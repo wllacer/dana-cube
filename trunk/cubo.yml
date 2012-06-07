@@ -1,0 +1,93 @@
+datos pincho:
+    connect:
+        driver: QSQLITE
+        dbname: /run/media/werner/Pincho/Generales2011.kexi
+        dbhost: 
+        dbuser:
+        dbpass:
+    table: datos
+    base filter: ""
+    guides:
+        -   name: linea
+            class: o
+            prod:
+                - elem: linea
+                  fmt: txt
+            
+        -   name: autonomia
+            class: o
+            prod:
+                -   elem: autonomia
+                    fmt: txt
+                    
+        -   name: provincia
+            class: o
+            prod:
+                -   elem: provincia
+                    fmt: txt
+                                
+        -   name: geo
+            class: h
+            prod: 
+                -   elem: autonomia
+                    fmt: txt
+                    name: autonomia
+                -   elem: provincia
+                    fmt: txt
+                    name: provincia
+                    
+        -   name: fecha
+            class: d
+            prod:
+                -   elem: fecha
+                    fmt: date
+    fields:
+        -   fact
+        -   fact2
+
+datos disco:
+    connect:
+        driver: QSQLITE
+        dbname: /home/wernera/generales2011/Generales2011.kexi
+        dbhost: 
+        dbuser:
+        dbpass:
+    table: datos
+    base filter: ""
+    guides:
+        -   name: linea
+            class: o
+            prod:
+                - elem: linea
+                  fmt: txt
+            
+        -   name: autonomia
+            class: o
+            prod:
+                -   elem: autonomia
+                    fmt: txt
+                    
+        -   name: provincia
+            class: o
+            prod:
+                -   elem: provincia
+                    fmt: txt
+                                
+        -   name: geo
+            class: h
+            prod:
+                -   elem: autonomia
+                    fmt: txt
+                    name: autonomia
+                -   elem: provincia
+                    fmt: txt
+                    name: provincia
+                    
+        -   name: fecha
+            class: d
+            prod:
+                -   elem: fecha
+                    fmt: date
+    fields:
+        -   fact
+        -   fact2
