@@ -112,17 +112,22 @@ class Form(QDialog):
     def requestVista(self):
         vistaDlg = VistaDlg(self.cubo, self)
         #TODO.  dar valores iniciales a la vista
-        if self.vista is not None:
+        #TODO  falta el filtro
+        if self.vista is  None:
             pass
-            
+        else:
+            vistaDlg.rowCB.setCurrentIndex(self.vista.row_id)
+            vistaDlg.colCB.setCurrentIndex(self.vista.col_id)
         if vistaDlg.exec_():
             row =vistaDlg.rowCB.currentIndex()
             col = vistaDlg.colCB.currentIndex()
+            agregado = vistaDlg.agrCB.currentText()
+            campo = vistaDlg.fldCB.currentText()
 #        
             if self.vista is None:
-                self.vista = Vista(self.cubo, row, col)       
+                self.vista = Vista(self.cubo, row, col, agregado, campo)       
             else:
-                self.vista.setNewView(row,  col)
+                self.vista.setNewView(row, col, agregado, campo)
             
             self.refreshTable()
 #

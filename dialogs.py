@@ -54,6 +54,16 @@ class VistaDlg(QDialog):
         self.colCB = QComboBox()
         self.colCB.addItems(listaCampos)
         colLbl.setBuddy(self.colCB)
+        
+        agrLbl = QLabel("&Functiom")
+        self.agrCB=QComboBox()
+        self.agrCB.addItems(self.cubo.getFunctions())
+        agrLbl.setBuddy(self.agrCB)
+
+        fldLbl = QLabel("&Element")
+        self.fldCB=QComboBox()
+        self.fldCB.addItems(self.cubo.getFields())
+        fldLbl.setBuddy(self.fldCB)
 
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|
                                                         QDialogButtonBox.Cancel)
@@ -64,7 +74,11 @@ class VistaDlg(QDialog):
         grid.addWidget(self.rowCB, 1, 1)
         grid.addWidget(colLbl, 2, 0)
         grid.addWidget(self.colCB, 2, 1)
-        grid.addWidget(buttonBox, 4, 0, 1, 2)
+        grid.addWidget(agrLbl, 3,  0)
+        grid.addWidget(self.agrCB, 3, 1)
+        grid.addWidget(fldLbl, 4, 0)
+        grid.addWidget(self.fldCB, 4, 1)
+        grid.addWidget(buttonBox, 6, 0, 1, 2)
         self.setLayout(grid)
   
         self.connect(buttonBox, SIGNAL("accepted()"),
