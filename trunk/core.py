@@ -167,12 +167,24 @@ class Cubo:
                     sqlString += 'order by %s'%orstring
                     indices.append(self.putIndex(sqlString, idx))
                 entrada['indice'] = indices
-#
+                
+    def getFunctions(self):
+        lista_funciones = ['count', 'max', 'min', 'avg', 'sum']
+        #TODO include functions which depend on DB driver
+        return lista_funciones
 
-
+    def getFields(self):
+        lista_campos = self.campos[:]
+        for entry in self.modelo:
+            for regla in entry['prod']:
+                if 'fmt' in regla.keys():
+                    if regla['fmt'] in ('txt', 'date'):
+                        continue
+                lista_campos.append(regla['elem'])
+        return lista_campos
 
 class Vista:
-    def __init__(self, cubo,row, col,  agregado='sum', campo='fact', filtro=''):
+    def __init__(self, cubo,row, col,  agregado, campo, filtro=''):
         
         self.cubo = cubo
         self.db = self.cubo.db
@@ -194,10 +206,28 @@ class Vista:
 
         self.setNewView(row, col)
 
-    def setNewView(self,row, col):
+    def setNewView(self,row, col, agregado=None, campo=None, filtro=''):
         dim_max = len(self.cubo.lista)
         if row < dim_max and col < dim_max:
-            if self.row_id <> row or self.col_id <> col:
+            # validamos los parametros
+            procesar = False
+            if self.row_id <> row:
+                procesar = True
+                self.row_id = row
+            if self.col_id <> col:
+                procesar = True
+                self.col_id = col
+            if agregado is not None and agregado <> self.agregado:
+                procesar = True
+                self.agregado = agregado
+            if campo is not None and campo <> self.campo:
+                procesar = True
+                self.campo = campo
+            if self.filtro <> filtro:
+                procesar = True
+                self.filtro = filtro
+                
+            if procesar:
     
                 self.row_id = row
                 self.col_id = col
