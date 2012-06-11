@@ -202,7 +202,9 @@ class Vista:
                 self.row_id = row
                 self.col_id = col
                 
-
+                self.row_idx = list()
+                self.col_idx = list()
+                
                 self.cur_row=self.cubo.lista[self.row_id]
                 self.cur_col = self.cubo.lista[self.col_id]
  
@@ -226,7 +228,7 @@ class Vista:
 
                 self.merge_list(0, indices, cols, num_cols,self.dim_col, list(), self.col_idx)
             
-                self.array=[[None for y in range(len(self.col_idx))] for x in range(len(self.row_idx))]
+                #self.array=[[None for y in range(len(self.col_idx))] for x in range(len(self.row_idx))]
     
 
                 self.putDataMatrixH()
@@ -234,6 +236,7 @@ class Vista:
             print 'Limite dimensional excedido. Ignoramos'
         
     def putDataMatrixH(self):
+        
         if self.db is None:      
             return None
 
@@ -244,7 +247,7 @@ class Vista:
             filtro_def = self.filtro + self.cubo.filtro_base 
             coreString += 'where %s ' % (filtro_def)
 
-        
+        self.array=[[None for y in range(len(self.col_idx))] for x in range(len(self.row_idx))]
         
         for i in range(self.dim_row):
             row_elem = ''
