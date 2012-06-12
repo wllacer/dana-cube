@@ -1,15 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
-## Copyright (c) 2008 Qtrac Ltd. All rights reserved.
-## This program or module is free software: you can redistribute it and/or
-## modify it under the terms of the GNU General Public License as published
-## by the Free Software Foundation, either version 2 of the License, or
-## version 3 of the License, or (at your option) any later version. It is
-## provided for educational purposes and is distributed in the hope that
-## it will be useful, but WITHOUT ANY WARRANTY; without even the implied
-## warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See
-## the GNU General Public License for more details.
+## Copyright (c) 2012 Werner Llacer. All rights reserved.. Under the terms of the GPL 2
+## Portions copyright (c) 2008 Qtrac Ltd. All rights reserved.. Under the terms of the GPL 2
 #
 from __future__ import division
 #from __future__ import print_function
@@ -23,14 +15,12 @@ import sys
 from PyQt4.QtCore import (Qt, SIGNAL)
 from PyQt4.QtGui import (QApplication, QDialog, QHBoxLayout, QPushButton,
         QTableWidget, QTableWidgetItem, QVBoxLayout)
-#import numberformatdlg1
-#import numberformatdlg2
-#import numberformatdlg3
-from dialogs import CuboDlg,  VistaDlg
+from dialogs import CuboDlg,  VistaDlg,  NumberFormatDlg
 from core import *
 #
 def fmtNumber(number, fmtOptions):
     """ taken from Rapid development with PyQT book (chapter 5) """
+
     fraction, whole = math.modf(number)
     sign = "-" if whole < 0 else ""
     whole = "{0}".format(int(math.floor(abs(whole))))
@@ -63,20 +53,17 @@ class Form(QDialog):
                                     rednegatives=False, 
                                     yellowoutliers=False)
         self.numbers = {}
-#        for x in range(self.X_MAX):
-#            for y in range(self.Y_MAX):
-#                self.numbers[(x, y)] = (10000 * random.random()) - 5000
 
         self.table = QTableWidget()
         formatButton1 = QPushButton("&Parametrizar vista")
-        formatButton2 = QPushButton("Boton 2")
-        formatButton3 = QPushButton("Boton 3")
+        formatButton2 = QPushButton("&Formateo presentacion")
+        #formatButton3 = QPushButton("Boton 3")
 
         buttonLayout = QHBoxLayout()
         buttonLayout.addStretch()
         buttonLayout.addWidget(formatButton1)
         buttonLayout.addWidget(formatButton2)
-        buttonLayout.addWidget(formatButton3)
+        #buttonLayout.addWidget(formatButton3)
         layout = QVBoxLayout()
         layout.addWidget(self.table)
         layout.addLayout(buttonLayout)
@@ -87,8 +74,8 @@ class Form(QDialog):
 
         self.connect(formatButton1, SIGNAL("clicked()"),
                      self.requestVista)
-#        self.connect(formatButton2, SIGNAL("clicked()"),
-#                     self.setNumberFormat2)
+        self.connect(formatButton2, SIGNAL("clicked()"),
+                     self.setNumberFormat)
 #        self.connect(formatButton3, SIGNAL("clicked()"),
 #                     self.setNumberFormat3)
         self.setWindowTitle("Cubo ")
@@ -111,13 +98,16 @@ class Form(QDialog):
         
     def requestVista(self):
         vistaDlg = VistaDlg(self.cubo, self)
-        #TODO.  dar valores iniciales a la vista
+ 
         #TODO  falta el filtro
         if self.vista is  None:
             pass
         else:
             vistaDlg.rowCB.setCurrentIndex(self.vista.row_id)
             vistaDlg.colCB.setCurrentIndex(self.vista.col_id)
+            vistaDlg.agrCB.setCurrentIndex(self.cubo.getFunctions().index(self.vista.agregado))
+            vistaDlg.fldCB.setCurrentIndex(self.cubo.getFields().index(self.vista.campo))
+ 
         if vistaDlg.exec_():
             row =vistaDlg.rowCB.currentIndex()
             col = vistaDlg.colCB.currentIndex()
@@ -134,7 +124,7 @@ class Form(QDialog):
 #
     def fmtHeader(self, indice, separador='\t', sparse=False):
         cab_col = []
-        #for linea in self.vista.col_idx:
+  
         for i, entrada in(enumerate(indice)):
             linea = entrada[:]
             if sparse and i >0:
@@ -161,53 +151,42 @@ class Form(QDialog):
         self.X_MAX = len(self.vista.row_idx)
         self.Y_MAX = len(self.vista.col_idx)
         self.numbers = self.vista.array
-        
+        #
+        if self.format['yellowoutlier']:
+            self.metrics = self.fivepointsmetric()
+            
         self.table.clear()
         self.table.setColumnCount(self.Y_MAX)
         self.table.setRowCount(self.X_MAX)
         cab_col = self.fmtHeader(self.vista.col_idx, '\n')
         cab_row = self.fmtHeader(self.vista.row_idx, '\t', True)
-
-
-        self.table.setHorizontalHeaderLabels(
-                cab_col)
-        self.table.setVerticalHeaderLabels(
-                cab_row)
-        for x in range(self.X_MAX):           # 
+        self.table.setHorizontalHeaderLabels(cab_col)
+        self.table.setVerticalHeaderLabels(cab_row)
+        
+        for x in range(self.X_MAX):           
             for y in range(self.Y_MAX):
                 if self.numbers[x][y] is None:
                     continue
                 text, sign = fmtNumber(self.numbers[x][y][0], self.format)    
-                
                 item = QTableWidgetItem(text)
-                item.setTextAlignment(Qt.AlignRight|
-                                      Qt.AlignVCenter)
-                if sign and self.format["rednegatives"]:
-                    item.setBackgroundColor(Qt.red)
-                self.table.setItem(x, y, item)
+                self.formatTableItem(item, x, y, self.numbers[x][y][0])
+            self.table.setItem(x, y, item)
+            
         self.show()
 #
-#
-#    def setNumberFormat1(self):
-#        dialog = numberformatdlg1.NumberFormatDlg(self.format, self)
-#        if dialog.exec_():
-#            self.format = dialog.numberFormat()
-#            self.refreshTable()
-#
-#
-#    def setNumberFormat2(self):
-#        dialog = numberformatdlg2.NumberFormatDlg(self.format, self)
-#        self.connect(dialog, SIGNAL("changed"), self.refreshTable)
-#        dialog.show()
-#
-#
-#    def setNumberFormat3(self):
-#        if self.numberFormatDlg is None:
-#            self.numberFormatDlg = numberformatdlg3.NumberFormatDlg(
-#                    self.format, self.refreshTable, self)
-#        self.numberFormatDlg.show()
-#        self.numberFormatDlg.raise_()
-#        self.numberFormatDlg.activateWindow()
+    def formatTableItem(self, item, row, col, number):
+        item.setTextAlignment(Qt.AlignRight|Qt.AlignVCenter)
+        if number < 0 and self.format["rednegatives"]:
+            item.setBackgroundColor(Qt.red)
+
+        
+    def setNumberFormat(self):
+        """ adapted from Rapid development with PyQT book (chapter 5) """        
+        if self.numberFormatDlg is None:
+            self.numberFormatDlg = NumberFormatDlg(self.format, self.refreshTable, self)
+        self.numberFormatDlg.show()
+        self.numberFormatDlg.raise_()
+        self.numberFormatDlg.activateWindow()
 
 
 app = QApplication(sys.argv)

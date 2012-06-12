@@ -82,7 +82,10 @@ class Cubo:
                     j += 1
                     
         #dump_structure(self.lista, "lista_dump.yml")
-        
+        self.lista_funciones = []
+        self.lista_funciones = self.getFunctions()
+        self.lista_campos = []
+        self.lista_campos = self.getFields()
     # 
     def setDatabase(self, constring):
         db = QSqlDatabase.addDatabase(constring['driver']);
@@ -169,18 +172,24 @@ class Cubo:
                 entrada['indice'] = indices
                 
     def getFunctions(self):
-        lista_funciones = ['count', 'max', 'min', 'avg', 'sum']
+        if len(self.lista_funciones ) == 0:
+            lista_funciones = ['count', 'max', 'min', 'avg', 'sum']
+        else:
+            lista_funciones = self.lista_funciones[ : ]
         #TODO include functions which depend on DB driver
         return lista_funciones
 
     def getFields(self):
-        lista_campos = self.campos[:]
-        for entry in self.modelo:
-            for regla in entry['prod']:
-                if 'fmt' in regla.keys():
-                    if regla['fmt'] in ('txt', 'date'):
-                        continue
-                lista_campos.append(regla['elem'])
+        if len(self.lista_campos) == 0:
+            lista_campos = self.campos[:]
+            for entry in self.modelo:
+                for regla in entry['prod']:
+                    if 'fmt' in regla.keys():
+                        if regla['fmt'] in ('txt', 'date'):
+                            continue
+                    lista_campos.append(regla['elem'])
+        else:
+            lista_campos = self.lista_campos [ : ]
         return lista_campos
 
 class Vista:
