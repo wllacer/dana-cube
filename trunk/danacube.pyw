@@ -14,7 +14,8 @@ import string
 import sys
 from PyQt4.QtCore import (Qt, SIGNAL)
 from PyQt4.QtGui import (QApplication, QDialog, QHBoxLayout, QPushButton,
-        QTableWidget, QTableWidgetItem, QVBoxLayout)
+        QTableWidget, QTableWidgetItem, QVBoxLayout, QColor)
+
 from dialogs import CuboDlg,  VistaDlg,  NumberFormatDlg
 from core import *
 #
@@ -51,7 +52,7 @@ class Form(QDialog):
                                     decimalmarker=",",
                                     decimalplaces=2,
                                     rednegatives=False, 
-                                    yellowoutliers=False)
+                                    yellowoutliers=True)
         self.numbers = {}
 
         self.table = QTableWidget()
@@ -151,11 +152,10 @@ class Form(QDialog):
         self.X_MAX = len(self.vista.row_idx)
         self.Y_MAX = len(self.vista.col_idx)
         self.numbers = self.vista.array
-        print self.numbers
         #
         if self.format['yellowoutliers']:
-            self.metrics = self.fivepointsmetric()
-            
+            metrics = self.vista.fivepointsmetric()
+  
         self.table.clear()
         self.table.setColumnCount(self.Y_MAX)
         self.table.setRowCount(self.X_MAX)
@@ -164,15 +164,33 @@ class Form(QDialog):
         self.table.setHorizontalHeaderLabels(cab_col)
         self.table.setVerticalHeaderLabels(cab_row)
         
-        for x in range(self.X_MAX):           
+        for x in range(self.X_MAX):
+            level_x = getLevel(self.vista.row_idx[x])           
             for y in range(self.Y_MAX):
+                level_y = getLevel(self.vista.col_idx[y])
                 if self.numbers[x][y] is None:
+                    item = QTableWidgetItem(' ')
+                    if self.vista.dim_row > 1 and level_x < (self.vista.dim_row -1) :
+                        item.setBackgroundColor(QColor('grey').lighter())
+                    if self.vista.dim_col > 1 and level_y == (self.vista.dim_col -1):
+                        item.setBackgroundColor(QColor('grey').lighter())
+                    self.table.setItem(x, y, item)
                     continue
-                text, sign = fmtNumber(self.numbers[x][y][0], self.format)    
+
+                numero = self.numbers[x][y][0] #para ser mas comodo
+                text, sign = fmtNumber(numero, self.format)    
                 item = QTableWidgetItem(text)
                 item.setTextAlignment(Qt.AlignRight|Qt.AlignVCenter)
+
+                if self.vista.dim_row > 1 and level_x < (self.vista.dim_row -1):
+                    item.setBackgroundColor(QColor('grey').lighter())
+                if self.vista.dim_col  > 1 and level_y < (self.vista.dim_col -1):
+                    item.setBackgroundColor(QColor('grey').lighter())
                 if sign and self.format["rednegatives"]:
-                    item.setBackgroundColor(Qt.red)
+                    item.setBackgroundColor(QColor("red"))
+                if self.format['yellowoutliers']: 
+                    if (numero< metrics[level_x][level_y][1] or numero  > metrics[level_x][level_y][5] ):
+                        item.setBackgroundColor(QColor("yellow"))
                 self.table.setItem(x, y, item)
             
         self.show()
