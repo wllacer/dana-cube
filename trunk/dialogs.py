@@ -172,7 +172,7 @@ class NumberFormatDlg(QDialog):
                 self.decimalPlacesSpinBox.value())
         self.format["rednegatives"] = (
                 self.redNegativesCheckBox.isChecked())
-        self.format["yellowoutiler"] = (
+        self.format["yellowoutilers"] = (
                 self.yellowOutlierCheckBox.isChecked())
 
         self.callback()

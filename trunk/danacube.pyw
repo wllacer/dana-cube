@@ -151,8 +151,9 @@ class Form(QDialog):
         self.X_MAX = len(self.vista.row_idx)
         self.Y_MAX = len(self.vista.col_idx)
         self.numbers = self.vista.array
+        print self.numbers
         #
-        if self.format['yellowoutlier']:
+        if self.format['yellowoutliers']:
             self.metrics = self.fivepointsmetric()
             
         self.table.clear()
@@ -169,15 +170,16 @@ class Form(QDialog):
                     continue
                 text, sign = fmtNumber(self.numbers[x][y][0], self.format)    
                 item = QTableWidgetItem(text)
-                self.formatTableItem(item, x, y, self.numbers[x][y][0])
-            self.table.setItem(x, y, item)
+                item.setTextAlignment(Qt.AlignRight|Qt.AlignVCenter)
+                if sign and self.format["rednegatives"]:
+                    item.setBackgroundColor(Qt.red)
+                self.table.setItem(x, y, item)
             
         self.show()
 #
     def formatTableItem(self, item, row, col, number):
-        item.setTextAlignment(Qt.AlignRight|Qt.AlignVCenter)
-        if number < 0 and self.format["rednegatives"]:
-            item.setBackgroundColor(Qt.red)
+        pass
+
 
         
     def setNumberFormat(self):
