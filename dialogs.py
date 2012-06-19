@@ -4,7 +4,7 @@
 ## Portions copyright (c) 2008 Qtrac Ltd. All rights reserved.. Under the terms of the GPL 2
 
 from __future__ import division
-from __future__ import print_function
+#from __future__ import print_function
 from __future__ import unicode_literals
 from future_builtins import *
 
@@ -123,6 +123,17 @@ class ZoomDlg(QDialog):
         self.colTCB.addItems(cab_col)
         colTLbl.setBuddy(self.colTCB)
         
+        rowDimLbl= QLabel("Row &Dimensions")
+        self.rowDimSpinBox = QSpinBox()
+        rowDimLbl.setBuddy(self.rowDimSpinBox)
+        self.rowDimSpinBox.setRange(1, self.vista.dim_row)
+         
+        colDimLbl= QLabel("col &Dimensions")
+        self.colDimSpinBox = QSpinBox()
+        colDimLbl.setBuddy(self.colDimSpinBox)
+        self.colDimSpinBox.setRange(1, self.vista.dim_col)
+
+        
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel)
 
         grid = QGridLayout()
@@ -135,7 +146,15 @@ class ZoomDlg(QDialog):
         grid.addWidget(self.colFCB, 3, 1)
         grid.addWidget(colTLbl, 3, 2)
         grid.addWidget(self.colTCB, 3, 3)
-        grid.addWidget(buttonBox, 6, 0, 1, 2)
+        
+        grid.addWidget(rowDimLbl, 5, 0)
+        grid.addWidget(self.rowDimSpinBox, 5, 1)
+        grid.addWidget(colDimLbl, 5, 2)
+        grid.addWidget(self.colDimSpinBox, 5, 3)
+
+        
+        
+        grid.addWidget(buttonBox, 7, 0, 1, 2)
         self.setLayout(grid)
   
         self.connect(buttonBox, SIGNAL("accepted()"),
