@@ -93,24 +93,56 @@ class VistaDlg(QDialog):
         self.connect(buttonBox, SIGNAL("rejected()"),
                            self, SLOT("reject()"))
 
-class zoomDlg(QDialog):
+class ZoomDlg(QDialog):
     def __init__(self, vista,  parent=None):
-        super(zoomDlg, self).__init__(parent)
+        super(ZoomDlg, self).__init__(parent)
         
         self.vista = vista
-
+        cab_row = parent.fmtHeader(self.vista.row_hdr_idx, '\t',True) # max_col_level, row_range)
+        cab_col = parent.fmtHeader(self.vista.col_hdr_idx, '\t', True)  #max_row_level, col_range)
+        
         InicioLabel = QLabel("Defina el rango de seleccion")
         
-        rowLbl = QLabel("&Row")
-        self.rowCB = QComboBox()
-        self.rowCB.addItems(listaCampos)
-        rowLbl.setBuddy(self.rowCB)
+        rowFLbl = QLabel("&Row  from")
+        self.rowFCB = QComboBox()
+        self.rowFCB.addItems(cab_row)
+        rowFLbl.setBuddy(self.rowFCB)
  
-        colLbl = QLabel("&Col")
-        self.colCB = QComboBox()
-        self.colCB.addItems(listaCampos)
-        colLbl.setBuddy(self.colCB)
+        rowTLbl = QLabel("&Row  to")
+        self.rowTCB = QComboBox()
+        self.rowTCB.addItems(cab_row)
+        rowTLbl.setBuddy(self.rowTCB)
+
+        colFLbl = QLabel("&Col  from")
+        self.colFCB = QComboBox()
+        self.colFCB.addItems(cab_col)
+        colFLbl.setBuddy(self.colFCB)
+ 
+        colTLbl = QLabel("&Col  to")
+        self.colTCB = QComboBox()
+        self.colTCB.addItems(cab_col)
+        colTLbl.setBuddy(self.colTCB)
         
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel)
+
+        grid = QGridLayout()
+        grid.addWidget(InicioLabel, 0, 0)
+        grid.addWidget(rowFLbl, 1, 0)
+        grid.addWidget(self.rowFCB, 1, 1)
+        grid.addWidget(rowTLbl, 1, 2)
+        grid.addWidget(self.rowTCB, 1, 3)
+        grid.addWidget(colFLbl, 3, 0)
+        grid.addWidget(self.colFCB, 3, 1)
+        grid.addWidget(colTLbl, 3, 2)
+        grid.addWidget(self.colTCB, 3, 3)
+        grid.addWidget(buttonBox, 6, 0, 1, 2)
+        self.setLayout(grid)
+  
+        self.connect(buttonBox, SIGNAL("accepted()"),
+                            self, SLOT("accept()"))
+        self.connect(buttonBox, SIGNAL("rejected()"),
+                           self, SLOT("reject()"))
+
 class NumberFormatDlg(QDialog):
     # Copyright (c) 2008 Qtrac Ltd. All rights reserved. Under the terms of GPL2.
     # portions modified by Werner Llacer
