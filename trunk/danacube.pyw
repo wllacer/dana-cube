@@ -16,7 +16,7 @@ from PyQt4.QtCore import (Qt, SIGNAL)
 from PyQt4.QtGui import (QApplication, QDialog, QHBoxLayout, QPushButton,
         QTableWidget, QTableWidgetItem, QVBoxLayout, QColor)
 
-from dialogs import CuboDlg,  VistaDlg,  NumberFormatDlg
+from dialogs import CuboDlg,  VistaDlg,  NumberFormatDlg,  ZoomDlg
 from core import *
 #
 def fmtNumber(number, fmtOptions):
@@ -58,13 +58,13 @@ class Form(QDialog):
         self.table = QTableWidget()
         formatButton1 = QPushButton("&Parametrizar vista")
         formatButton2 = QPushButton("&Formateo presentacion")
-        #formatButton3 = QPushButton("Boton 3")
+        formatButton3 = QPushButton("&Zoom")
 
         buttonLayout = QHBoxLayout()
         buttonLayout.addStretch()
         buttonLayout.addWidget(formatButton1)
         buttonLayout.addWidget(formatButton2)
-        #buttonLayout.addWidget(formatButton3)
+        buttonLayout.addWidget(formatButton3)
         layout = QVBoxLayout()
         layout.addWidget(self.table)
         layout.addLayout(buttonLayout)
@@ -77,8 +77,8 @@ class Form(QDialog):
                      self.requestVista)
         self.connect(formatButton2, SIGNAL("clicked()"),
                      self.setNumberFormat)
-#        self.connect(formatButton3, SIGNAL("clicked()"),
-#                     self.setNumberFormat3)
+        self.connect(formatButton3, SIGNAL("clicked()"),
+                     self.zoomData)
         self.setWindowTitle("Cubo ")
                         
         self.initCube()
@@ -120,10 +120,33 @@ class Form(QDialog):
                 self.vista = Vista(self.cubo, row, col, agregado, campo)       
             else:
                 self.vista.setNewView(row, col, agregado, campo)
+                
+            self.max_row_level = self.vista.dim_row
+            self.max_col_level  = self.vista.dim_col
+            self.row_range = [0, len(self.vista.row_idx) -1]
+            self.col_range = [0, len(self.vista.col_idx) -1]
             
             self.refreshTable()
 #
+    def zoomData(self):
+        zoomDlg = ZoomDlg(self.vista, self)
 #
+        zoomDlg.rowFCB.setCurrentIndex(self.row_range[0])
+        zoomDlg.rowTCB.setCurrentIndex(self.row_range[1])
+        zoomDlg.colFCB.setCurrentIndex(self.col_range[0])
+        zoomDlg.colTCB.setCurrentIndex(self.col_range[1])
+
+        if zoomDlg.exec_():
+            if ( zoomDlg.rowFCB.currentIndex() <> self.row_range[0] or
+                   zoomDlg.rowTCB.currentIndex() <> self.row_range[1] or
+                   zoomDlg.colFCB.currentIndex() <> self.col_range[0] or
+                   zoomDlg.colTCB.currentIndex() <> self.col_range[1] ) :
+                self.row_range[0] = zoomDlg.rowFCB.currentIndex()
+                self.row_range[1] = zoomDlg.rowTCB.currentIndex()
+                self.col_range[0] = zoomDlg.colFCB.currentIndex()
+                self.col_range[1] = zoomDlg.colTCB.currentIndex()
+                self.refreshTable()
+        
     def fmtHeader(self, indice, separador='\t', sparse=False, max_level=99, range= None):
         cab_col = []
   
@@ -139,7 +162,7 @@ class Form(QDialog):
             if sparse and i >0:
                 for k, campo in enumerate(linea):
                     if campo == indice[i -1][k] and campo is not None:
-                        linea[k] = ' '*len(campo)
+                        linea[k] = ' '*8
                     else:
                         break
             texto = ''
@@ -184,15 +207,10 @@ class Form(QDialog):
 
         
         self.numbers = self.vista.array
-        #
-        max_row_level = 99
-        max_col_level  = 99
-        row_range = [0, len(self.vista.row_idx) -1]
-        col_range = [0, len(self.vista.col_idx) -1]
+        #        
         
-        
-        cab_col = self.fmtHeader(self.vista.col_hdr_idx, '\n', False, max_row_level, col_range)
-        cab_row = self.fmtHeader(self.vista.row_hdr_idx, '\t',True, max_col_level, row_range)
+        cab_col = self.fmtHeader(self.vista.col_hdr_idx, '\n', False, self.max_row_level, self.col_range)
+        cab_row = self.fmtHeader(self.vista.row_hdr_idx, '\t',True, self.max_col_level, self.row_range)
 
 
         self.X_MAX = len(self.vista.row_idx)
@@ -213,19 +231,19 @@ class Form(QDialog):
         row_i = 0
         for x in range(self.X_MAX):
             level_x = getLevel(self.vista.row_idx[x])     
-            if level_x > max_row_level :
+            if level_x > self.max_row_level :
                 continue
-            if row_range[0] <= x <= row_range[1] :
+            if self.row_range[0] <= x <= self.row_range[1] :
                 pass
             else:
                 continue
-            #print (row_range[1] <= self.vista.row_idx[x] => row_range[0] )
+            #print (self.row_range[1] <= self.vista.row_idx[x] => self.row_range[0] )
             col_i  = 0
             for y in range(self.Y_MAX):
                 level_y = getLevel(self.vista.col_idx[y])
-                if level_y > max_col_level:
+                if level_y > self.max_col_level:
                     continue
-                if col_range[0] <= y <= col_range[1] :
+                if self.col_range[0] <= y <= self.col_range[1] :
                     pass
                 else:
                     continue
