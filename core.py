@@ -76,7 +76,7 @@ class Cubo:
                 for prod in getDateSlots(campo, dbdriver):
                     self.lista.append({'name':prod['name'], 
                                                 'type':entrada['class'],
-                                                'source':campo, 
+                                                'base_fld':campo, 
                                                 'prod':[prod, ]
                                               })
                     j += 1
@@ -106,7 +106,7 @@ class Cubo:
             sys.exit(-1)
             
         
-    def putIndex(self, sql_string, num_fields=1):
+    def getCursor(self, sql_string, num_fields=1):
     
         if self.db is None:
             return None
@@ -119,57 +119,112 @@ class Cubo:
                     row.append(query.value(i).toString())
                 indices.append(row)
         return indices
-        
-    def putGuidesModelo(self):
+
+    def getIndex(self, sql_string, num_fields=1, num_desc=0):
         if self.db is None:
             return None
-        
-        coreString = 'from %s ' % self.tabla
-        if self.filtro_base <> '':
-            coreString += 'where %s ' % self.filtro_base
-        
-        date_cache={}
+        indices = []
+        desc    = []
+        query = QSqlQuery(self.db)
+        if query.exec_(sql_string):
+            while query.next():
+                row = []
+                for i in range(0,num_fields):
+                    row.append(query.value(i).toString())
+                indices.append(row)
+                row_d = []
+                if num_desc == 0:
+                    desc.append(row[ : ])
+                else :
+                    for i in range(0, num_fields - num_desc):
+                        row_d.append(None)
+                    for j in range(num_fields, num_desc +  num_fields):
+                        row_d.append(query.value(j).toString())
+                    desc.append(row_d)
 
-        for entrada in self.lista:
-            tipo = entrada['type']
-            entrada['indice'] = []
+        return indices, desc
+
+    def getSqlStatement(self, entrada, fields):
+        code_fld = 0
+        desc_fld = 0
+        fldString = ''
+        coreString = ''
+        if 'source' in entrada.keys():
+            fuente = entrada['source']
+            coreString = 'from %s ' % fuente['table']
+            if 'filter' in fuente.keys():
+                coreString += 'where %s ' % fuente['filter']
+        
+            if 'desc' in fuente.keys():
+                fldString = fuente['code'] +',' + fuente['desc']
+                desc_fld = fldString.count(',')
+            else:
+                fldlString = fuente['code']
+
             
-            if    tipo == 'o':
-                campo = entrada['prod'][0]['elem']
-                sqlString = 'select distinct %s '%campo
-                sqlString += coreString + ' order by 1'
-                entrada['indice'].append(self.putIndex(sqlString))
+            if 'grouped by' in fuente.keys():
+                fldString = fuente['grouped by'] + ',' + fldString
+            
+            elif len(fields) > 0:
+                fldString = ','.join([campo for campo in fields]) + ',' + fldString
+
+            
+        else:
+            coreString = 'from %s ' % self.tabla
+            if self.filtro_base !='':
+                coreString += 'where %s ' % self.filtro_base
+
+            
+            fldString = entrada['elem']
+            
+            if len(fields) > 0:
+                fldString = ','.join([campo for campo in fields]) + ',' + fldString
                 
-            elif tipo == 'd':
-                campo = entrada['source']
-                fmt = entrada['prod'][0]['mask']
-                if campo not in date_cache:
-                    sqlString = 'select max(%s),min(%s) ' % (campo, campo)
-                    sqlString += coreString
-                    row=self.putIndex(sqlString, 2)   #obtenemos  la fecha maxima y minima
-                    date_cache[campo] = (row[0][0], row[0][1])
+        code_fld = fldString.count(',') + 1 - desc_fld        
+        orderString = ','.join([ str(x + 1) for x in range(code_fld)])
+        orderString = 'order by '+orderString
+        sqlString = 'select distinct '+fldString + ' ' + coreString + ' ' + orderString
+        return sqlString, code_fld,desc_fld 
+    
+    def getGuides(self):
+        if self.db is None:
+            return None
+            
+        coreString = 'from %s ' % self.tabla
+        if self.filtro_base !='':
+            
+            coreString += 'where %s ' % self.filtro_base
+        date_cache={}
+        
+        for entrada in self.lista:
+            entrada['indice'] = []
+            entrada['cabecera'] =  []
+            campos = []
+            for ind, regla in enumerate(entrada['prod']):
+                idx = ind +1
+                if entrada['type'] != 'd':
+                    (sqlString, code_fld, desc_fld) = self.getSqlStatement(entrada['prod'][idx -1], campos )
+                    campos.append(regla['elem'])
+                    ind, desc = self.getIndex(sqlString, code_fld, desc_fld)             
                     
-                max_date = date_cache[campo][0]
-                min_date  = date_cache[campo][1]
-                
-                entrada['indice'].append (getDateIndex(max_date, min_date, fmt))
-            elif tipo == 'h':
-                campo = ''
-                idx =1
-                indices = []
-                for level in entrada['prod']:
-                    if campo == '':
-                        campo = level['elem']
-                        orstring = '%d'%idx
-                    else:
-                        idx += 1
-                        campo += ',' + level['elem']
-                        orstring += ',%d'%idx
-                    sqlString = 'select distinct %s '%campo
-                    sqlString += coreString 
-                    sqlString += 'order by %s'%orstring
-                    indices.append(self.putIndex(sqlString, idx))
-                entrada['indice'] = indices
+                    entrada['indice'].append(ind)
+                    entrada['cabecera'].append(desc)
+
+                else:
+                    campo = entrada['base_fld']
+                    fmt = entrada['prod'][ind]['mask']
+                    if campo not in date_cache:
+                        sqlString = 'select max(%s),min(%s) ' % (campo, campo)
+                        sqlString += coreString
+                        row=self.getCursor(sqlString, 2)   #obtenemos  la fecha maxima y minima
+                        date_cache[campo] = (row[0][0], row[0][1])
+                        
+                    max_date = date_cache[campo][0]
+                    min_date  = date_cache[campo][1]
+                    
+                    entrada['indice'].append (getDateIndex(max_date, min_date, fmt))
+                    entrada['cabecera'].append(entrada['indice'][ind][ : ])
+
                 
     def getFunctions(self):
         if len(self.lista_funciones ) == 0:
@@ -208,6 +263,8 @@ class Vista:
         self.cur_col  = None
         self.row_idx = list()
         self.col_idx = list()
+        self.row_hdr_idx = list()
+        self.col_hdr_idx = list()
         self.dim_row = None
         self.dim_col = None
         self.hierarchy= False
@@ -237,12 +294,13 @@ class Vista:
                 self.filtro = filtro
                 
             if procesar:
-    
                 self.row_id = row
                 self.col_id = col
                 
                 self.row_idx = list()
                 self.col_idx = list()
+                self.row_hdr_idx = list()
+                self.col_hdr_idx = list()
                 
                 self.cur_row=self.cubo.lista[self.row_id]
                 self.cur_col = self.cubo.lista[self.col_id]
@@ -254,21 +312,22 @@ class Vista:
                 
                 if self.cur_row['type'] == 'h' or self.cur_col['type'] == 'h':
                     self.hierarchy = True
-                    
+            
                 indices = [ 0 for i in range(0,self.dim_row)]
                 rows = [self.cur_row['indice'][i] for i in range(0,self.dim_row)] 
+                row_hdr=[self.cur_row['cabecera'][i] for i in range(0,self.dim_row)]
                 num_rows = [len(rows[i]) for i in range(0, self.dim_row)]
-           
-                self.merge_list(0, indices, rows, num_rows,self.dim_row, list(), self.row_idx)
-                
+
+                self.merge_list(0, indices, rows, num_rows,self.dim_row, list(), self.row_idx, row_hdr, self.row_hdr_idx)
+
                 indices = [ 0 for i in range(0, self.dim_col)]
                 cols = [self.cur_col['indice'][i] for i in range(0, self.dim_col)] 
+                cols_hdr = [self.cur_col['cabecera'][i] for i in range(0, self.dim_col)] 
+                
                 num_cols = [len(cols[i]) for i in range(0, self.dim_col)]
 
-                self.merge_list(0, indices, cols, num_cols,self.dim_col, list(), self.col_idx)
-            
+                self.merge_list(0, indices, cols, num_cols,self.dim_col, list(), self.col_idx,  cols_hdr, self.col_hdr_idx)
                 #self.array=[[None for y in range(len(self.col_idx))] for x in range(len(self.row_idx))]
-    
 
                 self.putDataMatrixH()
         else:
@@ -426,7 +485,7 @@ class Vista:
         html += '</table>'
         return html
  
-    def  merge_list(self, level, indices, rows, num_rows,max_level, estado, result_list):
+    def  merge_list(self, level, indices, rows, num_rows,max_level, estado, result_list, rows_hdr=[], result_hdr=[]):
         
         #print(level, indices,num_rows,max_level, estado)
         
@@ -438,7 +497,7 @@ class Vista:
         else:
             return False
         cur_record = rows[level][cur_index]
-        #print cur_record
+        cur_record_hdr = rows_hdr[level][cur_index]
         #print estado
         estamos = True
         while estamos:
@@ -450,58 +509,23 @@ class Vista:
             if not estamos:
                 break
             entry = [ None for i in range(0, max_level)]
+            entry_hdr = entry[ : ]
             for i in range(0, level +1):
                 entry[i]=cur_record[i]
-                
             result_list.append(entry)
+            for i in range(0, level +1):
+                if cur_record_hdr[i] is None:
+                    entry_hdr[i] = rows_hdr[i][indices[i]][i]
+                else:   
+                    entry_hdr[i]=cur_record_hdr[i]
+            result_hdr.append(entry_hdr)
             nestado = cur_record
             if (level +1 ) < max_level :
-                self.merge_list(level +1, indices, rows, num_rows, max_level, nestado, result_list)
+                self.merge_list(level +1, indices, rows, num_rows, max_level, nestado, result_list,  rows_hdr, result_hdr)
             indices[level] += 1
             if indices[level] >= num_rows[level]:
                 break
             else:
                 cur_record = rows[level][indices[level]]
-    
-#def main():
-#    app = QApplication(sys.argv)
-#    w = QTextBrowser()
-#    
-#    my_cubos = load_cubo()
-#    cubo = Cubo(my_cubos['datos disco'])
-##    db = cubo.getDatabase()
-##    if db is None: 
-##        html = QString('<html><body>')
-##        html += 'Error de Conexion en la BD. Terminando'    
-##        w.setHtml(html)
-##        w.show()
-##        sys.exit(app.exec_())
-#    cubo.putGuidesModelo()
-#    vista = Vista(cubo, 0, 1)
-#    #vista.setNewView(3,  4)
-#    html = QString('<html><body>')
-#    html += vista.showTableDataH() 
-#    html += '</body></html>'
-#    w.setHtml(html)            
-#    w.show()
-##    tabla = []
-##    for i in range(0, 5):
-##        antes = datetime.now()
-##        vista.putDataMatrixH()
-##        delta = datetime.now() -antes
-##        tabla.append(delta.total_seconds())
-##    print tabla
-##    print fivesummary(tabla)
-##    print avg(tabla)
-##    
-#    #vista.showTableData(w) #, cubo)
-#    sys.exit(app.exec_())
-#
-#if __name__ == "__main__":
-#    main()
-#
-#'''
-#Campo:<select_list> Funcion: <select_list>* elements depend on format of campo
-#Lista (excluye campo si forma parte)
-#'''
+                cur_record_hdr = rows_hdr[level][indices[level]]
 
