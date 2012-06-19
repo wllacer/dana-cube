@@ -93,7 +93,8 @@ class Form(QDialog):
         if dialog.exec_():
             seleccion = str(dialog.cuboCB.currentText())
             self.cubo = Cubo(my_cubos[seleccion])
-            self.cubo.putGuidesModelo()
+            #self.cubo.putGuidesModelo()
+            self.cubo.getGuides()
             self.vista = None
 #            self.requestVista()
         
@@ -123,10 +124,17 @@ class Form(QDialog):
             self.refreshTable()
 #
 #
-    def fmtHeader(self, indice, separador='\t', sparse=False):
+    def fmtHeader(self, indice, separador='\t', sparse=False, max_level=99, range= None):
         cab_col = []
   
         for i, entrada in(enumerate(indice)):
+            if getLevel(entrada)> max_level:
+                continue
+            if range is not None:
+                if range[0] <= i <= range[1]:
+                    pass
+                else:
+                    continue
             linea = entrada[:]
             if sparse and i >0:
                 for k, campo in enumerate(linea):
@@ -141,62 +149,147 @@ class Form(QDialog):
                 elif col is None:
                     texto +=separador
                 elif texto == '':
-                    texto = str(col)
+                    texto = unicode(col)
                 else:
-                    texto += separador + col
+                    texto += separador + unicode(col)
             cab_col.append(texto)
         return cab_col
         
+    def addTableItem(self, tabla,  elemento, row, col, level_x, level_y,outlier=False):
+        if elemento is None:
+            item = QTableWidgetItem(' ')
+            if self.vista.dim_row > 1 and level_x < (self.vista.dim_row -1) :
+                item.setBackgroundColor(QColor('grey').lighter())
+            if self.vista.dim_col > 1 and level_y < (self.vista.dim_col -1):
+                item.setBackgroundColor(QColor('grey').lighter())
+            tabla.setItem(row, col, item)
+            return
+            
+        numero = elemento[0] #para ser mas comodo
+        text, sign = fmtNumber(numero, self.format)    
+        item = QTableWidgetItem(text)
+        item.setTextAlignment(Qt.AlignRight|Qt.AlignVCenter)
+
+        if self.vista.dim_row > 1 and level_x < (self.vista.dim_row -1):
+            item.setBackgroundColor(QColor('grey').lighter())
+        if self.vista.dim_col  > 1 and level_y < (self.vista.dim_col -1):
+            item.setBackgroundColor(QColor('grey').lighter())
+        if sign and self.format["rednegatives"]:
+            item.setBackgroundColor(QColor("red"))
+        if outlier: 
+            item.setBackgroundColor(QColor("yellow"))
+        tabla.setItem(row, col, item)
+
     def refreshTable(self):
+
+        
+        self.numbers = self.vista.array
+        #
+        max_row_level = 99
+        max_col_level  = 99
+        row_range = [0, len(self.vista.row_idx) -1]
+        col_range = [0, len(self.vista.col_idx) -1]
+        
+        
+        cab_col = self.fmtHeader(self.vista.col_hdr_idx, '\n', False, max_row_level, col_range)
+        cab_row = self.fmtHeader(self.vista.row_hdr_idx, '\t',True, max_col_level, row_range)
+
 
         self.X_MAX = len(self.vista.row_idx)
         self.Y_MAX = len(self.vista.col_idx)
-        self.numbers = self.vista.array
-        #
+
+        metrics=None
         if self.format['yellowoutliers']:
             metrics = self.vista.fivepointsmetric()
   
         self.table.clear()
-        self.table.setColumnCount(self.Y_MAX)
-        self.table.setRowCount(self.X_MAX)
-        cab_col = self.fmtHeader(self.vista.col_idx, '\n')
-        cab_row = self.fmtHeader(self.vista.row_idx, '\t', True)
+
+        self.table.setColumnCount(len(cab_col))
+        self.table.setRowCount(len(cab_row))
+
         self.table.setHorizontalHeaderLabels(cab_col)
         self.table.setVerticalHeaderLabels(cab_row)
         
+        row_i = 0
         for x in range(self.X_MAX):
-            level_x = getLevel(self.vista.row_idx[x])           
+            level_x = getLevel(self.vista.row_idx[x])     
+            if level_x > max_row_level :
+                continue
+            if row_range[0] <= x <= row_range[1] :
+                pass
+            else:
+                continue
+            #print (row_range[1] <= self.vista.row_idx[x] => row_range[0] )
+            col_i  = 0
             for y in range(self.Y_MAX):
                 level_y = getLevel(self.vista.col_idx[y])
-                if self.numbers[x][y] is None:
-                    item = QTableWidgetItem(' ')
-                    if self.vista.dim_row > 1 and level_x < (self.vista.dim_row -1) :
-                        item.setBackgroundColor(QColor('grey').lighter())
-                    if self.vista.dim_col > 1 and level_y == (self.vista.dim_col -1):
-                        item.setBackgroundColor(QColor('grey').lighter())
-                    self.table.setItem(x, y, item)
+                if level_y > max_col_level:
                     continue
-
-                numero = self.numbers[x][y][0] #para ser mas comodo
-                text, sign = fmtNumber(numero, self.format)    
-                item = QTableWidgetItem(text)
-                item.setTextAlignment(Qt.AlignRight|Qt.AlignVCenter)
-
-                if self.vista.dim_row > 1 and level_x < (self.vista.dim_row -1):
-                    item.setBackgroundColor(QColor('grey').lighter())
-                if self.vista.dim_col  > 1 and level_y < (self.vista.dim_col -1):
-                    item.setBackgroundColor(QColor('grey').lighter())
-                if sign and self.format["rednegatives"]:
-                    item.setBackgroundColor(QColor("red"))
-                if self.format['yellowoutliers']: 
-                    if (numero< metrics[level_x][level_y][1] or numero  > metrics[level_x][level_y][5] ):
-                        item.setBackgroundColor(QColor("yellow"))
-                self.table.setItem(x, y, item)
-            
+                if col_range[0] <= y <= col_range[1] :
+                    pass
+                else:
+                    continue
+                #determine if outlier
+                outlier = False
+                if self.format['yellowoutliers'] and self.numbers[x][y] is not None:
+                    if (self.numbers[x][y][0]< metrics[level_x][level_y][1] 
+                                or self.numbers[x][y][0]  > metrics[level_x][level_y][5] ):
+                        outlier=True
+                
+                self.addTableItem(self.table, self.numbers[x][y], row_i, col_i, level_x, level_y, outlier)
+                col_i += 1
+            row_i += 1
         self.show()
+        
+#    def refreshTableOrig(self):
 #
-    def formatTableItem(self, item, row, col, number):
-        pass
+#        
+#        self.X_MAX = len(self.vista.row_idx)
+#        self.Y_MAX = len(self.vista.col_idx)
+#        self.numbers = self.vista.array
+#        #
+#        if self.format['yellowoutliers']:
+#            metrics = self.vista.fivepointsmetric()
+#  
+#        self.table.clear()
+#        self.table.setColumnCount(self.Y_MAX)
+#        self.table.setRowCount(self.X_MAX)
+#        cab_col = self.fmtHeader(self.vista.col_idx, '\n')
+#        cab_row = self.fmtHeader(self.vista.row_idx, '\t', True)
+#        self.table.setHorizontalHeaderLabels(cab_col)
+#        self.table.setVerticalHeaderLabels(cab_row)
+#        
+#        for x in range(self.X_MAX):
+#            level_x = getLevel(self.vista.row_idx[x])           
+#            for y in range(self.Y_MAX):
+#                level_y = getLevel(self.vista.col_idx[y])
+#                if self.numbers[x][y] is None:
+#                    item = QTableWidgetItem(' ')
+#                    if self.vista.dim_row > 1 and level_x < (self.vista.dim_row -1) :
+#                        item.setBackgroundColor(QColor('grey').lighter())
+#                    if self.vista.dim_col > 1 and level_y < (self.vista.dim_col -1):
+#                        item.setBackgroundColor(QColor('grey').lighter())
+#                    self.table.setItem(x, y, item)
+#                    continue
+#
+#                numero = self.numbers[x][y][0] #para ser mas comodo
+#                text, sign = fmtNumber(numero, self.format)    
+#                item = QTableWidgetItem(text)
+#                item.setTextAlignment(Qt.AlignRight|Qt.AlignVCenter)
+#
+#                if self.vista.dim_row > 1 and level_x < (self.vista.dim_row -1):
+#                    item.setBackgroundColor(QColor('grey').lighter())
+#                if self.vista.dim_col  > 1 and level_y < (self.vista.dim_col -1):
+#                    item.setBackgroundColor(QColor('grey').lighter())
+#                if sign and self.format["rednegatives"]:
+#                    item.setBackgroundColor(QColor("red"))
+#                if self.format['yellowoutliers']: 
+#                    if (numero< metrics[level_x][level_y][1] or numero  > metrics[level_x][level_y][5] ):
+#                        item.setBackgroundColor(QColor("yellow"))
+#                self.table.setItem(x, y, item)
+#            
+#        self.show()#
+
 
 
         
