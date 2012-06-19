@@ -135,7 +135,10 @@ class Form(QDialog):
         zoomDlg.rowTCB.setCurrentIndex(self.row_range[1])
         zoomDlg.colFCB.setCurrentIndex(self.col_range[0])
         zoomDlg.colTCB.setCurrentIndex(self.col_range[1])
-
+        zoomDlg.rowDimSpinBox.setValue(self.max_row_level)
+        zoomDlg.colDimSpinBox.setValue(self.max_col_level)
+        
+        refrescar = False
         if zoomDlg.exec_():
             if ( zoomDlg.rowFCB.currentIndex() <> self.row_range[0] or
                    zoomDlg.rowTCB.currentIndex() <> self.row_range[1] or
@@ -145,13 +148,22 @@ class Form(QDialog):
                 self.row_range[1] = zoomDlg.rowTCB.currentIndex()
                 self.col_range[0] = zoomDlg.colFCB.currentIndex()
                 self.col_range[1] = zoomDlg.colTCB.currentIndex()
+                refrescar = True
+            if ( zoomDlg.rowDimSpinBox.value <> self.max_row_level or
+                    zoomDlg.colDimSpinBox.value <> self.max_col_level ):
+                self.max_row_level = zoomDlg.rowDimSpinBox.value()
+                self.max_col_level = zoomDlg.colDimSpinBox.value()
+                refrescar = True
+                
+            if refrescar:
+
                 self.refreshTable()
-        
+                
     def fmtHeader(self, indice, separador='\t', sparse=False, max_level=99, range= None):
         cab_col = []
-  
+
         for i, entrada in(enumerate(indice)):
-            if getLevel(entrada)> max_level:
+            if getLevel(entrada) >= max_level :
                 continue
             if range is not None:
                 if range[0] <= i <= range[1]:
@@ -207,10 +219,10 @@ class Form(QDialog):
 
         
         self.numbers = self.vista.array
-        #        
-        
-        cab_col = self.fmtHeader(self.vista.col_hdr_idx, '\n', False, self.max_row_level, self.col_range)
-        cab_row = self.fmtHeader(self.vista.row_hdr_idx, '\t',True, self.max_col_level, self.row_range)
+        #                
+
+        cab_row = self.fmtHeader(self.vista.row_hdr_idx, '\t',True, self.max_row_level, self.row_range)
+        cab_col = self.fmtHeader(self.vista.col_hdr_idx, '\n', False, self.max_col_level, self.col_range)
 
 
         self.X_MAX = len(self.vista.row_idx)
@@ -231,7 +243,7 @@ class Form(QDialog):
         row_i = 0
         for x in range(self.X_MAX):
             level_x = getLevel(self.vista.row_idx[x])     
-            if level_x > self.max_row_level :
+            if level_x >= self.max_row_level :
                 continue
             if self.row_range[0] <= x <= self.row_range[1] :
                 pass
@@ -241,7 +253,7 @@ class Form(QDialog):
             col_i  = 0
             for y in range(self.Y_MAX):
                 level_y = getLevel(self.vista.col_idx[y])
-                if level_y > self.max_col_level:
+                if level_y >= self.max_col_level:
                     continue
                 if self.col_range[0] <= y <= self.col_range[1] :
                     pass
