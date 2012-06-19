@@ -93,7 +93,24 @@ class VistaDlg(QDialog):
         self.connect(buttonBox, SIGNAL("rejected()"),
                            self, SLOT("reject()"))
 
+class zoomDlg(QDialog):
+    def __init__(self, vista,  parent=None):
+        super(zoomDlg, self).__init__(parent)
+        
+        self.vista = vista
 
+        InicioLabel = QLabel("Defina el rango de seleccion")
+        
+        rowLbl = QLabel("&Row")
+        self.rowCB = QComboBox()
+        self.rowCB.addItems(listaCampos)
+        rowLbl.setBuddy(self.rowCB)
+ 
+        colLbl = QLabel("&Col")
+        self.colCB = QComboBox()
+        self.colCB.addItems(listaCampos)
+        colLbl.setBuddy(self.colCB)
+        
 class NumberFormatDlg(QDialog):
     # Copyright (c) 2008 Qtrac Ltd. All rights reserved. Under the terms of GPL2.
     # portions modified by Werner Llacer
@@ -101,12 +118,14 @@ class NumberFormatDlg(QDialog):
         super(NumberFormatDlg, self).__init__(parent)
 
         punctuationRe = QRegExp(r"[ ,;:.]")
+        
         thousandsLabel = QLabel("&Thousands separator")
         self.thousandsEdit = QLineEdit(format["thousandsseparator"])
         thousandsLabel.setBuddy(self.thousandsEdit)
         self.thousandsEdit.setMaxLength(1)
         self.thousandsEdit.setValidator(QRegExpValidator(
                 punctuationRe, self))
+        
         decimalMarkerLabel = QLabel("Decimal &marker")
         self.decimalMarkerEdit = QLineEdit(format["decimalmarker"])
         decimalMarkerLabel.setBuddy(self.decimalMarkerEdit)
@@ -114,11 +133,13 @@ class NumberFormatDlg(QDialog):
         self.decimalMarkerEdit.setValidator(QRegExpValidator(
                 punctuationRe, self))
         self.decimalMarkerEdit.setInputMask("X")
+        
         decimalPlacesLabel = QLabel("&Decimal places")
         self.decimalPlacesSpinBox = QSpinBox()
         decimalPlacesLabel.setBuddy(self.decimalPlacesSpinBox)
         self.decimalPlacesSpinBox.setRange(0, 6)
         self.decimalPlacesSpinBox.setValue(format["decimalplaces"])
+        
         self.redNegativesCheckBox = QCheckBox("&Red negative numbers")
         self.redNegativesCheckBox.setChecked(format["rednegatives"])
         
@@ -146,6 +167,8 @@ class NumberFormatDlg(QDialog):
         self.connect(self.decimalPlacesSpinBox,
                 SIGNAL("valueChanged(int)"), self.apply)
         self.connect(self.redNegativesCheckBox,
+                SIGNAL("toggled(bool)"), self.apply)
+        self.connect(self.yellowOutlierCheckBox,
                 SIGNAL("toggled(bool)"), self.apply)
         self.setWindowTitle("Set Number Format (`Live')")
 

@@ -19,7 +19,6 @@ datos pincho:
             prod:
                 -   elem: autonomia
                     fmt: txt
-                    
         -   name: provincia
             class: o
             prod:
@@ -34,7 +33,6 @@ datos pincho:
                     name: autonomia
                 -   elem: provincia
                     fmt: txt
-                    name: provincia
                     
         -   name: fecha
             class: d
@@ -48,7 +46,7 @@ datos pincho:
 datos disco:
     connect:
         driver: QSQLITE
-        dbname: /home/wernera/generales2011/Generales2011.kexi
+        dbname: /home/werner/dana-cube/Generales2011.kexi
         dbhost: 
         dbuser:
         dbpass:
@@ -66,22 +64,41 @@ datos disco:
             prod:
                 -   elem: autonomia
                     fmt: txt
-                    
+                    source:
+                        code: autonomia
+                        desc: nombre
+                        table: autonomias
+                        filter: autonomia <> '00' 
         -   name: provincia
             class: o
             prod:
                 -   elem: provincia
                     fmt: txt
-                                
+                    source:
+                        code: provincia
+                        desc: nombre
+                        table: provincias
+                        filter: provincia <> '00' 
         -   name: geo
             class: h
-            prod:
+            prod: 
                 -   elem: autonomia
                     fmt: txt
                     name: autonomia
+                    source:
+                        code: autonomia
+                        desc: nombre
+                        table: autonomias
+                        filter: autonomia <> '00' 
+                    
                 -   elem: provincia
                     fmt: txt
-                    name: provincia
+                    source:
+                        code: provincia
+                        desc: nombre
+                        table: provincias
+                        grouped by: autonomia
+                        filter: provincia <> '00' 
                     
         -   name: fecha
             class: d
