@@ -4,7 +4,8 @@
 ## Portions copyright (c) 2008 Qtrac Ltd. All rights reserved.. Under the terms of the GPL 2
 #
 from __future__ import division
-#from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import print_function
 from __future__ import unicode_literals
 from future_builtins import *
 
@@ -12,12 +13,19 @@ import math
 import random
 import string
 import sys
+
 from PyQt4.QtCore import (Qt, SIGNAL)
 from PyQt4.QtGui import (QApplication, QDialog, QHBoxLayout, QPushButton,
         QTableWidget, QTableWidgetItem, QVBoxLayout, QColor)
 
 from dialogs import CuboDlg,  VistaDlg,  NumberFormatDlg,  ZoomDlg
 from core import *
+
+# para evitar problemas con utf-8, no lo recomiendan pero me funciona
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
 #
 def fmtNumber(number, fmtOptions):
     """ taken from Rapid development with PyQT book (chapter 5) """
@@ -271,55 +279,6 @@ class Form(QDialog):
             row_i += 1
         self.show()
         
-#    def refreshTableOrig(self):
-#
-#        
-#        self.X_MAX = len(self.vista.row_idx)
-#        self.Y_MAX = len(self.vista.col_idx)
-#        self.numbers = self.vista.array
-#        #
-#        if self.format['yellowoutliers']:
-#            metrics = self.vista.fivepointsmetric()
-#  
-#        self.table.clear()
-#        self.table.setColumnCount(self.Y_MAX)
-#        self.table.setRowCount(self.X_MAX)
-#        cab_col = self.fmtHeader(self.vista.col_idx, '\n')
-#        cab_row = self.fmtHeader(self.vista.row_idx, '\t', True)
-#        self.table.setHorizontalHeaderLabels(cab_col)
-#        self.table.setVerticalHeaderLabels(cab_row)
-#        
-#        for x in range(self.X_MAX):
-#            level_x = getLevel(self.vista.row_idx[x])           
-#            for y in range(self.Y_MAX):
-#                level_y = getLevel(self.vista.col_idx[y])
-#                if self.numbers[x][y] is None:
-#                    item = QTableWidgetItem(' ')
-#                    if self.vista.dim_row > 1 and level_x < (self.vista.dim_row -1) :
-#                        item.setBackgroundColor(QColor('grey').lighter())
-#                    if self.vista.dim_col > 1 and level_y < (self.vista.dim_col -1):
-#                        item.setBackgroundColor(QColor('grey').lighter())
-#                    self.table.setItem(x, y, item)
-#                    continue
-#
-#                numero = self.numbers[x][y][0] #para ser mas comodo
-#                text, sign = fmtNumber(numero, self.format)    
-#                item = QTableWidgetItem(text)
-#                item.setTextAlignment(Qt.AlignRight|Qt.AlignVCenter)
-#
-#                if self.vista.dim_row > 1 and level_x < (self.vista.dim_row -1):
-#                    item.setBackgroundColor(QColor('grey').lighter())
-#                if self.vista.dim_col  > 1 and level_y < (self.vista.dim_col -1):
-#                    item.setBackgroundColor(QColor('grey').lighter())
-#                if sign and self.format["rednegatives"]:
-#                    item.setBackgroundColor(QColor("red"))
-#                if self.format['yellowoutliers']: 
-#                    if (numero< metrics[level_x][level_y][1] or numero  > metrics[level_x][level_y][5] ):
-#                        item.setBackgroundColor(QColor("yellow"))
-#                self.table.setItem(x, y, item)
-#            
-#        self.show()#
-
 
 
         

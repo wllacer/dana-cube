@@ -1,4 +1,16 @@
-import random
+# -*- coding=utf -*-
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
+
+'''
+Documentation, License etc.
+
+@package estimaciones
+'''
+import math
+# import random
 
 def is_number(s):
     try:
@@ -11,19 +23,8 @@ def is_number(s):
             return False
     return True
 
-# -*- coding=utf -*-
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 
-'''
-Documentation, License etc.
 
-@package estimaciones
-'''
-
-import math
 
 def is_number(s):
     try:

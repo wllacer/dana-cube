@@ -4,7 +4,7 @@
 ## Portions copyright (c) 2008 Qtrac Ltd. All rights reserved.. Under the terms of the GPL 2
 
 from __future__ import division
-#from __future__ import print_function
+from __future__ import print_function
 from __future__ import unicode_literals
 from future_builtins import *
 

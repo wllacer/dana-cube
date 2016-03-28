@@ -1,5 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
+
+'''
+Documentation, License etc.
+
+@package estimaciones
+'''
 
 import sys
 from PyQt4.QtCore import *
@@ -33,7 +43,7 @@ def getLevel(entry):
 class Cubo:
     def __init__(self, definicion):
         if definicion is None :
-            print 'No se especifico definicion valida '
+            print('No se especifico definicion valida ')
             sys.exit(-1)
         
         # los datos siguientes son la definicion externa del cubo
@@ -43,7 +53,7 @@ class Cubo:
         self.filtro_base = definicion['base filter'] 
         self.campos = definicion['fields']
         #except KeyError:
-        #    print 'Error en los parametros de definicion del cubo'
+        #    print( 'Error en los parametros de definicion del cubo')
         #    sys.exit(-1)
         self.db = self.setDatabase(definicion['connect'])
         
@@ -102,7 +112,7 @@ class Cubo:
         if ok:        
             return db
         else:
-            print 'conexion a bd imposible'
+            print('conexion a bd imposible')
             sys.exit(-1)
             
         
@@ -308,7 +318,7 @@ class Vista:
                 self.dim_row = len(self.cur_row['indice'])
                 self.dim_col = len(self.cur_col['indice'])
 
-                print self.cur_row['name'], self.cur_col['name']
+                print (self.cur_row['name'], self.cur_col['name'])
                 
                 if self.cur_row['type'] == 'h' or self.cur_col['type'] == 'h':
                     self.hierarchy = True
@@ -331,7 +341,7 @@ class Vista:
 
                 self.putDataMatrixH()
         else:
-            print 'Limite dimensional excedido. Ignoramos'
+            print( 'Limite dimensional excedido. Ignoramos')
         
     def putDataMatrixH(self):
         
@@ -369,7 +379,7 @@ class Vista:
                 
                 select_string = " select %s," % (group_string)
                 sql_string = select_string + coreString + 'group by '+group_string
-                print i, j, sql_string
+                print (i, j, sql_string)
 
                 query = QSqlQuery(self.db)
                 if query.exec_(sql_string):
@@ -399,9 +409,9 @@ class Vista:
         
         
         for i in range(0,len(self.row_idx)):
-            #print cabecera
+            #print (cabecera)
             eje_x = getLevel(self.row_idx[i])
-            #print data
+            #print(data)
             for j in range(0, len(self.col_idx)):
                 eje_y = getLevel(self.col_idx[j])
                 
@@ -462,7 +472,7 @@ class Vista:
             
             for item in self.row_idx[i]:
                 html +=('<td>%s< /td>')% str(item)
-            #print data
+            #print(data)
             j = 0
             for elem in self.array[i]:
                 style=''
@@ -498,12 +508,12 @@ class Vista:
             return False
         cur_record = rows[level][cur_index]
         cur_record_hdr = rows_hdr[level][cur_index]
-        #print estado
+        #print(estado)
         estamos = True
         while estamos:
             for i in range(0, level):
                 if estado[i] != cur_record[i]:
-                    #print 'rompen ', i, estado[i], cur_record[i]
+                    #print ('rompen ', i, estado[i], cur_record[i])
                     estamos = False
                     break
             if not estamos:

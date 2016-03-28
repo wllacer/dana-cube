@@ -1,3 +1,16 @@
+# -*- coding=utf-8 -*-
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
+
+'''
+Documentation, License etc.
+
+@package estimaciones
+'''
+
+
 from PyQt4.QtCore import *
 from decimal import *
 from pprint import *
@@ -91,7 +104,7 @@ def getDateEntry(source, fmt, driver='QSQLITE'):
         marker["w"] = 'D'
         marker["J"] = 'DDD'
     else:
-        print 'Date conversions for driver %s still not implemented'%driver
+        print('Date conversions for driver %s still not implemented'%driver)
         return None
         
     delimiter = '.'
