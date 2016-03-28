@@ -10,8 +10,6 @@ Documentation, License etc.
 @package estimaciones
 '''
 
-
-from PyQt4.QtCore import *
 from decimal import *
 from pprint import *
 from datetime import *

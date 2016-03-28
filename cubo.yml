@@ -108,3 +108,43 @@ datos disco:
     fields:
         -   fact
         -   fact2
+
+datos elecciones:
+    connect:
+        driver: QSQLITE
+        dbname: /home/werner/elecciones/elecciones_2015_desa.db
+        dbhost: 
+        dbuser:
+        dbpass:
+    table: votos_2015
+    base filter: "level_3 = ''"
+    guides:
+        -   name: partido
+            class: o
+            prod:
+                - elem: code
+                  fmt: txt
+                  source:
+                        code: code
+                        desc: acronym
+                        table: partidos_2015
+                        filter: "level_2 = ''"
+            
+        -   name: autonomia
+            class: o
+            prod:
+                -   elem: level_2
+                    fmt: txt
+                    source:
+                        code: level_2
+                        desc: nombre
+                        table: localidades_2015
+                        filter: "level_3 = ''"
+        -   name: provincia
+            class: o
+            prod:
+                -   elem: level_3
+                    fmt: txt
+    fields:
+        -   votes_presential
+        -   votes_percent

@@ -11,9 +11,7 @@ from future_builtins import *
 import sys
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-from PyQt4.QtSql import *
 
-#from core import *
 
 class CuboDlg(QDialog):
     def __init__(self, dict_cubos, parent=None):

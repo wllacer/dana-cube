@@ -12,8 +12,7 @@ Documentation, License etc.
 '''
 
 import sys
-from PyQt4.QtCore import *
-#from PyQt4.QtGui import *
+
 from PyQt4.QtSql import *
 
 from decimal import *
