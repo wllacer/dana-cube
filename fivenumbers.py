@@ -122,7 +122,7 @@ def qualitycontrol(texto,tabla):
   fivenmr = fivesummary(tabla)
   print ()
   print ('  {:20}                        ({} elementos)'.format(texto,len(tabla)))
-  print ('        media {:5.1f} ± {:5.1f}'.encode('utf-8').format(avg(tabla),std(tabla)))
+  print ('        media {:5.1f} ± {:5.1f}'.format(avg(tabla),std(tabla)))
   print ('      mediana {:5.1f}'.format(fivenmr[3]))
   if fivenmr[0] < fivenmr[1]:
       alarma_low = '<===='
@@ -138,7 +138,9 @@ def qualitycontrol(texto,tabla):
   outliers_l = outliers_inc(tabla,fivenmr)
   if len(outliers_l) > 0:
     print('Hay algunos outliers :',outliers_l)
+
+if __name__ == '__main__':
  
-#s=[1,2]
-s=[20,10,10,6,6,6,5,5,5,5,5,3,3,3,3,3,3,3,1,1,1,1,1,1,1]
-qualitycontrol('prueba',s)
+    #s=[1,2]
+    s=[20,10,10,6,6,6,5,5,5,5,5,3,3,3,3,3,3,3,1,1,1,1,1,1,1]
+    qualitycontrol('prueba',s)

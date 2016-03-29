@@ -1,5 +1,4 @@
 # dana-cube
-Automatically exported from code.google.com/p/dana-cube
 
 Dana-cube is a tool to automate the design, execution and visualization of cross reference queries, aka pivot tables aka multidimensional aggregate queries.
 
@@ -56,18 +55,60 @@ Why a text file for definition? Getting the table definitions from the DB Catalo
 
 The tool is programmed in python2 + PyQt4? (with PyYaml? as the only current dependency)
 
-TODO: Functional details corresponding to actual versions
 
 ## License
 
+For my part, while I (Werner Llácer Viciano) retain all ownership of the code, you can use it as you see fit.
 
-## History:
-As of June,12 2012 HEAD is loaded with functional code (it just lacks some UI functions we want in 0.1). The user interface is rather primitive and has been "lifted" from the "numbers" example of Mark Summerfield's book "Rapid GUI Programming with Python and Qt. Definitive Guide to PyQt?"
+Good policy would be to, at least, acknowledge my autorship of this piece of code and, even better, to send upstream all corrections and enhancements to the original functionality.
+
+PyQt licensing might impose other restrictions, please keep an eye on it
+
 
 ## Actual Status
-Updated Easter Monday 2016: work has resumed. At first we'll center only in Python 3 -and Qt 5- compatibility). OTOH we want to experiment with SqlAlchemy as backend, but don't know exactly if it will pass the test. I hope to make some inroads into new functionality
+Updated Easter Monday 2016: work has resumed. At first we'll center only in Python 3 -and Qt 5- compatibility). 
 
-## Current Plans (Just for historical value. Nothing came out of it)
+I hope to make some inroads into new functionality.
+
+HEAD works now with PyQt 5.
+
+## short term TODO list (2016)
+
+* __CODED__ Python 3 compatible. Coded. Works on 2, not (yet) tested in 3 (29/3/16)
+* __DONE__ PyQt 5 works now as it worked with 4 (29/3/16)
+* __WOP__. New test database. Minimally available (Sqlite) (29/3/16)
+
+* New use cases
+
+* Code refactoring for clarity
+
+* Database testing in other environmentes. First 3 are available to me
+    * MySQL/ MariaDB
+    * PostGreSQL
+    * DB2
+    * Oracle  (not available locally)
+    * SQLServer (not available locally)
+
+* Use of CUBE / ROLLUP sintax where available
+
+* Packaging
+ 
+* __EXPERIMENTAL__: use SqlAlchemy as data background, so dependencies on PyQt would only be on the presentation level
+    * Date Management into alchemy
+    * Cube/Rollp
+ 
+* __EXPERIMENTAL__: Substitute PySlide for PyQt (licensing issues)
+
+* __EXPERIMENTAL__: Definition language compatible to CUBES (?)
+
+
+
+## Historical info
+
+### History:
+As of June,12 2012 HEAD is loaded with functional code (it just lacks some UI functions we want in 0.1). The user interface is rather primitive and has been "lifted" from the "numbers" example of Mark Summerfield's book "Rapid GUI Programming with Python and Qt. Definitive Guide to PyQt?"
+
+### Current Plans (Just for historical value. Nothing came out of it)
 Updated at the Feast of St. Agnes, 2014 In case you haven't noticed it, development has stalled, but i'm still out there. I hope to resume work in the short term. Probably i'll drop QtSql? as DB backend ... 
 
 Updated at the Feast of the Sacred Hearth of Jesus, 2012. Due to some rather unexpected events -not all negative-, release schedule is in a bit of flux. But let's see how things develop Version 0.1 Due July, 1. Although HEAD should be usable by now. We plan to have all the core functionality implemented by then, with only minor functional aspects wanting. UI, error handling and doc will still be primitive we could introduce several intermediate releases and

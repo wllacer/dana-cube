@@ -6,11 +6,12 @@
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
-from future_builtins import *
+#from future_builtins import *
 
 import sys
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
 
 
 class CuboDlg(QDialog):
@@ -35,10 +36,8 @@ class CuboDlg(QDialog):
 
         self.setLayout(grid)
         
-        self.connect(buttonBox, SIGNAL("accepted()"),
-                            self, SLOT("accept()"))
-        self.connect(buttonBox, SIGNAL("rejected()"),
-                            self, SLOT("reject()"))
+        buttonBox.accepted.connect(self.accept)
+        buttonBox.rejected.connect(self.reject)
                             
 class VistaDlg(QDialog):
     def __init__(self, cubo_eleg,  parent=None):
@@ -86,10 +85,8 @@ class VistaDlg(QDialog):
         grid.addWidget(buttonBox, 6, 0, 1, 2)
         self.setLayout(grid)
   
-        self.connect(buttonBox, SIGNAL("accepted()"),
-                            self, SLOT("accept()"))
-        self.connect(buttonBox, SIGNAL("rejected()"),
-                           self, SLOT("reject()"))
+        buttonBox.accepted.connect(self.accept)
+        buttonBox.rejected.connect(self.reject)
 
 class ZoomDlg(QDialog):
     def __init__(self, vista,  parent=None):
@@ -155,10 +152,8 @@ class ZoomDlg(QDialog):
         grid.addWidget(buttonBox, 7, 0, 1, 2)
         self.setLayout(grid)
   
-        self.connect(buttonBox, SIGNAL("accepted()"),
-                            self, SLOT("accept()"))
-        self.connect(buttonBox, SIGNAL("rejected()"),
-                           self, SLOT("reject()"))
+        buttonBox.accepted.connect(self.accept)
+        buttonBox.rejected.connect(self.reject)
 
 class NumberFormatDlg(QDialog):
     # Copyright (c) 2008 Qtrac Ltd. All rights reserved. Under the terms of GPL2.
@@ -209,22 +204,19 @@ class NumberFormatDlg(QDialog):
         grid.addWidget(self.yellowOutlierCheckBox, 4, 0, 1, 2)
         self.setLayout(grid)
 
-        self.connect(self.thousandsEdit,
-                SIGNAL("textEdited(QString)"), self.checkAndFix)
-        self.connect(self.decimalMarkerEdit,
-                SIGNAL("textEdited(QString)"), self.checkAndFix)
-        self.connect(self.decimalPlacesSpinBox,
-                SIGNAL("valueChanged(int)"), self.apply)
-        self.connect(self.redNegativesCheckBox,
-                SIGNAL("toggled(bool)"), self.apply)
-        self.connect(self.yellowOutlierCheckBox,
-                SIGNAL("toggled(bool)"), self.apply)
+        self.thousandsEdit.textEdited['QString'].connect(self.checkAndFix)
+        self.decimalMarkerEdit.textEdited['QString'].connect(self.checkAndFix)
+        self.decimalPlacesSpinBox.valueChanged[int].connect(self.apply)
+        self.redNegativesCheckBox.toggled[bool].connect(self.apply)
+        self.yellowOutlierCheckBox.toggled[bool].connect(self.apply)
         self.setWindowTitle("Set Number Format (`Live')")
 
 
     def checkAndFix(self):
-        thousands = unicode(self.thousandsEdit.text())
-        decimal = unicode(self.decimalMarkerEdit.text())
+        #thousands = unicode(self.thousandsEdit.text())
+        #decimal = unicode(self.decimalMarkerEdit.text())
+        thousands = self.thousandsEdit.text()
+        decimal = self.decimalMarkerEdit.text()
         if thousands == decimal:
             self.thousandsEdit.clear()
             self.thousandsEdit.setFocus()
@@ -237,9 +229,11 @@ class NumberFormatDlg(QDialog):
 
     def apply(self):
         self.format["thousandsseparator"] = (
-                unicode(self.thousandsEdit.text()))
+                #unicode(self.thousandsEdit.text()))
+                self.thousandsEdit.text())
         self.format["decimalmarker"] = (
-                unicode(self.decimalMarkerEdit.text()))
+                #unicode(self.decimalMarkerEdit.text()))
+                self.decimalMarkerEdit.text())
         self.format["decimalplaces"] = (
                 self.decimalPlacesSpinBox.value())
         self.format["rednegatives"] = (

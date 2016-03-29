@@ -13,7 +13,8 @@ Documentation, License etc.
 
 import sys
 
-from PyQt4.QtSql import *
+#from PyQt4.QtSql import *
+from PyQt5.QtSql import *
 
 from decimal import *
 from pprint import *
@@ -125,7 +126,7 @@ class Cubo:
             while query.next():
                 row = []
                 for i in range(0,num_fields):
-                    row.append(query.value(i).toString())
+                    row.append(query.value(i))
                 indices.append(row)
         return indices
 
@@ -139,7 +140,7 @@ class Cubo:
             while query.next():
                 row = []
                 for i in range(0,num_fields):
-                    row.append(query.value(i).toString())
+                    row.append(query.value(i))
                 indices.append(row)
                 row_d = []
                 if num_desc == 0:
@@ -148,7 +149,7 @@ class Cubo:
                     for i in range(0, num_fields - num_desc):
                         row_d.append(None)
                     for j in range(num_fields, num_desc +  num_fields):
-                        row_d.append(query.value(j).toString())
+                        row_d.append(query.value(j))
                     desc.append(row_d)
 
         return indices, desc
@@ -286,19 +287,19 @@ class Vista:
         if row < dim_max and col < dim_max:
             # validamos los parametros
             procesar = False
-            if self.row_id <> row:
+            if self.row_id != row:
                 procesar = True
                 self.row_id = row
-            if self.col_id <> col:
+            if self.col_id != col:
                 procesar = True
                 self.col_id = col
-            if agregado is not None and agregado <> self.agregado:
+            if agregado is not None and agregado != self.agregado:
                 procesar = True
                 self.agregado = agregado
-            if campo is not None and campo <> self.campo:
+            if campo is not None and campo != self.campo:
                 procesar = True
                 self.campo = campo
-            if self.filtro <> filtro:
+            if self.filtro != filtro:
                 procesar = True
                 self.filtro = filtro
                 
@@ -348,9 +349,9 @@ class Vista:
             return None
 
         coreString = '%s(%s) from %s ' % (self.agregado, self.campo, self.cubo.tabla)
-        if self.cubo.filtro_base <> '' and self.filtro <> '':
+        if self.cubo.filtro_base != '' and self.filtro != '':
             coreString += 'where %s and %s ' % (self.cubo.filtro_base, self.filtro)
-        elif self.filtro <> '' or self.cubo.filtro_base <> '':
+        elif self.filtro != '' or self.cubo.filtro_base != '':
             filtro_def = self.filtro + self.cubo.filtro_base 
             coreString += 'where %s ' % (filtro_def)
 
@@ -359,7 +360,7 @@ class Vista:
         for i in range(self.dim_row):
             row_elem = ''
             for k in range(0, i+1):
-                if row_elem <> '':
+                if row_elem != '':
                     row_elem +=','
 
                 row_dict = self.cur_row['prod'][k]
@@ -370,7 +371,7 @@ class Vista:
             for j in range(self.dim_col):
                 col_elem = ''
                 for m in range(0, j+1):
-                    if col_elem <> '':
+                    if col_elem != '':
                         col_elem += ','
                     col_dict =  self.cur_col['prod'][m]
                     col_elem += '%s'%col_dict['elem']
@@ -387,25 +388,24 @@ class Vista:
                         col_key =[None for x in range(0, self.dim_col)] 
                         k = 0
                         for r_ind in range(0, i +1):
-                            row_key[r_ind] = query.value(k).toString()
+                            row_key[r_ind] = query.value(k)
                             k += 1
                         
                         row_id = self.row_idx.index(row_key)
 
                         for c_ind in range(0, j+1):
-                            col_key[c_ind] = query.value(k).toString()
+                            col_key[c_ind] = query.value(k)
                             k += 1
 
                         col_id  = self.col_idx.index(col_key)
 
-                        self.array[row_id][col_id]=query.value(k).toFloat()
+                        self.array[row_id][col_id]=query.value(k)
         #pprint(self.array)
         
         
     def getPointLists(self):
 
         metricplist = [ [ list() for J in range(self.dim_col)] for i in range(self.dim_row)]
-        
         
         for i in range(0,len(self.row_idx)):
             #print (cabecera)
@@ -414,8 +414,11 @@ class Vista:
             for j in range(0, len(self.col_idx)):
                 eje_y = getLevel(self.col_idx[j])
                 
-                if self.array[i][j] is not None:
-                    metricplist[eje_x][eje_y].append(self.array[i][j][0])
+                if not(self.array[i][j] is None):
+                    if isinstance(self.array[i][j],(list,tuple,set)):
+                       metricplist[eje_x][eje_y].append(self.array[i][j][0])
+                    else :
+                       metricplist[eje_x][eje_y].append(self.array[i][j])
         
         return metricplist
         

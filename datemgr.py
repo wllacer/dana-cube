@@ -112,7 +112,7 @@ def getDateEntry(source, fmt, driver='QSQLITE'):
     fmt_string = ''
 
     for char in fmt:
-        if fmt_string <> '':
+        if fmt_string != '':
             fmt_string += delimiter
         fmt_string += marker[char]
     element = function + "("

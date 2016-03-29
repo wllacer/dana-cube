@@ -7,24 +7,25 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
-from future_builtins import *
+#from future_builtins import *
 
 import math
 import random
 import string
 import sys
 
-from PyQt4.QtCore import (Qt, SIGNAL)
-from PyQt4.QtGui import (QApplication, QDialog, QHBoxLayout, QPushButton,
-        QTableWidget, QTableWidgetItem, QVBoxLayout, QColor)
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QColor
+from PyQt5.QtWidgets import (QApplication, QDialog, QHBoxLayout, QPushButton,
+                             QTableWidget, QTableWidgetItem, QVBoxLayout)
 
 from dialogs import CuboDlg,  VistaDlg,  NumberFormatDlg,  ZoomDlg
 from core import *
 
 # para evitar problemas con utf-8, no lo recomiendan pero me funciona
 import sys
-reload(sys)
-sys.setdefaultencoding('utf-8')
+#reload(sys)
+#sys.setdefaultencoding('utf-8')
 
 #
 def fmtNumber(number, fmtOptions):
@@ -79,14 +80,10 @@ class Form(QDialog):
 
         self.setLayout(layout)
         
-
-
-        self.connect(formatButton1, SIGNAL("clicked()"),
-                     self.requestVista)
-        self.connect(formatButton2, SIGNAL("clicked()"),
-                     self.setNumberFormat)
-        self.connect(formatButton3, SIGNAL("clicked()"),
-                     self.zoomData)
+        formatButton1.clicked.connect(self.requestVista)
+        formatButton2.clicked.connect(self.setNumberFormat)
+        formatButton3.clicked.connect(self.zoomData)
+        
         self.setWindowTitle("Cubo ")
                         
         self.initCube()
@@ -148,17 +145,17 @@ class Form(QDialog):
         
         refrescar = False
         if zoomDlg.exec_():
-            if ( zoomDlg.rowFCB.currentIndex() <> self.row_range[0] or
-                   zoomDlg.rowTCB.currentIndex() <> self.row_range[1] or
-                   zoomDlg.colFCB.currentIndex() <> self.col_range[0] or
-                   zoomDlg.colTCB.currentIndex() <> self.col_range[1] ) :
+            if ( zoomDlg.rowFCB.currentIndex() != self.row_range[0] or
+                   zoomDlg.rowTCB.currentIndex() != self.row_range[1] or
+                   zoomDlg.colFCB.currentIndex() != self.col_range[0] or
+                   zoomDlg.colTCB.currentIndex() != self.col_range[1] ) :
                 self.row_range[0] = zoomDlg.rowFCB.currentIndex()
                 self.row_range[1] = zoomDlg.rowTCB.currentIndex()
                 self.col_range[0] = zoomDlg.colFCB.currentIndex()
                 self.col_range[1] = zoomDlg.colTCB.currentIndex()
                 refrescar = True
-            if ( zoomDlg.rowDimSpinBox.value <> self.max_row_level or
-                    zoomDlg.colDimSpinBox.value <> self.max_col_level ):
+            if ( zoomDlg.rowDimSpinBox.value != self.max_row_level or
+                    zoomDlg.colDimSpinBox.value != self.max_col_level ):
                 self.max_row_level = zoomDlg.rowDimSpinBox.value()
                 self.max_col_level = zoomDlg.colDimSpinBox.value()
                 refrescar = True
@@ -192,9 +189,11 @@ class Form(QDialog):
                 elif col is None:
                     texto +=separador
                 elif texto == '':
-                    texto = unicode(col)
+                    #texto = unicode(col)
+                    texto = col
                 else:
-                    texto += separador + unicode(col)
+                    #texto += separador + unicode(col)
+                    texto += separador + col
             cab_col.append(texto)
         return cab_col
         
@@ -202,25 +201,25 @@ class Form(QDialog):
         if elemento is None:
             item = QTableWidgetItem(' ')
             if self.vista.dim_row > 1 and level_x < (self.vista.dim_row -1) :
-                item.setBackgroundColor(QColor('grey').lighter())
+                item.setBackground(QColor('grey').lighter())
             if self.vista.dim_col > 1 and level_y < (self.vista.dim_col -1):
-                item.setBackgroundColor(QColor('grey').lighter())
+                item.setBackground(QColor('grey').lighter())
             tabla.setItem(row, col, item)
             return
             
-        numero = elemento[0] #para ser mas comodo
+        numero = elemento #para ser mas comodo
         text, sign = fmtNumber(numero, self.format)    
         item = QTableWidgetItem(text)
         item.setTextAlignment(Qt.AlignRight|Qt.AlignVCenter)
 
         if self.vista.dim_row > 1 and level_x < (self.vista.dim_row -1):
-            item.setBackgroundColor(QColor('grey').lighter())
+            item.setBackground(QColor('grey').lighter())
         if self.vista.dim_col  > 1 and level_y < (self.vista.dim_col -1):
-            item.setBackgroundColor(QColor('grey').lighter())
+            item.setBackground(QColor('grey').lighter())
         if sign and self.format["rednegatives"]:
-            item.setBackgroundColor(QColor("red"))
+            item.setBackground(QColor("red"))
         if outlier: 
-            item.setBackgroundColor(QColor("yellow"))
+            item.setBackground(QColor("yellow"))
         tabla.setItem(row, col, item)
 
     def refreshTable(self):
@@ -270,8 +269,8 @@ class Form(QDialog):
                 #determine if outlier
                 outlier = False
                 if self.format['yellowoutliers'] and self.numbers[x][y] is not None:
-                    if (self.numbers[x][y][0]< metrics[level_x][level_y][1] 
-                                or self.numbers[x][y][0]  > metrics[level_x][level_y][5] ):
+                    if (self.numbers[x][y]< metrics[level_x][level_y][1] 
+                                or self.numbers[x][y]  > metrics[level_x][level_y][5] ):
                         outlier=True
                 
                 self.addTableItem(self.table, self.numbers[x][y], row_i, col_i, level_x, level_y, outlier)
