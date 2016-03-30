@@ -62,7 +62,7 @@ For my part, while I (Werner Llácer Viciano) retain all ownership of the code, 
 
 Good policy would be to, at least, acknowledge my autorship of this piece of code and, even better, to send upstream all corrections and enhancements to the original functionality.
 
-PyQt licensing might impose other restrictions, please keep an eye on it
+PyQt licensing might impose other restrictions, please keep an eye on it (AFAIK it is __GPL__ licensed)
 
 
 ## Actual Status
@@ -74,13 +74,33 @@ HEAD works now with PyQt 5.
 
 ## short term TODO list (2016)
 
-* __CODED__ Python 3 compatible. Coded. Works on 2, not (yet) tested in 3 (29/3/16)
+* __DONE__ Python 3 compatible. (29/3/16)
 * __DONE__ PyQt 5 works now as it worked with 4 (29/3/16)
-* __WOP__. New test database. Minimally available (Sqlite) (29/3/16)
+* __WIP__. New test database. Minimally available. Dates missing (Sqlite) (30/3/16)
+
+* _HP_ Code refactoring for clarity
 
 * New use cases
+  * basic source a query instead of a table
+  * post filter row/columns
+  * more than one measure
+ 
+* bugs
+  * fivepoints metric
+  * _HP_ name of elements in hierarchy YML
+  * __DONE__ in guides allow blank filter
+ 
+* Performance
+  * _HP_ municipio as guide performance is a horror
+  
+* Behaviour
+  * complex keying in guides
+  * collapsed hierarchy as default
+  * Ability of expand only a level entry
+  * _HP_ allow to skip entries
 
-* Code refactoring for clarity
+
+* SQL error handling
 
 * Database testing in other environmentes. First 3 are available to me
     * MySQL/ MariaDB

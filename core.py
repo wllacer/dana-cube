@@ -23,7 +23,7 @@ from datetime import *
 from fivenumbers import *
 from yamlmgr import *
 from datemgr import *
-
+from access_layer import *
     
 def getLevel(entry):
     " ojo chequear por el valor -1 "
@@ -55,7 +55,7 @@ class Cubo:
         #except KeyError:
         #    print( 'Error en los parametros de definicion del cubo')
         #    sys.exit(-1)
-        self.db = self.setDatabase(definicion['connect'])
+        self.db = dbConnect(definicion['connect'])
         
  
     # ahora generamos las definiciones internas para las fechas
@@ -96,25 +96,7 @@ class Cubo:
         self.lista_funciones = self.getFunctions()
         self.lista_campos = []
         self.lista_campos = self.getFields()
-    # 
-    def setDatabase(self, constring):
-        db = QSqlDatabase.addDatabase(constring['driver']);
-        
-        db.setDatabaseName(constring['dbname'])
-        
-        if constring['driver'] != 'QSQLITE':
-            db.setHostName(constring['dbhost'])
-            db.setUserName(constring['dbuser'])
-            db.setPassword(constring['dbpass'])
-        
-        ok = db.open()
-        # True if connected
-        if ok:        
-            return db
-        else:
-            print('conexion a bd imposible')
-            sys.exit(-1)
-            
+    #
         
     def getCursor(self, sql_string, num_fields=1):
     
@@ -135,6 +117,7 @@ class Cubo:
             return None
         indices = []
         desc    = []
+        print('Index :',sql_string)
         query = QSqlQuery(self.db)
         if query.exec_(sql_string):
             while query.next():
@@ -162,8 +145,9 @@ class Cubo:
         if 'source' in entrada.keys():
             fuente = entrada['source']
             coreString = 'from %s ' % fuente['table']
-            if 'filter' in fuente.keys():
-                coreString += 'where %s ' % fuente['filter']
+            if 'filter' in fuente.keys() :
+               if fuente['filter'].strip() != '':
+                  coreString += 'where %s ' % fuente['filter']
         
             if 'desc' in fuente.keys():
                 fldString = fuente['code'] +',' + fuente['desc']
@@ -380,10 +364,16 @@ class Vista:
                 select_string = " select %s," % (group_string)
                 sql_string = select_string + coreString + 'group by '+group_string
                 print (i, j, sql_string)
-
                 query = QSqlQuery(self.db)
                 if query.exec_(sql_string):
                     while query.next():
+                        #k=0
+                        #cadena = ''
+                        #while (query.value(k)):
+			  #print(query.value(k),end=' ')
+			  #k += 1
+		        #print()
+                        
                         row_key=[None for x in range(0, self.dim_row)]
                         col_key =[None for x in range(0, self.dim_col)] 
                         k = 0
@@ -400,6 +390,8 @@ class Vista:
                         col_id  = self.col_idx.index(col_key)
 
                         self.array[row_id][col_id]=query.value(k)
+                else:
+	           print('Error en ejecucion de SQL',sql_string)
         #pprint(self.array)
         
         
@@ -541,3 +533,19 @@ class Vista:
                 cur_record = rows[level][indices[level]]
                 cur_record_hdr = rows_hdr[level][indices[level]]
 
+if __name__ == '__main__':
+   mis_cubos = load_cubo()
+   cubo = Cubo(mis_cubos['datos locales'])
+   if cubo is None:
+     print ('vaya pifia')
+   else:
+     print('construi un cubo')
+     print('Campos          ',cubo.campos)
+     print('filtro_base     ',cubo.filtro_base)
+     print('lista           ',cubo.lista)
+     print('lista_campos    ',cubo.lista_campos)
+     print('lista_funciones ',cubo.lista_funciones)
+     print('modelo          ',cubo.modelo)
+     print('tabla           ',cubo.tabla)
+     print('DB              ',cubo.db)
+     pprint(cubo)

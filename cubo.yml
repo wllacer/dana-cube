@@ -1,150 +1,179 @@
-datos pincho:
+        
+datos provincia:
     connect:
         driver: QSQLITE
-        dbname: /run/media/werner/Pincho/Generales2011.kexi
+        dbname: /home/werner/projects/dana-cube.git/ejemplo_dana.db
         dbhost: 
         dbuser:
         dbpass:
-    table: datos
+    table: votos_provincia
     base filter: ""
-    guides:
-        -   name: linea
-            class: o
-            prod:
-                - elem: linea
-                  fmt: txt
-            
-        -   name: autonomia
-            class: o
-            prod:
-                -   elem: autonomia
-                    fmt: txt
-        -   name: provincia
-            class: o
-            prod:
-                -   elem: provincia
-                    fmt: txt
-                                
-        -   name: geo
-            class: h
-            prod: 
-                -   elem: autonomia
-                    fmt: txt
-                    name: autonomia
-                -   elem: provincia
-                    fmt: txt
-                    
-        -   name: fecha
-            class: d
-            prod:
-                -   elem: fecha
-                    fmt: date
-    fields:
-        -   fact
-        -   fact2
-
-datos disco:
-    connect:
-        driver: QSQLITE
-        dbname: /home/werner/dana-cube/Generales2011.kexi
-        dbhost: 
-        dbuser:
-        dbpass:
-    table: datos
-    base filter: ""
-    guides:
-        -   name: linea
-            class: o
-            prod:
-                - elem: linea
-                  fmt: txt
-            
-        -   name: autonomia
-            class: o
-            prod:
-                -   elem: autonomia
-                    fmt: txt
-                    source:
-                        code: autonomia
-                        desc: nombre
-                        table: autonomias
-                        filter: autonomia <> '00' 
-        -   name: provincia
-            class: o
-            prod:
-                -   elem: provincia
-                    fmt: txt
-                    source:
-                        code: provincia
-                        desc: nombre
-                        table: provincias
-                        filter: provincia <> '00' 
-        -   name: geo
-            class: h
-            prod: 
-                -   elem: autonomia
-                    fmt: txt
-                    name: autonomia
-                    source:
-                        code: autonomia
-                        desc: nombre
-                        table: autonomias
-                        filter: autonomia <> '00' 
-                    
-                -   elem: provincia
-                    fmt: txt
-                    source:
-                        code: provincia
-                        desc: nombre
-                        table: provincias
-                        grouped by: autonomia
-                        filter: provincia <> '00' 
-                    
-        -   name: fecha
-            class: d
-            prod:
-                -   elem: fecha
-                    fmt: date
-    fields:
-        -   fact
-        -   fact2
-
-datos elecciones:
-    connect:
-        driver: QSQLITE
-        dbname: /home/werner/elecciones/elecciones_2015_desa.db
-        dbhost: 
-        dbuser:
-        dbpass:
-    table: votos_2015
-    base filter: "level_3 = ''"
     guides:
         -   name: partido
             class: o
             prod:
-                - elem: code
+                - elem: partido
                   fmt: txt
                   source:
                         code: code
                         desc: acronym
-                        table: partidos_2015
-                        filter: "level_2 = ''"
+                        table: partidos
             
         -   name: autonomia
             class: o
             prod:
-                -   elem: level_2
+                -   elem: region
                     fmt: txt
                     source:
-                        code: level_2
+                        code: region
                         desc: nombre
-                        table: localidades_2015
-                        filter: "level_3 = ''"
+                        table: localidades
+                        filter: "provincia = ''"
         -   name: provincia
             class: o
             prod:
-                -   elem: level_3
+                -   elem: provincia
                     fmt: txt
+                    source:
+                        code: provincia
+                        desc: nombre
+                        table: localidades
+                        filter: "municipio = '' and isla = ''"
+        -   name: geo
+            class: h
+            prod: 
+                -   elem: region
+                    fmt: txt
+                    name: region
+                    source:
+                        code: region
+                        desc: nombre
+                        table: localidades
+                        filter: "provincia = ''"
+                    
+                -   elem: provincia
+                    fmt: txt
+                    name: provincia
+                    source:
+                        code: provincia
+                        desc: nombre
+                        table: localidades
+                        grouped by: region
+                        filter: "municipio = '' and isla = ''"
+
     fields:
         -   votes_presential
         -   votes_percent
+        -   seats
+        -   ord
+
+datos locales:
+    connect:
+        driver: QSQLITE
+        dbname: /home/werner/projects/dana-cube.git/ejemplo_dana.db
+        dbhost: 
+        dbuser:
+        dbpass:
+    table: votos_locales
+    base filter: ""
+    guides:
+        -   name: partido
+            class: o
+            prod:
+                - elem: partido
+                  fmt: txt
+                  source:
+                        code: code
+                        desc: acronym
+                        table: partidos
+                        filter: ''
+            
+        -   name: autonomia
+            class: o
+            prod:
+                -   elem: region
+                    fmt: txt
+                    source:
+                        code: region
+                        desc: nombre
+                        table: localidades
+                        filter: "provincia = ''"
+        -   name: provincia
+            class: o
+            prod:
+                -   elem: provincia
+                    fmt: txt
+                    source:
+                        code: provincia
+                        desc: nombre
+                        table: localidades
+                        filter: "provincia <> '' and municipio = '' and isla = ''"
+        -   name: municipio
+            class: o
+            prod:
+                -   elem: municipio
+                    fmt: txt
+                    source:
+                        code: municipio
+                        desc: nombre
+                        table: localidades
+                        filter: "municipio <> '' "
+        -   name: geo
+            class: h
+            prod: 
+                -   elem: region
+                    fmt: txt
+                    name: region
+                    source:
+                        code: region
+                        desc: nombre
+                        table: localidades
+                        filter: "provincia = ''"
+                    
+                -   elem: provincia
+                    fmt: txt
+                    name: provincia
+                    source:
+                        code: provincia
+                        desc: nombre
+                        table: localidades
+                        grouped by: region
+                        filter: "provincia <> '' and municipio = '' and isla = ''"
+                        
+        -   name: geo-detail
+            class: h
+            prod: 
+                -   elem: region
+                    fmt: txt
+                    name: region
+                    source:
+                        code: region
+                        desc: nombre
+                        table: localidades
+                        filter: "provincia = ''"
+                    
+                -   elem: provincia
+                    fmt: txt
+                    name: provincia
+                    source:
+                        code: provincia
+                        desc: nombre
+                        table: localidades
+                        grouped by: region
+                        filter: "municipio = '' and isla = ''"
+
+                -   elem: municipio
+                    fmt: txt
+                    name: municipio
+                    source:
+                        code: municipio
+                        desc: nombre
+                        table: localidades
+                        grouped by: region,provincia
+                        filter: "municipio <> ''"
+
+    fields:
+        -   votes_presential
+        -   votes_percent
+        -   seats
+        -   ord
