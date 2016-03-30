@@ -97,45 +97,30 @@ class Cubo:
         self.lista_campos = []
         self.lista_campos = self.getFields()
     #
-        
-    def getCursor(self, sql_string, num_fields=1):
     
-        if self.db is None:
-            return None
-        indices = []
-        query = QSqlQuery(self.db)
-        if query.exec_(sql_string):
-            while query.next():
-                row = []
-                for i in range(0,num_fields):
-                    row.append(query.value(i))
-                indices.append(row)
-        return indices
-
     def getIndex(self, sql_string, num_fields=1, num_desc=0):
+        '''
+           devuelve dos tablas ligadas (codigo + descripción) para una guia 
+           CLEAR code
+        '''
         if self.db is None:
             return None
         indices = []
         desc    = []
         print('Index :',sql_string)
-        query = QSqlQuery(self.db)
-        if query.exec_(sql_string):
-            while query.next():
-                row = []
-                for i in range(0,num_fields):
-                    row.append(query.value(i))
-                indices.append(row)
-                row_d = []
-                if num_desc == 0:
-                    desc.append(row[ : ])
-                else :
-                    for i in range(0, num_fields - num_desc):
-                        row_d.append(None)
-                    for j in range(num_fields, num_desc +  num_fields):
-                        row_d.append(query.value(j))
-                    desc.append(row_d)
+        idx_cursor = getCursor(self.db,sql_string)
+        for record in idx_cursor:
+	   indices.append(record[0:num_fields])
+	   if num_desc == 0:
+	     desc.append(record[0:num_fields])
+	   else:
+	      row_d = [None for k in range(0,num_fields)]
+	      for j in range(num_fields, num_desc +  num_fields):
+		  row_d[num_fields - 1 -j]=record[j]
 
+	      desc.append(row_d)
         return indices, desc
+    
 
     def getSqlStatement(self, entrada, fields):
         code_fld = 0
@@ -210,7 +195,8 @@ class Cubo:
                     if campo not in date_cache:
                         sqlString = 'select max(%s),min(%s) ' % (campo, campo)
                         sqlString += coreString
-                        row=self.getCursor(sqlString, 2)   #obtenemos  la fecha maxima y minima
+                        #SQL row=self.getCursor(sqlString, 2)   #obtenemos  la fecha maxima y minima 
+                        row=getCursor(self.db,sqlString)
                         date_cache[campo] = (row[0][0], row[0][1])
                         
                     max_date = date_cache[campo][0]
@@ -367,12 +353,6 @@ class Vista:
                 query = QSqlQuery(self.db)
                 if query.exec_(sql_string):
                     while query.next():
-                        #k=0
-                        #cadena = ''
-                        #while (query.value(k)):
-			  #print(query.value(k),end=' ')
-			  #k += 1
-		        #print()
                         
                         row_key=[None for x in range(0, self.dim_row)]
                         col_key =[None for x in range(0, self.dim_col)] 
