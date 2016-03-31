@@ -47,20 +47,14 @@ class Cubo:
             sys.exit(-1)
         
         # los datos siguientes son la definicion externa del cubo
-        #try:
-        self.tabla = definicion['table']
-        self.modelo=definicion['guides']
-        self.filtro_base = definicion['base filter'] 
-        self.campos = definicion['fields']
-        #except KeyError:
-        #    print( 'Error en los parametros de definicion del cubo')
-        #    sys.exit(-1)
-        self.db = dbConnect(definicion['connect'])
+        #pprint(definicion)
+        self.definition = definicion
+        self.db = dbConnect(self.definition['connect'])
         
  
     # ahora generamos las definiciones internas para las fechas
         ind = -1
-        dbdriver = definicion['connect']['driver']
+        dbdriver = self.definition['connect']['driver']
         
 
         # ahora generamos una lista medio decente de manejar para las presentaciones
@@ -72,11 +66,11 @@ class Cubo:
             3 -> model.col (prod)
             3,,n indices
         '''
-        self.lista=list()
-        for i in range(0, len(self.modelo)):
-            entrada = self.modelo[i]
+        self.lista_guias=list()
+        for i in range(0, len(self.definition['guides'])):
+            entrada = self.definition['guides'][i]
             if entrada['class'] != 'd':
-                self.lista.append({'name':entrada['name'], 
+                self.lista_guias.append({'name':entrada['name'], 
                                             'type':entrada['class'],
                                             'prod':entrada['prod']
                                           })
@@ -84,7 +78,7 @@ class Cubo:
                 campo = entrada['prod'][0]['elem']
                 j = 0
                 for prod in getDateSlots(campo, dbdriver):
-                    self.lista.append({'name':prod['name'], 
+                    self.lista_guias.append({'name':prod['name'], 
                                                 'type':entrada['class'],
                                                 'base_fld':campo, 
                                                 'prod':[prod, ]
@@ -147,9 +141,9 @@ class Cubo:
             elif len(fields) > 0:
                  fldString = ','.join([campo for campo in fields]) + ',' + fldString      
         else:
-            coreString = 'from %s ' % self.tabla
-            if self.filtro_base !='':
-                coreString += 'where %s ' % self.filtro_base
+            coreString = 'from %s ' % self.definition['table']
+            if self.definition['base filter'] !='':
+                coreString += 'where %s ' % self.definition['base filter']
 
             
             fldString = entrada['elem']
@@ -167,13 +161,13 @@ class Cubo:
         if self.db is None:
             return None
             
-        coreString = 'from %s ' % self.tabla
-        if self.filtro_base !='':
+        coreString = 'from %s ' % self.definition['table']
+        if self.definition['base filter'] !='':
             
-            coreString += 'where %s ' % self.filtro_base
+            coreString += 'where %s ' % self.definition['base filter']
         date_cache={}
         
-        for entrada in self.lista:
+        for entrada in self.lista_guias:
             entrada['indice'] = []
             entrada['cabecera'] =  []
             campos = []
@@ -213,9 +207,13 @@ class Cubo:
         return lista_funciones
 
     def getFields(self):
+        '''
+           crea/devuelve el atributo cubo.lista_campos
+           parte de la base de los campos de la definición y añade los campos no textuales de las lista_guias
+        '''
         if len(self.lista_campos) == 0:
-            lista_campos = self.campos[:]
-            for entry in self.modelo:
+            lista_campos = self.definition['fields'][:]
+            for entry in self.definition['guides']:
                 for regla in entry['prod']:
                     if 'fmt' in regla.keys():
                         if regla['fmt'] in ('txt', 'date'):
@@ -250,7 +248,7 @@ class Vista:
         self.setNewView(row, col)
 
     def setNewView(self,row, col, agregado=None, campo=None, filtro=''):
-        dim_max = len(self.cubo.lista)
+        dim_max = len(self.cubo.lista_guias)
         if row < dim_max and col < dim_max:
             # validamos los parametros
             procesar = False
@@ -279,8 +277,8 @@ class Vista:
                 self.row_hdr_txt = list()
                 self.col_hdr_txt = list()
                 
-                self.cur_row=self.cubo.lista[self.row_id]
-                self.cur_col = self.cubo.lista[self.col_id]
+                self.cur_row=  self.cubo.lista_guias[self.row_id]
+                self.cur_col = self.cubo.lista_guias[self.col_id]
  
                 self.dim_row = len(self.cur_row['indice'])
                 self.dim_col = len(self.cur_col['indice'])
@@ -315,11 +313,11 @@ class Vista:
         if self.cubo.db is None:      
             return None
 
-        coreString = '%s(%s) from %s ' % (self.agregado, self.campo, self.cubo.tabla)
-        if self.cubo.filtro_base != '' and self.filtro != '':
-            coreString += 'where %s and %s ' % (self.cubo.filtro_base, self.filtro)
-        elif self.filtro != '' or self.cubo.filtro_base != '':
-            filtro_def = self.filtro + self.cubo.filtro_base 
+        coreString = '%s(%s) from %s ' % (self.agregado, self.campo, self.cubo.definition['table'])
+        if self.cubo.definition['base filter'] != '' and self.filtro != '':
+            coreString += 'where %s and %s ' % (self.cubo.definition['base filter'], self.filtro)
+        elif self.filtro != '' or self.cubo.definition['base filter'] != '':
+            filtro_def = self.filtro + self.cubo.definition['base filter'] 
             coreString += 'where %s ' % (filtro_def)
 
         self.array=[[None for y in range(len(self.col_hdr_idx))] for x in range(len(self.row_hdr_idx))]
@@ -519,17 +517,15 @@ if __name__ == '__main__':
      print ('vaya pifia')
    else:
      print('construi un cubo')
-     print('Campos          ',cubo.campos)
-     print('filtro_base     ',cubo.filtro_base)
-     print('lista           ')
-     #pprint(cubo.lista)
+     print('Definicion      ')
+     pprint(cubo.definition)
+     print('lista_guias     ')
+     #pprint(cubo.lista_guias)
      print('lista_campos    ',cubo.lista_campos)
      print('lista_funciones ',cubo.lista_funciones)
-     print('modelo          ',cubo.modelo)
-     print('tabla           ',cubo.tabla)
      print('DB              ',cubo.db)
    # 
-   row =4
+   row =1
    col =0
    agregado = 'sum'
    campo = 'votes_presential'

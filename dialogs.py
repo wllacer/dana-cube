@@ -44,7 +44,7 @@ class VistaDlg(QDialog):
         super(VistaDlg, self).__init__(parent)
         
         self.cubo = cubo_eleg
-        datos_cubo = self.cubo.lista
+        datos_cubo = self.cubo.lista_guias
         
         listaCampos = [ item['name'] for item in datos_cubo]
         
