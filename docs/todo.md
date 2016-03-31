@@ -5,6 +5,7 @@
 * __DONE__ Python 3 compatible. (29/3/16)
 * __DONE__ PyQt 5 works now as it worked with 4 (29/3/16)
 * __WIP__. New test database. Minimally available. Dates missing (Sqlite) (30/3/16)
+   * Falta todo el tratamiento de fechas
 
 * _WIP_ Code refactoring for clarity
   * _WIP_ data access layer isolation
@@ -16,7 +17,7 @@
   * more than one measure
  
 * bugs
-  * fivepoints metric
+  * fivepoints metric (?)
 
   * __DONE__ in guides allow blank filter
  

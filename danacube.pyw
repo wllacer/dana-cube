@@ -128,8 +128,8 @@ class Form(QDialog):
                 
             self.max_row_level = self.vista.dim_row
             self.max_col_level  = self.vista.dim_col
-            self.row_range = [0, len(self.vista.row_idx) -1]
-            self.col_range = [0, len(self.vista.col_idx) -1]
+            self.row_range = [0, len(self.vista.row_hdr_idx) -1]
+            self.col_range = [0, len(self.vista.col_hdr_idx) -1]
             
             self.refreshTable()
 #
@@ -228,12 +228,12 @@ class Form(QDialog):
         self.numbers = self.vista.array
         #                
 
-        cab_row = self.fmtHeader(self.vista.row_hdr_idx, '\t',True, self.max_row_level, self.row_range)
-        cab_col = self.fmtHeader(self.vista.col_hdr_idx, '\n', False, self.max_col_level, self.col_range)
+        cab_row = self.fmtHeader(self.vista.row_hdr_txt, '\t',True, self.max_row_level, self.row_range)
+        cab_col = self.fmtHeader(self.vista.col_hdr_txt, '\n', False, self.max_col_level, self.col_range)
 
 
-        self.X_MAX = len(self.vista.row_idx)
-        self.Y_MAX = len(self.vista.col_idx)
+        self.X_MAX = len(self.vista.row_hdr_idx)
+        self.Y_MAX = len(self.vista.col_hdr_idx)
 
         metrics=None
         if self.format['yellowoutliers']:
@@ -249,7 +249,7 @@ class Form(QDialog):
         
         row_i = 0
         for x in range(self.X_MAX):
-            level_x = getLevel(self.vista.row_idx[x])     
+            level_x = getLevel(self.vista.row_hdr_idx[x])     
             if level_x >= self.max_row_level :
                 continue
             if self.row_range[0] <= x <= self.row_range[1] :
@@ -259,7 +259,7 @@ class Form(QDialog):
             #print (self.row_range[1] <= self.vista.row_idx[x] => self.row_range[0] )
             col_i  = 0
             for y in range(self.Y_MAX):
-                level_y = getLevel(self.vista.col_idx[y])
+                level_y = getLevel(self.vista.col_hdr_idx[y])
                 if level_y >= self.max_col_level:
                     continue
                 if self.col_range[0] <= y <= self.col_range[1] :

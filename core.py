@@ -145,9 +145,7 @@ class Cubo:
                 fldString = fuente['grouped by'] + ',' + fldString
             
             elif len(fields) > 0:
-                fldString = ','.join([campo for campo in fields]) + ',' + fldString
-
-            
+                 fldString = ','.join([campo for campo in fields]) + ',' + fldString      
         else:
             coreString = 'from %s ' % self.tabla
             if self.filtro_base !='':
@@ -231,7 +229,6 @@ class Vista:
     def __init__(self, cubo,row, col,  agregado, campo, filtro=''):
         
         self.cubo = cubo
-        self.db = self.cubo.db
         # deberia verificar la validez de estos datos
         self.agregado=agregado
         self.campo = campo
@@ -241,10 +238,10 @@ class Vista:
         self.col_id = None
         self.cur_row = None
         self.cur_col  = None
-        self.row_idx = list()
-        self.col_idx = list()
         self.row_hdr_idx = list()
         self.col_hdr_idx = list()
+        self.row_hdr_txt = list()
+        self.col_hdr_txt = list()
         self.dim_row = None
         self.dim_col = None
         self.hierarchy= False
@@ -277,10 +274,10 @@ class Vista:
                 self.row_id = row
                 self.col_id = col
                 
-                self.row_idx = list()
-                self.col_idx = list()
                 self.row_hdr_idx = list()
                 self.col_hdr_idx = list()
+                self.row_hdr_txt = list()
+                self.col_hdr_txt = list()
                 
                 self.cur_row=self.cubo.lista[self.row_id]
                 self.cur_col = self.cubo.lista[self.col_id]
@@ -298,7 +295,7 @@ class Vista:
                 row_hdr=[self.cur_row['cabecera'][i] for i in range(0,self.dim_row)]
                 num_rows = [len(rows[i]) for i in range(0, self.dim_row)]
 
-                self.merge_list(0, indices, rows, num_rows,self.dim_row, list(), self.row_idx, row_hdr, self.row_hdr_idx)
+                self.merge_list(0, indices, rows, num_rows,self.dim_row, list(), self.row_hdr_idx, row_hdr, self.row_hdr_txt)
 
                 indices = [ 0 for i in range(0, self.dim_col)]
                 cols = [self.cur_col['indice'][i] for i in range(0, self.dim_col)] 
@@ -306,7 +303,7 @@ class Vista:
                 
                 num_cols = [len(cols[i]) for i in range(0, self.dim_col)]
 
-                self.merge_list(0, indices, cols, num_cols,self.dim_col, list(), self.col_idx,  cols_hdr, self.col_hdr_idx)
+                self.merge_list(0, indices, cols, num_cols,self.dim_col, list(), self.col_hdr_idx,  cols_hdr, self.col_hdr_txt)
                 #self.array=[[None for y in range(len(self.col_idx))] for x in range(len(self.row_idx))]
 
                 self.putDataMatrixH()
@@ -315,7 +312,7 @@ class Vista:
         
     def putDataMatrixH(self):
         
-        if self.db is None:      
+        if self.cubo.db is None:      
             return None
 
         coreString = '%s(%s) from %s ' % (self.agregado, self.campo, self.cubo.tabla)
@@ -325,7 +322,7 @@ class Vista:
             filtro_def = self.filtro + self.cubo.filtro_base 
             coreString += 'where %s ' % (filtro_def)
 
-        self.array=[[None for y in range(len(self.col_idx))] for x in range(len(self.row_idx))]
+        self.array=[[None for y in range(len(self.col_hdr_idx))] for x in range(len(self.row_hdr_idx))]
         
         for i in range(self.dim_row):
             row_elem = ''
@@ -350,7 +347,7 @@ class Vista:
                 select_string = " select %s," % (group_string)
                 sql_string = select_string + coreString + 'group by '+group_string
                 print (i, j, sql_string)
-                query = QSqlQuery(self.db)
+                query = QSqlQuery(self.cubo.db)
                 if query.exec_(sql_string):
                     while query.next():
                         
@@ -361,13 +358,13 @@ class Vista:
                             row_key[r_ind] = query.value(k)
                             k += 1
                         
-                        row_id = self.row_idx.index(row_key)
+                        row_id = self.row_hdr_idx.index(row_key)
 
                         for c_ind in range(0, j+1):
                             col_key[c_ind] = query.value(k)
                             k += 1
 
-                        col_id  = self.col_idx.index(col_key)
+                        col_id  = self.col_hdr_idx.index(col_key)
 
                         self.array[row_id][col_id]=query.value(k)
                 else:
@@ -379,12 +376,12 @@ class Vista:
 
         metricplist = [ [ list() for J in range(self.dim_col)] for i in range(self.dim_row)]
         
-        for i in range(0,len(self.row_idx)):
+        for i in range(0,len(self.row_hdr_idx)):
             #print (cabecera)
-            eje_x = getLevel(self.row_idx[i])
+            eje_x = getLevel(self.row_hdr_idx[i])
             #print(data)
-            for j in range(0, len(self.col_idx)):
-                eje_y = getLevel(self.col_idx[j])
+            for j in range(0, len(self.col_hdr_idx)):
+                eje_y = getLevel(self.col_hdr_idx[j])
                 
                 if not(self.array[i][j] is None):
                     if isinstance(self.array[i][j],(list,tuple,set)):
@@ -424,27 +421,27 @@ class Vista:
                 else:
                     nombre = ''
                 html +=('<th>%s< /th>'% nombre)
-            for j in self.col_idx:
+            for j in self.col_hdr_idx:
 #                if max_col == 1:
 #                    html +=('<th>%s< /th>'% j[0])
 #                else:
                     html += ('<th>%s< /th>'%j[k])
             html +=('</tr>')
             
-        for i in range(0,len(self.row_idx)):
+        for i in range(0,len(self.row_hdr_idx)):
             #print cabecera
             
             style = ''
             eje_x = 0
             if self.dim_row > 1:
-                eje_x = getLevel(self.row_idx[i])
+                eje_x = getLevel(self.row_hdr_idx[i])
                 if eje_x >= max_row:
                     continue
                 if eje_x == 0:
                     style = 'style="color:blue">'
             html += '<tr %s>'%style
             
-            for item in self.row_idx[i]:
+            for item in self.row_hdr_idx[i]:
                 html +=('<td>%s< /td>')% str(item)
             #print(data)
             j = 0
@@ -452,7 +449,7 @@ class Vista:
                 style=''
                 eje_y = 0
                 if self.dim_col > 1:
-                    eje_y = getLevel(self.col_idx[j])
+                    eje_y = getLevel(self.col_hdr_idx[j])
                     if eje_y >= max_col:
                         continue
                     if eje_y == 0:
@@ -461,9 +458,9 @@ class Vista:
                 if elem is None or elem == 0:
                     html += ('<td %s></td>')%style
                 else:
-                    if elem[0] < metrics[eje_x][eje_y][1] or elem[0] > metrics[eje_x][eje_y][5] :
+                    if elem < metrics[eje_x][eje_y][1] or elem > metrics[eje_x][eje_y][5] :
                         style = 'style="color:red"'
-                    html +=('<td %s>%d< /td>')% (style, elem[0])
+                    html +=('<td %s>%d< /td>')% (style, elem)
                 j += 1
             html += '</tr>'
         html += '</table>'
@@ -514,18 +511,55 @@ class Vista:
                 cur_record_hdr = rows_hdr[level][indices[level]]
 
 if __name__ == '__main__':
+   vista = None
    mis_cubos = load_cubo()
    cubo = Cubo(mis_cubos['datos locales'])
+   cubo.getGuides()
    if cubo is None:
      print ('vaya pifia')
    else:
      print('construi un cubo')
      print('Campos          ',cubo.campos)
      print('filtro_base     ',cubo.filtro_base)
-     print('lista           ',cubo.lista)
+     print('lista           ')
+     #pprint(cubo.lista)
      print('lista_campos    ',cubo.lista_campos)
      print('lista_funciones ',cubo.lista_funciones)
      print('modelo          ',cubo.modelo)
      print('tabla           ',cubo.tabla)
      print('DB              ',cubo.db)
-     pprint(cubo)
+   # 
+   row =4
+   col =0
+   agregado = 'sum'
+   campo = 'votes_presential'
+   #        
+   if vista is None:
+      vista = Vista(cubo, row, col, agregado, campo)       
+   #else:
+   #   vista.setNewView(row, col, agregado, campo)
+   if vista is None:
+     print('Ahora pifie con la vista')
+   else:
+     '''?
+        x_hdr_txt === cur_x['cabecera']
+        x_hdr_idx === cur_x['indice']
+     '''
+     print('agregado     ',vista.agregado)
+     print('array        ',vista.array)
+     print('campo        ',vista.campo)
+     print('col_hdr_txt  ',vista.col_hdr_txt)
+     print('col_hdr_idx  ',vista.col_hdr_idx)
+     print('col_id       ',vista.col_id)
+     print('cubo         ',vista.cubo)
+     print('cur_col      ',vista.cur_col)
+     pprint(vista.cur_row)
+     print('cur_row      ',vista.cur_row)
+     print('dim_col      ',vista.dim_col)
+     print('dim_row      ',vista.dim_row)
+     print('filtro       ',vista.filtro)
+     print('hierarchy    ',vista.hierarchy)
+     print('row_hdr_txt  ',vista.row_hdr_txt)
+     print('row_hdr_idx      ',vista.row_hdr_idx)
+     print('row_id       ',vista.row_id)
+
