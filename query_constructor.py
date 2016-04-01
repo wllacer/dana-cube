@@ -104,14 +104,16 @@ def whereConstructor(kwargs):
      
     if complemento in kwargs:
        if kstatement == '':
-	 kstatement = complemento
+	 kstatement = kwargs[complemento]
+       elif len(kwargs[complemento].strip()) == 0:
+         pass
        else:
-         kstatement = '({}) AND ({})'.format(complemento,kstatement)
+         kstatement = '({}) AND ({}) '.format(kwargs[complemento],kstatement)
          
     if kstatement == '':
       return ''
     else:
-      return statement + ' ' + kstatement
+      return statement + ' ' + kstatement + ' '
       
        
 def groupConstructor(kwargs):
@@ -265,18 +267,19 @@ if __name__ == '__main__':
   clause1=dict()
   clause2=dict()
 
-  clause1['where']=(('campo','in','galba','oton','vitelio','vespasiano'),)
+  pepe['where']=(('campo','in','galba','oton','vitelio','vespasiano'),)
   pepe['tables'] = 'paco'
-  pepe['tables'] = ('cesar',('augusto','octavio'),'select * from table2')
-  pepe['fields'] = ('cayo','tiberio magno',('caligula',),('octavio.claudio',),('Neron','sum'),('galba','avg'))
-  pepe['tables'] = 'paco'
-  pepe['select_modifier'] = 'DISTINCT'
+  #pepe['tables'] = ('cesar',('augusto','octavio'),'select * from table2')
+  #pepe['fields'] = ('cayo','tiberio magno',('caligula',),('octavio.claudio',),('Neron','sum'),('galba','avg'))
+  #pepe['tables'] = 'paco'
+  #pepe['select_modifier'] = 'DISTINCT'
   clause2['where'] = ( ('cayo','=',"'caligula'"),('neron','ne',"'domicio'"),('avg(galba)','!=','sum(neron)'),
 		    ('miselect','is null'),('','EXISTS','(select paco from hugo where none)')
 		  )
-  pepe['where']=((clause1,'OR',clause2),)
+  #pepe['where']=((clause1,'OR',clause2),)
   #pepe['group']=('julia','claudia')
   #pepe['having']=(('campo','=','345'),)
+  pepe['base_filter']=''
   pepe['order']=(1,(2,'DESC'),3)
   pprint(pepe)
   #pepe['fields'] = '*'

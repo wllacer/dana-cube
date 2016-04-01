@@ -38,7 +38,7 @@ datos provincia:
                         code: provincia
                         desc: nombre
                         table: localidades
-                        filter: "municipio = '' and isla = ''"
+                        filter: "provincia <> '' and municipio = '' and isla = ''"
         -   name: geo
             class: h
             prod: 
@@ -59,7 +59,8 @@ datos provincia:
                         desc: nombre
                         table: localidades
                         grouped by: region
-                        filter: "municipio = '' and isla = ''"
+                        filter: "provincia <> '' and municipio = '' and isla = ''"
+                        
 
     fields:
         -   votes_presential

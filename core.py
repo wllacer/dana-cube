@@ -24,6 +24,7 @@ from fivenumbers import *
 from yamlmgr import *
 from datemgr import *
 from access_layer import *
+from query_constructor import  queryConstructor
     
 def getLevel(entry):
     " ojo chequear por el valor -1 "
@@ -119,7 +120,7 @@ class Cubo:
         return indices, desc
     
 
-    def setSqlStatement(self, entrada, fields):
+    def setGuidesSqlStatement(self, entrada, fields):
         '''
 	  entrada es definition[guides][i][prod][j]: Contiene array
 	      -> source
@@ -136,47 +137,49 @@ class Cubo:
 	      -> entrada.elem
 	  fields son campos auxiliares a incluir en la query
 	'''
-
+	print()
+	print(fields)
         code_fld = 0
         desc_fld = 0
-        fldString = ''
-        coreString = ''
+
+	sqlDef=dict()
+
         if 'source' in entrada.keys():
-            fuente = entrada['source']
-            coreString = 'from %s ' % fuente['table']
-            if 'filter' in fuente.keys() :
-               if fuente['filter'].strip() != '':
-                  coreString += 'where %s ' % fuente['filter']
-        
-            if 'desc' in fuente.keys():
-                fldString = fuente['code'] +',' + fuente['desc']
-                desc_fld = fldString.count(',')
-            else:
-                fldlString = fuente['code']
-
-            
-            if 'grouped by' in fuente.keys():
-                fldString = fuente['grouped by'] + ',' + fldString
-            
-            elif len(fields) > 0:
-                 fldString = ','.join([campo for campo in fields]) + ',' + fldString      
-        else:
-            coreString = 'from %s ' % self.definition['table']
-            if self.definition['base filter'] !='':
-                coreString += 'where %s ' % self.definition['base filter']
-
-            
-            fldString = entrada['elem']
-            
-            if len(fields) > 0:
-                fldString = ','.join([campo for campo in fields]) + ',' + fldString
-                
-        code_fld = fldString.count(',') + 1 - desc_fld        
-        orderString = ','.join([ str(x + 1) for x in range(code_fld)])
-        orderString = 'order by '+orderString
-        sqlString = 'select distinct '+fldString + ' ' + coreString + ' ' + orderString
+	  sqlDef['tables'] = entrada['source']['table']
+	  if 'filter' in entrada['source']:
+	    sqlDef['base_filter']=entrada['source']['filter']
+	  sqlDef['fields'] = []
+	  if 'grouped by' in entrada['source']:
+	    sqlDef['fields'] += [entrada['source']['grouped by'],]
+	  if len(fields) > 0:
+	    sqlDef['fields'] += fields[:]
+	  sqlDef['fields'] += [entrada['source']['code'],]
+	  if 'desc' in entrada['source']:
+	    desc_tup = entrada['source']['desc'].split(',')
+	    sqlDef['fields'] += desc_tup
+	    desc_fld = len(desc_tup)
+	else:
+          sqlDef['tables'] = self.definition['table']
+          if len(self.definicion['base_filter'].strip() > 0):
+             sqlDef['base_filter']=self.definition['base_filter']
+          sqlDef['fields'] = entrada['elem']
+          
+        code_fld = len(sqlDef['fields']) - desc_fld		  
+        sqlDef['order'] = [ str(x + 1) for x in range(code_fld)]
+        sqlDef['select_modifier']='DISTINCT'
+	
+	
+        sqlString = queryConstructor(**sqlDef)
         return sqlString, code_fld,desc_fld 
     
+    def setGuidesDateSqlStatement(self, entrada, fields):
+        sqlDef=dict()
+	sqlDef['tables'] = self.definition['table']
+	if len(self.definicion['base_filter'].strip() > 0):
+	    sqlDef['base_filter']=self.definition['base_filter']
+	sqlDef['fields'] = [[entrada['base_field'],'max'],[entrada['base_field'],'min'],]
+	return queryConstructor(**sqlDef)	     
+ 
     def getGuides(self):
         if self.db is None:
             return None
@@ -194,7 +197,7 @@ class Cubo:
             for ind, regla in enumerate(entrada['prod']):
                 #idx = ind +1
                 if entrada['type'] != 'd':
-                    (sqlString, code_fld, desc_fld) = self.setSqlStatement(entrada['prod'][ind], campos )
+                    (sqlString, code_fld, desc_fld) = self.setGuidesSqlStatement(entrada['prod'][ind], campos )
                     # campos.append(regla['elem'])   parece innecesario
                     ind, desc = self.getIndex(sqlString, code_fld, desc_fld)             
                     
@@ -204,10 +207,8 @@ class Cubo:
                 else:
                     campo = entrada['base_fld']
                     fmt = entrada['prod'][ind]['mask']
-                    if campo not in date_cache:
-                        sqlString = 'select max(%s),min(%s) ' % (campo, campo)
-                        sqlString += coreString
-                        #SQL row=self.getCursor(sqlString, 2)   #obtenemos  la fecha maxima y minima 
+                    if entrada['base_fld'] not in date_cache:
+		        sqlString = self.setGuidesDateSqlStatement(entrada)
                         row=getCursor(self.db,sqlString)
                         date_cache[campo] = (row[0][0], row[0][1])
                         
@@ -327,66 +328,61 @@ class Vista:
                 self.putDataMatrixH()
         else:
             print( 'Limite dimensional excedido. Ignoramos')
-        
+            
+    def getPos(self,dimension,record,idx_row,idx_col,dim_dimension):
+      
+      if dimension == 'row':
+	ambito = self.row_hdr_idx
+	start_pos = 0  #eso deberia venir en los parametros
+	end_pos   = start_pos + idx_row + 1
+      elif dimension == 'col':
+	ambito = self.col_hdr_idx
+	start_pos = idx_row +1
+	end_pos = start_pos + idx_col +1
+      else:
+        return None
+
+      #TODO Buscar una clave formada por un array es venenoso.
+      #   debo rodear con un try except para capturar cuando el registro no existe
+      dim_key=[record[k] for k in range(start_pos,end_pos)] +[ None for k in range(end_pos,dim_dimension)]
+      print (dimension,dim_dimension,record,start_pos,end_pos,dim_key)
+      print (ambito.index(dim_key))
+      return ambito.index(dim_key)
+
     def putDataMatrixH(self):
         
         if self.cubo.db is None:      
             return None
-
-        coreString = '%s(%s) from %s ' % (self.agregado, self.campo, self.cubo.definition['table'])
-        if self.cubo.definition['base filter'] != '' and self.filtro != '':
-            coreString += 'where %s and %s ' % (self.cubo.definition['base filter'], self.filtro)
-        elif self.filtro != '' or self.cubo.definition['base filter'] != '':
-            filtro_def = self.filtro + self.cubo.definition['base filter'] 
-            coreString += 'where %s ' % (filtro_def)
-
-        self.array=[[None for y in range(len(self.col_hdr_idx))] for x in range(len(self.row_hdr_idx))]
-        
-        for i in range(self.dim_row):
-            row_elem = ''
-            for k in range(0, i+1):
-                if row_elem != '':
-                    row_elem +=','
-
-                row_dict = self.cur_row['prod'][k]
-                row_elem += '%s'%row_dict['elem']
-
-           
-
-            for j in range(self.dim_col):
-                col_elem = ''
-                for m in range(0, j+1):
-                    if col_elem != '':
-                        col_elem += ','
-                    col_dict =  self.cur_col['prod'][m]
-                    col_elem += '%s'%col_dict['elem']
-                group_string = '%s,%s' % (row_elem, col_elem)
-                
-                select_string = " select %s," % (group_string)
-                sql_string = select_string + coreString + 'group by '+group_string
-                print (i, j, sql_string)
-                query = QSqlQuery(self.cubo.db)
-                if query.exec_(sql_string):
-                    while query.next():
-                        
-                        row_key=[None for x in range(0, self.dim_row)]
-                        col_key =[None for x in range(0, self.dim_col)] 
-                        k = 0
-                        for r_ind in range(0, i +1):
-                            row_key[r_ind] = query.value(k)
-                            k += 1
-                        
-                        row_id = self.row_hdr_idx.index(row_key)
-
-                        for c_ind in range(0, j+1):
-                            col_key[c_ind] = query.value(k)
-                            k += 1
-
-                        col_id  = self.col_hdr_idx.index(col_key)
-
-                        self.array[row_id][col_id]=query.value(k)
-                else:
-	           print('Error en ejecucion de SQL',sql_string)
+	  
+	#aqui depositare el resultado final  
+	self.array=[[None for y in range(len(self.col_hdr_idx))] for x in range(len(self.row_hdr_idx))]  
+	
+	# INIT NUEVO
+        sqlDef = dict()
+        sqlDef['tables']=self.cubo.definition['table']
+        if len(self.cubo.definition['base filter'].strip()) > 0 and len(self.filtro.strip()) >0 :
+           sqlDef['base_filter'] = '{} AND {}'.format(self.cubo.definition['base filter'], self.filtro)
+        else:
+	   sqlDef['base_filter'] = '{} {}'.format(self.cubo.definition['base filter'], self.filtro).strip()
+	# variablea auxiliares
+	sqlDef['tgt_fields']=[[self.campo,self.agregado],]
+	sqlDef['row_fields']=[ self.cur_row['prod'][k]['elem'] for k in range(self.dim_row)]
+	sqlDef['col_fields']=[ self.cur_col['prod'][k]['elem'] for k in range(self.dim_col)]
+	
+	for i in range(self.dim_row):
+	  for j in range(self.dim_col):
+	    sqlDef['fields'] = [sqlDef['row_fields'][k] for k in range(i+1)]+[sqlDef['col_fields'][k] for k in range(j+1)] + \
+	                        sqlDef['tgt_fields']
+	    sqlDef['group']  = [sqlDef['row_fields'][k] for k in range(i+1)]+[sqlDef['col_fields'][k] for k in range(j+1)]
+	    sqlQuery = queryConstructor(**sqlDef)
+	    print(i,j,sqlQuery)
+	    tmp_cursor = getCursor(self.cubo.db,sqlQuery)
+            for row in tmp_cursor:  #por razones de rendimiento deberia ser una funcion especial en el getCursor
+	       row_id = self.getPos('row',row,i,j,self.dim_row)
+	       col_id = self.getPos('col',row,i,j,self.dim_col)
+	       self.array[row_id][col_id]=row[-1]
+	      
+	#FIN NUEVO
         #pprint(self.array)
         
         
@@ -459,7 +455,7 @@ class Vista:
                     style = 'style="color:blue"'
             html += ('<tr {}>'.format(style))
             
-            for item in self.row_hdr_text[i]:
+            for item in self.row_hdr_txt[i]:
                 html +=('<td>{}< /td>'.format(item))
             #print(data)
             j = 0
@@ -531,57 +527,57 @@ class Vista:
 if __name__ == '__main__':
    vista = None
    mis_cubos = load_cubo()
-   cubo = Cubo(mis_cubos['datos locales'])
+   cubo = Cubo(mis_cubos['datos provincia'])
    cubo.getGuides()
-   if cubo is None:
-     print ('vaya pifia')
-   else:
-     print('construi un cubo')
-     print('Definicion      ')
-     pprint(cubo.definition)
-     print('lista_guias     ')
-     #pprint(cubo.lista_guias)
-     print('lista_campos    ',cubo.lista_campos)
-     print('lista_funciones ',cubo.lista_funciones)
-     print('DB              ',cubo.db)
+   #if cubo is None:
+     #print ('vaya pifia')
+   #else:
+     #print('construi un cubo')
+     #print('Definicion      ')
+     #pprint(cubo.definition)
+     #print('lista_guias     ')
+     ##pprint(cubo.lista_guias)
+     #print('lista_campos    ',cubo.lista_campos)
+     #print('lista_funciones ',cubo.lista_funciones)
+     #print('DB              ',cubo.db)
    # 
-   row =1
+   row =3
    col =0
    agregado = 'sum'
-   campo = 'votes_presential'
+   campo = 'seats'
    #        
    if vista is None:
       vista = Vista(cubo, row, col, agregado, campo)       
    #else:
    #   vista.setNewView(row, col, agregado, campo)
-   if vista is None:
-     print('Ahora pifie con la vista')
-   else:
-     '''?
-        x_hdr_txt|idx === cur_x['cabecera|indice'] agrupado para la presentacion
+   #if vista is None:
+     #print('Ahora pifie con la vista')
+   #else:
+     #'''?
+        #x_hdr_txt|idx === cur_x['cabecera|indice'] agrupado para la presentacion
        
-     '''
-     print('agregado     ',vista.agregado)
-     print('array        ',vista.array)
-     print('campo        ',vista.campo)
-     print('col_hdr_txt  ',vista.col_hdr_txt)
-     print('col_hdr_idx  ',vista.col_hdr_idx)
-     pprint(vista.row_hdr_idx)
-     print('col_id       ',vista.col_id)
-     print('cubo         ',vista.cubo)
-     print('cur_col      ',vista.cur_col)
-     pprint(vista.cur_row['indice'])
-     print('cur_row      ',vista.cur_row)
-     print('dim_col      ',vista.dim_col)
-     print('dim_row      ',vista.dim_row)
-     print('filtro       ',vista.filtro)
-     print('hierarchy    ',vista.hierarchy)
-     print('row_hdr_txt  ',vista.row_hdr_txt)
-     print('row_hdr_idx      ',vista.row_hdr_idx)
-     print('row_id       ',vista.row_id)
+     #'''
+     #print('agregado     ',vista.agregado)
+     #print('array        ',vista.array)
+     #print('campo        ',vista.campo)
+     #print('col_hdr_txt  ',vista.col_hdr_txt)
+     #print('col_hdr_idx  ',vista.col_hdr_idx)
+     #pprint(vista.col_hdr_idx)
+     #print('col_id       ',vista.col_id)
+     #print('cubo         ',vista.cubo)
+     #print('cur_col      ',vista.cur_col)
+     #pprint(vista.cur_row['indice'])
+     #print('cur_row      ',vista.cur_row)
+     #print('dim_col      ',vista.dim_col)
+     #print('dim_row      ',vista.dim_row)
+     #print('filtro       ',vista.filtro)
+     #print('hierarchy    ',vista.hierarchy)
+     #print('row_hdr_txt  ',vista.row_hdr_txt)
+     #pprint('row_hdr_idx      ',vista.row_hdr_idx)
+     #print('row_id       ',vista.row_id)
      
-   for i in range(len(vista.row_hdr_idx)):
-     if vista.row_hdr_idx[i] != vista.cur_row['indice'][0][i]:
-        print('got cha',vista.row_hdr_idx[i],vista.cur_row['indice'][i])
+   #for i in range(len(vista.row_hdr_idx)):
+     #if vista.row_hdr_idx[i] != vista.cur_row['indice'][0][i]:
+        #print('got cha',vista.row_hdr_idx[i],vista.cur_row['indice'][i])
 
-   #pprint(vista.showTableDataH())
+   pprint(vista.showTableDataH())
