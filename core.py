@@ -50,10 +50,13 @@ class Cubo:
         #pprint(definicion)
         self.definition = definicion
         self.db = dbConnect(self.definition['connect'])
+        # inicializo (y cargo a continuacion) los otros atributos       
+        self.lista_guias=list() 
+        self.lista_funciones = []
+        self.lista_campos = []
         
- 
-    # ahora generamos las definiciones internas para las fechas
-        ind = -1
+        # ahora generamos las definiciones internas para las fechas
+        #ind = -1
         dbdriver = self.definition['connect']['driver']
         
 
@@ -66,7 +69,7 @@ class Cubo:
             3 -> model.col (prod)
             3,,n indices
         '''
-        self.lista_guias=list()
+
         for i in range(0, len(self.definition['guides'])):
             entrada = self.definition['guides'][i]
             if entrada['class'] != 'd':
@@ -86,9 +89,9 @@ class Cubo:
                     j += 1
                     
         #dump_structure(self.lista, "lista_dump.yml")
-        self.lista_funciones = []
+
         self.lista_funciones = self.getFunctions()
-        self.lista_campos = []
+
         self.lista_campos = self.getFields()
     #
     
@@ -116,7 +119,24 @@ class Cubo:
         return indices, desc
     
 
-    def getSqlStatement(self, entrada, fields):
+    def setSqlStatement(self, entrada, fields):
+        '''
+	  entrada es definition[guides][i][prod][j]: Contiene array
+	      -> source
+		  -> code
+		  -> desc
+		  -> table
+		  -> filter
+		  -> grouped by (no usada)
+	      -> fmt
+	      -> elem
+	    parametros implicitos  (para campos sin source, es decir base general
+	      -> definition.table
+	      -> definition.base_filter
+	      -> entrada.elem
+	  fields son campos auxiliares a incluir en la query
+	'''
+
         code_fld = 0
         desc_fld = 0
         fldString = ''
@@ -172,10 +192,10 @@ class Cubo:
             entrada['cabecera'] =  []
             campos = []
             for ind, regla in enumerate(entrada['prod']):
-                idx = ind +1
+                #idx = ind +1
                 if entrada['type'] != 'd':
-                    (sqlString, code_fld, desc_fld) = self.getSqlStatement(entrada['prod'][idx -1], campos )
-                    campos.append(regla['elem'])
+                    (sqlString, code_fld, desc_fld) = self.setSqlStatement(entrada['prod'][ind], campos )
+                    # campos.append(regla['elem'])   parece innecesario
                     ind, desc = self.getIndex(sqlString, code_fld, desc_fld)             
                     
                     entrada['indice'].append(ind)
@@ -409,7 +429,7 @@ class Vista:
         html =('<table border=1>')
         #header
         for k in range(0, max_col):
-            html += '<tr>'
+            html += ('<tr>')
             for i in range(0, max_row):
                 if k == max_col -1 :
                     if 'name' in self.cur_row['prod'][i].keys():
@@ -418,12 +438,12 @@ class Vista:
                         nombre =  self.cur_row ['name']
                 else:
                     nombre = ''
-                html +=('<th>%s< /th>'% nombre)
-            for j in self.col_hdr_idx:
+                html +=('<th>{}< /th>'.format(nombre))
+	    for j in self.col_hdr_txt:
 #                if max_col == 1:
 #                    html +=('<th>%s< /th>'% j[0])
 #                else:
-                    html += ('<th>%s< /th>'%j[k])
+                    html += ('<th>{}< /th>'.format(j[k]))
             html +=('</tr>')
             
         for i in range(0,len(self.row_hdr_idx)):
@@ -436,11 +456,11 @@ class Vista:
                 if eje_x >= max_row:
                     continue
                 if eje_x == 0:
-                    style = 'style="color:blue">'
-            html += '<tr %s>'%style
+                    style = 'style="color:blue"'
+            html += ('<tr {}>'.format(style))
             
-            for item in self.row_hdr_idx[i]:
-                html +=('<td>%s< /td>')% str(item)
+            for item in self.row_hdr_text[i]:
+                html +=('<td>{}< /td>'.format(item))
             #print(data)
             j = 0
             for elem in self.array[i]:
@@ -454,14 +474,14 @@ class Vista:
                         style = 'style="color:blue"'
                         
                 if elem is None or elem == 0:
-                    html += ('<td %s></td>')%style
+                    html += ('<td {}></td>'.format(style))
                 else:
                     if elem < metrics[eje_x][eje_y][1] or elem > metrics[eje_x][eje_y][5] :
                         style = 'style="color:red"'
-                    html +=('<td %s>%d< /td>')% (style, elem)
+                    html +=('<td {}>{}< /td>'.format(style, elem))
                 j += 1
-            html += '</tr>'
-        html += '</table>'
+            html += ('</tr>')
+        html += ('</table>')
         return html
  
     def  merge_list(self, level, indices, rows, num_rows,max_level, estado, result_list, rows_hdr=[], result_hdr=[]):
@@ -538,18 +558,19 @@ if __name__ == '__main__':
      print('Ahora pifie con la vista')
    else:
      '''?
-        x_hdr_txt === cur_x['cabecera']
-        x_hdr_idx === cur_x['indice']
+        x_hdr_txt|idx === cur_x['cabecera|indice'] agrupado para la presentacion
+       
      '''
      print('agregado     ',vista.agregado)
      print('array        ',vista.array)
      print('campo        ',vista.campo)
      print('col_hdr_txt  ',vista.col_hdr_txt)
      print('col_hdr_idx  ',vista.col_hdr_idx)
+     pprint(vista.row_hdr_idx)
      print('col_id       ',vista.col_id)
      print('cubo         ',vista.cubo)
      print('cur_col      ',vista.cur_col)
-     pprint(vista.cur_row)
+     pprint(vista.cur_row['indice'])
      print('cur_row      ',vista.cur_row)
      print('dim_col      ',vista.dim_col)
      print('dim_row      ',vista.dim_row)
@@ -558,4 +579,9 @@ if __name__ == '__main__':
      print('row_hdr_txt  ',vista.row_hdr_txt)
      print('row_hdr_idx      ',vista.row_hdr_idx)
      print('row_id       ',vista.row_id)
+     
+   for i in range(len(vista.row_hdr_idx)):
+     if vista.row_hdr_idx[i] != vista.cur_row['indice'][0][i]:
+        print('got cha',vista.row_hdr_idx[i],vista.cur_row['indice'][i])
 
+   #pprint(vista.showTableDataH())
