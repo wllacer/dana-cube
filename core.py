@@ -20,11 +20,11 @@ from decimal import *
 from pprint import *
 from datetime import *
 
-from fivenumbers import *
-from yamlmgr import *
+from util.fivenumbers import *
+from util.yamlmgr import *
 from datemgr import *
-from access_layer import *
-from query_constructor import  queryConstructor
+from datalayer.access_layer import *
+from datalayer.query_constructor import  queryConstructor
     
 def getLevel(entry):
     " ojo chequear por el valor -1 "
