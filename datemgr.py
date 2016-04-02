@@ -15,6 +15,7 @@ from pprint import *
 from datetime import *
 
 def getDateIndexElement(max_date, min_date, char):
+    #TODO formatos todavia usan %
     minidx = []
     if char == 'w':
         min_rg = 0
@@ -48,8 +49,9 @@ def getDateIndexElement(max_date, min_date, char):
         
 
     for j in range(min_rg, max_rg):
-        minidx.append(QString(format % j)) #OJO
-            
+        #minidx.append(QString(format % j)) 
+        minidx.append(format % j) 
+        
     return minidx
 
 def getDateIndex(max_date,  min_date, fmt):     

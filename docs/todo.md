@@ -4,11 +4,11 @@
 
 * __DONE__ Python 3 compatible. (29/3/16)
 * __DONE__ PyQt 5 works now as it worked with 4 (29/3/16)
-* __WIP__. New test database. Minimally available. Dates missing (Sqlite) (30/3/16)
-   * Falta todo el tratamiento de fechas
+* __DONE__. New test database.  (Sqlite) (2/4/16)
+   * __DONE__ Date Handling codepaths tested (2/4/16)
 
 * _WIP_ Code refactoring for clarity
-  * _WIP_ data access layer isolation
+  * _DONE_ data access layer isolation (2/4/16)
   * _HP_ name of elements in hierarchy YML
   
 * New use cases
@@ -17,6 +17,7 @@
   * more than one measure
  
 * bugs
+  * Kdevelop editor defaults is undermining Py 3 compatibility. Need to think about it
   * fivepoints metric (?)
 
   * __DONE__ in guides allow blank filter

@@ -172,6 +172,12 @@ datos locales:
                         table: localidades
                         grouped by: region,provincia
                         filter: "municipio <> ''"
+        -   name: fecha
+            class: d
+            prod:
+            - elem: fakedate
+              fmt: date
+
 
     fields:
         -   votes_presential

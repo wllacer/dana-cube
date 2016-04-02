@@ -108,15 +108,15 @@ class Cubo:
         print('Index :',sql_string)
         idx_cursor = getCursor(self.db,sql_string)
         for record in idx_cursor:
-	   indices.append(record[0:num_fields])
-	   if num_desc == 0:
-	     desc.append(record[0:num_fields])
-	   else:
-	      row_d = [None for k in range(0,num_fields)]
-	      for j in range(num_fields, num_desc +  num_fields):
-		  row_d[num_fields - 1 -j]=record[j]
+            indices.append(record[0:num_fields])
+            if num_desc == 0:
+              desc.append(record[0:num_fields])
+            else:
+              row_d = [None for k in range(0,num_fields)]
+              for j in range(num_fields, num_desc +  num_fields):
+                 row_d[num_fields - 1 -j]=record[j]
 
-	      desc.append(row_d)
+              desc.append(row_d)
         return indices, desc
     
 
@@ -137,8 +137,8 @@ class Cubo:
 	      -> entrada.elem
 	  fields son campos auxiliares a incluir en la query
 	'''
-	print()
-	print(fields)
+        print()
+        print(fields)
         code_fld = 0
         desc_fld = 0
 
@@ -160,8 +160,8 @@ class Cubo:
 	    desc_fld = len(desc_tup)
 	else:
           sqlDef['tables'] = self.definition['table']
-          if len(self.definicion['base_filter'].strip() > 0):
-             sqlDef['base_filter']=self.definition['base_filter']
+          if len(self.definition['base filter'].strip()) > 0:
+             sqlDef['base filter']=self.definition['base_filter']
           sqlDef['fields'] = entrada['elem']
           
         code_fld = len(sqlDef['fields']) - desc_fld		  
@@ -173,21 +173,25 @@ class Cubo:
         return sqlString, code_fld,desc_fld 
     
     def setGuidesDateSqlStatement(self, entrada, fields):
+        #TODO creo que fields sobra
+        pprint(entrada)
         sqlDef=dict()
-	sqlDef['tables'] = self.definition['table']
-	if len(self.definicion['base_filter'].strip() > 0):
-	    sqlDef['base_filter']=self.definition['base_filter']
-	sqlDef['fields'] = [[entrada['base_field'],'max'],[entrada['base_field'],'min'],]
-	return queryConstructor(**sqlDef)	     
+        sqlDef['tables'] = self.definition['table']
+        if len(self.definition['base filter'].strip()) > 0:
+           sqlDef['base_filter']=self.definition['base filter']
+        sqlDef['fields'] = [[entrada['base_fld'],'max'],
+		            [entrada['base_fld'],'min'],
+		           ]
+        return queryConstructor(**sqlDef)	     
  
     def getGuides(self):
         if self.db is None:
             return None
+        #SQL    
+        #coreString = 'from %s ' % self.definition['table']
+        #if self.definition['base filter'] !='':
             
-        coreString = 'from %s ' % self.definition['table']
-        if self.definition['base filter'] !='':
-            
-            coreString += 'where %s ' % self.definition['base filter']
+            #coreString += 'where %s ' % self.definition['base filter']
         date_cache={}
         
         for entrada in self.lista_guias:
@@ -208,7 +212,7 @@ class Cubo:
                     campo = entrada['base_fld']
                     fmt = entrada['prod'][ind]['mask']
                     if entrada['base_fld'] not in date_cache:
-		        sqlString = self.setGuidesDateSqlStatement(entrada)
+		        sqlString = self.setGuidesDateSqlStatement(entrada,campos)
                         row=getCursor(self.db,sqlString)
                         date_cache[campo] = (row[0][0], row[0][1])
                         
@@ -308,7 +312,8 @@ class Vista:
                 
                 if self.cur_row['type'] == 'h' or self.cur_col['type'] == 'h':
                     self.hierarchy = True
-            
+                    
+                # INICIO ANTIGUO
                 indices = [ 0 for i in range(0,self.dim_row)]
                 rows = [self.cur_row['indice'][i] for i in range(0,self.dim_row)] 
                 row_hdr=[self.cur_row['cabecera'][i] for i in range(0,self.dim_row)]
@@ -324,7 +329,7 @@ class Vista:
 
                 self.merge_list(0, indices, cols, num_cols,self.dim_col, list(), self.col_hdr_idx,  cols_hdr, self.col_hdr_txt)
                 #self.array=[[None for y in range(len(self.col_idx))] for x in range(len(self.row_idx))]
-
+                # FIN ANTIGUO
                 self.putDataMatrixH()
         else:
             print( 'Limite dimensional excedido. Ignoramos')
@@ -345,8 +350,6 @@ class Vista:
       #TODO Buscar una clave formada por un array es venenoso.
       #   debo rodear con un try except para capturar cuando el registro no existe
       dim_key=[record[k] for k in range(start_pos,end_pos)] +[ None for k in range(end_pos,dim_dimension)]
-      print (dimension,dim_dimension,record,start_pos,end_pos,dim_key)
-      print (ambito.index(dim_key))
       return ambito.index(dim_key)
 
     def putDataMatrixH(self):
@@ -377,10 +380,10 @@ class Vista:
 	    sqlQuery = queryConstructor(**sqlDef)
 	    print(i,j,sqlQuery)
 	    tmp_cursor = getCursor(self.cubo.db,sqlQuery)
-            for row in tmp_cursor:  #por razones de rendimiento deberia ser una funcion especial en el getCursor
-	       row_id = self.getPos('row',row,i,j,self.dim_row)
-	       col_id = self.getPos('col',row,i,j,self.dim_col)
-	       self.array[row_id][col_id]=row[-1]
+            for record in tmp_cursor:  #por razones de rendimiento deberia ser una funcion especial en el getCursor
+	       row_id = self.getPos('row',record,i,j,self.dim_row)
+	       col_id = self.getPos('col',record,i,j,self.dim_col)
+	       self.array[row_id][col_id]=record[-1]
 	      
 	#FIN NUEVO
         #pprint(self.array)
@@ -527,7 +530,7 @@ class Vista:
 if __name__ == '__main__':
    vista = None
    mis_cubos = load_cubo()
-   cubo = Cubo(mis_cubos['datos provincia'])
+   cubo = Cubo(mis_cubos['datos locales'])
    cubo.getGuides()
    #if cubo is None:
      #print ('vaya pifia')
@@ -541,7 +544,7 @@ if __name__ == '__main__':
      #print('lista_funciones ',cubo.lista_funciones)
      #print('DB              ',cubo.db)
    # 
-   row =3
+   row =1
    col =0
    agregado = 'sum'
    campo = 'seats'
@@ -579,5 +582,5 @@ if __name__ == '__main__':
    #for i in range(len(vista.row_hdr_idx)):
      #if vista.row_hdr_idx[i] != vista.cur_row['indice'][0][i]:
         #print('got cha',vista.row_hdr_idx[i],vista.cur_row['indice'][i])
-
-   pprint(vista.showTableDataH())
+   pprint(vista.cur_row['indice'])
+   #pprint(vista.showTableDataH())
