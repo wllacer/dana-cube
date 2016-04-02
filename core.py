@@ -110,7 +110,7 @@ class Cubo:
         for record in idx_cursor:
             indices.append(record[0:num_fields])
             if num_desc == 0:
-              desc.append(record[0:num_fields])
+                desc.append(record[0:num_fields])
             else:
               row_d = [None for k in range(0,num_fields)]
               for j in range(num_fields, num_desc +  num_fields):
@@ -141,24 +141,26 @@ class Cubo:
         print(fields)
         code_fld = 0
         desc_fld = 0
-
-	sqlDef=dict()
+        
+        sqlDef=dict()
 
         if 'source' in entrada.keys():
-	  sqlDef['tables'] = entrada['source']['table']
-	  if 'filter' in entrada['source']:
-	    sqlDef['base_filter']=entrada['source']['filter']
-	  sqlDef['fields'] = []
-	  if 'grouped by' in entrada['source']:
-	    sqlDef['fields'] += [entrada['source']['grouped by'],]
-	  if len(fields) > 0:
-	    sqlDef['fields'] += fields[:]
-	  sqlDef['fields'] += [entrada['source']['code'],]
-	  if 'desc' in entrada['source']:
-	    desc_tup = entrada['source']['desc'].split(',')
-	    sqlDef['fields'] += desc_tup
-	    desc_fld = len(desc_tup)
-	else:
+          sqlDef['tables'] = entrada['source']['table']
+          if 'filter' in entrada['source']:
+              sqlDef['base_filter']=entrada['source']['filter']
+              
+          sqlDef['fields'] = []
+          if 'grouped by' in entrada['source']:
+              sqlDef['fields'] += [entrada['source']['grouped by'],]
+          if len(fields) > 0:
+              sqlDef['fields'] += fields[:]
+          sqlDef['fields'] += [entrada['source']['code'],]
+          
+          if 'desc' in entrada['source']:
+              desc_tup = entrada['source']['desc'].split(',')
+              sqlDef['fields'] += desc_tup
+              desc_fld = len(desc_tup)
+        else:
           sqlDef['tables'] = self.definition['table']
           if len(self.definition['base filter'].strip()) > 0:
              sqlDef['base filter']=self.definition['base_filter']
@@ -167,8 +169,7 @@ class Cubo:
         code_fld = len(sqlDef['fields']) - desc_fld		  
         sqlDef['order'] = [ str(x + 1) for x in range(code_fld)]
         sqlDef['select_modifier']='DISTINCT'
-	
-	
+        
         sqlString = queryConstructor(**sqlDef)
         return sqlString, code_fld,desc_fld 
     
@@ -180,8 +181,8 @@ class Cubo:
         if len(self.definition['base filter'].strip()) > 0:
            sqlDef['base_filter']=self.definition['base filter']
         sqlDef['fields'] = [[entrada['base_fld'],'max'],
-		            [entrada['base_fld'],'min'],
-		           ]
+                            [entrada['base_fld'],'min'],
+                            ]
         return queryConstructor(**sqlDef)	     
  
     def getGuides(self):
@@ -212,7 +213,7 @@ class Cubo:
                     campo = entrada['base_fld']
                     fmt = entrada['prod'][ind]['mask']
                     if entrada['base_fld'] not in date_cache:
-		        sqlString = self.setGuidesDateSqlStatement(entrada,campos)
+                        sqlString = self.setGuidesDateSqlStatement(entrada,campos)
                         row=getCursor(self.db,sqlString)
                         date_cache[campo] = (row[0][0], row[0][1])
                         
@@ -337,15 +338,15 @@ class Vista:
     def getPos(self,dimension,record,idx_row,idx_col,dim_dimension):
       
       if dimension == 'row':
-	ambito = self.row_hdr_idx
-	start_pos = 0  #eso deberia venir en los parametros
-	end_pos   = start_pos + idx_row + 1
+          ambito = self.row_hdr_idx
+          start_pos = 0  #eso deberia venir en los parametros
+          end_pos   = start_pos + idx_row + 1
       elif dimension == 'col':
-	ambito = self.col_hdr_idx
-	start_pos = idx_row +1
-	end_pos = start_pos + idx_col +1
+          ambito = self.col_hdr_idx
+          start_pos = idx_row +1
+          end_pos = start_pos + idx_col +1
       else:
-        return None
+          return None
 
       #TODO Buscar una clave formada por un array es venenoso.
       #   debo rodear con un try except para capturar cuando el registro no existe
@@ -356,35 +357,35 @@ class Vista:
         
         if self.cubo.db is None:      
             return None
-	  
-	#aqui depositare el resultado final  
-	self.array=[[None for y in range(len(self.col_hdr_idx))] for x in range(len(self.row_hdr_idx))]  
-	
-	# INIT NUEVO
+            
+        #aqui depositare el resultado final  
+        self.array=[[None for y in range(len(self.col_hdr_idx))] for x in range(len(self.row_hdr_idx))]  
+
+        # INIT NUEVO
         sqlDef = dict()
         sqlDef['tables']=self.cubo.definition['table']
         if len(self.cubo.definition['base filter'].strip()) > 0 and len(self.filtro.strip()) >0 :
            sqlDef['base_filter'] = '{} AND {}'.format(self.cubo.definition['base filter'], self.filtro)
         else:
-	   sqlDef['base_filter'] = '{} {}'.format(self.cubo.definition['base filter'], self.filtro).strip()
+            sqlDef['base_filter'] = '{} {}'.format(self.cubo.definition['base filter'], self.filtro).strip()
 	# variablea auxiliares
-	sqlDef['tgt_fields']=[[self.campo,self.agregado],]
-	sqlDef['row_fields']=[ self.cur_row['prod'][k]['elem'] for k in range(self.dim_row)]
-	sqlDef['col_fields']=[ self.cur_col['prod'][k]['elem'] for k in range(self.dim_col)]
+        sqlDef['tgt_fields']=[[self.campo,self.agregado],]
+        sqlDef['row_fields']=[ self.cur_row['prod'][k]['elem'] for k in range(self.dim_row)]
+        sqlDef['col_fields']=[ self.cur_col['prod'][k]['elem'] for k in range(self.dim_col)]
 	
-	for i in range(self.dim_row):
-	  for j in range(self.dim_col):
-	    sqlDef['fields'] = [sqlDef['row_fields'][k] for k in range(i+1)]+[sqlDef['col_fields'][k] for k in range(j+1)] + \
-	                        sqlDef['tgt_fields']
-	    sqlDef['group']  = [sqlDef['row_fields'][k] for k in range(i+1)]+[sqlDef['col_fields'][k] for k in range(j+1)]
-	    sqlQuery = queryConstructor(**sqlDef)
-	    print(i,j,sqlQuery)
-	    tmp_cursor = getCursor(self.cubo.db,sqlQuery)
-            for record in tmp_cursor:  #por razones de rendimiento deberia ser una funcion especial en el getCursor
-	       row_id = self.getPos('row',record,i,j,self.dim_row)
-	       col_id = self.getPos('col',record,i,j,self.dim_col)
-	       self.array[row_id][col_id]=record[-1]
-	      
+        for i in range(self.dim_row):
+            for j in range(self.dim_col):
+                sqlDef['fields'] = [sqlDef['row_fields'][k] for k in range(i+1)]+[sqlDef['col_fields'][k] for k in range(j+1)] + \
+                                    sqlDef['tgt_fields']
+                sqlDef['group']  = [sqlDef['row_fields'][k] for k in range(i+1)]+[sqlDef['col_fields'][k] for k in range(j+1)]
+                sqlQuery = queryConstructor(**sqlDef)
+                print(i,j,sqlQuery)
+                tmp_cursor = getCursor(self.cubo.db,sqlQuery)
+                for record in tmp_cursor:  #por razones de rendimiento deberia ser una funcion especial en el getCursor
+                    row_id = self.getPos('row',record,i,j,self.dim_row)
+                    col_id = self.getPos('col',record,i,j,self.dim_col)
+                    self.array[row_id][col_id]=record[-1]
+                
 	#FIN NUEVO
         #pprint(self.array)
         
@@ -438,7 +439,7 @@ class Vista:
                 else:
                     nombre = ''
                 html +=('<th>{}< /th>'.format(nombre))
-	    for j in self.col_hdr_txt:
+            for j in self.col_hdr_txt:
 #                if max_col == 1:
 #                    html +=('<th>%s< /th>'% j[0])
 #                else:

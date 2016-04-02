@@ -28,17 +28,17 @@ def dbConnect(constring):
     db.setDatabaseName(constring['dbname'])
     
     if constring['driver'] != 'QSQLITE':
-	db.setHostName(constring['dbhost'])
-	db.setUserName(constring['dbuser'])
-	db.setPassword(constring['dbpass'])
+        db.setHostName(constring['dbhost'])
+        db.setUserName(constring['dbuser'])
+        db.setPassword(constring['dbpass'])
     
     ok = db.open()
     # True if connected
     if ok:        
-	return db
+        return db
     else:
-	print('conexion a bd imposible')
-	sys.exit(-1)
+        print('conexion a bd imposible')
+        sys.exit(-1)
             
 def getCursor(db, sql_string):
     '''
@@ -49,17 +49,17 @@ def getCursor(db, sql_string):
            sql_string lo que se va a ejecutar
     '''
     if db is None:
-	return None
+        return None
     if sql_string is None or sql_string.strip() == '':
         return None
       
     cursor = []
     query = QSqlQuery(db)
     if query.exec_(sql_string):
-	while query.next():
-	    row = []
-	    for j in range(0,query.record().count()):
-	       row.append(query.value(j))   
-	    cursor.append(row)
+        while query.next():
+            row = []
+            for j in range(0,query.record().count()):
+                row.append(query.value(j))   
+            cursor.append(row)
     return cursor
 

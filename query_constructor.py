@@ -32,9 +32,9 @@ def selConstructor(kwargs):
     if 'select_modifier' in kwargs:
        modifier = kwargs['select_modifier'].strip().upper()
        if modifier in ('DISTINCT','FIRST'):
-	 statement += modifier + ' '
+            statement += modifier + ' '
 
-    if isinstance(kwargs[definicion],(str,unicode)):
+    if isinstance(kwargs[definicion],str):
       entrada = [kwargs[definicion],]
     else:
       entrada = kwargs[definicion]
@@ -44,18 +44,18 @@ def selConstructor(kwargs):
     for kelem in entrada:
       elemento,adfijo=slicer(kelem)
       if elemento.strip().find(' ') == -1:
-	texto = elemento.strip()
+        texto = elemento.strip()
       else:
-	texto = '({})'.format(elemento)
-	
+        texto = '({})'.format(elemento)
+
       if adfijo != '':
-	texto = '{}({})'.format(adfijo.strip(),texto)
-	
+        texto = '{}({})'.format(adfijo.strip(),texto)
+
       if ind < (num_elem -1):
-	statement += ' {},'.format(texto)
+        statement += ' {},'.format(texto)
       else:
-	statement += ' ' + texto + ' '
-	
+        statement += ' ' + texto + ' '
+
       ind += 1
     return statement
 
@@ -65,7 +65,7 @@ def fromConstructor(kwargs):
     if definicion not in kwargs:
        return ''
     
-    if isinstance(kwargs[definicion],(str,unicode)):
+    if isinstance(kwargs[definicion],str):
       entrada = [kwargs[definicion],]
     else:
       entrada = kwargs[definicion]
@@ -75,20 +75,20 @@ def fromConstructor(kwargs):
     for kelem in entrada:
       elemento,adfijo=slicer(kelem)
       if elemento.strip().find(' ') == -1:
-	texto = elemento.strip()
+        texto = elemento.strip()
       else:
-	texto = '({})'.format(elemento)
-	
+        texto = '({})'.format(elemento)
+
       if adfijo != '':
-	texto = '{} as {}'.format(texto,adfijo.strip())
+        texto = '{} as {}'.format(texto,adfijo.strip())
       elif num_elem > 1:
-	texto = '{} as t{}'.format(texto,ind)
-	
+        texto = '{} as t{}'.format(texto,ind)
+
       if ind < (num_elem -1):
-	statement += ' {},'.format(texto)
+        statement += ' {},'.format(texto)
       else:
-	statement += ' ' + texto + ' '
-	
+        statement += ' ' + texto + ' '
+
       ind += 1
     return statement
     
@@ -104,7 +104,7 @@ def whereConstructor(kwargs):
      
     if complemento in kwargs:
        if kstatement == '':
-	 kstatement = kwargs[complemento]
+          kstatement = kwargs[complemento]
        elif len(kwargs[complemento].strip()) == 0:
          pass
        else:
@@ -123,7 +123,7 @@ def groupConstructor(kwargs):
     if definicion not in kwargs:
        return ''
     
-    if isinstance(kwargs[definicion],(str,unicode)):
+    if isinstance(kwargs[definicion],str):
       entrada = [kwargs[definicion],]
     else:
       entrada = kwargs[definicion]
@@ -132,22 +132,22 @@ def groupConstructor(kwargs):
     num_elem = len(entrada)
     for elemento in entrada:
       if elemento.strip().find(' ') == -1:
-	texto = elemento.strip()
+        texto = elemento.strip()
       else:
-	texto = '({})'.format(elemento)
-		
+        texto = '({})'.format(elemento)
+            
       if ind < (num_elem -1):
-	statement += ' {},'.format(texto)
+        statement += ' {},'.format(texto)
       else:
-	statement += ' ' + texto + ' '
-	
+        statement += ' ' + texto + ' '
+
       ind += 1
     
     if statement.strip() != 'GROUP BY ':
        if 'having' in kwargs:
-	  having_clause = searchConstructor('having',kwargs)
-	  if having_clause.strip() != '':
-	    statement += 'HAVING {}'.format(having_clause)
+            having_clause = searchConstructor('having',kwargs)
+            if having_clause.strip() != '':
+                statement += 'HAVING {}'.format(having_clause)
        return statement
     else:
        return ''
@@ -158,7 +158,7 @@ def orderConstructor(kwargs):
     if definicion not in kwargs:
        return ''
     
-    if isinstance(kwargs[definicion],(str,unicode)):
+    if isinstance(kwargs[definicion],str):
       entrada = [kwargs[definicion],]
     else:
       entrada = kwargs[definicion]
@@ -167,21 +167,21 @@ def orderConstructor(kwargs):
     num_elem = len(entrada)
     for kelem in entrada:
       elemento,adfijo=slicer(kelem)
-      if isinstance(elemento,(int,long)):
-	texto = '{}'.format(elemento)
+      if isinstance(elemento,int):
+        texto = '{}'.format(elemento)
       elif elemento.strip().find(' ') == -1:
-	texto = elemento.strip()
+        texto = elemento.strip()
       else:
-	texto = '({})'.format(elemento)
-	
+        texto = '({})'.format(elemento)
+
       if adfijo != '':
-	texto = '{}  {}'.format(texto,adfijo.strip())
-	
-      if ind < (num_elem -1):
-	statement += ' {},'.format(texto)
+        texto = '{}  {}'.format(texto,adfijo.strip())
+
+      if ind < (num_elem -1):   
+          statement += ' {},'.format(texto)
       else:
-	statement += ' ' + texto + ' '
-	
+        statement += ' ' + texto + ' '
+
       ind += 1
     return statement
     
@@ -190,7 +190,7 @@ def searchConstructor(definicion,kwargs):
 
     if definicion not in kwargs:
        return ''    
-    if isinstance(kwargs[definicion],(str,unicode)):
+    if isinstance(kwargs[definicion],str):
       entrada = [kwargs[definicion],]
     else:
       entrada = kwargs[definicion]
@@ -205,29 +205,29 @@ def searchConstructor(definicion,kwargs):
       #	texto = elemento.strip()
       #else:
       #	texto = '({})'.format(elemento)
-	
+
       nadfijo = adfijo.strip().upper()
       if nadfijo in ('IN','NOT IN'):
-	texto = '{} {} ({})'.format(elemento.strip(),nadfijo,', '.join(parms))
+        texto = '{} {} ({})'.format(elemento.strip(),nadfijo,', '.join(parms))
       elif nadfijo in ('BETWEEN','NOT BETWEEN'):
-	texto = '{} {} {} AND {}'.format(elemento.strip(),nadfijo,parms[0].strip(),parms[1].strip())
+        texto = '{} {} {} AND {}'.format(elemento.strip(),nadfijo,parms[0].strip(),parms[1].strip())
       else:
-	if isinstance(elemento,dict):
-	  nelemento = '({})'.format(searchConstructor(definicion,elemento))
-	else:
-	  nelemento = elemento.strip()
-	if isinstance(parms,dict):
-	  nparms = '({})'.format(searchConstructor(definicion,parms))
-	else:
-	  nparms = parms.strip()
-	  
-	texto = '{} {} {}'.format(nelemento,nadfijo,nparms)
-	
+        if isinstance(elemento,dict):
+            nelemento = '({})'.format(searchConstructor(definicion,elemento))
+        else:
+            nelemento = elemento.strip()
+        if isinstance(parms,dict):
+            nparms = '({})'.format(searchConstructor(definicion,parms))
+        else:
+            nparms = parms.strip()
+  
+        texto = '{} {} {}'.format(nelemento,nadfijo,nparms)
+
       if ind < (num_elem -1):
-	statement += ' {} AND'.format(texto)
+        statement += ' {} AND'.format(texto)
       else:
-	statement += ' ' + texto + ' '
-	
+        statement += ' ' + texto + ' '
+
       ind += 1
     return statement
   
