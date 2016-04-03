@@ -17,7 +17,7 @@
   * more than one measure
  
 * bugs
-  * Kdevelop editor defaults is undermining Py 3 compatibility. Need to think about it
+  * __DONE__ Kdevelop editor defaults is undermining Py 3 compatibility. Need to think about it (just better parametrization)
   * fivepoints metric (?)
 
   * __DONE__ in guides allow blank filter
@@ -44,6 +44,8 @@
 * Use of CUBE / ROLLUP sintax where available
 
 * Packaging
+
+* GUI to generate definitions file
  
 * __EXPERIMENTAL__: use SqlAlchemy as data background, so dependencies on PyQt would only be on the presentation level
     * Date Management into alchemy

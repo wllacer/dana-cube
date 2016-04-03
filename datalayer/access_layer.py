@@ -40,13 +40,15 @@ def dbConnect(constring):
         print('conexion a bd imposible')
         sys.exit(-1)
             
-def getCursor(db, sql_string):
+def getCursor(db, sql_string,funcion=None,**kwargs):
     '''
         ante una query devuelve un cursor normalizado:  una lista de registros, que a su vez es una lista de campos.
-        aisla las 'peculiaridades' de QtSql
-        Los parametros son evidentes:
+        aisla las 'peculiaridades' de QtSql, y permite el preprocesamiento de los registros individuales
+        Los parametros son :
            db la conexion a base de datos
            sql_string lo que se va a ejecutar
+           una función que se aplica a cada uno de los registros individualmente
+           **kwargs el diccionario de rigor para parametros variable
     '''
     if db is None:
         return None
@@ -59,7 +61,9 @@ def getCursor(db, sql_string):
         while query.next():
             row = []
             for j in range(0,query.record().count()):
-                row.append(query.value(j))   
+                row.append(query.value(j))  
+            if callable(funcion):
+                funcion(row,**kwargs)
             cursor.append(row)
     return cursor
 

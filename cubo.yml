@@ -182,5 +182,4 @@ datos locales:
     fields:
         -   votes_presential
         -   votes_percent
-        -   seats
         -   ord
