@@ -17,8 +17,11 @@ Documentation, License etc.
 '''
 
 from util.yamlmgr import *
+from util.record_functions import *
+
 from datalayer.access_layer import *
 from datalayer.query_constructor import *
+
 from datemgr import getDateSlots
 from pprint import *
 
@@ -33,7 +36,7 @@ class NCubo:
         self.definition = definicion
         self.db = dbConnect(self.definition['connect'])
         # inicializo (y cargo a continuacion) los otros atributos       
-        self.lista_guias=list() 
+        self.lista_guias= []
         self.lista_funciones = []
         self.lista_campos = []
         
@@ -51,7 +54,7 @@ class NCubo:
             3 -> model.col (prod)
             3,,n indices
         '''
-
+        #FiXME TODO este codigo aparentemente es obsoleto, solo la parte de fechas tiene sentido
         for i in range(0, len(self.definition['guides'])):
             entrada = self.definition['guides'][i]
             if entrada['class'] != 'd':
@@ -71,8 +74,8 @@ class NCubo:
                     j += 1
                     
         #dump_structure(self.lista, "lista_dump.yml")
-
-        self.lista_funciones = getFunctions(self.db,self.lista_funciones)
+        self.setGuias()
+        self.lista_funciones = getAgrFunctions(self.db,self.lista_funciones)
         # no se usa en core. No se todavia en la parte GUI
         self.lista_campos = self.getFields()
     #
@@ -109,10 +112,8 @@ class NCubo:
               -> definition.table
               -> definition.base_filter
               -> entrada.elem
-          fields son campos auxiliares a incluir en la query
+          TODO fields son campos auxiliares a incluir en la query
         '''
-        print()
-        print(fields)
         code_fld = 0
         desc_fld = 0
         
@@ -130,7 +131,7 @@ class NCubo:
               sqlDef['fields'] += entrada['source']['grouped by'].split(',')
           if len(fields) > 0:
               sqlDef['fields'] += fields[:]
-          sqlDef['fields'] += [entrada['source']['code'],]
+          sqlDef['fields'] += entrada['source']['code'].split(',')
           
           if 'desc' in entrada['source']:
               desc_tup = entrada['source']['desc'].split(',')
@@ -144,7 +145,7 @@ class NCubo:
           
         code_fld = len(sqlDef['fields']) - desc_fld  
         
-        print(code_fld,desc_fld,sqlDef['fields'])
+        #print(code_fld,desc_fld,sqlDef['fields'])
         sqlDef['order'] = [ str(x + 1) for x in range(code_fld)]
         sqlDef['select_modifier']='DISTINCT'
         
@@ -162,19 +163,62 @@ class NCubo:
                             ]
         return queryConstructor(**sqlDef)            
  
-def construct_indexes(cubo):
-    contendor = []
-    for ind,entrada in enumerate(cubo.definition['guides']):
-        if len(entrada['prod']) > 1:
-            jerarquico = True
-        else:
-            jerarquico = False
-        contendor.append({'name':entrada['name'],'rules':[]})
-        for idx,componente in enumerate(entrada['prod']):
-            (sqlString,code_fld,desc_fld) = cubo.setGuidesSqlStatement(componente,[])
-            contendor[ind]['rules'].append({'string':sqlString,'ncode':code_fld,'ndesc':desc_fld})
-            pprint(componente)
-    return contendor
+    def setGuias(self):
+        #TODO manejo de fechas
+        #TODO indices con campos elementales no son problema, pero no se si funciona con definiciones raras
+        self.lista_guias = []
+        for ind,entrada in enumerate(self.definition['guides']):
+            self.lista_guias.append({'name':entrada['name'],'rules':[],'elem':[]})
+            for idx,componente in enumerate(entrada['prod']):
+                if entrada['class'] == 'd':
+                    self.lista_guias[ind]['elem'].append(componente['elem'])
+                else:
+                    (sqlString,code_fld,desc_fld) = self.setGuidesSqlStatement(componente,[])
+                    self.lista_guias[ind]['rules'].append({'string':sqlString,'ncode':code_fld,'ndesc':desc_fld})
+                    self.lista_guias[ind]['elem'].append(componente['elem'])
+                #pprint(componente)
+    def fillGuias(self):
+
+        for ind,entrada in enumerate(self.lista_guias):
+            cursor = []
+            for idx,componente in enumerate(entrada['rules']):
+                if len(componente) == 0: #TODO fechas
+                    continue
+                sqlstring=componente['string']
+                lista_compra={'nkeys':componente['ncode'],'ndesc':componente['ndesc']}
+                if componente['ncode'] < len(entrada['elem']):
+                    lista_compra['nholder']=len(entrada['elem'])-componente['ncode']
+                    if componente['ndesc'] != 1:
+                        lista_compra['pholder'] = - componente['ndesc']
+                print(ind,idx,sqlstring,lista_compra)
+                cursor += getCursor(self.db,sqlstring,regHashFill,**lista_compra)
+            entrada['cursor']=sorted(cursor)    
+            entrada['dir_row']=[record[0] for record in entrada['cursor'] ]  #para navegar el indice con menos datos
+            entrada['des_row']=[record[-componente['ndesc']:] for record in entrada['cursor']] #probablemenente innecesario
+            #print(time.strftime("%H:%M:%S"),dir_row[0])
+
+class NVista:
+    def __init__(self, cubo,row, col,  agregado, campo, filtro=''):
+        
+        self.cubo = cubo
+        # deberia verificar la validez de estos datos
+        self.agregado=agregado
+        self.campo = campo
+        self.filtro = filtro
+        
+        self.row_id = None   #son row y col. a asignar en setnewview
+        self.col_id = None
+        self.cur_row = None
+        self.cur_col  = None
+        self.row_hdr_idx = list()
+        self.col_hdr_idx = list()
+        self.row_hdr_txt = list()
+        self.col_hdr_txt = list()
+        self.dim_row = None
+        self.dim_col = None
+        self.hierarchy= False
+        self.array = []
+
 def get_query():
     return
 
@@ -186,7 +230,8 @@ def experimental():
     #pprint(cubo.lista_funciones)
     #pprint(cubo.lista_campos)
     
-    pprint(construct_indexes(cubo))
+    cubo.fillGuias()
+    pprint(cubo.lista_guias[5]['des_row'][1:20])
     
     get_query()
 

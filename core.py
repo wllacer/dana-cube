@@ -185,56 +185,6 @@ class Cubo:
                             ]
         return queryConstructor(**sqlDef)	     
     
-    def getGuidesNew(self):
-        if self.db is None:
-            return None
-
-        date_cache={}
-        
-        for entrada in self.lista_guias:
-            entrada['indice'] = []
-            entrada['cabecera'] =  []
-            constructor = []
-            campos = []
-            for ind, regla in enumerate(entrada['prod']):
-                #idx = ind +1
-                if entrada['type'] != 'd':
-                    ''' 
-                       constructor[ind][0] sqlstring
-                       constructor[ind][1] code_fld
-                       constructor[ind][2] desc_fld
-                    '''
-                    constructor.append(self.setGuidesSqlStatement(regla, campos ))
-                    #TODO campos.append(regla['elem'])   Puede ser util en ciertos casos, pero no tengo la casuistica
-                else:
-                    #FIXME las fechas por ahora no pueden entrar en una jerarquia
-                    if entrada['base_fld'] not in date_cache:
-                        constructor.append(self.setGuidesDateSqlStatement(entrada,campos))
-
-            for k in range(len(entrada['prod'])):
-                if entrada['type'] != 'd':
-                    
-                # cargamos los datos
-                    '''          
-                    ind, desc = self.getIndex(sqlString, code_fld, desc_fld)             
-                    
-                    entrada['indice'].append(ind)
-                    entrada['cabecera'].append(desc)
-
-                else:
-                    campo = entrada['base_fld']
-                    fmt = entrada['prod'][ind]['mask']
-                    if entrada['base_fld'] not in date_cache:
-                        sqlString = self.setGuidesDateSqlStatement(entrada,campos)
-                        row=getCursor(self.db,sqlString)
-                        date_cache[campo] = (row[0][0], row[0][1])
-                        
-                    max_date = date_cache[campo][0]
-                    min_date  = date_cache[campo][1]
-                    
-                    entrada['indice'].append (getDateIndex(max_date, min_date, fmt))
-                    entrada['cabecera'].append(entrada['indice'][ind][ : ])
-                    ''' 
                 
  
     def getGuides(self):

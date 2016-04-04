@@ -67,7 +67,7 @@ def getCursor(db, sql_string,funcion=None,**kwargs):
             cursor.append(row)
     return cursor
 
-def getFunctions(db,plista = None):
+def getAgrFunctions(db,plista = None):
     '''
       Devuelve la lista de funciones agregadas que soporta la base de datos
     '''
