@@ -151,7 +151,7 @@ class Cubo:
               
           sqlDef['fields'] = []
           if 'grouped by' in entrada['source']:
-              sqlDef['fields'] += [entrada['source']['grouped by'],]
+              sqlDef['fields'] += entrada['source']['grouped by'].split(',')
           if len(fields) > 0:
               sqlDef['fields'] += fields[:]
           sqlDef['fields'] += [entrada['source']['code'],]
@@ -166,7 +166,8 @@ class Cubo:
              sqlDef['base filter']=self.definition['base_filter']
           sqlDef['fields'] = entrada['elem']
           
-        code_fld = len(sqlDef['fields']) - desc_fld		  
+        code_fld = len(sqlDef['fields']) - desc_fld	
+	  
         sqlDef['order'] = [ str(x + 1) for x in range(code_fld)]
         sqlDef['select_modifier']='DISTINCT'
         
@@ -175,7 +176,6 @@ class Cubo:
     
     def setGuidesDateSqlStatement(self, entrada, fields):
         #TODO creo que fields sobra
-        pprint(entrada)
         sqlDef=dict()
         sqlDef['tables'] = self.definition['table']
         if len(self.definition['base filter'].strip()) > 0:
@@ -184,26 +184,75 @@ class Cubo:
                             [entrada['base_fld'],'min'],
                             ]
         return queryConstructor(**sqlDef)	     
- 
-    def getGuides(self):
+    
+    def getGuidesNew(self):
         if self.db is None:
             return None
-        #SQL    
-        #coreString = 'from %s ' % self.definition['table']
-        #if self.definition['base filter'] !='':
-            
-            #coreString += 'where %s ' % self.definition['base filter']
+
         date_cache={}
         
         for entrada in self.lista_guias:
             entrada['indice'] = []
             entrada['cabecera'] =  []
+            constructor = []
+            campos = []
+            for ind, regla in enumerate(entrada['prod']):
+                #idx = ind +1
+                if entrada['type'] != 'd':
+                    ''' 
+                       constructor[ind][0] sqlstring
+                       constructor[ind][1] code_fld
+                       constructor[ind][2] desc_fld
+                    '''
+                    constructor.append(self.setGuidesSqlStatement(regla, campos ))
+                    #TODO campos.append(regla['elem'])   Puede ser util en ciertos casos, pero no tengo la casuistica
+                else:
+                    #FIXME las fechas por ahora no pueden entrar en una jerarquia
+                    if entrada['base_fld'] not in date_cache:
+                        constructor.append(self.setGuidesDateSqlStatement(entrada,campos))
+
+            for k in range(len(entrada['prod'])):
+                if entrada['type'] != 'd':
+                    
+                # cargamos los datos
+                    '''          
+                    ind, desc = self.getIndex(sqlString, code_fld, desc_fld)             
+                    
+                    entrada['indice'].append(ind)
+                    entrada['cabecera'].append(desc)
+
+                else:
+                    campo = entrada['base_fld']
+                    fmt = entrada['prod'][ind]['mask']
+                    if entrada['base_fld'] not in date_cache:
+                        sqlString = self.setGuidesDateSqlStatement(entrada,campos)
+                        row=getCursor(self.db,sqlString)
+                        date_cache[campo] = (row[0][0], row[0][1])
+                        
+                    max_date = date_cache[campo][0]
+                    min_date  = date_cache[campo][1]
+                    
+                    entrada['indice'].append (getDateIndex(max_date, min_date, fmt))
+                    entrada['cabecera'].append(entrada['indice'][ind][ : ])
+                    ''' 
+                
+ 
+    def getGuides(self):
+        if self.db is None:
+            return None
+
+        date_cache={}
+        
+        for entrada in self.lista_guias:
+            entrada['indice'] = []
+            entrada['cabecera'] =  []
+            constructor = []
             campos = []
             for ind, regla in enumerate(entrada['prod']):
                 #idx = ind +1
                 if entrada['type'] != 'd':
                     (sqlString, code_fld, desc_fld) = self.setGuidesSqlStatement(entrada['prod'][ind], campos )
-                    # campos.append(regla['elem'])   parece innecesario
+                    #TODO campos.append(regla['elem'])   Puede ser util en ciertos casos, pero no tengo la casuistica
                     ind, desc = self.getIndex(sqlString, code_fld, desc_fld)             
                     
                     entrada['indice'].append(ind)
@@ -545,10 +594,10 @@ if __name__ == '__main__':
      #print('lista_funciones ',cubo.lista_funciones)
      #print('DB              ',cubo.db)
    # 
-   row =1
+   row =7
    col =0
    agregado = 'sum'
-   campo = 'seats'
+   campo = 'votes_presential'
    #        
    if vista is None:
       vista = Vista(cubo, row, col, agregado, campo)       
