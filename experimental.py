@@ -174,8 +174,12 @@ class NCubo:
                     self.lista_guias[ind]['elem'].append(componente['elem'])
                 else:
                     (sqlString,code_fld,desc_fld) = self.setGuidesSqlStatement(componente,[])
-                    self.lista_guias[ind]['rules'].append({'string':sqlString,'ncode':code_fld,'ndesc':desc_fld})
-                    self.lista_guias[ind]['elem'].append(componente['elem'])
+                    self.lista_guias[ind]['elem'] += componente['elem'].split(',')
+                    self.lista_guias[ind]['rules'].append({'string':sqlString,
+                                                           'ncode':code_fld,
+                                                           'ndesc':desc_fld,
+                                                           'elem':self.lista_guias[ind]['elem'][:]})
+                    
                 #pprint(componente)
     def fillGuias(self):
 
@@ -194,10 +198,13 @@ class NCubo:
                 cursor += getCursor(self.db,sqlstring,regHashFill,**lista_compra)
             entrada['cursor']=sorted(cursor)    
             entrada['dir_row']=[record[0] for record in entrada['cursor'] ]  #para navegar el indice con menos datos
+            #FIXME probablemente esta mal con descripciondes de mas de un campo
             entrada['des_row']=[record[-componente['ndesc']:] for record in entrada['cursor']] #probablemenente innecesario
             #print(time.strftime("%H:%M:%S"),dir_row[0])
 
 class NVista:
+    #TODO falta documentar
+    #TODO falta implementar la five points metric
     def __init__(self, cubo,row, col,  agregado, campo, filtro=''):
         
         self.cubo = cubo
@@ -208,19 +215,103 @@ class NVista:
         
         self.row_id = None   #son row y col. a asignar en setnewview
         self.col_id = None
-        self.cur_row = None
-        self.cur_col  = None
+
         self.row_hdr_idx = list()
         self.col_hdr_idx = list()
         self.row_hdr_txt = list()
         self.col_hdr_txt = list()
+
         self.dim_row = None
         self.dim_col = None
         self.hierarchy= False
         self.array = []
+        
+        self.setNewView(row, col)
+        
+    def setNewView(self,row, col, agregado=None, campo=None, filtro=''):
+        dim_max = len(self.cubo.lista_guias)
+        # validaciones. Necesarias porque puede ser invocado desde fuera
+        if row >= dim_max or col >= dim_max:
+            print( 'Limite dimensional excedido. Ignoramos')
+            return 
+        elif  agregado is not None and agregado not in  self.db.lista_funciones:
+            print('Funcion de agregacion >{}< no disponible'.format(agregado))
+            return
+        elif campo is not None and campo not in self.db.lista_campos:
+            print('Magnitud >{}< no disponible en este cubo'.format(campo))
+            return
+            
+        # Determinamos si han cambiado los valores
+      
+        procesar = False
+        if self.row_id != row:
+            procesar = True
+            self.row_id = row
+        if self.col_id != col:
+            procesar = True
+            self.col_id = col
+        if agregado is not None and agregado != self.agregado:
+            procesar = True
+            self.agregado = agregado
+        if campo is not None and campo != self.campo:
+            procesar = True
+            self.campo = campo
+        if self.filtro != filtro:
+            procesar = True
+            self.filtro = filtro
+            
+        if procesar:
+            self.row_id = row
+            self.col_id = col
+            
+            self.dim_row = len(self.cubo.lista_guias[row]['rules'])
+            self.dim_col = len(self.cubo.lista_guias[col]['rules'])
+            if  self.dim_row  > 1 or self.dim_col > 1: #No se si es necesario
+                self.hierarchy = True
+            
+            self.row_hdr_idx = self.cubo.lista_guias[row]['dir_row']
+            self.col_hdr_idx = self.cubo.lista_guias[col]['dir_row']
+            self.row_hdr_txt = self.cubo.lista_guias[row]['des_row']
+            self.col_hdr_txt = self.cubo.lista_guias[col]['des_row']
+                         
+            self.setDataMatrix()
+            
+    def  setDataMatrix(self):
+         #FIXME solo esperamos un campo de datos. Hay que generalizarlo
+        self.array = [ [None for k in range(len(self.col_hdr_idx))] for j in range(len(self.row_hdr_idx))]
+        
+        for i in range(0,self.dim_row):
+            for j in range(0,self.dim_col):          
+                #TODO rellenar sqlstring y lista de compra en cada caso
+                sqlDef=dict()
+                sqlDef['tables']=self.cubo.definition['table']
+                #sqlDef['select_modifier']=None
+                sqlDef['fields']= self.cubo.lista_guias[self.row_id]['rules'][i]['elem'] + \
+                                  self.cubo.lista_guias[self.col_id]['rules'][j]['elem'] + \
+                                  [(self.campo,self.agregado)]    
+                #sqlDef['where']=None
+                sqlDef['base_filter']=self.cubo.definition['base filter']+self.filtro
+                sqlDef['group']=self.cubo.lista_guias[self.row_id]['rules'][i]['elem'] + \
+                                  self.cubo.lista_guias[self.col_id]['rules'][j]['elem']
+                #sqlDef['having']=None
+                #sqlDef['order']=None
+                sqlstring=queryConstructor(**sqlDef)
+                
+                #
+                lista_compra={'row':{'nkeys':len(self.cubo.lista_guias[self.row_id]['rules'][i]['elem'])},
+                              'col':{'nkeys':len(self.cubo.lista_guias[self.col_id]['rules'][j]['elem']),
+                                     'init':-1-len(self.cubo.lista_guias[self.col_id]['rules'][j]['elem'])}
+                              }
+                print(sqlstring,lista_compra)
+                cursor_data=getCursor(self.cubo.db,sqlstring,regHasher2D,**lista_compra)
+                #print(time.strftime("%H:%M:%S"),cursor_data[0])
+                for record in cursor_data:
+                    #TODO permitir en ciertas circunstancias que algunos registros se pierdan
+                    row_idx = self.row_hdr_idx.index(record[0])
+                    col_idx = self.col_hdr_idx.index(record[1])
+                    #print('{} de {}, {} de {}'.format(row_idx,len(dir_row),col_idx,len(dir_col)))
+                    self.array[row_idx][col_idx] = record[-1]
 
-def get_query():
-    return
 
 def experimental():
     vista = None
@@ -231,9 +322,14 @@ def experimental():
     #pprint(cubo.lista_campos)
     
     cubo.fillGuias()
-    pprint(cubo.lista_guias[5]['des_row'][1:20])
-    
-    get_query()
+    vista=NVista(cubo,5,0,'sum','votes_presential')
+    idx = 0
+    print('',vista.col_hdr_txt)
+    for record in vista.array:
+        print(vista.row_hdr_txt[idx],record)
+        idx += 1
+
+
 
 if __name__ == '__main__':
     experimental()

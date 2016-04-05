@@ -161,7 +161,7 @@ datos locales:
                         desc: nombre
                         table: localidades
                         grouped by: region
-                        filter: "municipio = '' and isla = ''"
+                        filter: "provincia <> '' and municipio = '' and isla = ''"
 
                 -   elem: municipio
                     fmt: txt
