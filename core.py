@@ -25,7 +25,7 @@ from datalayer.query_constructor import *
 from datemgr import getDateSlots,getDateIndex
 from pprint import *
 
-class NCubo:
+class Cubo:
     def __init__(self, definicion):
         if definicion is None :
             print('No se especifico definicion valida ')
@@ -246,7 +246,7 @@ class NCubo:
                     entrada['des_row']=[record[-componente['ndesc']:] for record in entrada['cursor']] #probablemenente innecesario
                     #print(time.strftime("%H:%M:%S"),dir_row[0])
 
-class NVista:
+class Vista:
     #TODO falta documentar
     #TODO falta implementar la five points metric
     def __init__(self, cubo,row, col,  agregado, campo, filtro=''):
@@ -360,15 +360,15 @@ class NVista:
 def experimental():
     vista = None
     mis_cubos = load_cubo()
-    cubo = NCubo(mis_cubos['datos locales'])
+    cubo = Cubo(mis_cubos['datos locales'])
     #pprint(cubo.definition)
     #pprint(cubo.lista_funciones)
     #pprint(cubo.lista_campos)
     cubo.fillGuias()
-    pprint(cubo.lista_guias[1])   
-    pprint(cubo.lista_guias[6])   
+    #pprint(cubo.lista_guias[1])   
+    #pprint(cubo.lista_guias[6])   
 
-    vista=NVista(cubo,6,0,'sum','votes_presential')
+    vista=Vista(cubo,6,0,'sum','votes_presential')
     idx = 0
     print('',vista.col_hdr_txt)
     for record in vista.array:
