@@ -14,6 +14,24 @@ Documentation, License etc.
 
 from pprint import *
 
+def getLevel(record):
+    '''
+       determino el ultimo nivel activo en un registro
+    '''
+    " ojo chequear por el valor -1 "
+    if not isinstance(record, (list, tuple)):
+        return 0
+    elif len(record) == 1:
+        return 0
+    else:
+        pos = len(filter(lambda x: x is not None, record)) -1
+                  
+    if pos < 0 :
+        return 0
+    else:
+        return pos
+
+
 def regHashFill(record,**kwargs):
 
     regHasher(record,**kwargs)

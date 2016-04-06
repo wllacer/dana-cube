@@ -25,6 +25,7 @@ from datalayer.query_constructor import *
 from datemgr import getDateSlots,getDateIndex
 from pprint import *
 
+
 class Cubo:
     def __init__(self, definicion):
         if definicion is None :
@@ -48,6 +49,13 @@ class Cubo:
         # no se usa en core. No se todavia en la parte GUI
         self.lista_campos = self.getFields()
     #
+    def getFunctions(self):
+        '''
+           INTERFAZ EXTERNA
+           obtiene las funciones disponibls por la base de datos
+        '''
+        return self.lista_funciones
+           
     def getFields(self):
         '''
            crea/devuelve el atributo cubo.lista_campos

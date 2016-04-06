@@ -2,6 +2,12 @@
 # -*- coding: utf-8 -*-
 ## Copyright (c) 2012 Werner Llacer. All rights reserved.. Under the terms of the GPL 2
 ## Portions copyright (c) 2008 Qtrac Ltd. All rights reserved.. Under the terms of the GPL 2
+# FIXED cubo.getGuides.  Sustituir por fillGuias()
+# FIXED cubo.getFunctions:  generar
+# FIXED getLevel    no definida creada en util.record_functions
+# FIXME fivepointsmetric no definida. Suspendida de momento
+# FIXME cambiar la vista se pega un carajazo. vista.setNewView
+# FIXME fmtHdr parece incompatible con el codigo nuevo en fechas
 #
 from __future__ import division
 from __future__ import absolute_import
@@ -48,6 +54,7 @@ def fmtNumber(number, fmtOptions):
     text = "{0}{1}{2}".format(sign, "".join(digits), fraction)#
     
     return text, sign
+
 class Form(QDialog):
 
 
@@ -99,7 +106,7 @@ class Form(QDialog):
             seleccion = str(dialog.cuboCB.currentText())
             self.cubo = Cubo(my_cubos[seleccion])
             #self.cubo.putGuidesModelo()
-            self.cubo.getGuides()
+            self.cubo.fillGuias()
             self.vista = None
 #            self.requestVista()
         
@@ -165,6 +172,7 @@ class Form(QDialog):
                 self.refreshTable()
                 
     def fmtHeader(self, indice, separador='\t', sparse=False, max_level=99, range= None):
+        #FIXME parece incompatible con el codigo nuevo
         cab_col = []
 
         for i, entrada in(enumerate(indice)):
@@ -236,8 +244,9 @@ class Form(QDialog):
         self.Y_MAX = len(self.vista.col_hdr_idx)
 
         metrics=None
-        if self.format['yellowoutliers']:
-            metrics = self.vista.fivepointsmetric()
+        #FIXME
+        #if self.format['yellowoutliers']:
+            #metrics = self.vista.fivepointsmetric()
   
         self.table.clear()
 
@@ -268,10 +277,11 @@ class Form(QDialog):
                     continue
                 #determine if outlier
                 outlier = False
-                if self.format['yellowoutliers'] and self.numbers[x][y] is not None:
-                    if (self.numbers[x][y]< metrics[level_x][level_y][1] 
-                                or self.numbers[x][y]  > metrics[level_x][level_y][5] ):
-                        outlier=True
+                # FIXME fivepointsmetric
+                #if self.format['yellowoutliers'] and self.numbers[x][y] is not None:
+                    #if (self.numbers[x][y]< metrics[level_x][level_y][1] 
+                                #or self.numbers[x][y]  > metrics[level_x][level_y][5] ):
+                        #outlier=True
                 
                 self.addTableItem(self.table, self.numbers[x][y], row_i, col_i, level_x, level_y, outlier)
                 col_i += 1
