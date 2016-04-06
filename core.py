@@ -281,20 +281,23 @@ class Vista:
         self.setNewView(row, col)
         
     def setNewView(self,row, col, agregado=None, campo=None, filtro=''):
+        
         dim_max = len(self.cubo.lista_guias)
+        
         # validaciones. Necesarias porque puede ser invocado desde fuera
         if row >= dim_max or col >= dim_max:
             print( 'Limite dimensional excedido. Ignoramos')
             return 
-        elif  agregado is not None and agregado not in  self.db.lista_funciones:
+        elif  agregado is not None and agregado not in  self.cubo.lista_funciones:
             print('Funcion de agregacion >{}< no disponible'.format(agregado))
             return
-        elif campo is not None and campo not in self.db.lista_campos:
+        elif campo is not None and campo not in self.cubo.lista_campos:
             print('Magnitud >{}< no disponible en este cubo'.format(campo))
             return
-            
+        else:
+            pass
         # Determinamos si han cambiado los valores
-      
+        
         procesar = False
         if self.row_id != row:
             procesar = True
@@ -313,6 +316,7 @@ class Vista:
             self.filtro = filtro
             
         if procesar:
+        
             self.row_id = row
             self.col_id = col
             
@@ -325,7 +329,7 @@ class Vista:
             self.col_hdr_idx = self.cubo.lista_guias[col]['dir_row']
             self.row_hdr_txt = self.cubo.lista_guias[row]['des_row']
             self.col_hdr_txt = self.cubo.lista_guias[col]['des_row']
-                         
+        
             self.setDataMatrix()
             
     def  setDataMatrix(self):
@@ -364,25 +368,31 @@ class Vista:
                     #print('{} de {}, {} de {}'.format(row_idx,len(dir_row),col_idx,len(dir_col)))
                     self.array[row_idx][col_idx] = record[-1]
 
-    def fmtHeader(self,dimension, separador='\t', sparse=False, rango= None):
+    def fmtHeader(self,dimension, separador='\t', sparse=False, rango= None,  max_level=None):
         '''
            TODO puede simplificarse
+           TODO documentar
         '''
+        #print(dimension, separador, sparse, rango,  max_level)
         cab_col = []
         if dimension == 'row':
             indice = self.cubo.lista_guias[self.row_id]['dir_row']
             datos  = self.cubo.lista_guias[self.row_id]['des_row']
-            max_level = self.dim_row
+            if max_level is None:
+                max_level = self.dim_row
         elif dimension == 'col':
             indice = self.cubo.lista_guias[self.col_id]['dir_row']
             datos = self.cubo.lista_guias[self.col_id]['des_row']
-            max_level = self.dim_col
+            if max_level is None:
+                max_level = self.dim_col
         else:
             print('Piden formatear la cabecera >{}< no implementada'.format(dimension))
             exit(-1)
             
         for ind,key in enumerate(indice):
             cur_level = getLevel(key)
+            if cur_level >= max_level:  #odio los indices en 0. siempre off by one 
+                continue
             if rango is not None:
                 if rango[0] <= ind <= rango[1]:
                     pass

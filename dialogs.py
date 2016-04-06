@@ -88,13 +88,16 @@ class VistaDlg(QDialog):
         buttonBox.accepted.connect(self.accept)
         buttonBox.rejected.connect(self.reject)
 
+        
+        
 class ZoomDlg(QDialog):
     def __init__(self, vista,  parent=None):
         super(ZoomDlg, self).__init__(parent)
         
         self.vista = vista
-        cab_row = parent.fmtHeader(self.vista.row_hdr_idx, '\t',True) # max_col_level, row_range)
-        cab_col = parent.fmtHeader(self.vista.col_hdr_idx, '\t', True)  #max_row_level, col_range)
+
+        cab_row = vista.fmtHeader('row', '\t',True) # max_col_level, row_range)
+        cab_col = vista.fmtHeader('col', '\t', True)  #max_row_level, col_range)
         
         InicioLabel = QLabel("Defina el rango de seleccion")
         

@@ -9,7 +9,9 @@
 # FIXED fmtHdr moverlo a vista
 # TODO ¿que pasa con las secuencias de escape?
 # FIXME LOW fivepointsmetric no definida. Suspendida de momento. No funciona como yo quiero
-# FIXME cambiar la vista se pega un carajazo, zoom tambien. ????
+# FIXED cambiar la vista se pega un carajazo, aparecian elementos con nomenclatura caducada
+# FIXED vista zoom cae. Es por invocacion a formatHeader. FIXED acabo de descubrir que falta un parametro alli para
+#  colapsar jerarquias
 # FIXME por alguna razon FmtHdr se ejecuta dos veces. Algo esta duplicado
 from __future__ import division
 from __future__ import absolute_import
@@ -114,7 +116,7 @@ class Form(QDialog):
         
     def requestVista(self):
         vistaDlg = VistaDlg(self.cubo, self)
- 
+        
         #TODO  falta el filtro
         if self.vista is  None:
             pass
@@ -129,17 +131,16 @@ class Form(QDialog):
             col = vistaDlg.colCB.currentIndex()
             agregado = vistaDlg.agrCB.currentText()
             campo = vistaDlg.fldCB.currentText()
-#        
             if self.vista is None:
                 self.vista = Vista(self.cubo, row, col, agregado, campo)       
-            else:
+            else:             
                 self.vista.setNewView(row, col, agregado, campo)
-                
+           
             self.max_row_level = self.vista.dim_row
             self.max_col_level  = self.vista.dim_col
             self.row_range = [0, len(self.vista.row_hdr_idx) -1]
             self.col_range = [0, len(self.vista.col_hdr_idx) -1]
-            
+          
             self.refreshTable()
 #
     def zoomData(self):
@@ -163,16 +164,16 @@ class Form(QDialog):
                 self.col_range[0] = zoomDlg.colFCB.currentIndex()
                 self.col_range[1] = zoomDlg.colTCB.currentIndex()
                 refrescar = True
+
             if ( zoomDlg.rowDimSpinBox.value != self.max_row_level or
                     zoomDlg.colDimSpinBox.value != self.max_col_level ):
                 self.max_row_level = zoomDlg.rowDimSpinBox.value()
                 self.max_col_level = zoomDlg.colDimSpinBox.value()
                 refrescar = True
-                
-            if refrescar:
 
+            if refrescar:
                 self.refreshTable()
-       
+
             
         
     def addTableItem(self, tabla,  elemento, row, col, level_x, level_y,outlier=False):
@@ -206,8 +207,8 @@ class Form(QDialog):
         self.numbers = self.vista.array
         #                
 
-        cab_row = self.vista.fmtHeader('row','\t',True, self.row_range)
-        cab_col = self.vista.fmtHeader('col','\t',False, self.row_range)
+        cab_row = self.vista.fmtHeader('row','\t',True, self.row_range,self.max_row_level)
+        cab_col = self.vista.fmtHeader('col','\t',False, self.row_range,self.max_col_level)
         self.X_MAX = len(self.vista.row_hdr_idx)
         self.Y_MAX = len(self.vista.col_hdr_idx)
         
