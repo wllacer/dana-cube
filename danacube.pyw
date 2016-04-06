@@ -5,7 +5,9 @@
 # FIXED cubo.getGuides.  Sustituir por fillGuias()
 # FIXED cubo.getFunctions:  generar
 # FIXED getLevel    no definida creada en util.record_functions . Adaptado a marcar nivel con ':'
-# FIXED fmtHdr fijado. TODO moverlo a vista TODO ¿que pasa con las secuencias de escape?
+# FIXED fmtHdr fijado. 
+# FIXED fmtHdr moverlo a vista
+# TODO ¿que pasa con las secuencias de escape?
 # FIXME LOW fivepointsmetric no definida. Suspendida de momento. No funciona como yo quiero
 # FIXME cambiar la vista se pega un carajazo, zoom tambien. ????
 # FIXME por alguna razon FmtHdr se ejecuta dos veces. Algo esta duplicado
@@ -171,52 +173,6 @@ class Form(QDialog):
 
                 self.refreshTable()
        
-    def fmtHeader(self,dimension, separador='\t', sparse=False, rango= None):
-        '''
-           TODO puede simplificarse
-        '''
-        cab_col = []
-        if dimension == 'row':
-            indice = self.vista.cubo.lista_guias[self.vista.row_id]['dir_row']
-            datos  = self.vista.cubo.lista_guias[self.vista.row_id]['des_row']
-            max_level = self.max_row_level
-        elif dimension == 'col':
-            indice = self.vista.cubo.lista_guias[self.vista.col_id]['dir_row']
-            datos = self.vista.cubo.lista_guias[self.vista.col_id]['des_row']
-            max_level = self.max_col_level
-        else:
-            print('Piden formatear la cabecera >{}< no implementada'.format(dimension))
-            exit(-1)
-            
-        for ind,key in enumerate(indice):
-            cur_level = getLevel(key)
-            if rango is not None:
-                if rango[0] <= ind <= rango[1]:
-                    pass
-                else:
-                    continue
-            #FIXME primera iteracion. Altamente ineficiente. 
-            tmp_table = datos[ind][:]
-            if len(tmp_table) >= cur_level +1:
-                if sparse:
-                    for k in range(0,cur_level):
-                        tmp_table[k]=' '*8
-                base = separador.join(tmp_table)
-            else:
-                tmp_idx_arr = key.split(':')
-                base = separador.join(tmp_table)
-                for k in range(cur_level,0,-1):
-                    if not sparse:
-                        idx=':'.join(tmp_idx_arr[0:k])
-                        texto = separador.join(datos[indice.index(idx)])
-                    else:
-                        texto = ' '*8
-                    base = '{}{}{}'.format(texto,separador,base)
-                    
-            cab_col.append(base)
-                
-               
-        return cab_col
             
         
     def addTableItem(self, tabla,  elemento, row, col, level_x, level_y,outlier=False):
@@ -250,8 +206,8 @@ class Form(QDialog):
         self.numbers = self.vista.array
         #                
 
-        cab_row = self.fmtHeader('row','\t',True, self.row_range)
-        cab_col = self.fmtHeader('col','\t',False, self.row_range)
+        cab_row = self.vista.fmtHeader('row','\t',True, self.row_range)
+        cab_col = self.vista.fmtHeader('col','\t',False, self.row_range)
         self.X_MAX = len(self.vista.row_hdr_idx)
         self.Y_MAX = len(self.vista.col_hdr_idx)
         

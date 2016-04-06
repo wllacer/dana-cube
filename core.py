@@ -364,6 +364,52 @@ class Vista:
                     #print('{} de {}, {} de {}'.format(row_idx,len(dir_row),col_idx,len(dir_col)))
                     self.array[row_idx][col_idx] = record[-1]
 
+    def fmtHeader(self,dimension, separador='\t', sparse=False, rango= None):
+        '''
+           TODO puede simplificarse
+        '''
+        cab_col = []
+        if dimension == 'row':
+            indice = self.cubo.lista_guias[self.row_id]['dir_row']
+            datos  = self.cubo.lista_guias[self.row_id]['des_row']
+            max_level = self.dim_row
+        elif dimension == 'col':
+            indice = self.cubo.lista_guias[self.col_id]['dir_row']
+            datos = self.cubo.lista_guias[self.col_id]['des_row']
+            max_level = self.dim_col
+        else:
+            print('Piden formatear la cabecera >{}< no implementada'.format(dimension))
+            exit(-1)
+            
+        for ind,key in enumerate(indice):
+            cur_level = getLevel(key)
+            if rango is not None:
+                if rango[0] <= ind <= rango[1]:
+                    pass
+                else:
+                    continue
+            #FIXME primera iteracion. Altamente ineficiente con indices chungos
+            tmp_table = datos[ind][:]
+            if len(tmp_table) >= cur_level +1:
+                if sparse:
+                    for k in range(0,cur_level):
+                        tmp_table[k]=' '*8
+                base = separador.join(tmp_table)
+            else:
+                tmp_idx_arr = key.split(':')
+                base = separador.join(tmp_table)
+                for k in range(cur_level,0,-1):
+                    if not sparse:
+                        idx=':'.join(tmp_idx_arr[0:k])
+                        texto = separador.join(datos[indice.index(idx)])
+                    else:
+                        texto = ' '*8
+                    base = '{}{}{}'.format(texto,separador,base)
+                    
+            cab_col.append(base)
+                
+               
+        return cab_col
 
 def experimental():
     vista = None
