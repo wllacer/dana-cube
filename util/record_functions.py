@@ -14,7 +14,16 @@ Documentation, License etc.
 
 from pprint import *
 
-def getLevel(record):
+def getLevel(entrada):
+    '''
+       sustituto del get level como array
+       el : es separador de nivel (espero que eso no entre en conflicto con textos reales TODO
+       
+    '''
+    level = entrada.count(':')
+    return level
+    
+def getRecordLevel(record):
     '''
        determino el ultimo nivel activo en un registro
     '''

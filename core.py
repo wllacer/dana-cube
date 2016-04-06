@@ -170,7 +170,7 @@ class Cubo:
         '''
         #TODO Mejorar los nombres de las fechas
         #TODO indices con campos elementales no son problema, pero no se si funciona con definiciones raras
-        #FIXME no proceso el elemento __fmt__ de la definicion. 
+
         
         self.lista_guias = []
         ind = 0
@@ -238,7 +238,7 @@ class Cubo:
                                                    , componente['fmt'] )
                     # espero que Python trabaje como dice y esto sean referencias
                     entrada['dir_row'] = entrada['cursor']
-                    entrada['des_row'] = entrada['cursor']
+                    entrada['des_row'] = [ [k,] for k in entrada['cursor'] ]
                 else:  
                     sqlstring=componente['string']
                     lista_compra={'nkeys':componente['ncode'],'ndesc':componente['ndesc']}

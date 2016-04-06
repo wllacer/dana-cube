@@ -4,11 +4,11 @@
 ## Portions copyright (c) 2008 Qtrac Ltd. All rights reserved.. Under the terms of the GPL 2
 # FIXED cubo.getGuides.  Sustituir por fillGuias()
 # FIXED cubo.getFunctions:  generar
-# FIXED getLevel    no definida creada en util.record_functions
-# FIXME fivepointsmetric no definida. Suspendida de momento
-# FIXME cambiar la vista se pega un carajazo. vista.setNewView
-# FIXME fmtHdr parece incompatible con el codigo nuevo en fechas
-#
+# FIXED getLevel    no definida creada en util.record_functions . Adaptado a marcar nivel con ':'
+# FIXED fmtHdr fijado. TODO moverlo a vista TODO ¿que pasa con las secuencias de escape?
+# FIXME LOW fivepointsmetric no definida. Suspendida de momento. No funciona como yo quiero
+# FIXME cambiar la vista se pega un carajazo, zoom tambien. ????
+# FIXME por alguna razon FmtHdr se ejecuta dos veces. Algo esta duplicado
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
@@ -170,40 +170,54 @@ class Form(QDialog):
             if refrescar:
 
                 self.refreshTable()
-                
-    def fmtHeader(self, indice, separador='\t', sparse=False, max_level=99, range= None):
-        #FIXME parece incompatible con el codigo nuevo
+       
+    def fmtHeader(self,dimension, separador='\t', sparse=False, rango= None):
+        '''
+           TODO puede simplificarse
+        '''
         cab_col = []
-
-        for i, entrada in(enumerate(indice)):
-            if getLevel(entrada) >= max_level :
-                continue
-            if range is not None:
-                if range[0] <= i <= range[1]:
+        if dimension == 'row':
+            indice = self.vista.cubo.lista_guias[self.vista.row_id]['dir_row']
+            datos  = self.vista.cubo.lista_guias[self.vista.row_id]['des_row']
+            max_level = self.max_row_level
+        elif dimension == 'col':
+            indice = self.vista.cubo.lista_guias[self.vista.col_id]['dir_row']
+            datos = self.vista.cubo.lista_guias[self.vista.col_id]['des_row']
+            max_level = self.max_col_level
+        else:
+            print('Piden formatear la cabecera >{}< no implementada'.format(dimension))
+            exit(-1)
+            
+        for ind,key in enumerate(indice):
+            cur_level = getLevel(key)
+            if rango is not None:
+                if rango[0] <= ind <= rango[1]:
                     pass
                 else:
                     continue
-            linea = entrada[:]
-            if sparse and i >0:
-                for k, campo in enumerate(linea):
-                    if campo == indice[i -1][k] and campo is not None:
-                        linea[k] = ' '*8
+            #FIXME primera iteracion. Altamente ineficiente. 
+            tmp_table = datos[ind][:]
+            if len(tmp_table) >= cur_level +1:
+                if sparse:
+                    for k in range(0,cur_level):
+                        tmp_table[k]=' '*8
+                base = separador.join(tmp_table)
+            else:
+                tmp_idx_arr = key.split(':')
+                base = separador.join(tmp_table)
+                for k in range(cur_level,0,-1):
+                    if not sparse:
+                        idx=':'.join(tmp_idx_arr[0:k])
+                        texto = separador.join(datos[indice.index(idx)])
                     else:
-                        break
-            texto = ''
-            for col in linea:
-                if col is None and texto == '':
-                    pass
-                elif col is None:
-                    texto +=separador
-                elif texto == '':
-                    #texto = unicode(col)
-                    texto = col
-                else:
-                    #texto += separador + unicode(col)
-                    texto += separador + col
-            cab_col.append(texto)
+                        texto = ' '*8
+                    base = '{}{}{}'.format(texto,separador,base)
+                    
+            cab_col.append(base)
+                
+               
         return cab_col
+            
         
     def addTableItem(self, tabla,  elemento, row, col, level_x, level_y,outlier=False):
         if elemento is None:
@@ -236,12 +250,11 @@ class Form(QDialog):
         self.numbers = self.vista.array
         #                
 
-        cab_row = self.fmtHeader(self.vista.row_hdr_txt, '\t',True, self.max_row_level, self.row_range)
-        cab_col = self.fmtHeader(self.vista.col_hdr_txt, '\n', False, self.max_col_level, self.col_range)
-
-
+        cab_row = self.fmtHeader('row','\t',True, self.row_range)
+        cab_col = self.fmtHeader('col','\t',False, self.row_range)
         self.X_MAX = len(self.vista.row_hdr_idx)
         self.Y_MAX = len(self.vista.col_hdr_idx)
+        
 
         metrics=None
         #FIXME
