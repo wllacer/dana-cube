@@ -40,40 +40,9 @@ class NCubo:
         self.lista_funciones = []
         self.lista_campos = []
         
-        # ahora generamos las definiciones internas para las fechas
-        #ind = -1
-        dbdriver = self.definition['connect']['driver']
+        self.dbdriver = self.definition['connect']['driver']
         
 
-        # ahora generamos una lista medio decente de manejar para las presentaciones
-        '''
-        estructura de la lista
-            0 -> nombre
-            1 -> type
-            2 -> model.row
-            3 -> model.col (prod)
-            3,,n indices
-        '''
-        #FiXME TODO este codigo aparentemente es obsoleto, solo la parte de fechas tiene sentido
-        for i in range(0, len(self.definition['guides'])):
-            entrada = self.definition['guides'][i]
-            if entrada['class'] != 'd':
-                self.lista_guias.append({'name':entrada['name'], 
-                                            'type':entrada['class'],
-                                            'prod':entrada['prod']
-                                          })
-            else:
-                campo = entrada['prod'][0]['elem']
-                j = 0
-                for prod in getDateSlots(campo, dbdriver):
-                    self.lista_guias.append({'name':prod['name'], 
-                                                'type':entrada['class'],
-                                                'base_fld':campo, 
-                                                'prod':[prod, ]
-                                              })
-                    j += 1
-                    
-        #dump_structure(self.lista, "lista_dump.yml")
         self.setGuias()
         self.lista_funciones = getAgrFunctions(self.db,self.lista_funciones)
         # no se usa en core. No se todavia en la parte GUI
@@ -164,29 +133,83 @@ class NCubo:
         return queryConstructor(**sqlDef)            
  
     def setGuias(self):
-        #TODO manejo de fechas
+        '''
+           Crea la estructura lista_guias para cada una de las guias (dimensiones) que hemos definido en el cubo.
+           Proceden de las reglas de produccion (prod) de la definicion
+           Es una tupla con una entrada (diccionario) por cada guia con los siguientes elementos:
+           *  name   nombre con el que aparece en la interfaz de usuario (de la definicion)
+           *  elem   lista con los campos de la TABLA PRINCIPAL que cubren esa guia (de la definicion en la prod
+           *  rules  lista con cada una de las reglas de produccion de los niveles. Contiene
+                *   name
+                *   string   cadena sql para crear el dominio de la guia (de prod )
+                *   ncode    numero de campos que forman la clave de la iteracion
+                *   ndesc    numero de campso de la descripción
+                *   elem     lista con los campos de la TABLA PRINCIPAL que cubren ese nivel
+                *   class    '' normal, 'd' fecha
+           * cursor el resultado normalizado (con rellenos) y agreagado de la guia en todos sus niveles
+           * dir_row el array indice (para realizar busquedas)
+           * des_row el array con la descripción  TODO es mejorable su proceso
+           
+           Estos tres últimos elemnentos se cargan en self.fillGuias; separado para poder refrescarlo en cualquier
+           momento
+           
+           El comportamiento para guias de formato fecha es totalmente distinto del resto. TODO documentar proceso
+           
+           FIXME Funciona perfectamente con el ejemplo que uso, necesito explorar otras posibilidades de definicion
+           
+        '''
+        #TODO Mejorar los nombres de las fechas
         #TODO indices con campos elementales no son problema, pero no se si funciona con definiciones raras
+        #FIXME no proceso el elemento __fmt__ de la definicion. __class__ solo afecta a las fechas. No tengo clara
+        #      su necesidad ahora mismo
         self.lista_guias = []
-        for ind,entrada in enumerate(self.definition['guides']):
-            self.lista_guias.append({'name':entrada['name'],'rules':[],'elem':[]})
-            for idx,componente in enumerate(entrada['prod']):
-                if entrada['class'] == 'd':
-                    self.lista_guias[ind]['elem'].append(componente['elem'])
-                else:
-                    (sqlString,code_fld,desc_fld) = self.setGuidesSqlStatement(componente,[])
+        ind = 0
+        for entrada in self.definition['guides']:
+            
+            if entrada['class'] == 'd':
+                for idx,componente in enumerate(entrada['prod']):
+                    if 'name' in componente:
+                        nombre = componente['name']
+                    else:
+                        nombre = entrada['name']
+                    slots = getDateSlots(componente['elem'],self.dbdriver)
+                    # Cada tipo de agregacion de fecha -es lo que devuelve esta funcion- genera una entrada
+                    # distinta, sin jerarquia, de momento
+                    pprint(slots)
+                    for formula in slots:
+                        self.lista_guias.append({'name':nombre +'_'+ formula['mask'],'rules':[],'elem':[]})
+                        pprint(formula)
+                        self.lista_guias[ind]['elem'] += [formula['elem'],]
+                        self.lista_guias[ind]['rules'].append({'string':'',
+                                                        'ncode':1,
+                                                        'ndesc':1,
+                                                        'elem':formula['elem'],
+                                                        'name':nombre +'_'+ formula['mask']})
+                        ind +=1
+            else :
+                self.lista_guias.append({'name':entrada['name'],'rules':[],'elem':[]})
+                for idx,componente in enumerate(entrada['prod']):
+                    if 'name' in componente:
+                        nombre = componente['name']
+                    else:
+                        nombre = entrada['name']
                     self.lista_guias[ind]['elem'] += componente['elem'].split(',')
-                    self.lista_guias[ind]['rules'].append({'string':sqlString,
-                                                           'ncode':code_fld,
-                                                           'ndesc':desc_fld,
-                                                           'elem':self.lista_guias[ind]['elem'][:]})
+                    (sqlString,code_fld,desc_fld) = self.setGuidesSqlStatement(componente,[])
                     
+                    self.lista_guias[ind]['rules'].append({'string':sqlString,
+                                                    'ncode':code_fld,
+                                                    'ndesc':desc_fld,
+                                                    'elem':self.lista_guias[ind]['elem'][:],
+                                                    'name':nombre})
+                ind +=1
+                        
                 #pprint(componente)
     def fillGuias(self):
 
         for ind,entrada in enumerate(self.lista_guias):
             cursor = []
             for idx,componente in enumerate(entrada['rules']):
-                if len(componente) == 0: #TODO fechas
+                if len(componente['string']) == 0: #TODO fechas
                     continue
                 sqlstring=componente['string']
                 lista_compra={'nkeys':componente['ncode'],'ndesc':componente['ndesc']}
@@ -198,7 +221,7 @@ class NCubo:
                 cursor += getCursor(self.db,sqlstring,regHashFill,**lista_compra)
             entrada['cursor']=sorted(cursor)    
             entrada['dir_row']=[record[0] for record in entrada['cursor'] ]  #para navegar el indice con menos datos
-            #FIXME probablemente esta mal con descripciondes de mas de un campo
+            #FIXME probablemente esta mal con descripciones de mas de un campo
             entrada['des_row']=[record[-componente['ndesc']:] for record in entrada['cursor']] #probablemenente innecesario
             #print(time.strftime("%H:%M:%S"),dir_row[0])
 
@@ -320,8 +343,11 @@ def experimental():
     #pprint(cubo.definition)
     #pprint(cubo.lista_funciones)
     #pprint(cubo.lista_campos)
-    
+    pprint(cubo.lista_guias[:])    
     cubo.fillGuias()
+    #pprint(cubo.definition['guides'][6])
+
+    return
     vista=NVista(cubo,5,0,'sum','votes_presential')
     idx = 0
     print('',vista.col_hdr_txt)

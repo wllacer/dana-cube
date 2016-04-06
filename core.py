@@ -137,8 +137,6 @@ class Cubo:
 	      -> entrada.elem
 	  fields son campos auxiliares a incluir en la query
 	'''
-        print()
-        print(fields)
         code_fld = 0
         desc_fld = 0
         
@@ -575,12 +573,13 @@ if __name__ == '__main__':
      #print('dim_row      ',vista.dim_row)
      #print('filtro       ',vista.filtro)
      #print('hierarchy    ',vista.hierarchy)
-     #print('row_hdr_txt  ',vista.row_hdr_txt)
-     #pprint('row_hdr_idx      ',vista.row_hdr_idx)
+   pprint(vista.cubo.lista_guias[7])
+   print('row_hdr_txt  ',vista.row_hdr_txt)
+   print('row_hdr_idx      ',vista.row_hdr_idx)
      #print('row_id       ',vista.row_id)
      
    #for i in range(len(vista.row_hdr_idx)):
      #if vista.row_hdr_idx[i] != vista.cur_row['indice'][0][i]:
         #print('got cha',vista.row_hdr_idx[i],vista.cur_row['indice'][i])
-   pprint(vista.cur_row['indice'])
+   #pprint(vista.cur_row['indice'])
    #pprint(vista.showTableDataH())

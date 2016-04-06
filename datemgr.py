@@ -49,6 +49,8 @@ def getDateIndexElement(max_date, min_date, char):
         
 
     for j in range(min_rg, max_rg):
+        #TODO este proceso solo funciona con dias, no con horas. es una limitacion conocida.
+        #FIXME tengo la impresion que es un poco lento
         #minidx.append(QString(format % j)) 
         minidx.append(format % j) 
         
@@ -132,6 +134,7 @@ def getDateEntry(source, fmt, driver='QSQLITE'):
     return entrada
     
 def getDateSlots(fieldname, driver='QSQLITE', zoom='n'):
+    #FIXME no se procesa el zoom
     base_collection= []
     zoom_collection=[]
     if driver == 'QSQLITE':
@@ -142,7 +145,6 @@ def getDateSlots(fieldname, driver='QSQLITE', zoom='n'):
     zoom_col=('YJ','Ymd', 'Ymw', 'YmWw','YWw')
         
     for i in base_col:
-        base_collection.append(getDateEntry(fieldname, i,  driver))
-    
+        base_collection.append(getDateEntry(fieldname, i,  driver))    
     return base_collection
 
