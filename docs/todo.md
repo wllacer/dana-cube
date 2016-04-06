@@ -10,9 +10,9 @@
 * _WIP_ Code refactoring for clarity
   * _DONE_ data access layer isolation (2/4/16)
   * _DONE_ heavy simplification of core codepaths, and several internal structures.(6/4/16)
-  *  handling of date indexes. Code is handicrafted and full of 's..t'. Integration of dateutil would solve a lot
+  * _DONE_ handling of date indexes. Code is handicrafted and full of 's..t'. Integration of dateutil would solve a lot
   of problems, but add a new dependency
-  * Adapt GUI to new internal structures
+  * _DONE_ Adapt GUI to new internal structures
   * name of elements in hierarchy YML
   
 * New use cases

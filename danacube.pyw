@@ -9,10 +9,10 @@
 # FIXED fmtHdr moverlo a vista
 # TODO ¿que pasa con las secuencias de escape?
 # FIXME LOW fivepointsmetric no definida. Suspendida de momento. No funciona como yo quiero
-# FIXED cambiar la vista se pega un carajazo, aparecian elementos con nomenclatura caducada
+# FIXED cambiar la vista se pega un carajazo, aparecian elementos con nomenclatura caducada (self.vista.db y simulares)
 # FIXED vista zoom cae. Es por invocacion a formatHeader. FIXED acabo de descubrir que falta un parametro alli para
-#  colapsar jerarquias
-# FIXME por alguna razon FmtHdr se ejecuta dos veces. Algo esta duplicado
+#  colapsar jerarquias (max_row_level)
+# FIXED por alguna razon FmtHdr se ejecuta dos veces. requestVista aparecia innecesariamente en el init del form
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
@@ -100,7 +100,7 @@ class Form(QDialog):
         self.initCube()
         if self.vista is None:
             self.requestVista()
-        self.refreshTable()
+        #self.refreshTable()
         
     def initCube(self):
         my_cubos = load_cubo()
