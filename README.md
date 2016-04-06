@@ -66,11 +66,15 @@ PyQt licensing might impose other restrictions, please keep an eye on it (AFAIK 
 
 
 ## Actual Status
-Updated Easter Monday 2016: work has resumed. At first we'll center only in Python 3 -and Qt 5- compatibility). 
+_Update Feast of St. Vincent Ferrer 2016_: Work has progressed steadily. Upgrade to new versions seems to work, and i'm 
+in a process of heavy refactoring of the core functionality. Sadly that implies that _HEAD_ is broken, and might be for some time.
+I made a release from the old codebase which does work. Still have to master Github to know how to mantain them in parallel, so pls. be patient with bugs in there
+
+_Update Easter Monday 2016_: work has resumed. At first we'll center only in Python 3 -and Qt 5- compatibility). 
 
 I hope to make some inroads into new functionality.
 
-HEAD works now with PyQt 5.
+__HEAD is broken now__. If you want to try it, please download release __2.1__ or get the source in the __antiguo__ branch 
 
 Active tasks can be read [here](../docs/todo.md)
 

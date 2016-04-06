@@ -42,6 +42,7 @@ def selConstructor(kwargs):
     ind = 0
     num_elem = len(entrada)
     for kelem in entrada:
+      
       elemento,adfijo=slicer(kelem)
       if elemento.strip().find(' ') == -1:
         texto = elemento.strip()
@@ -197,7 +198,7 @@ def searchConstructor(definicion,kwargs):
       
     ind = 0
     num_elem = len(entrada)
-    print(num_elem,entrada)
+    #print(num_elem,entrada)
         
     for kelem in entrada:
       elemento,adfijo,parms=slicer(kelem,3)   

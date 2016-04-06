@@ -51,14 +51,16 @@ def getDateIndexElement(max_date, min_date, char):
     for j in range(min_rg, max_rg):
         #TODO este proceso solo funciona con dias, no con horas. es una limitacion conocida.
         #FIXME tengo la impresion que es un poco lento
+        #TODO explorar la posibilidad de utilizar el paquete Dateutil 
         #minidx.append(QString(format % j)) 
         minidx.append(format % j) 
         
     return minidx
 
 def getDateIndex(max_date,  min_date, fmt):     
-    ''' admite una leve posibilidad de mejora para excluir fechas imposibles
-       esta clarisimo que ademas admite seria optimizacion
+    ''' 
+       TODO admite una leve posibilidad de mejora para excluir fechas imposibles
+       TODO esta clarisimo que ademas admite seria optimizacion
     '''
     delimiter = '.'
     base = []
@@ -72,11 +74,12 @@ def getDateIndex(max_date,  min_date, fmt):
                 for k in result:   #jerarquia actual
                     tmp.append(j+delimiter+k)
             base = tmp
-    normalizado = []
-    for i in base:
-        normalizado.append([i, ]) #convert into 0 list
+    return base
+    #normalizado = []
+    #for i in base:
+        #normalizado.append([i, ]) #convert into 0 list
 
-    return normalizado
+    #return normalizado
         
 def getDateEntry(source, fmt, driver='QSQLITE'):
     marker = {}
