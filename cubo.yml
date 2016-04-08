@@ -87,8 +87,18 @@ datos locales:
                         code: code
                         desc: acronym
                         table: partidos
-                        filter: ''
-            
+                        filter: "code in (select distinct partido from votos_provincia where votes_percent >= 3)"
+        -   name: partidos importantes
+            class: o
+            prod:
+                  - elem: partido
+                    fmt: txt
+                    source:
+                        code: code
+                        desc: acronym
+                        table: partidos
+                        filter: "code in (select distinct partido from votos_provincia where votes_percent >= 3)"
+                    
         -   name: autonomia
             class: o
             prod:

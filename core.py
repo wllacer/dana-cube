@@ -14,6 +14,14 @@ sys.setdefaultencoding('utf-8')
 Documentation, License etc.
 
 @package estimaciones
+# 0.3
+TODO si utilizo un filter en la guia ¿deberia que estar en la query?
+FIXME y propagarse en el filtro si es jerarquico
+# FIXED la union de filtros no funcionaba. Faltaba el AND
+# DONE esto es una funcion reutilizable mergeString
+#FIXED ahora si el indice no existe para un valor no se dispara error
+#TODO En ciertas circunstancias debe o no provocarse y/o informar del error
+
 '''
 
 from util.yamlmgr import *
@@ -25,6 +33,14 @@ from datalayer.query_constructor import *
 from datemgr import getDateSlots,getDateIndex
 from pprint import *
 
+def mergeString(string1,string2,connector):
+    if len(string1.strip()) > 0 and len(string1.strip()) > 0:
+        merge ='{} {} {}'.format(string1,connector,string2)
+    elif len(string1.strip()) > 0 or len(string2.strip()) > 0: 
+        merge ='{}{}'.format(string1,string2).strip()
+    else:
+        merge = ''
+    return merge
 
 class Cubo:
     def __init__(self, definicion):
@@ -102,7 +118,7 @@ class Cubo:
               sqlDef['base_filter']=entrada['source']['filter']
               
           sqlDef['fields'] = []
-          #TODO grouped by determina la jerarquia explicitamente.
+          #REFINE grouped by determina la jerarquia explicitamente.
           #     hay que hallar la manera de determinarla implicitamente
           if 'grouped by' in entrada['source']:
               sqlDef['fields'] += entrada['source']['grouped by'].split(',')
@@ -130,7 +146,7 @@ class Cubo:
         return sqlString, code_fld,desc_fld 
     
     def setGuidesDateSqlStatement(self, entrada, fields=None):
-        #TODO creo que fields sobra
+        #REFINE creo que fields sobra
         sqlDef=dict()
         sqlDef['tables'] = self.definition['table']
         if len(self.definition['base filter'].strip()) > 0:
@@ -224,7 +240,7 @@ class Cubo:
             cursor = []
             for idx,componente in enumerate(entrada['rules']):
                 if 'class' in entrada and entrada['class'] == 'd':
-                    #FIXME asumo que solo existe un elemento origen en los campos fecha
+                    #REFINE asumo que solo existe un elemento origen en los campos fecha
                     campo = componente['elem'][0]
                     # obtengo la fecha mayor y menor
                     if campo in date_cache:
@@ -250,8 +266,8 @@ class Cubo:
                     cursor += getCursor(self.db,sqlstring,regHashFill,**lista_compra)
                     entrada['cursor']=sorted(cursor)    
                     entrada['dir_row']=[record[0] for record in entrada['cursor'] ]  #para navegar el indice con menos datos
-                    #FIXME probablemente esta mal con descripciones de mas de un campo
-                    entrada['des_row']=[record[-componente['ndesc']:] for record in entrada['cursor']] #probablemenente innecesario
+                    # pensado con descripciones en mas de un campo. la sintaxis luego es una pes
+                    entrada['des_row']=[record[-componente['ndesc']:] for record in entrada['cursor']] 
                     #print(time.strftime("%H:%M:%S"),dir_row[0])
 
 class Vista:
@@ -333,20 +349,19 @@ class Vista:
             self.setDataMatrix()
             
     def  setDataMatrix(self):
-         #FIXME solo esperamos un campo de datos. Hay que generalizarlo
+         #REFINE solo esperamos un campo de datos. Hay que generalizarlo
         self.array = [ [None for k in range(len(self.col_hdr_idx))] for j in range(len(self.row_hdr_idx))]
-        
+
         for i in range(0,self.dim_row):
-            for j in range(0,self.dim_col):          
-                #TODO rellenar sqlstring y lista de compra en cada caso
+            for j in range(0,self.dim_col):
                 sqlDef=dict()
                 sqlDef['tables']=self.cubo.definition['table']
                 #sqlDef['select_modifier']=None
                 sqlDef['fields']= self.cubo.lista_guias[self.row_id]['rules'][i]['elem'] + \
                                   self.cubo.lista_guias[self.col_id]['rules'][j]['elem'] + \
                                   [(self.campo,self.agregado)]    
-                #sqlDef['where']=None
-                sqlDef['base_filter']=self.cubo.definition['base filter']+self.filtro
+                sqlDef['base_filter']=mergeString(self.filtro,self.cubo.definition['base filter'],'AND')
+                    
                 sqlDef['group']=self.cubo.lista_guias[self.row_id]['rules'][i]['elem'] + \
                                   self.cubo.lista_guias[self.col_id]['rules'][j]['elem']
                 #sqlDef['having']=None
@@ -362,9 +377,12 @@ class Vista:
                 cursor_data=getCursor(self.cubo.db,sqlstring,regHasher2D,**lista_compra)
                 #print(time.strftime("%H:%M:%S"),cursor_data[0])
                 for record in cursor_data:
-                    #TODO permitir en ciertas circunstancias que algunos registros se pierdan
-                    row_idx = self.row_hdr_idx.index(record[0])
-                    col_idx = self.col_hdr_idx.index(record[1])
+                    try:
+                        row_idx = self.row_hdr_idx.index(record[0])
+                        col_idx = self.col_hdr_idx.index(record[1])
+                    #REFINE En ciertas circunstancias debe o no provocarse y/o informar del error
+                    except ValueError:
+                        continue
                     #print('{} de {}, {} de {}'.format(row_idx,len(dir_row),col_idx,len(dir_col)))
                     self.array[row_idx][col_idx] = record[-1]
 

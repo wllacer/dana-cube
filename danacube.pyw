@@ -1,8 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 ## Copyright (c) 2012 Werner Llacer. All rights reserved.. Under the terms of the GPL 2
-## Portions copyright (c) 2008 Qtrac Ltd. All rights reserved.. Under the terms of the GPL 2
-# FIXED cubo.getGuides.  Sustituir por fillGuias()
+## Portions copyright (c) 2008 Qtrac Ltd. All rights reserved.. Under the terms of the GPL 2FIX# FIXED cubo.getGuides.  Sustituir por fillGuias()
 # FIXED cubo.getFunctions:  generar
 # FIXED getLevel    no definida creada en util.record_functions . Adaptado a marcar nivel con ':'
 # FIXED fmtHdr fijado. 
@@ -13,6 +12,11 @@
 # FIXED vista zoom cae. Es por invocacion a formatHeader. FIXED acabo de descubrir que falta un parametro alli para
 #  colapsar jerarquias (max_row_level)
 # FIXED por alguna razon FmtHdr se ejecuta dos veces. requestVista aparecia innecesariamente en el init del form
+# 0.3
+# FIXED Iniciar con el dialogo abierto. 
+# FIXED calcular el tamaño de la pantalla via QApplication.primaryScreen()
+# #TODO averiguar si QDialog es el objeto ideal para arrancar el proceso
+# TODO Jerarquias: hay que configurar algun tipo de evento para abrirlos y un parametro de configuracion
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
@@ -25,9 +29,9 @@ import string
 import sys
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor
+from PyQt5.QtGui import QColor,QScreen
 from PyQt5.QtWidgets import (QApplication, QDialog, QHBoxLayout, QPushButton,
-                             QTableWidget, QTableWidgetItem, QVBoxLayout)
+                             QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
 
 from dialogs import CuboDlg,  VistaDlg,  NumberFormatDlg,  ZoomDlg
 from core import *
@@ -59,8 +63,9 @@ def fmtNumber(number, fmtOptions):
     
     return text, sign
 
+#TODO averiguar si QDialog es el objeto ideal para arrancar el proceso
 class Form(QDialog):
-
+#class  Form(QWidget):
 
     def __init__(self, parent=None):
         super(Form, self).__init__(parent)
@@ -96,6 +101,8 @@ class Form(QDialog):
         formatButton3.clicked.connect(self.zoomData)
         
         self.setWindowTitle("Cubo ")
+        self.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
+        self.show()
                         
         self.initCube()
         if self.vista is None:
@@ -109,7 +116,6 @@ class Form(QDialog):
         if dialog.exec_():
             seleccion = str(dialog.cuboCB.currentText())
             self.cubo = Cubo(my_cubos[seleccion])
-            #self.cubo.putGuidesModelo()
             self.cubo.fillGuias()
             self.vista = None
 #            self.requestVista()
@@ -136,8 +142,12 @@ class Form(QDialog):
             else:             
                 self.vista.setNewView(row, col, agregado, campo)
            
-            self.max_row_level = self.vista.dim_row
-            self.max_col_level  = self.vista.dim_col
+            # para que aparezcan colapsados los indices jerarquicos
+            # TODO hay que configurar algun tipo de evento para abrirlos y un parametro de configuracion
+            #self.max_row_level = self.vista.dim_row
+            #self.max_col_level  = self.vista.dim_col
+            self.max_row_level = 1
+            self.max_col_level  = 1
             self.row_range = [0, len(self.vista.row_hdr_idx) -1]
             self.col_range = [0, len(self.vista.col_hdr_idx) -1]
           
