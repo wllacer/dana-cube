@@ -10,7 +10,7 @@ from __future__ import unicode_literals
 from pprint import pprint
 
 
-from PyQt5.QtCore import QAbstractItemModel, QFile, QIODevice, QModelIndex, Qt
+from PyQt5.QtCore import QAbstractItemModel, QFile, QIODevice, QModelIndex, Qt,QSortFilterProxyModel
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QApplication, QFileDialog, QMainWindow, QTreeView
 
@@ -19,13 +19,17 @@ from dialogs import *
 from util.yamlmgr import load_cubo
 from models import *
 
-#FIXED zoom view breaks. Some variables weren't available
+#FIXED 1 zoom view breaks. Some variables weren't available 
 #     FIXME zoom doesn't trigger any action with the new interface
-#FIXED config view doesn't fire. Definition too early
-#     FIXME there's no code to handle it now
-#FIXED cursor en trabajo app.setOverrideCursor
+#FIXED 1 config view doesn't fire. Definition too early     
+#     FIXED 2 there's no code to handle it now
+#          FIXME right justified
+#          FIXME refreshTable
+#
+#FIXED 1 cursor en trabajo app.setOverrideCursor             
 # TODO formateo de la tabla
-# TODO formateo de los elementos
+#FIXED 2 formateo de los elementos
+#DONE 2 implementar sort en modelo
 
 '''
 # decorador para el cursor. tomado de http://stackoverflow.com/questions/8218900/how-can-i-change-the-cursor-shape-with-pyqt
@@ -45,7 +49,6 @@ def waiting_effects(function):
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
-
         #CHANGE here
         self.fileMenu = self.menuBar().addMenu("&Cubo")
         self.fileMenu.addAction("&Open Cube ...", self.initCube, "Ctrl+O")
@@ -66,6 +69,12 @@ class MainWindow(QMainWindow):
 
         self.view = QTreeView(self)
         self.view.setModel(self.model)
+        
+        self.view.setSortingEnabled(True);
+        #self.view.setRootIsDecorated(False)
+        self.view.setAlternatingRowColors(True)
+        self.view.sortByColumn(0, Qt.AscendingOrder)
+
 
         self.setCentralWidget(self.view)
         self.setWindowTitle("Cubos")
@@ -106,15 +115,18 @@ class MainWindow(QMainWindow):
             
             app.setOverrideCursor(QCursor(Qt.WaitCursor))
             if self.vista is None:
-                self.vista = Vista(self.cubo, row, col, agregado, campo)       
+                self.vista = Vista(self.cubo, row, col, agregado, campo) 
+                self.vista.format = self.format
             else:  
 
                 self.vista.setNewView(row, col, agregado, campo)
             app.restoreOverrideCursor()
-
+            # estas vueltas para permitir ordenacion
             newModel = TreeModel(self.vista, self)
-            self.view.setModel(newModel)
-            self.model = newModel
+            proxyModel = QSortFilterProxyModel()
+            proxyModel.setSourceModel(newModel)
+            self.view.setModel(proxyModel)
+            self.model = proxyModel
 
             # para que aparezcan colapsados los indices jerarquicos
             # TODO hay que configurar algun tipo de evento para abrirlos y un parametro de configuracion

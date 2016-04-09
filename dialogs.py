@@ -162,7 +162,6 @@ class NumberFormatDlg(QDialog):
     # Copyright (c) 2008 Qtrac Ltd. All rights reserved. Under the terms of GPL2.
     # portions modified by Werner Llacer
     def __init__(self, format, callback, parent=None):
-        print('entra')
         super(NumberFormatDlg, self).__init__(parent)
 
         punctuationRe = QRegExp(r"[ ,;:.]")
@@ -215,7 +214,7 @@ class NumberFormatDlg(QDialog):
         self.yellowOutlierCheckBox.toggled[bool].connect(self.apply)
         self.setWindowTitle("Set Number Format (`Live')")
 
-        print('sale')
+
     def checkAndFix(self):
         #thousands = unicode(self.thousandsEdit.text())
         #decimal = unicode(self.decimalMarkerEdit.text())

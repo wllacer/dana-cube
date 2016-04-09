@@ -10,7 +10,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from pprint import pprint
-
+import math
 
 from PyQt5.QtCore import QAbstractItemModel, QFile, QIODevice, QModelIndex, Qt
 from PyQt5.QtWidgets import QApplication, QTreeView
@@ -18,6 +18,27 @@ from PyQt5.QtWidgets import QApplication, QTreeView
 
 from core import Cubo,Vista
 from util.yamlmgr import *
+
+def fmtNumber(number, fmtOptions):
+    """ taken from Rapid development with PyQT book (chapter 5) """
+
+    fraction, whole = math.modf(number)
+    sign = "-" if whole < 0 else ""
+    whole = "{0}".format(int(math.floor(abs(whole))))
+    digits = []
+    for i, digit in enumerate(reversed(whole)):
+        if i and i % 3 == 0:
+            digits.insert(0, fmtOptions["thousandsseparator"])
+        digits.insert(0, digit)
+    if fmtOptions["decimalplaces"]:
+        fraction = "{0:.7f}".format(abs(fraction))
+        fraction = (fmtOptions["decimalmarker"] +
+                fraction[2:fmtOptions["decimalplaces"] + 2])
+    else:
+        fraction = ""
+    text = "{0}{1}{2}".format(sign, "".join(digits), fraction)#
+    
+    return text, sign
 
 
 class TreeItem(object):
@@ -55,16 +76,16 @@ class TreeItem(object):
 
 
 class TreeModel(QAbstractItemModel):
-    def __init__(self, data, parent=None):
+    def __init__(self, datos, parent=None):
         super(TreeModel, self).__init__(parent)
 
         self.rootItem = TreeItem(("", ""))
-        self.data = data
-        self.setupModelData(data, self.rootItem)
+        self.datos = datos
+        self.setupModelData(datos, self.rootItem)
         
 
     def columnCount(self, parent):
-        return len(self.data.col_hdr_idx) + 1
+        return len(self.datos.col_hdr_idx) + 1
 
     def data(self, index, role):
         if not index.isValid():
@@ -74,7 +95,14 @@ class TreeModel(QAbstractItemModel):
             return None
 
         item = index.internalPointer()
-        return item.data(index.column())
+        if index.column() == 0:
+            return item.data(index.column())
+        elif item.data(index.column()) is None:
+            return None
+        else:
+            text, sign = fmtNumber(item.data(index.column()),self.datos.format)
+            return '{}{}'.format(sign,text)
+        #return item.data(index.column())
 
     def flags(self, index):
         if not index.isValid():
@@ -89,9 +117,9 @@ class TreeModel(QAbstractItemModel):
                 if section == 0:
                     return ""
                 else:
-                    return ':'.join(self.data.col_hdr_txt[section - 1])
+                    return ':'.join(self.datos.col_hdr_txt[section - 1])
             elif orientation == Qt.Vertical:
-                return ':'.join(self.data.row_hdr_txt[section])
+                return ':'.join(self.datos.row_hdr_txt[section])
 
         return None
 
@@ -133,18 +161,18 @@ class TreeModel(QAbstractItemModel):
 
         return parentItem.childCount()
 
-    def setupModelData(self, data, parent):
+    def setupModelData(self, datos, parent):
         parents = [parent]
         elemento = []
         
-        for ind, columnData in enumerate(data.array):
-            datos_cabecera = [':'.join(self.data.row_hdr_txt[ind]),]
+        for ind, columnData in enumerate(datos.array):
+            datos_cabecera = [':'.join(self.datos.row_hdr_txt[ind]),]
             celda = datos_cabecera + columnData
             
-            if self.data.dim_row == 1:
+            if self.datos.dim_row == 1:
                 parents[-1].appendChild(TreeItem(celda, parents[-1]))
             else:
-                estructura = self.data.row_hdr_idx[ind].split(':')
+                estructura = self.datos.row_hdr_idx[ind].split(':')
                 if len(estructura) > len(elemento): #un nivel mas
                     if parents[-1].childCount() > 0:
                         parents.append(parents[-1].child(parents[-1].childCount() - 1))

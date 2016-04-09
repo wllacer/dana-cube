@@ -35,7 +35,7 @@
   * complex keying in guides
   * _WIP_ collapsed hierarchy as default. Define ways of opening it 
   * _WIP_ Open maximized
-  * Ability of expand only an entry
+  * _DONE_ Ability of expand only an entry
   * Hierarchical dates
   * _DONE_ allow to skip entries. I skip entries by default
   *
