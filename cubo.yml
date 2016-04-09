@@ -87,7 +87,7 @@ datos locales:
                         code: code
                         desc: acronym
                         table: partidos
-                        filter: "code in (select distinct partido from votos_provincia where votes_percent >= 3)"
+                        filter: ""
         -   name: partidos importantes
             class: o
             prod:
@@ -161,7 +161,7 @@ datos locales:
                         code: region
                         desc: nombre
                         table: localidades
-                        filter: "provincia = ''"
+                        filter: "provincia = '' "
                     
                 -   elem: provincia
                     fmt: txt
@@ -171,7 +171,7 @@ datos locales:
                         desc: nombre
                         table: localidades
                         grouped by: region
-                        filter: "provincia <> '' and municipio = '' and isla = ''"
+                        filter: "region = 'CA01' and provincia <> '' and municipio = '' and isla = ''"
 
                 -   elem: municipio
                     fmt: txt
@@ -181,7 +181,7 @@ datos locales:
                         desc: nombre
                         table: localidades
                         grouped by: region,provincia
-                        filter: "municipio <> ''"
+                        filter: "region = 'CA01' and municipio <> ''"
         -   name: fecha
             class: d
             prod:

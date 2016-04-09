@@ -61,7 +61,7 @@
 * __WIP__Packaging
     * Configuration management
 
-* GUI 
+* __WIP__ GUI 
     * GUI refactoring based on Model-View
     * GUI for definition   (__HP__ showstopper for release)
  

@@ -1,114 +1,58 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-## Copyright (c) 2012 Werner Llacer. All rights reserved.. Under the terms of the GPL 2
-## Portions copyright (c) 2008 Qtrac Ltd. All rights reserved.. Under the terms of the GPL 2FIX# FIXED cubo.getGuides.  Sustituir por fillGuias()
-# FIXED cubo.getFunctions:  generar
-# FIXED getLevel    no definida creada en util.record_functions . Adaptado a marcar nivel con ':'
-# FIXED fmtHdr fijado. 
-# FIXED fmtHdr moverlo a vista
-# TODO ¿que pasa con las secuencias de escape?
-# FIXME LOW fivepointsmetric no definida. Suspendida de momento. No funciona como yo quiero
-# FIXED cambiar la vista se pega un carajazo, aparecian elementos con nomenclatura caducada (self.vista.db y simulares)
-# FIXED vista zoom cae. Es por invocacion a formatHeader. FIXED acabo de descubrir que falta un parametro alli para
-#  colapsar jerarquias (max_row_level)
-# FIXED por alguna razon FmtHdr se ejecuta dos veces. requestVista aparecia innecesariamente en el init del form
-# 0.3
-# FIXED Iniciar con el dialogo abierto. 
-# FIXED calcular el tamaño de la pantalla via QApplication.primaryScreen()
-# #TODO averiguar si QDialog es el objeto ideal para arrancar el proceso
-# TODO Jerarquias: hay que configurar algun tipo de evento para abrirlos y un parametro de configuracion
+
+
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
-#from future_builtins import *
 
-import math
-import random
-import string
-import sys
+from pprint import pprint
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor,QScreen
-from PyQt5.QtWidgets import (QApplication, QDialog, QHBoxLayout, QPushButton,
-                             QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
 
-from dialogs import CuboDlg,  VistaDlg,  NumberFormatDlg,  ZoomDlg
-from core import *
+from PyQt5.QtCore import QAbstractItemModel, QFile, QIODevice, QModelIndex, Qt
+from PyQt5.QtWidgets import QApplication, QFileDialog, QMainWindow, QTreeView
+from PyQt5.QtXml import QDomDocument
 
-# para evitar problemas con utf-8, no lo recomiendan pero me funciona
-import sys
-#reload(sys)
-#sys.setdefaultencoding('utf-8')
+from core import Cubo,Vista
+from dialogs import *
+from util.yamlmgr import load_cubo
+from models import *
 
-#
-def fmtNumber(number, fmtOptions):
-    """ taken from Rapid development with PyQT book (chapter 5) """
+#TODO cursor en trabajo
+#TODO formateo de la tabla
+#TODO formateo de los elementos
 
-    fraction, whole = math.modf(number)
-    sign = "-" if whole < 0 else ""
-    whole = "{0}".format(int(math.floor(abs(whole))))
-    digits = []
-    for i, digit in enumerate(reversed(whole)):
-        if i and i % 3 == 0:
-            digits.insert(0, fmtOptions["thousandsseparator"])
-        digits.insert(0, digit)
-    if fmtOptions["decimalplaces"]:
-        fraction = "{0:.7f}".format(abs(fraction))
-        fraction = (fmtOptions["decimalmarker"] +
-                fraction[2:fmtOptions["decimalplaces"] + 2])
-    else:
-        fraction = ""
-    text = "{0}{1}{2}".format(sign, "".join(digits), fraction)#
-    
-    return text, sign
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super(MainWindow, self).__init__()
 
-#TODO averiguar si QDialog es el objeto ideal para arrancar el proceso
-class Form(QDialog):
-#class  Form(QWidget):
+        #CHANGE here
+        self.fileMenu = self.menuBar().addMenu("&Cubo")
+        self.fileMenu.addAction("&Open Cube ...", self.initCube, "Ctrl+O")
+        self.fileMenu.addAction("E&xit", self.close, "Ctrl+Q")
+        self.fileMenu = self.menuBar().addMenu("&Vista")
+        self.fileMenu.addAction("C&hange View ...", self.requestVista, "Ctrl+H")
+        self.fileMenu.addAction("&Zoom View ...", self.zoomData, "Ctrl+Z")
+        self.fileMenu.addAction("&Config ...",self.setNumberFormat,"Ctrl+F")
+        #
+        #self.format = dict(thousandsseparator=".", 
+                                    #decimalmarker=",",
+                                    #decimalplaces=2,
+                                    #rednegatives=False, 
+                                    #yellowoutliers=True)
 
-    def __init__(self, parent=None):
-        super(Form, self).__init__(parent)
+        #CHANGE here
+        # ¿Por que he de sustituir QDomDocument() ?
+        self.vista = None
+        self.model = None
+        #self.model = ViewModel(QDomDocument(), self)
+        self.view = QTreeView(self)
+        self.view.setModel(self.model)
 
-        self.X_MAX=0
-        self.Y_MAX =0
-        self.numberFormatDlg = None
-        self.format = dict(thousandsseparator=".", 
-                                    decimalmarker=",",
-                                    decimalplaces=2,
-                                    rednegatives=False, 
-                                    yellowoutliers=True)
-        self.numbers = {}
+        self.setCentralWidget(self.view)
+        self.setWindowTitle("Cubos")
 
-        self.table = QTableWidget()
-        formatButton1 = QPushButton("&Parametrizar vista")
-        formatButton2 = QPushButton("&Formateo presentacion")
-        formatButton3 = QPushButton("&Zoom")
-
-        buttonLayout = QHBoxLayout()
-        buttonLayout.addStretch()
-        buttonLayout.addWidget(formatButton1)
-        buttonLayout.addWidget(formatButton2)
-        buttonLayout.addWidget(formatButton3)
-        layout = QVBoxLayout()
-        layout.addWidget(self.table)
-        layout.addLayout(buttonLayout)
-
-        self.setLayout(layout)
-        
-        formatButton1.clicked.connect(self.requestVista)
-        formatButton2.clicked.connect(self.setNumberFormat)
-        formatButton3.clicked.connect(self.zoomData)
-        
-        self.setWindowTitle("Cubo ")
-        self.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
-        self.show()
-                        
-        self.initCube()
-        if self.vista is None:
-            self.requestVista()
-        #self.refreshTable()
-        
     def initCube(self):
         my_cubos = load_cubo()
         #realiza la seleccion del cubo
@@ -118,9 +62,11 @@ class Form(QDialog):
             self.cubo = Cubo(my_cubos[seleccion])
             self.cubo.fillGuias()
             self.vista = None
-#            self.requestVista()
-        
+        self.setWindowTitle("Cubo "+ seleccion)
+        self.requestVista()
+
     def requestVista(self):
+
         vistaDlg = VistaDlg(self.cubo, self)
         
         #TODO  falta el filtro
@@ -141,7 +87,11 @@ class Form(QDialog):
                 self.vista = Vista(self.cubo, row, col, agregado, campo)       
             else:             
                 self.vista.setNewView(row, col, agregado, campo)
-           
+
+            newModel = TreeModel(self.vista, self)
+            self.view.setModel(newModel)
+            self.model = newModel
+
             # para que aparezcan colapsados los indices jerarquicos
             # TODO hay que configurar algun tipo de evento para abrirlos y un parametro de configuracion
             #self.max_row_level = self.vista.dim_row
@@ -151,8 +101,7 @@ class Form(QDialog):
             self.row_range = [0, len(self.vista.row_hdr_idx) -1]
             self.col_range = [0, len(self.vista.col_hdr_idx) -1]
           
-            self.refreshTable()
-#
+            #self.refreshTable()
     def zoomData(self):
         zoomDlg = ZoomDlg(self.vista, self)
 #
@@ -182,105 +131,29 @@ class Form(QDialog):
                 refrescar = True
 
             if refrescar:
-                self.refreshTable()
-
-            
-        
-    def addTableItem(self, tabla,  elemento, row, col, level_x, level_y,outlier=False):
-        if elemento is None:
-            item = QTableWidgetItem(' ')
-            if self.vista.dim_row > 1 and level_x < (self.vista.dim_row -1) :
-                item.setBackground(QColor('grey').lighter())
-            if self.vista.dim_col > 1 and level_y < (self.vista.dim_col -1):
-                item.setBackground(QColor('grey').lighter())
-            tabla.setItem(row, col, item)
-            return
-            
-        numero = elemento #para ser mas comodo
-        text, sign = fmtNumber(numero, self.format)    
-        item = QTableWidgetItem(text)
-        item.setTextAlignment(Qt.AlignRight|Qt.AlignVCenter)
-
-        if self.vista.dim_row > 1 and level_x < (self.vista.dim_row -1):
-            item.setBackground(QColor('grey').lighter())
-        if self.vista.dim_col  > 1 and level_y < (self.vista.dim_col -1):
-            item.setBackground(QColor('grey').lighter())
-        if sign and self.format["rednegatives"]:
-            item.setBackground(QColor("red"))
-        if outlier: 
-            item.setBackground(QColor("yellow"))
-        tabla.setItem(row, col, item)
-
-    def refreshTable(self):
-
-        
-        self.numbers = self.vista.array
-        #                
-
-        cab_row = self.vista.fmtHeader('row','\t',True, self.row_range,self.max_row_level)
-        cab_col = self.vista.fmtHeader('col','\t',False, self.row_range,self.max_col_level)
-        self.X_MAX = len(self.vista.row_hdr_idx)
-        self.Y_MAX = len(self.vista.col_hdr_idx)
-        
-
-        metrics=None
-        #FIXME
-        #if self.format['yellowoutliers']:
-            #metrics = self.vista.fivepointsmetric()
-  
-        self.table.clear()
-
-        self.table.setColumnCount(len(cab_col))
-        self.table.setRowCount(len(cab_row))
-
-        self.table.setHorizontalHeaderLabels(cab_col)
-        self.table.setVerticalHeaderLabels(cab_row)
-        
-        row_i = 0
-        for x in range(self.X_MAX):
-            level_x = getLevel(self.vista.row_hdr_idx[x])     
-            if level_x >= self.max_row_level :
-                continue
-            if self.row_range[0] <= x <= self.row_range[1] :
-                pass
-            else:
-                continue
-            #print (self.row_range[1] <= self.vista.row_idx[x] => self.row_range[0] )
-            col_i  = 0
-            for y in range(self.Y_MAX):
-                level_y = getLevel(self.vista.col_hdr_idx[y])
-                if level_y >= self.max_col_level:
-                    continue
-                if self.col_range[0] <= y <= self.col_range[1] :
-                    pass
-                else:
-                    continue
-                #determine if outlier
-                outlier = False
-                # FIXME fivepointsmetric
-                #if self.format['yellowoutliers'] and self.numbers[x][y] is not None:
-                    #if (self.numbers[x][y]< metrics[level_x][level_y][1] 
-                                #or self.numbers[x][y]  > metrics[level_x][level_y][5] ):
-                        #outlier=True
+                #self.refreshTable()
+                return
                 
-                self.addTableItem(self.table, self.numbers[x][y], row_i, col_i, level_x, level_y, outlier)
-                col_i += 1
-            row_i += 1
-        self.show()
-        
-
-
-        
     def setNumberFormat(self):
         """ adapted from Rapid development with PyQT book (chapter 5) """        
+        #FIXME no funciona con la nueva arquitectura
+        return
         if self.numberFormatDlg is None:
+            print('paso cero')
             self.numberFormatDlg = NumberFormatDlg(self.format, self.refreshTable, self)
+        print('defino')
         self.numberFormatDlg.show()
         self.numberFormatDlg.raise_()
         self.numberFormatDlg.activateWindow()
+        print('blablabla')
 
 
-app = QApplication(sys.argv)
-form = Form()
-form.show()
-app.exec_()
+if __name__ == '__main__':
+
+    import sys
+
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
+    window.show()
+    sys.exit(app.exec_())
