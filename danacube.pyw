@@ -11,18 +11,37 @@ from pprint import pprint
 
 
 from PyQt5.QtCore import QAbstractItemModel, QFile, QIODevice, QModelIndex, Qt
+from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QApplication, QFileDialog, QMainWindow, QTreeView
-from PyQt5.QtXml import QDomDocument
 
 from core import Cubo,Vista
 from dialogs import *
 from util.yamlmgr import load_cubo
 from models import *
 
-#TODO cursor en trabajo
-#TODO formateo de la tabla
-#TODO formateo de los elementos
+#FIXED zoom view breaks. Some variables weren't available
+#     FIXME zoom doesn't trigger any action with the new interface
+#FIXED config view doesn't fire. Definition too early
+#     FIXME there's no code to handle it now
+#FIXED cursor en trabajo app.setOverrideCursor
+# TODO formateo de la tabla
+# TODO formateo de los elementos
 
+'''
+# decorador para el cursor. tomado de http://stackoverflow.com/questions/8218900/how-can-i-change-the-cursor-shape-with-pyqt
+# estoy verde para usarlo
+def waiting_effects(function):
+    def new_function(*args, **kwargs):
+        app.setOverrideCursor(QCursor(Qt.WaitCursor))
+        try:
+            return function(*args, **kwargs)
+        except Exception as e:
+            raise e
+            print("Error {}".format(e.args[0]))
+        finally:
+            QApplication.restoreOverrideCursor()
+    return new_function
+'''
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -36,17 +55,15 @@ class MainWindow(QMainWindow):
         self.fileMenu.addAction("&Zoom View ...", self.zoomData, "Ctrl+Z")
         self.fileMenu.addAction("&Config ...",self.setNumberFormat,"Ctrl+F")
         #
-        #self.format = dict(thousandsseparator=".", 
-                                    #decimalmarker=",",
-                                    #decimalplaces=2,
-                                    #rednegatives=False, 
-                                    #yellowoutliers=True)
+        self.format = dict(thousandsseparator=".", 
+                                    decimalmarker=",",
+                                    decimalplaces=2,
+                                    rednegatives=False, 
+                                    yellowoutliers=True)
 
-        #CHANGE here
-        # ¿Por que he de sustituir QDomDocument() ?
         self.vista = None
         self.model = None
-        #self.model = ViewModel(QDomDocument(), self)
+
         self.view = QTreeView(self)
         self.view.setModel(self.model)
 
@@ -60,7 +77,10 @@ class MainWindow(QMainWindow):
         if dialog.exec_():
             seleccion = str(dialog.cuboCB.currentText())
             self.cubo = Cubo(my_cubos[seleccion])
+            
+            app.setOverrideCursor(QCursor(Qt.WaitCursor))
             self.cubo.fillGuias()
+            app.restoreOverrideCursor()
             self.vista = None
         self.setWindowTitle("Cubo "+ seleccion)
         self.requestVista()
@@ -83,10 +103,14 @@ class MainWindow(QMainWindow):
             col = vistaDlg.colCB.currentIndex()
             agregado = vistaDlg.agrCB.currentText()
             campo = vistaDlg.fldCB.currentText()
+            
+            app.setOverrideCursor(QCursor(Qt.WaitCursor))
             if self.vista is None:
                 self.vista = Vista(self.cubo, row, col, agregado, campo)       
-            else:             
+            else:  
+
                 self.vista.setNewView(row, col, agregado, campo)
+            app.restoreOverrideCursor()
 
             newModel = TreeModel(self.vista, self)
             self.view.setModel(newModel)
@@ -94,14 +118,17 @@ class MainWindow(QMainWindow):
 
             # para que aparezcan colapsados los indices jerarquicos
             # TODO hay que configurar algun tipo de evento para abrirlos y un parametro de configuracion
-            #self.max_row_level = self.vista.dim_row
-            #self.max_col_level  = self.vista.dim_col
+            self.max_row_level = self.vista.dim_row
+            self.max_col_level  = self.vista.dim_col
             self.max_row_level = 1
             self.max_col_level  = 1
             self.row_range = [0, len(self.vista.row_hdr_idx) -1]
             self.col_range = [0, len(self.vista.col_hdr_idx) -1]
-          
+            
+            ##@waiting_effects
+            #app.setOverrideCursor(QCursor(Qt.WaitCursor))
             #self.refreshTable()
+            #app.restoreOverrideCursor()
     def zoomData(self):
         zoomDlg = ZoomDlg(self.vista, self)
 #
@@ -131,23 +158,23 @@ class MainWindow(QMainWindow):
                 refrescar = True
 
             if refrescar:
-                #self.refreshTable()
-                return
+                #@waiting_effects
+                app.setOverrideCursor(QCursor(Qt.WaitCursor))
+                self.refreshTable()
+                app.restoreOverrideCursor()
+
                 
     def setNumberFormat(self):
         """ adapted from Rapid development with PyQT book (chapter 5) """        
         #FIXME no funciona con la nueva arquitectura
-        return
-        if self.numberFormatDlg is None:
-            print('paso cero')
-            self.numberFormatDlg = NumberFormatDlg(self.format, self.refreshTable, self)
-        print('defino')
+        self.numberFormatDlg = NumberFormatDlg(self.format, self.refreshTable, self)
+
         self.numberFormatDlg.show()
         self.numberFormatDlg.raise_()
         self.numberFormatDlg.activateWindow()
-        print('blablabla')
 
-
+    def refreshTable(self):
+        return
 if __name__ == '__main__':
 
     import sys
