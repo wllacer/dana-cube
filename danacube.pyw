@@ -10,14 +10,14 @@ from __future__ import unicode_literals
 from pprint import pprint
 
 
-from PyQt5.QtCore import QAbstractItemModel, QFile, QIODevice, QModelIndex, Qt,QSortFilterProxyModel
+from PyQt5.QtCore import QAbstractItemModel, QFile, QIODevice, QModelIndex, Qt
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QApplication, QFileDialog, QMainWindow, QTreeView
 
 from core import Cubo,Vista
 from dialogs import *
 from util.yamlmgr import load_cubo
-from models import *
+from models_std import *
 
 #FIXED 1 zoom view breaks. Some variables weren't available 
 #     FIXME zoom doesn't trigger any action with the new interface
@@ -30,7 +30,8 @@ from models import *
 # TODO formateo de la tabla
 #FIXED 2 formateo de los elementos
 #DONE 2 implementar sort en modelo
-
+#TODO uso de formato numerico directamente en la view setNumberFormat
+#ALERT dopado para que vaya siempre a datos de prueba
 '''
 # decorador para el cursor. tomado de http://stackoverflow.com/questions/8218900/how-can-i-change-the-cursor-shape-with-pyqt
 # estoy verde para usarlo
@@ -70,18 +71,48 @@ class MainWindow(QMainWindow):
         self.view = QTreeView(self)
         self.view.setModel(self.model)
         
+        
         self.view.setSortingEnabled(True);
         #self.view.setRootIsDecorated(False)
         self.view.setAlternatingRowColors(True)
         self.view.sortByColumn(0, Qt.AscendingOrder)
+        #ALERT
+        self.initCube()
 
 
         self.setCentralWidget(self.view)
         self.setWindowTitle("Cubos")
+    def pruebas(self,my_cubos):
 
+        self.cubo=Cubo(my_cubos['datos provincia'])
+        app.setOverrideCursor(QCursor(Qt.WaitCursor))
+        self.cubo.fillGuias()
+        self.vista = Vista(self.cubo, 1, 0, "min", "ord") 
+        app.restoreOverrideCursor()   
+        self.vista.format = self.format
+        newModel = TreeModel(self.vista, self)
+        self.view.setModel(newModel)
+        self.modelo=self.view.model
+        self.model = newModel
+        #proxyModel = NumberSortModel()
+        #proxyModel.setSourceModel(newModel)
+        #self.view.setModel(proxyModel)
+        #self.model = proxyModel
+        self.max_row_level = self.vista.dim_row
+        self.max_col_level  = self.vista.dim_col
+        self.max_row_level = 1
+        self.max_col_level  = 1
+        self.row_range = [0, len(self.vista.row_hdr_idx) -1]
+        self.col_range = [0, len(self.vista.col_hdr_idx) -1]
+        
     def initCube(self):
         my_cubos = load_cubo()
         #realiza la seleccion del cubo
+        #ALERT cortado 
+        print('antes')
+        self.pruebas(my_cubos)
+        print('despues')
+        """
         dialog = CuboDlg(my_cubos, self)
         if dialog.exec_():
             seleccion = str(dialog.cuboCB.currentText())
@@ -91,9 +122,10 @@ class MainWindow(QMainWindow):
             self.cubo.fillGuias()
             app.restoreOverrideCursor()
             self.vista = None
+        
         self.setWindowTitle("Cubo "+ seleccion)
         self.requestVista()
-
+        """
     def requestVista(self):
 
         vistaDlg = VistaDlg(self.cubo, self)
@@ -123,10 +155,12 @@ class MainWindow(QMainWindow):
             app.restoreOverrideCursor()
             # estas vueltas para permitir ordenacion
             newModel = TreeModel(self.vista, self)
-            proxyModel = QSortFilterProxyModel()
-            proxyModel.setSourceModel(newModel)
-            self.view.setModel(proxyModel)
-            self.model = proxyModel
+            self.view.setModel(newModel)
+            self.modelo=self.view.model
+            #proxyModel = NumberSortModel()
+            #proxyModel.setSourceModel(newModel)
+            #self.view.setModel(proxyModel)
+            #self.model = proxyModel
 
             # para que aparezcan colapsados los indices jerarquicos
             # TODO hay que configurar algun tipo de evento para abrirlos y un parametro de configuracion
@@ -186,7 +220,7 @@ class MainWindow(QMainWindow):
         self.numberFormatDlg.activateWindow()
 
     def refreshTable(self):
-        return
+        self.model.emitDataChanged()
 if __name__ == '__main__':
 
     import sys

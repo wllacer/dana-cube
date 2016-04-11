@@ -12,12 +12,15 @@ from __future__ import unicode_literals
 from pprint import pprint
 import math
 
-from PyQt5.QtCore import QAbstractItemModel, QFile, QIODevice, QModelIndex, Qt
+from PyQt5.QtCore import QAbstractItemModel, QFile, QIODevice, QModelIndex, Qt, QSortFilterProxyModel
 from PyQt5.QtWidgets import QApplication, QTreeView
 
 
 from core import Cubo,Vista
 from util.yamlmgr import *
+
+
+
 
 def fmtNumber(number, fmtOptions):
     """ taken from Rapid development with PyQT book (chapter 5) """
@@ -40,6 +43,18 @@ def fmtNumber(number, fmtOptions):
     
     return text, sign
 
+class NumberSortModel(QSortFilterProxyModel):
+
+    def lessThan(self, left, right):
+        
+    
+        if left.column() == 0:
+            lvalue = left.data()
+            rvalue = right.data()
+        else:
+            lvalue = float(left.data())
+            rvalue = float(right.data())
+        return lvalue < rvalue
 
 class TreeItem(object):
     def __init__(self, data, parent=None):
@@ -100,9 +115,10 @@ class TreeModel(QAbstractItemModel):
         elif item.data(index.column()) is None:
             return None
         else:
-            text, sign = fmtNumber(item.data(index.column()),self.datos.format)
-            return '{}{}'.format(sign,text)
-        #return item.data(index.column())
+            #text, sign = fmtNumber(item.data(index.column()),self.datos.format)
+            #return '{}{}'.format(sign,text)
+            #return text
+            return item.data(index.column())
 
     def flags(self, index):
         if not index.isValid():
@@ -185,4 +201,5 @@ class TreeModel(QAbstractItemModel):
                         elemento[-1] = estructura[-1]
                 parents[-1].appendChild(TreeItem(celda, parents[-1]))
 
-       
+    def emitDataChanged(self):
+        self.dataChanged.emit(QModelIndex(),QModelIndex())
