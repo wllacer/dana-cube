@@ -46,14 +46,15 @@ def fmtNumber(number, fmtOptions):
 class NumberSortModel(QSortFilterProxyModel):
 
     def lessThan(self, left, right):
-        
-    
+        SORT_ROLE = 33
+        lvalor = left.data(SORT_ROLE)
+        rvalor = right.data(SORT_ROLE)
         if left.column() == 0:
-            lvalue = left.data()
-            rvalue = right.data()
+            lvalue = lvalor
+            rvalue = rvalor
         else:
-            lvalue = float(left.data())
-            rvalue = float(right.data())
+            lvalue = float(lvalor) if lvalor is not None else None
+            rvalue = float(rvalor) if rvalor is not None else None
         return lvalue < rvalue
 
 class TreeItem(object):
@@ -75,6 +76,7 @@ class TreeItem(object):
         return len(self.itemData)
 
     def data(self, column):
+
         try:
             return self.itemData[column]
         except IndexError:
@@ -103,22 +105,26 @@ class TreeModel(QAbstractItemModel):
         return len(self.datos.col_hdr_idx) + 1
 
     def data(self, index, role):
+
         if not index.isValid():
             return None
 
-        if role != Qt.DisplayRole:
+        if role not in (Qt.DisplayRole,33,):
             return None
-
+            
         item = index.internalPointer()
         if index.column() == 0:
             return item.data(index.column())
         elif item.data(index.column()) is None:
             return None
         else:
-            #text, sign = fmtNumber(item.data(index.column()),self.datos.format)
-            #return '{}{}'.format(sign,text)
-            #return text
-            return item.data(index.column())
+            if role == Qt.DisplayRole:
+                text, sign = fmtNumber(item.data(index.column()),self.datos.format)
+                return '{}{}'.format(sign,text)
+            else:
+                return item.data(index.column())
+                #return text
+            #return item.data(index.column())
 
     def flags(self, index):
         if not index.isValid():

@@ -17,7 +17,7 @@ from PyQt5.QtWidgets import QApplication, QFileDialog, QMainWindow, QTreeView
 from core import Cubo,Vista
 from dialogs import *
 from util.yamlmgr import load_cubo
-from models_std import *
+from models import *
 
 #FIXED 1 zoom view breaks. Some variables weren't available 
 #     FIXME zoom doesn't trigger any action with the new interface
@@ -82,22 +82,24 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(self.view)
         self.setWindowTitle("Cubos")
-    def pruebas(self,my_cubos):
-
-        self.cubo=Cubo(my_cubos['datos provincia'])
+        
+    def autoCarga(self,my_cubos):
+        base = my_cubos['default']
+        pprint(base)
+        self.cubo=Cubo(my_cubos[base['cubo']])
         app.setOverrideCursor(QCursor(Qt.WaitCursor))
         self.cubo.fillGuias()
-        self.vista = Vista(self.cubo, 1, 0, "min", "ord") 
+        self.vista = Vista(self.cubo, base['vista']['row'], base['vista']['col'],base['vista']['agregado'],base['vista']['elemento']) 
         app.restoreOverrideCursor()   
         self.vista.format = self.format
         newModel = TreeModel(self.vista, self)
-        self.view.setModel(newModel)
-        self.modelo=self.view.model
-        self.model = newModel
-        #proxyModel = NumberSortModel()
-        #proxyModel.setSourceModel(newModel)
-        #self.view.setModel(proxyModel)
-        #self.model = proxyModel
+        #self.view.setModel(newModel)
+        #self.modelo=self.view.model
+        #self.model = newModel
+        proxyModel = NumberSortModel()
+        proxyModel.setSourceModel(newModel)
+        self.view.setModel(proxyModel)
+        self.model = proxyModel
         self.max_row_level = self.vista.dim_row
         self.max_col_level  = self.vista.dim_col
         self.max_row_level = 1
@@ -106,26 +108,27 @@ class MainWindow(QMainWindow):
         self.col_range = [0, len(self.vista.col_hdr_idx) -1]
         
     def initCube(self):
+        #FIXME casi funciona ... vuelve a leer el fichero cada vez
         my_cubos = load_cubo()
+        if 'default' in my_cubos:
+            self.autoCarga(my_cubos)
+            del my_cubos['default']
+        else:
         #realiza la seleccion del cubo
-        #ALERT cortado 
-        print('antes')
-        self.pruebas(my_cubos)
-        print('despues')
-        """
-        dialog = CuboDlg(my_cubos, self)
-        if dialog.exec_():
-            seleccion = str(dialog.cuboCB.currentText())
-            self.cubo = Cubo(my_cubos[seleccion])
-            
-            app.setOverrideCursor(QCursor(Qt.WaitCursor))
-            self.cubo.fillGuias()
-            app.restoreOverrideCursor()
-            self.vista = None
         
-        self.setWindowTitle("Cubo "+ seleccion)
-        self.requestVista()
-        """
+            dialog = CuboDlg(my_cubos, self)
+            if dialog.exec_():
+                seleccion = str(dialog.cuboCB.currentText())
+                self.cubo = Cubo(my_cubos[seleccion])
+                
+                app.setOverrideCursor(QCursor(Qt.WaitCursor))
+                self.cubo.fillGuias()
+                app.restoreOverrideCursor()
+                self.vista = None
+            
+            self.setWindowTitle("Cubo "+ seleccion)
+            self.requestVista()
+       
     def requestVista(self):
 
         vistaDlg = VistaDlg(self.cubo, self)
@@ -155,12 +158,12 @@ class MainWindow(QMainWindow):
             app.restoreOverrideCursor()
             # estas vueltas para permitir ordenacion
             newModel = TreeModel(self.vista, self)
-            self.view.setModel(newModel)
-            self.modelo=self.view.model
-            #proxyModel = NumberSortModel()
-            #proxyModel.setSourceModel(newModel)
-            #self.view.setModel(proxyModel)
-            #self.model = proxyModel
+            #self.view.setModel(newModel)
+            #self.modelo=self.view.model
+            proxyModel = NumberSortModel()
+            proxyModel.setSourceModel(newModel)
+            self.view.setModel(proxyModel)
+            self.model = proxyModel
 
             # para que aparezcan colapsados los indices jerarquicos
             # TODO hay que configurar algun tipo de evento para abrirlos y un parametro de configuracion

@@ -1,4 +1,10 @@
-        
+default:
+    cubo: datos provincia
+    vista:
+         row: 1
+         col: 0
+         agregado: avg
+         elemento: votes_percent
 datos provincia:
     connect:
         driver: QSQLITE
