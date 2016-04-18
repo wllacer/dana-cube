@@ -10,7 +10,7 @@ from __future__ import unicode_literals
 from pprint import pprint
 
 
-from PyQt5.QtCore import QAbstractItemModel, QFile, QIODevice, QModelIndex, Qt
+from PyQt5.QtCore import QAbstractItemModel, QFile, QIODevice, QModelIndex, Qt,QSortFilterProxyModel
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QApplication, QFileDialog, QMainWindow, QTreeView
 
@@ -96,10 +96,12 @@ class MainWindow(QMainWindow):
         #self.view.setModel(newModel)
         #self.modelo=self.view.model
         #self.model = newModel
-        proxyModel = NumberSortModel()
+        proxyModel = QSortFilterProxyModel()
         proxyModel.setSourceModel(newModel)
+        proxyModel.setSortRole(33)
         self.view.setModel(proxyModel)
         self.model = proxyModel
+        
         self.max_row_level = self.vista.dim_row
         self.max_col_level  = self.vista.dim_col
         self.max_row_level = 1
@@ -160,8 +162,9 @@ class MainWindow(QMainWindow):
             newModel = TreeModel(self.vista, self)
             #self.view.setModel(newModel)
             #self.modelo=self.view.model
-            proxyModel = NumberSortModel()
+            proxyModel = QSortFilterProxyModel()
             proxyModel.setSourceModel(newModel)
+            proxyModel.setSortRole(33)
             self.view.setModel(proxyModel)
             self.model = proxyModel
 

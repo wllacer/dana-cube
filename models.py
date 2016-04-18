@@ -42,7 +42,7 @@ def fmtNumber(number, fmtOptions):
     text = "{0}{1}{2}".format(sign, "".join(digits), fraction)#
     
     return text, sign
-
+"""
 class NumberSortModel(QSortFilterProxyModel):
 
     def lessThan(self, left, right):
@@ -56,7 +56,7 @@ class NumberSortModel(QSortFilterProxyModel):
             lvalue = float(lvalor) if lvalor is not None else None
             rvalue = float(rvalor) if rvalor is not None else None
         return lvalue < rvalue
-
+"""
 class TreeItem(object):
     def __init__(self, data, parent=None):
         self.parentItem = parent
