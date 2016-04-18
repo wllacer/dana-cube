@@ -67,7 +67,7 @@ class MainWindow(QMainWindow):
 
         self.vista = None
         self.model = None
-
+        self.cubo =  None
         self.view = QTreeView(self)
         self.view.setModel(self.model)
         
@@ -83,6 +83,28 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.view)
         self.setWindowTitle("Cubos")
         
+    def defineModel(self):
+        """
+        definimos el modelo. Tengo que ejecutarlo cada vez que cambie la vista. TODO no he conseguido hacerlo dinamicamente
+        """
+        newModel = TreeModel(self.vista, self)
+        #self.view.setModel(newModel)
+        #self.modelo=self.view.model
+        proxyModel = QSortFilterProxyModel()
+        proxyModel.setSourceModel(newModel)
+        proxyModel.setSortRole(33)
+        self.view.setModel(proxyModel)
+        self.model = newModel #proxyModel
+
+        # estas vueltas para permitir ordenacion
+        # para que aparezcan colapsados los indices jerarquicos
+        self.max_row_level = self.vista.dim_row
+        self.max_col_level  = self.vista.dim_col
+        self.max_row_level = 1
+        self.max_col_level  = 1
+        self.row_range = [0, len(self.vista.row_hdr_idx) -1]
+        self.col_range = [0, len(self.vista.col_hdr_idx) -1]
+
     def autoCarga(self,my_cubos):
         base = my_cubos['default']
         pprint(base)
@@ -92,44 +114,32 @@ class MainWindow(QMainWindow):
         self.vista = Vista(self.cubo, base['vista']['row'], base['vista']['col'],base['vista']['agregado'],base['vista']['elemento']) 
         app.restoreOverrideCursor()   
         self.vista.format = self.format
-        newModel = TreeModel(self.vista, self)
-        #self.view.setModel(newModel)
-        #self.modelo=self.view.model
-        #self.model = newModel
-        proxyModel = QSortFilterProxyModel()
-        proxyModel.setSourceModel(newModel)
-        proxyModel.setSortRole(33)
-        self.view.setModel(proxyModel)
-        self.model = proxyModel
+        self.defineModel()
         
-        self.max_row_level = self.vista.dim_row
-        self.max_col_level  = self.vista.dim_col
-        self.max_row_level = 1
-        self.max_col_level  = 1
-        self.row_range = [0, len(self.vista.row_hdr_idx) -1]
-        self.col_range = [0, len(self.vista.col_hdr_idx) -1]
         
     def initCube(self):
         #FIXME casi funciona ... vuelve a leer el fichero cada vez
         my_cubos = load_cubo()
         if 'default' in my_cubos:
-            self.autoCarga(my_cubos)
+            if self.cubo is None:
+                self.autoCarga(my_cubos)
+                return
             del my_cubos['default']
-        else:
+
         #realiza la seleccion del cubo
         
-            dialog = CuboDlg(my_cubos, self)
-            if dialog.exec_():
-                seleccion = str(dialog.cuboCB.currentText())
-                self.cubo = Cubo(my_cubos[seleccion])
-                
-                app.setOverrideCursor(QCursor(Qt.WaitCursor))
-                self.cubo.fillGuias()
-                app.restoreOverrideCursor()
-                self.vista = None
+        dialog = CuboDlg(my_cubos, self)
+        if dialog.exec_():
+            seleccion = str(dialog.cuboCB.currentText())
+            self.cubo = Cubo(my_cubos[seleccion])
             
-            self.setWindowTitle("Cubo "+ seleccion)
-            self.requestVista()
+            app.setOverrideCursor(QCursor(Qt.WaitCursor))
+            self.cubo.fillGuias()
+            app.restoreOverrideCursor()
+            self.vista = None
+        
+        self.setWindowTitle("Cubo "+ seleccion)
+        self.requestVista()
        
     def requestVista(self):
 
@@ -154,28 +164,14 @@ class MainWindow(QMainWindow):
             if self.vista is None:
                 self.vista = Vista(self.cubo, row, col, agregado, campo) 
                 self.vista.format = self.format
-            else:  
-
+            else:
                 self.vista.setNewView(row, col, agregado, campo)
-            app.restoreOverrideCursor()
-            # estas vueltas para permitir ordenacion
-            newModel = TreeModel(self.vista, self)
-            #self.view.setModel(newModel)
-            #self.modelo=self.view.model
-            proxyModel = QSortFilterProxyModel()
-            proxyModel.setSourceModel(newModel)
-            proxyModel.setSortRole(33)
-            self.view.setModel(proxyModel)
-            self.model = proxyModel
+                
 
-            # para que aparezcan colapsados los indices jerarquicos
+            self.defineModel()
+            app.restoreOverrideCursor()
+ 
             # TODO hay que configurar algun tipo de evento para abrirlos y un parametro de configuracion
-            self.max_row_level = self.vista.dim_row
-            self.max_col_level  = self.vista.dim_col
-            self.max_row_level = 1
-            self.max_col_level  = 1
-            self.row_range = [0, len(self.vista.row_hdr_idx) -1]
-            self.col_range = [0, len(self.vista.col_hdr_idx) -1]
             
             ##@waiting_effects
             #app.setOverrideCursor(QCursor(Qt.WaitCursor))

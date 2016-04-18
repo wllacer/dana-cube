@@ -100,7 +100,7 @@ class TreeModel(QAbstractItemModel):
         self.datos = datos
         self.setupModelData(datos, self.rootItem)
         
-
+        
     def columnCount(self, parent):
         return len(self.datos.col_hdr_idx) + 1
 
@@ -108,7 +108,10 @@ class TreeModel(QAbstractItemModel):
 
         if not index.isValid():
             return None
-
+        if role == Qt.TextAlignmentRole:
+            if index.column() != 0:
+                return Qt.AlignRight| Qt.AlignVCenter
+        
         if role not in (Qt.DisplayRole,33,):
             return None
             
@@ -184,6 +187,7 @@ class TreeModel(QAbstractItemModel):
         return parentItem.childCount()
 
     def setupModelData(self, datos, parent):
+
         parents = [parent]
         elemento = []
         
