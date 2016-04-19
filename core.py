@@ -198,10 +198,24 @@ class Cubo:
                         nombre = componente['name']
                     else:
                         nombre = entrada['name']
-                    slots = getDateSlots(componente['elem'],self.dbdriver)
+                    (slots,datetrees) = getDateSlots(componente['elem'],self.dbdriver)
                     # Cada tipo de agregacion de fecha -es lo que devuelve esta funcion- genera una entrada
                     # distinta, sin jerarquia, de momento
-
+                    
+                    for arbol in datetrees:
+                        self.lista_guias.append({'name':nombre +'_'+ arbol[-1]['mask'],'class':'d','rules':[],'elem':[]})
+                        for formula in arbol:
+                            self.lista_guias[ind]['elem'] += [formula['elem'],]                            
+                            self.lista_guias[ind]['rules'].append({'string':'',
+                                                            'ncode':len( self.lista_guias[ind]['elem']),
+                                                            'ndesc':1,
+                                                            'elem':[formula['elem'],],
+                                                            'name':nombre +'_'+ formula['mask'],
+                                                            'fmt': formula['mask'],
+                                                            'class':'d'
+                                                            })
+                        ind += 1
+                    
                     for formula in slots:
                         self.lista_guias.append({'name':nombre +'_'+ formula['mask'],'class':'d','rules':[],'elem':[]})
                         #pprint(formula)
@@ -248,10 +262,13 @@ class Cubo:
                     else:
                         sqlString = self.setGuidesDateSqlStatement(componente)
                         row=getCursor(self.db,sqlString)
+                        print(sqlString,row)
                         date_cache[campo] = [row[0][0], row[0][1]] 
-                    entrada['cursor'] = getDateIndex(date_cache[campo][0]  #max_date
+                    cursor += getDateIndex(date_cache[campo][0]  #max_date
                                                    , date_cache[campo][1]  #min_date
                                                    , componente['fmt'] )
+                    print(ind,idx,sqlString,lista_compra)
+                    entrada['cursor'] = sorted(cursor)
                     # espero que Python trabaje como dice y esto sean referencias
                     entrada['dir_row'] = entrada['cursor']
                     entrada['des_row'] = [ [k,] for k in entrada['cursor'] ]
@@ -442,15 +459,16 @@ class Vista:
 def experimental():
     vista = None
     mis_cubos = load_cubo()
-    cubo = Cubo(mis_cubos['datos locales'])
+    cubo = Cubo(mis_cubos['datos light'])
     #pprint(cubo.definition)
     #pprint(cubo.lista_funciones)
     #pprint(cubo.lista_campos)
+    #pprint(cubo.lista_guias)
     cubo.fillGuias()
-    #pprint(cubo.lista_guias[1])   
+    pprint(cubo.lista_guias[6])
     #pprint(cubo.lista_guias[6])   
 
-    vista=Vista(cubo,6,0,'sum','votes_presential')
+    vista=Vista(cubo,6,1,'sum','votes_presential')
     idx = 0
     print('',vista.col_hdr_txt)
     for record in vista.array:

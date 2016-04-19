@@ -9,7 +9,7 @@ Documentation, License etc.
 
 @package estimaciones
 '''
-
+DELIMITER = ':'
 from decimal import *
 from pprint import *
 from datetime import *
@@ -62,7 +62,7 @@ def getDateIndex(max_date,  min_date, fmt):
        TODO admite una leve posibilidad de mejora para excluir fechas imposibles
        TODO esta clarisimo que ademas admite seria optimizacion
     '''
-    delimiter = '.'
+    #DELIMITER = '.'
     base = []
     for char in fmt:
         result = getDateIndexElement(max_date, min_date, char)
@@ -72,7 +72,7 @@ def getDateIndex(max_date,  min_date, fmt):
             tmp = []
             for j in base:     #jerarquia de fechas anterior
                 for k in result:   #jerarquia actual
-                    tmp.append(j+delimiter+k)
+                    tmp.append(j+DELIMITER+k)
             base = tmp
     return base
     #normalizado = []
@@ -112,7 +112,7 @@ def getDateEntry(source, fmt, driver='QSQLITE'):
         print('Date conversions for driver %s still not implemented'%driver)
         return None
         
-    delimiter = '.'
+    #DELIMITER = '.'
         
     entrada={}
 
@@ -120,7 +120,7 @@ def getDateEntry(source, fmt, driver='QSQLITE'):
 
     for char in fmt:
         if fmt_string != '':
-            fmt_string += delimiter
+            fmt_string += DELIMITER
         fmt_string += marker[char]
     element = function + "("
     if driver == 'QSQLITE':
@@ -138,16 +138,27 @@ def getDateEntry(source, fmt, driver='QSQLITE'):
     
 def getDateSlots(fieldname, driver='QSQLITE', zoom='n'):
     #FIXME no se procesa el zoom
+    """
+      fechas julianas excluidas en sqlite  no es lo que quiero
+    """
     base_collection= []
     zoom_collection=[]
     if driver == 'QSQLITE':
-        base_col=('Y', 'Ym', 'YW', 'YW','m', 'md', 'mw', 'W', 'Ww', 'J', 'd', 'w', )
+        base_col=('Y', 'Ym', 'YW', 'YW','m', 'md', 'mw', 'W', 'Ww','d', 'w', )
+        # base_col=('Y', 'Ym', 'YW', 'YW','m', 'md', 'mw', 'W', 'Ww', 'J', 'd', 'w', )
     else:
         base_col=('Y', 'Ym', 'YW', 'Ymv','m', 'mv', 'md', 'mw','mvw',  'W', 'Ww', 'J', 'd', 'w','v' )
-        
-    zoom_col=('YJ','Ymd', 'Ymw', 'YmWw','YWw')
+    zoom_col=('Ymd', 'Ymw', 'YmWw','YWw')    
+    #zoom_col=('YJ','Ymd', 'Ymw', 'YmWw','YWw')
         
     for i in base_col:
-        base_collection.append(getDateEntry(fieldname, i,  driver))    
-    return base_collection
+        base_collection.append(getDateEntry(fieldname, i,  driver)) 
+    for entrada in zoom_col:
+        tuplas = []
+        for l in range(len(entrada)):
+            tuplas.append(getDateEntry(fieldname,entrada[0:l+1],driver))
+        zoom_collection.append(tuplas)
+        #print(entrada)
+        #pprint(tuplas)
+    return base_collection,zoom_collection
 
