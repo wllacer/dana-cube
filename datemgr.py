@@ -14,6 +14,8 @@ from decimal import *
 from pprint import *
 from datetime import *
 
+
+
 def getDateIndexElement(max_date, min_date, char):
     #TODO formatos todavia usan %
     minidx = []
@@ -57,7 +59,7 @@ def getDateIndexElement(max_date, min_date, char):
         
     return minidx
 
-def getDateIndex(max_date,  min_date, fmt):     
+def getDateIndex(max_date,  min_date, fmt, **opciones):     
     ''' 
        TODO admite una leve posibilidad de mejora para excluir fechas imposibles
        TODO esta clarisimo que ademas admite seria optimizacion
@@ -73,8 +75,26 @@ def getDateIndex(max_date,  min_date, fmt):
             for j in base:     #jerarquia de fechas anterior
                 for k in result:   #jerarquia actual
                     tmp.append(j+DELIMITER+k)
-            base = tmp
-    return base
+            base = tmp      
+    '''
+    formateamos ahora de modo consistente a los otros cursores
+    '''
+    resultado = []
+    if 'nholder' in opciones:   
+        tamanyo = opciones['nkeys']+opciones['nholder']
+    else:
+        tamanyo = opciones['nkeys']
+    for elem in base:
+        final_record = [elem,] 
+        temporal = elem.split(DELIMITER)
+        for k in range(tamanyo):
+            if k < len(temporal):
+                final_record.append(DELIMITER.join(temporal[0:k+1]))
+            else:
+                final_record.append('')
+        resultado.append(final_record)              
+    #resultado = list(map(base,regFiller,**opciones))
+    return resultado
     #normalizado = []
     #for i in base:
         #normalizado.append([i, ]) #convert into 0 list

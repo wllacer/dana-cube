@@ -208,7 +208,7 @@ class Cubo:
                             self.lista_guias[ind]['elem'] += [formula['elem'],]                            
                             self.lista_guias[ind]['rules'].append({'string':'',
                                                             'ncode':len( self.lista_guias[ind]['elem']),
-                                                            'ndesc':1,
+                                                            'ndesc':0,
                                                             'elem':[formula['elem'],],
                                                             'name':nombre +'_'+ formula['mask'],
                                                             'fmt': formula['mask'],
@@ -222,7 +222,7 @@ class Cubo:
                         self.lista_guias[ind]['elem'] += [formula['elem'],]
                         self.lista_guias[ind]['rules'].append({'string':'',
                                                         'ncode':1,
-                                                        'ndesc':1,
+                                                        'ndesc':0,
                                                         'elem':[formula['elem'],],
                                                         'name':nombre +'_'+ formula['mask'],
                                                         'fmt': formula['mask']
@@ -253,6 +253,11 @@ class Cubo:
         for ind,entrada in enumerate(self.lista_guias):
             cursor = []
             for idx,componente in enumerate(entrada['rules']):
+                lista_compra={'nkeys':componente['ncode'],'ndesc':componente['ndesc']}
+                if componente['ncode'] < len(entrada['elem']):
+                    lista_compra['nholder']=len(entrada['elem'])-componente['ncode']
+                    if componente['ndesc'] != 1:
+                        lista_compra['pholder'] = - componente['ndesc']
                 if 'class' in entrada and entrada['class'] == 'd':
                     #REFINE asumo que solo existe un elemento origen en los campos fecha
                     campo = componente['elem'][0]
@@ -262,30 +267,26 @@ class Cubo:
                     else:
                         sqlString = self.setGuidesDateSqlStatement(componente)
                         row=getCursor(self.db,sqlString)
-                        print(sqlString,row)
                         date_cache[campo] = [row[0][0], row[0][1]] 
                     cursor += getDateIndex(date_cache[campo][0]  #max_date
                                                    , date_cache[campo][1]  #min_date
-                                                   , componente['fmt'] )
+                                                   , componente['fmt'],
+                                                   **lista_compra)
                     print(ind,idx,sqlString,lista_compra)
-                    entrada['cursor'] = sorted(cursor)
-                    # espero que Python trabaje como dice y esto sean referencias
-                    entrada['dir_row'] = entrada['cursor']
-                    entrada['des_row'] = [ [k,] for k in entrada['cursor'] ]
                 else:  
                     sqlstring=componente['string']
-                    lista_compra={'nkeys':componente['ncode'],'ndesc':componente['ndesc']}
-                    if componente['ncode'] < len(entrada['elem']):
-                        lista_compra['nholder']=len(entrada['elem'])-componente['ncode']
-                        if componente['ndesc'] != 1:
-                            lista_compra['pholder'] = - componente['ndesc']
                     print(ind,idx,sqlstring,lista_compra)
                     cursor += getCursor(self.db,sqlstring,regHashFill,**lista_compra)
-                    entrada['cursor']=sorted(cursor)    
-                    entrada['dir_row']=[record[0] for record in entrada['cursor'] ]  #para navegar el indice con menos datos
-                    # pensado con descripciones en mas de un campo. la sintaxis luego es una pes
+                if ind > 4:
+                    print(cursor[0])
+                entrada['cursor']=sorted(cursor)    
+                entrada['dir_row']=[record[0] for record in entrada['cursor'] ]  #para navegar el indice con menos datos
+                # pensado con descripciones en mas de un campo. la sintaxis luego es una pes
+                if 'class' in entrada and entrada['class'] == 'd':
+                    entrada['des_row']=[[record[0],] for record in entrada['cursor'] ] 
+                else:
                     entrada['des_row']=[record[-componente['ndesc']:] for record in entrada['cursor']] 
-                    #print(time.strftime("%H:%M:%S"),dir_row[0])
+                #print(time.strftime("%H:%M:%S"),dir_row[0])
 
 class Vista:
     #TODO falta documentar
@@ -465,7 +466,7 @@ def experimental():
     #pprint(cubo.lista_campos)
     #pprint(cubo.lista_guias)
     cubo.fillGuias()
-    pprint(cubo.lista_guias[6])
+    #pprint(cubo.lista_guias[5])
     #pprint(cubo.lista_guias[6])   
 
     vista=Vista(cubo,6,1,'sum','votes_presential')
