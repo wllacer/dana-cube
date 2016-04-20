@@ -24,7 +24,7 @@ FIXME y propagarse en el filtro si es jerarquico
 
 '''
 
-from util.yamlmgr import *
+
 from util.record_functions import *
 
 from datalayer.access_layer import *
@@ -456,6 +456,7 @@ class Vista:
         return cab_col
 
 def experimental():
+    from util.jsonmgr import load_cubo
     vista = None
     mis_cubos = load_cubo()
     cubo = Cubo(mis_cubos['datos light'])

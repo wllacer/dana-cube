@@ -17,7 +17,7 @@ from PyQt5.QtWidgets import QApplication, QTreeView
 
 
 from core import Cubo,Vista
-from util.yamlmgr import *
+
 
 
 

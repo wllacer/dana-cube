@@ -16,7 +16,7 @@ from PyQt5.QtWidgets import QApplication, QFileDialog, QMainWindow, QTreeView
 
 from core import Cubo,Vista
 from dialogs import *
-from util.yamlmgr import load_cubo
+from util.jsonmgr import load_cubo
 from models import *
 
 #FIXED 1 zoom view breaks. Some variables weren't available 

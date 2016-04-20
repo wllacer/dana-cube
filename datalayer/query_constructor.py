@@ -33,11 +33,15 @@ def selConstructor(kwargs):
        modifier = kwargs['select_modifier'].strip().upper()
        if modifier in ('DISTINCT','FIRST'):
             statement += modifier + ' '
-
-    if isinstance(kwargs[definicion],str):
-      entrada = [kwargs[definicion],]
+            
+    if isinstance(kwargs[definicion],(list,tuple)):
+        entrada = kwargs[definicion]
     else:
-      entrada = kwargs[definicion]
+        entrada = [kwargs[definicion],]
+    #if isinstance(kwargs[definicion],str):
+      #entrada = [kwargs[definicion],]
+    #else:
+      #entrada = kwargs[definicion]
       
     ind = 0
     num_elem = len(entrada)
@@ -66,10 +70,14 @@ def fromConstructor(kwargs):
     if definicion not in kwargs:
        return ''
     
-    if isinstance(kwargs[definicion],str):
-      entrada = [kwargs[definicion],]
+    if isinstance(kwargs[definicion],(list,tuple)):
+        entrada = kwargs[definicion]
     else:
-      entrada = kwargs[definicion]
+        entrada = [kwargs[definicion],]
+    #if isinstance(kwargs[definicion],str):
+        #entrada = [kwargs[definicion],]
+    #else:
+        #entrada = kwargs[definicion]
       
     ind = 0
     num_elem = len(entrada)
@@ -124,10 +132,14 @@ def groupConstructor(kwargs):
     if definicion not in kwargs:
        return ''
     
-    if isinstance(kwargs[definicion],str):
-      entrada = [kwargs[definicion],]
+    if isinstance(kwargs[definicion],(list,tuple)):
+        entrada = kwargs[definicion]
     else:
-      entrada = kwargs[definicion]
+        entrada = [kwargs[definicion],]
+    #if isinstance(kwargs[definicion],str):
+        #entrada = [kwargs[definicion],]
+    #else:
+        #entrada = kwargs[definicion]
       
     ind = 0
     num_elem = len(entrada)
@@ -159,10 +171,14 @@ def orderConstructor(kwargs):
     if definicion not in kwargs:
        return ''
     
-    if isinstance(kwargs[definicion],str):
-      entrada = [kwargs[definicion],]
+    if isinstance(kwargs[definicion],(list,tuple)):
+        entrada = kwargs[definicion]
     else:
-      entrada = kwargs[definicion]
+        entrada = [kwargs[definicion],]
+    #if isinstance(kwargs[definicion],str):
+        #entrada = [kwargs[definicion],]
+    #else:
+        #entrada = kwargs[definicion]
       
     ind = 0
     num_elem = len(entrada)
@@ -191,10 +207,14 @@ def searchConstructor(definicion,kwargs):
 
     if definicion not in kwargs:
        return ''    
-    if isinstance(kwargs[definicion],str):
-      entrada = [kwargs[definicion],]
+    if isinstance(kwargs[definicion],(list,tuple)):
+        entrada = kwargs[definicion]
     else:
-      entrada = kwargs[definicion]
+        entrada = [kwargs[definicion],]
+    #if isinstance(kwargs[definicion],str):
+        #entrada = [kwargs[definicion],]
+    #else:
+        #entrada = kwargs[definicion]
       
     ind = 0
     num_elem = len(entrada)
