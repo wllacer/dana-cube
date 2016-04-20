@@ -17,44 +17,47 @@ We have created an environment where you can run an arbitrary aggregate query an
 
 This is __not an end user tool__ , rather it is designed to be used for knowledgable users (DBAs, developers, data owners) or as a ready made __API__ cum sample tool to ne integrated in other's people work (as it still is in heavy development, _Caveat emptor_ ).
 
-Each instance of the application runs against what we call a Cube. This is the view of a data table (or table-like DB object -a view, a select statement, ...) and the definition of the potential indexes over which to search. This indexes can be scalar fields or hierarchical structures. If the index is a date field; we automatically provide (for SQLITE, MySQL, PostGreSQL and Oracle, atm) for several subindexes (years, years-month, ...) The definition of the Cube is a simple text (YAML) file like this
+Each instance of the application runs against what we call a Cube. This is the view of a data table (or table-like DB object -a view, a select statement, ...) and the definition of the potential indexes over which to search. This indexes can be scalar fields or hierarchical structures. If the index is a date field; we automatically provide (for SQLITE, MySQL, PostGreSQL and Oracle, atm) for several subindexes (years, years-month, ...) The definition of the Cube is a simple text (Json) file like this
 
 ```
-datos disco:
-    connect:
-        driver: QSQLITE
-        dbname: /home/werner/dana-cube/Generales2011.kexi
-    ...
-    table: datos
-    base filter: ""
-    guides:
-        -   name: linea
-            class: o
-            prod:
-                - elem: linea
-                  fmt: txt
- ...            
-        -   name: geo
-            class: h
-            prod:
-                -   elem: autonomia
-                    fmt: txt
-                    name: autonomia
-                -   elem: provincia
-                    fmt: txt
-                    name: provincia
-                    
-        -   name: fecha
-            class: d
-            prod:
-                -   elem: fecha
-                    fmt: date
-    fields:
-        -   fact
-        -   fact2
-```
+    "datos light": {
+        "base filter": "", 
+        "table": "votos_locales", 
+        "guides": [
+            {
+                "prod": [
+                    {
+                        "source": {
+                            "filter": "", 
+                            "table": "partidos", 
+                            "code": "code", 
+                            "desc": "acronym"
+                        }, 
+                        "fmt": "txt", 
+                        "elem": "partido"
+                    }
+                ], 
+                "name": "partido", 
+                "class": "o"
+            }, 
+            ...
+        ], 
+        "connect": {
+            "dbuser": null, 
+            "dbhost": null, 
+            "driver": "QSQLITE", 
+            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db", 
+            "dbpass": null
+        }, 
+        "fields": [
+            "votes_presential", 
+            "votes_percent", 
+            "ord"
+        ]
+    }, 
+ ```
 
-Why a text file for definition? Getting the table definitions from the DB Catalog is one of the areas not standarized in SQL, nor the underlying tool i'm using (QtSQL) abstract them. Although we have plans to overcome it, it is no trivial task and we decided to postpone its implementation to a point when the tool is more mature. Second, text files are easy to distribute and for "emergency' changes. Although its format introduces a small dependency (the PyYaml? package) we think it introduces less burden than including Sqlite or defining specific tables in other database managers.
+Why a text file for definition? Getting the table definitions from the DB Catalog is one of the areas not standarized in SQL, nor the underlying tool i'm using (QtSQL) abstract them. Although we have plans to overcome it, it is no trivial task and we decided to postpone its implementation to a point when the tool is more mature. Second, text files are easy to distribute and for "emergency' changes. 
 
 The tool is programmed in python2 + PyQt5? (with PyYaml? as the only current dependency), but we test it also under python3.
 
