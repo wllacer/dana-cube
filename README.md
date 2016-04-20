@@ -4,7 +4,8 @@ Dana-cube is a tool to automate the design, execution and visualization of cross
 
 ## What's the problem:
 
-A common problem an SQL database users is to solve the need to resolve an aggregate (sum, aver,...) by two or more parameters, f.i. Give me the sum of sales per country and per line of product The, very simple, SQL query gives a tabular result (country,line,sum(sales)) but the normal way we want to is as a spreadsheet (countries as rows, lines as columns) but this is NOT usually available in most data query programs. Resourceful users can use MS Access cross reference queries to get this or use Pivot Tables available in several spreadsheet programs, but the cost -and most ofter the unwieldness- of linking REAL databases to this products do not make them really sustainable options in the long run.
+A common problem an SQL database users is to solve the need to resolve an aggregate (sum, aver,...) by two or more parameters, f.i. Give me the sum of sales per country and per line of product The, very simple, SQL query gives a tabular result (country,line,sum(sales)) but the normal way we want to is as a spreadsheet (countries as rows, lines as columns) but this is NOT usually available in most data query programs.
+Resourceful users can use MS Access cross reference queries to get this or use Pivot Tables available in several spreadsheet programs, but the cost -and most ofter the unwieldness- of linking REAL databases to this products do not make them really sustainable options in the long run.
 
 At the other end of the spectrum, very expensive (in more senses than cost) OLAP products tend to serve the same end, but are usually an overkill; and for various reasons distribution in an organization is restricted, lowering its impact
 
@@ -13,6 +14,8 @@ At the other end of the spectrum, very expensive (in more senses than cost) OLAP
 We provide a database, OS agnostic environment for runing and managing those kind of queries and show them in tabular fashion.
 
 We have created an environment where you can run an arbitrary aggregate query and show it in tabular fashion.
+
+This is __not an end user tool__ , rather it is designed to be used for knowledgable users (DBAs, developers, data owners) or as a ready made __API__ cum sample tool to ne integrated in other's people work (as it still is in heavy development, _Caveat emptor_ ).
 
 Each instance of the application runs against what we call a Cube. This is the view of a data table (or table-like DB object -a view, a select statement, ...) and the definition of the potential indexes over which to search. This indexes can be scalar fields or hierarchical structures. If the index is a date field; we automatically provide (for SQLITE, MySQL, PostGreSQL and Oracle, atm) for several subindexes (years, years-month, ...) The definition of the Cube is a simple text (YAML) file like this
 
@@ -53,7 +56,7 @@ datos disco:
 
 Why a text file for definition? Getting the table definitions from the DB Catalog is one of the areas not standarized in SQL, nor the underlying tool i'm using (QtSQL) abstract them. Although we have plans to overcome it, it is no trivial task and we decided to postpone its implementation to a point when the tool is more mature. Second, text files are easy to distribute and for "emergency' changes. Although its format introduces a small dependency (the PyYaml? package) we think it introduces less burden than including Sqlite or defining specific tables in other database managers.
 
-The tool is programmed in python2 + PyQt4? (with PyYaml? as the only current dependency)
+The tool is programmed in python2 + PyQt5? (with PyYaml? as the only current dependency), but we test it also under python3.
 
 
 ## License
@@ -67,7 +70,7 @@ PyQt licensing might impose other restrictions, please keep an eye on it (AFAIK 
 
 ## Actual Status
 
-__MASTER works__ but some pieces are lacking. If you want to try it fully although with a clumiser interface  please download release __0.3__ 
+__MASTER works__ but some pieces are lacking (Above all documentation). You can download the latest release to test it
 
 
 _Update Saturday of the BVM_: New GUI based on the Model View elements of Qt. Still some parts missing

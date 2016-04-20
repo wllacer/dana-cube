@@ -53,11 +53,12 @@ class MainWindow(QMainWindow):
         #CHANGE here
         self.fileMenu = self.menuBar().addMenu("&Cubo")
         self.fileMenu.addAction("&Open Cube ...", self.initCube, "Ctrl+O")
-        self.fileMenu.addAction("E&xit", self.close, "Ctrl+Q")
-        self.fileMenu = self.menuBar().addMenu("&Vista")
         self.fileMenu.addAction("C&hange View ...", self.requestVista, "Ctrl+H")
-        self.fileMenu.addAction("&Zoom View ...", self.zoomData, "Ctrl+Z")
-        self.fileMenu.addAction("&Config ...",self.setNumberFormat,"Ctrl+F")
+        self.fileMenu.addAction("E&xit", self.close, "Ctrl+Q")
+        self.fileMenu = self.menuBar().addMenu("&Opciones")
+        #TODO skipped has to be retougth with the new interface
+        #self.fileMenu.addAction("&Zoom View ...", self.zoomData, "Ctrl+Z")
+        self.fileMenu.addAction("&Presentacion ...",self.setNumberFormat,"Ctrl+F")
         #
         self.format = dict(thousandsseparator=".", 
                                     decimalmarker=",",

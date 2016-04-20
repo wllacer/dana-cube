@@ -277,8 +277,6 @@ class Cubo:
                     sqlstring=componente['string']
                     print(ind,idx,sqlstring,lista_compra)
                     cursor += getCursor(self.db,sqlstring,regHashFill,**lista_compra)
-                if ind > 4:
-                    print(cursor[0])
                 entrada['cursor']=sorted(cursor)    
                 entrada['dir_row']=[record[0] for record in entrada['cursor'] ]  #para navegar el indice con menos datos
                 # pensado con descripciones en mas de un campo. la sintaxis luego es una pes
