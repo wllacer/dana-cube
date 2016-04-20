@@ -108,7 +108,7 @@ class MainWindow(QMainWindow):
 
     def autoCarga(self,my_cubos):
         base = my_cubos['default']
-        pprint(base)
+
         self.cubo=Cubo(my_cubos[base['cubo']])
         app.setOverrideCursor(QCursor(Qt.WaitCursor))
         self.cubo.fillGuias()

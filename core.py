@@ -134,7 +134,7 @@ class Cubo:
           sqlDef['tables'] = self.definition['table']
           if len(self.definition['base filter'].strip()) > 0:
              sqlDef['base filter']=self.definition['base_filter']
-          sqlDef['fields'] = entrada['elem']
+          sqlDef['fields'] = entrada['elem'].split(",")
           
         code_fld = len(sqlDef['fields']) - desc_fld  
         
@@ -280,7 +280,7 @@ class Cubo:
                 entrada['cursor']=sorted(cursor)    
                 entrada['dir_row']=[record[0] for record in entrada['cursor'] ]  #para navegar el indice con menos datos
                 # pensado con descripciones en mas de un campo. la sintaxis luego es una pes
-                if 'class' in entrada and entrada['class'] == 'd':
+                if componente['ndesc'] == 0:
                     entrada['des_row']=[[record[0],] for record in entrada['cursor'] ] 
                 else:
                     entrada['des_row']=[record[-componente['ndesc']:] for record in entrada['cursor']] 
@@ -365,6 +365,7 @@ class Vista:
             self.setDataMatrix()
             
     def  setDataMatrix(self):
+
          #REFINE solo esperamos un campo de datos. Hay que generalizarlo
         self.array = [ [None for k in range(len(self.col_hdr_idx))] for j in range(len(self.row_hdr_idx))]
 
@@ -459,7 +460,7 @@ def experimental():
     from util.jsonmgr import load_cubo
     vista = None
     mis_cubos = load_cubo()
-    cubo = Cubo(mis_cubos['datos light'])
+    cubo = Cubo(mis_cubos['experimento'])
     #pprint(cubo.definition)
     #pprint(cubo.lista_funciones)
     #pprint(cubo.lista_campos)
@@ -468,7 +469,7 @@ def experimental():
     #pprint(cubo.lista_guias[5])
     #pprint(cubo.lista_guias[6])   
 
-    vista=Vista(cubo,6,1,'sum','votes_presential')
+    vista=Vista(cubo,1,0,'sum','votes_presential')
     idx = 0
     print('',vista.col_hdr_txt)
     for record in vista.array:

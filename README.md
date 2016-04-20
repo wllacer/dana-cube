@@ -59,7 +59,7 @@ Each instance of the application runs against what we call a Cube. This is the v
 
 Why a text file for definition? Getting the table definitions from the DB Catalog is one of the areas not standarized in SQL, nor the underlying tool i'm using (QtSQL) abstract them. Although we have plans to overcome it, it is no trivial task and we decided to postpone its implementation to a point when the tool is more mature. Second, text files are easy to distribute and for "emergency' changes. 
 
-The tool is programmed in python2 + PyQt5? (with PyYaml? as the only current dependency), but we test it also under python3.
+The tool is programmed in python2 + PyQt5?, but we test it also under python3.
 
 
 ## License

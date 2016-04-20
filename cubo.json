@@ -1,8 +1,8 @@
 {
     "default": {
-        "cubo": "datos light", 
+        "cubo": "experimento", 
         "vista": {
-            "row": 2, 
+            "row": 1, 
             "agregado": "avg", 
             "col": 0, 
             "elemento": "votes_percent"
@@ -151,12 +151,12 @@
         "guides": [
             {
                 "prod": [
-                    {
-                        "source": {
+                    {   "source": {
+                            "filter": "", 
                             "table": "partidos", 
                             "code": "code", 
                             "desc": "acronym"
-                        }, 
+                        },
                         "fmt": "txt", 
                         "elem": "partido"
                     }
@@ -500,6 +500,136 @@
         "fields": [
             "votes_presential", 
             "votes_percent", 
+            "ord"
+        ]
+    },
+    "experimento": {
+        "base filter": "", 
+        "table": "votos_provincia", 
+        "guides": [
+            {
+                "prod": [
+                    {  
+                        "fmt": "txt", 
+                        "elem": "partido"
+                    }
+                ], 
+                "name": "partido", 
+                "class": "o"
+            }, 
+            {
+                "prod": [
+                    {
+                        "source": {
+                            "filter": "provincia <> '' and municipio = '' and isla = ''", 
+                            "table": "localidades", 
+                            "code": "provincia", 
+                            "desc": "nombre"
+                        }, 
+                        "fmt": "txt", 
+                        "elem": "provincia"
+                    }
+                ], 
+                "name": "provincia", 
+                "class": "o"
+            }, 
+            {
+                "prod": [
+                    {
+                        "source": {
+                            "filter": "code in (select distinct partido from votos_provincia where votes_percent >= 3)", 
+                            "table": "partidos", 
+                            "code": "code", 
+                            "desc": "acronym"
+                        }, 
+                        "fmt": "txt", 
+                        "elem": "partido"
+                    }
+                ], 
+                "name": "partidos importantes", 
+                "class": "o"
+            }, 
+            {
+                "prod": [
+                    {
+                        "fmt": "txt", 
+                        "elem": "partido", 
+                        "categories": [
+                            {
+                                "default": "otros"
+                            }, 
+                            {
+                                "values": [
+                                    3316, 
+                                    4688
+                                ], 
+                                "result": "Derecha", 
+                                "condition": "in"
+                            }, 
+                            {
+                                "values": [
+                                    1079, 
+                                    4475
+                                ], 
+                                "result": "Centro", 
+                                "condition": "in"
+                            }, 
+                            {
+                                "values": [
+                                    3484
+                                ], 
+                                "result": "Izquierda", 
+                                "condition": "in"
+                            }, 
+                            {
+                                "values": [
+                                    3736, 
+                                    5033, 
+                                    4850, 
+                                    5008, 
+                                    5041, 
+                                    2744, 
+                                    5026
+                                ], 
+                                "result": "Extrema Izquierda", 
+                                "condition": "in"
+                            }, 
+                            {
+                                "values": [
+                                    5063, 
+                                    4991, 
+                                    1528
+                                ], 
+                                "result": "Separatistas", 
+                                "condition": "in"
+                            }, 
+                            {
+                                "values": [
+                                    1533, 
+                                    4744, 
+                                    4223
+                                ], 
+                                "result": "Nacionalistas", 
+                                "condition": "in"
+                            }
+                        ]
+                    }
+                ], 
+                "name": "ideologia", 
+                "class": "c"
+            }
+        ], 
+        "connect": {
+            "dbuser": null, 
+            "dbhost": null, 
+            "driver": "QSQLITE", 
+            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db", 
+            "dbpass": null
+        }, 
+        "fields": [
+            "votes_presential", 
+            "votes_percent", 
+            "seats", 
             "ord"
         ]
     }
