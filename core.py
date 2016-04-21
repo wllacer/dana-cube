@@ -114,6 +114,7 @@ class Cubo:
 
         if 'source' in entrada.keys():
           sqlDef['tables'] = entrada['source']['table']
+          
           if 'filter' in entrada['source']:
               sqlDef['base_filter']=entrada['source']['filter']
               
@@ -138,8 +139,9 @@ class Cubo:
           
         code_fld = len(sqlDef['fields']) - desc_fld  
         
-        #print(code_fld,desc_fld,sqlDef['fields'])
+        
         sqlDef['order'] = [ str(x + 1) for x in range(code_fld)]
+        
         sqlDef['select_modifier']='DISTINCT'
         
         sqlString = queryConstructor(**sqlDef)
@@ -190,62 +192,80 @@ class Cubo:
         
         self.lista_guias = []
         ind = 0
+        
+        nombres = [ entrada['name'] for entrada in self.definition['guides'] ]
+        #indice = nombres.index('partido')
+        #pprint(self.definition['guides'][indice])
+        
         for entrada in self.definition['guides']:
-            
+            # las guias clase = 'd' generan varias entradas
             if entrada['class'] == 'd':
-                for idx,componente in enumerate(entrada['prod']):
-                    if 'name' in componente:
-                        nombre = componente['name']
-                    else:
-                        nombre = entrada['name']
-                    (slots,datetrees) = getDateSlots(componente['elem'],self.dbdriver)
-                    # Cada tipo de agregacion de fecha -es lo que devuelve esta funcion- genera una entrada
-                    # distinta, sin jerarquia, de momento
-                    
-                    for arbol in datetrees:
-                        self.lista_guias.append({'name':nombre +'_'+ arbol[-1]['mask'],'class':'d','rules':[],'elem':[]})
-                        for formula in arbol:
-                            self.lista_guias[ind]['elem'] += [formula['elem'],]                            
-                            self.lista_guias[ind]['rules'].append({'string':'',
-                                                            'ncode':len( self.lista_guias[ind]['elem']),
-                                                            'ndesc':0,
-                                                            'elem':[formula['elem'],],
-                                                            'name':nombre +'_'+ formula['mask'],
-                                                            'fmt': formula['mask'],
-                                                            'class':'d'
-                                                            })
-                        ind += 1
-                    
-                    for formula in slots:
-                        self.lista_guias.append({'name':nombre +'_'+ formula['mask'],'class':'d','rules':[],'elem':[]})
-                        #pprint(formula)
-                        self.lista_guias[ind]['elem'] += [formula['elem'],]
-                        self.lista_guias[ind]['rules'].append({'string':'',
-                                                        'ncode':1,
-                                                        'ndesc':0,
-                                                        'elem':[formula['elem'],],
-                                                        'name':nombre +'_'+ formula['mask'],
-                                                        'fmt': formula['mask']
-                                                        })
-                        ind +=1
-            else :
-                self.lista_guias.append({'name':entrada['name'],'class':'','rules':[],'elem':[]})
-                for idx,componente in enumerate(entrada['prod']):
-                    if 'name' in componente:
-                        nombre = componente['name']
-                    else:
-                        nombre = entrada['name']
-                    self.lista_guias[ind]['elem'] += componente['elem'].split(',')
+                (slots,datetrees) = getDateSlots(entrada['prod'][0]['elem'],self.dbdriver)
+                #primero las jerarquizadas
+                for elemento in datetrees:
+                    self.lista_guias.append({'name':entrada['name'] +'_'+ elemento[-1]['mask'],
+                                             'class':'d','rules':[],'elem':[],
+                                             'formula':elemento})
+                    ind += 1
+                # luego las individuales
+                for elemento in slots:
+                    self.lista_guias.append({'name':entrada['name'] +'_'+ elemento['mask'],
+                                             'class':'d','rules':[],'elem':[],
+                                             'formula':elemento})
+                    ind += 1
+            else:
+                self.lista_guias.append({'name':entrada['name'],'class':entrada['class'],'rules':[],'elem':[]})
+                ind += 1
+
+          
+        for entrada in self.lista_guias:
+            if 'formula' in entrada:
+                if isinstance(entrada['formula'],dict):  #error de definicion en getDateSlots. FIXME deberia desaparecer
+                    produccion = [entrada['formula'],]
+                else:
+                    produccion = entrada['formula']
+            else:
+                produccion = self.definition['guides'][nombres.index(entrada['name'])]['prod']
+            
+            for componente in produccion:
+                if 'name' in componente:
+                    nombre = componente['name']
+                else:
+                    nombre = entrada['name']
+                if 'class' in componente:
+                    clase = componente['class']
+                else:
+                    clase = entrada['class']
+                ##TODO hay que normalizar lo de los elementos
+                if isinstance(componente['elem'],(list,tuple)): 
+                    entrada['elem'] += componente['elem']
+                else:
+                    entrada['elem'] += [componente['elem'],]
+                if clase == 'd':
+                    entrada['rules'].append({'string':'',
+                                'ncode':len(entrada['elem']),
+                                'ndesc':0,
+                                'elem':[componente['elem'],],
+                                'name':nombre +'_'+ componente['mask'],
+                                'fmt': componente['mask'],
+                                'class':'d'
+                                })
+
+                else:
+
+                    #entrada['elem'] += componente['elem'].split(',')
                     (sqlString,code_fld,desc_fld) = self.setGuidesSqlStatement(componente,[])
-                    
-                    self.lista_guias[ind]['rules'].append({'string':sqlString,
+                    entrada['rules'].append({'string':sqlString,
                                                     'ncode':code_fld,
                                                     'ndesc':desc_fld,
-                                                    'elem':self.lista_guias[ind]['elem'][:],
-                                                    'name':nombre})
-                ind +=1
-                        
-                #pprint(componente)
+                                                    'elem':entrada['elem'][:],
+                                                    'name':nombre,
+                                                    'class':clase})
+            pprint(entrada)
+            #no deberia serme util 
+            #if 'formula' in entrada:    
+                #del entrada['formula']
+            
     def fillGuias(self):
         # TODO documentar y probablemente separar en funciones
         # 
@@ -277,15 +297,18 @@ class Cubo:
                     sqlstring=componente['string']
                     print(ind,idx,sqlstring,lista_compra)
                     cursor += getCursor(self.db,sqlstring,regHashFill,**lista_compra)
-                entrada['cursor']=sorted(cursor)    
-                entrada['dir_row']=[record[0] for record in entrada['cursor'] ]  #para navegar el indice con menos datos
+                
+                cursor = sorted(cursor)
+                entrada['dir_row']=[record[0] for record in cursor]  #para navegar el indice con menos datos
                 # pensado con descripciones en mas de un campo. la sintaxis luego es una pes
                 if componente['ndesc'] == 0:
-                    entrada['des_row']=[[record[0],] for record in entrada['cursor'] ] 
+                    entrada['des_row']=[[record[0],] for record in cursor ] 
                 else:
-                    entrada['des_row']=[record[-componente['ndesc']:] for record in entrada['cursor']] 
+                    entrada['des_row']=[record[-componente['ndesc']:] for record in cursor] 
+                
                 #print(time.strftime("%H:%M:%S"),dir_row[0])
-
+                #print(time.strftime("%H:%M:%S"),dir_row[0])
+                '''
 class Vista:
     #TODO falta documentar
     #TODO falta implementar la five points metric

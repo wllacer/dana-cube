@@ -15,6 +15,8 @@ We provide a database, OS agnostic environment for runing and managing those kin
 
 We have created an environment where you can run an arbitrary aggregate query and show it in tabular fashion.
 
+![Screenshot](docs/screenshot.png "Title")
+
 This is __not an end user tool__ , rather it is designed to be used for knowledgable users (DBAs, developers, data owners) or as a ready made __API__ cum sample tool to ne integrated in other's people work (as it still is in heavy development, _Caveat emptor_ ).
 
 Each instance of the application runs against what we call a Cube. This is the view of a data table (or table-like DB object -a view, a select statement, ...) and the definition of the potential indexes over which to search. This indexes can be scalar fields or hierarchical structures. If the index is a date field; we automatically provide (for SQLITE, MySQL, PostGreSQL and Oracle, atm) for several subindexes (years, years-month, ...) The definition of the Cube is a simple text (Json) file like this
