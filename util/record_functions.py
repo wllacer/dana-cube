@@ -14,6 +14,35 @@ Documentation, License etc.
 
 from pprint import *
 
+def ex(structure,value,defval=None):
+    """
+      devuelve el valor de la estructura definido por el indice value
+      si no existe o es nulo devuelve None o el valor de defecto que queramos
+    """
+    try:
+        if structure[value] is None:
+            return defval
+        else:
+            return structure[value]
+    except (KeyError ,IndexError) :
+        return defval
+
+def slicer(lista,num_elem=2,defval=''):
+    """
+       De una lista de tamaño arbitrario (incluye un elemento atomico) se devuelve una lista de
+       un numero limitado de campos (el parametro num_elem)
+       si la lista es de menor longitud se rellena con las entradas necesarias con el valor def_val
+       si es mayor, el último elemento es una lista con el resto 
+    """
+
+    if not isinstance(lista,(list,tuple)):
+        outlist =[lista,] + [defval for k in range(1,num_elem)]
+    elif len(lista) <= num_elem :
+        outlist=[elem for elem in lista] + [defval for k in range(len(lista),num_elem)]
+    else:
+        outlist=[lista[k] for k in range(num_elem -1)]+ [[lista[k] for k in range(num_elem -1,len(lista))],]
+    return outlist
+
 def getLevel(entrada):
     '''
        sustituto del get level como array

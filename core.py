@@ -75,17 +75,16 @@ class Cubo:
     def getFields(self):
         '''
            crea/devuelve el atributo cubo.lista_campos
-           parte de la base de los campos de la definición y añade los campos no textuales de las lista_guias
-           Esa idea es para poder tener campos parciales o derivados como guias TODO
         '''
         if len(self.lista_campos) == 0:
             lista_campos = self.definition['fields'][:]
-            for entry in self.definition['guides']:
-                for regla in entry['prod']:
-                    if 'fmt' in regla.keys():
-                        if regla['fmt'] in ('txt', 'date'):
-                            continue
-                    lista_campos.append(regla['elem'])
+            # este añadido no parece tener sentido por ahora. comentado FIXME
+            #for entry in self.definition['guides']:
+                #for regla in entry['prod']:
+                    #if 'fmt' in regla.keys():
+                        #if regla['fmt'] in ('txt', 'date'):
+                            #continue
+                    #lista_campos.append(regla['elem'])
         else:
             lista_campos = self.lista_campos [ : ]
         return lista_campos
@@ -169,12 +168,16 @@ class Cubo:
            *  rules  lista con cada una de las reglas de produccion de los niveles. Contiene
                 *   name
                 *   string   cadena sql para crear el dominio de la guia (de prod )
+                *   case_string para categorias
                 *   ncode    numero de campos que forman la clave de la iteracion
                 *   ndesc    numero de campso de la descripción
                 *   elem     lista con los campos de la TABLA PRINCIPAL que cubren ese nivel
-                *   fmt      (solo fechas) estructura de fecha que deseo
+                *   date_fmt      (solo fechas) estructura de fecha que deseo
+                *   enum     (solo categorias) estructura de enumeracion
+                *   fmt      (opcional). Formato especial para los valores del campo 
+                *   enum_fmt (opcional)  en categorias formato de los elementos a enumerar si no son el defecto
  
-           * cursor el resultado normalizado (con rellenos) y agreagado de la guia en todos sus niveles
+           * YA NO cursor el resultado normalizado (con rellenos) y agreagado de la guia en todos sus niveles
            * dir_row el array indice (para realizar busquedas)
            * des_row el array con la descripción  TODO es mejorable su proceso
            
@@ -247,8 +250,17 @@ class Cubo:
                                 'ndesc':0,
                                 'elem':[componente['elem'],],
                                 'name':nombre +'_'+ componente['mask'],
-                                'fmt': componente['mask'],
-                                'class':'d'
+                                'date_fmt': componente['mask'],
+                                'class':clase
+                                })
+                elif clase == 'c':
+                    entrada['rules'].append({'string':'',
+                                'ncode':len(entrada['elem']),
+                                'ndesc':0,
+                                'elem':[componente['elem'],],
+                                'name':nombre,
+                                'class':clase,
+                                'enum':componente['categories'],
                                 })
 
                 else:
@@ -261,14 +273,21 @@ class Cubo:
                                                     'elem':entrada['elem'][:],
                                                     'name':nombre,
                                                     'class':clase})
-            pprint(entrada)
+                if 'fmt' in componente:
+                    entrada['rules'][-1]['fmt']=componente['fmt']
+                if 'enum_fmt' in componente:
+                    entrada['rules'][-1]['enum_fmt']=componente['enum_fmt']
+                if clase == 'c':
+                    entrada['rules'][-1]['elem'][-1]=sqlCase(entrada['rules'][-1])
+            #pprint(entrada)
             #no deberia serme util 
             #if 'formula' in entrada:    
                 #del entrada['formula']
             
     def fillGuias(self):
         # TODO documentar y probablemente separar en funciones
-        # 
+        # TODO ahora debo de poder integrar fechas y categorias dentro de una jerarquia
+        #      probablemente el cursor += no es lo que se necesita en estos casos
         date_cache = {}
         for ind,entrada in enumerate(self.lista_guias):
             cursor = []
@@ -278,9 +297,10 @@ class Cubo:
                     lista_compra['nholder']=len(entrada['elem'])-componente['ncode']
                     if componente['ndesc'] != 1:
                         lista_compra['pholder'] = - componente['ndesc']
-                if 'class' in entrada and entrada['class'] == 'd':
+                        
+                if componente['class'] == 'd':
                     #REFINE asumo que solo existe un elemento origen en los campos fecha
-                    campo = componente['elem'][0]
+                    campo = componente['elem'][-1]
                     # obtengo la fecha mayor y menor
                     if campo in date_cache:
                         pass
@@ -290,9 +310,13 @@ class Cubo:
                         date_cache[campo] = [row[0][0], row[0][1]] 
                     cursor += getDateIndex(date_cache[campo][0]  #max_date
                                                    , date_cache[campo][1]  #min_date
-                                                   , componente['fmt'],
+                                                   , componente['date_fmt'],
                                                    **lista_compra)
                     print(ind,idx,sqlString,lista_compra)
+                elif componente['class'] == 'c':
+                    #FIXME placeholders, etc
+                    nombres = [ [item['result'] if 'result' in item else item['default'],] for item in componente['enum']]
+                    cursor += sorted(nombres)
                 else:  
                     sqlstring=componente['string']
                     print(ind,idx,sqlstring,lista_compra)
@@ -308,7 +332,7 @@ class Cubo:
                 
                 #print(time.strftime("%H:%M:%S"),dir_row[0])
                 #print(time.strftime("%H:%M:%S"),dir_row[0])
-                '''
+                
 class Vista:
     #TODO falta documentar
     #TODO falta implementar la five points metric
@@ -388,11 +412,16 @@ class Vista:
             self.setDataMatrix()
             
     def  setDataMatrix(self):
-
+         #TODO clarificar el codigo
          #REFINE solo esperamos un campo de datos. Hay que generalizarlo
         self.array = [ [None for k in range(len(self.col_hdr_idx))] for j in range(len(self.row_hdr_idx))]
 
         for i in range(0,self.dim_row):
+            # el group by en las categorias necesita codigo especial
+            if self.cubo.lista_guias[self.row_id]['rules'][i]['class'] == 'c':
+                group_row = [self.cubo.lista_guias[self.row_id]['rules'][i]['name'],]
+            else:
+                group_row = self.cubo.lista_guias[self.row_id]['rules'][i]['elem']
             for j in range(0,self.dim_col):
                 sqlDef=dict()
                 sqlDef['tables']=self.cubo.definition['table']
@@ -401,9 +430,14 @@ class Vista:
                                   self.cubo.lista_guias[self.col_id]['rules'][j]['elem'] + \
                                   [(self.campo,self.agregado)]    
                 sqlDef['base_filter']=mergeString(self.filtro,self.cubo.definition['base filter'],'AND')
-                    
-                sqlDef['group']=self.cubo.lista_guias[self.row_id]['rules'][i]['elem'] + \
-                                  self.cubo.lista_guias[self.col_id]['rules'][j]['elem']
+                # esta desviacion es por las categorias
+                if self.cubo.lista_guias[self.col_id]['rules'][j]['class'] == 'c':
+                    group_col = [self.cubo.lista_guias[self.col_id]['rules'][j]['name'],]
+                else:
+                    group_col = self.cubo.lista_guias[self.col_id]['rules'][j]['elem']
+                #sqlDef['group']=self.cubo.lista_guias[self.row_id]['rules'][i]['elem'] + \
+                                  #self.cubo.lista_guias[self.col_id]['rules'][j]['elem']
+                sqlDef['group']= group_row + group_col
                 #sqlDef['having']=None
                 #sqlDef['order']=None
                 sqlstring=queryConstructor(**sqlDef)
@@ -413,7 +447,7 @@ class Vista:
                               'col':{'nkeys':len(self.cubo.lista_guias[self.col_id]['rules'][j]['elem']),
                                      'init':-1-len(self.cubo.lista_guias[self.col_id]['rules'][j]['elem'])}
                               }
-                #print(sqlstring,lista_compra)
+                print('Datos ',sqlstring,lista_compra)
                 cursor_data=getCursor(self.cubo.db,sqlstring,regHasher2D,**lista_compra)
                 #print(time.strftime("%H:%M:%S"),cursor_data[0])
                 for record in cursor_data:
@@ -430,6 +464,7 @@ class Vista:
         '''
            TODO puede simplificarse
            TODO documentar
+           TODO en el caso de fechas debe formatearse a algo presentable
         '''
         #print(dimension, separador, sparse, rango,  max_level)
         cab_col = []
@@ -485,14 +520,14 @@ def experimental():
     mis_cubos = load_cubo()
     cubo = Cubo(mis_cubos['experimento'])
     #pprint(cubo.definition)
+    #pprint(cubo.definition)
     #pprint(cubo.lista_funciones)
     #pprint(cubo.lista_campos)
-    #pprint(cubo.lista_guias)
+    pprint(cubo.lista_guias)
     cubo.fillGuias()
-    #pprint(cubo.lista_guias[5])
+    #pprint(cubo.lista_guias[2])
     #pprint(cubo.lista_guias[6])   
-
-    vista=Vista(cubo,1,0,'sum','votes_presential')
+    vista=Vista(cubo,2,0,'sum','votes_presential')
     idx = 0
     print('',vista.col_hdr_txt)
     for record in vista.array:

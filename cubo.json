@@ -1,8 +1,8 @@
 {
     "default": {
-        "cubo": "experimento", 
+        "cubo": "datos light", 
         "vista": {
-            "row": 1, 
+            "row": 6, 
             "agregado": "avg", 
             "col": 0, 
             "elemento": "votes_percent"
@@ -21,7 +21,7 @@
                             "code": "code", 
                             "desc": "acronym"
                         }, 
-                        "fmt": "txt", 
+
                         "elem": "partido"
                     }
                 ], 
@@ -37,7 +37,7 @@
                             "code": "code", 
                             "desc": "acronym"
                         }, 
-                        "fmt": "txt", 
+
                         "elem": "partido"
                     }
                 ], 
@@ -53,7 +53,7 @@
                             "code": "region", 
                             "desc": "nombre"
                         }, 
-                        "fmt": "txt", 
+
                         "elem": "region"
                     }
                 ], 
@@ -69,7 +69,7 @@
                             "code": "provincia", 
                             "desc": "nombre"
                         }, 
-                        "fmt": "txt", 
+
                         "elem": "provincia"
                     }
                 ], 
@@ -85,7 +85,7 @@
                             "code": "municipio", 
                             "desc": "nombre"
                         }, 
-                        "fmt": "txt", 
+
                         "elem": "municipio"
                     }
                 ], 
@@ -101,7 +101,7 @@
                             "code": "region", 
                             "desc": "nombre"
                         }, 
-                        "fmt": "txt", 
+
                         "elem": "region", 
                         "name": "region"
                     }, 
@@ -113,7 +113,7 @@
                             "code": "provincia", 
                             "grouped by": "region"
                         }, 
-                        "fmt": "txt", 
+
                         "elem": "provincia", 
                         "name": "provincia"
                     }
@@ -157,7 +157,7 @@
                             "code": "code", 
                             "desc": "acronym"
                         },
-                        "fmt": "txt", 
+
                         "elem": "partido"
                     }
                 ], 
@@ -173,7 +173,7 @@
                             "code": "region", 
                             "desc": "nombre"
                         }, 
-                        "fmt": "txt", 
+
                         "elem": "region"
                     }
                 ], 
@@ -189,7 +189,7 @@
                             "code": "provincia", 
                             "desc": "nombre"
                         }, 
-                        "fmt": "txt", 
+
                         "elem": "provincia"
                     }
                 ], 
@@ -205,7 +205,7 @@
                             "code": "region", 
                             "desc": "nombre"
                         }, 
-                        "fmt": "txt", 
+
                         "elem": "region", 
                         "name": "region"
                     }, 
@@ -217,7 +217,7 @@
                             "code": "provincia", 
                             "grouped by": "region"
                         }, 
-                        "fmt": "txt", 
+
                         "elem": "provincia", 
                         "name": "provincia"
                     }
@@ -234,7 +234,7 @@
                             "code": "code", 
                             "desc": "acronym"
                         }, 
-                        "fmt": "txt", 
+
                         "elem": "partido"
                     }
                 ], 
@@ -269,7 +269,7 @@
                             "code": "code", 
                             "desc": "acronym"
                         }, 
-                        "fmt": "txt", 
+
                         "elem": "partido"
                     }
                 ], 
@@ -285,7 +285,7 @@
                             "code": "code", 
                             "desc": "acronym"
                         }, 
-                        "fmt": "txt", 
+
                         "elem": "partido"
                     }
                 ], 
@@ -301,7 +301,7 @@
                             "code": "region", 
                             "desc": "nombre"
                         }, 
-                        "fmt": "txt", 
+
                         "elem": "region"
                     }
                 ], 
@@ -317,7 +317,7 @@
                             "code": "provincia", 
                             "desc": "nombre"
                         }, 
-                        "fmt": "txt", 
+
                         "elem": "provincia"
                     }
                 ], 
@@ -333,7 +333,7 @@
                             "code": "municipio", 
                             "desc": "nombre"
                         }, 
-                        "fmt": "txt", 
+
                         "elem": "municipio"
                     }
                 ], 
@@ -349,7 +349,7 @@
                             "code": "region", 
                             "desc": "nombre"
                         }, 
-                        "fmt": "txt", 
+
                         "elem": "region", 
                         "name": "region"
                     }, 
@@ -361,7 +361,7 @@
                             "code": "provincia", 
                             "grouped by": "region"
                         }, 
-                        "fmt": "txt", 
+
                         "elem": "provincia", 
                         "name": "provincia"
                     }
@@ -378,7 +378,7 @@
                             "code": "region", 
                             "desc": "nombre"
                         }, 
-                        "fmt": "txt", 
+
                         "elem": "region", 
                         "name": "region"
                     }, 
@@ -390,7 +390,7 @@
                             "code": "provincia", 
                             "grouped by": "region"
                         }, 
-                        "fmt": "txt", 
+
                         "elem": "provincia", 
                         "name": "provincia"
                     }, 
@@ -402,7 +402,7 @@
                             "code": "municipio", 
                             "grouped by": "region,provincia"
                         }, 
-                        "fmt": "txt", 
+
                         "elem": "municipio", 
                         "name": "municipio"
                     }
@@ -446,7 +446,7 @@
                             "code": "code", 
                             "desc": "acronym"
                         }, 
-                        "fmt": "txt", 
+
                         "elem": "partido"
                     }
                 ], 
@@ -462,7 +462,7 @@
                             "code": "provincia", 
                             "desc": "nombre"
                         }, 
-                        "fmt": "txt", 
+
                         "elem": "provincia"
                     }
                 ], 
@@ -472,8 +472,10 @@
             {
                 "prod": [
                     {
-                        "fmt": "txt", 
+
                         "elem": "partido", 
+                        "fmt": "t",
+                        "enum_fmt": "n",
                         "categories": [
                             {
                                 "default": "otros"
