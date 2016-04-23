@@ -11,9 +11,17 @@ Documentation, License etc.
 @package estimaciones
 '''
 from util.record_functions import *
+
 from pprint import *
+from copy import deepcopy
 
 
+def getFmtArgs(kwargs):
+    salida = dict()
+    for ind in ('type','ltype','rtype','table','ltable','rtable','side','warn'):
+       if ind in kwargs:
+         salida[ind]=kwargs[ind]
+    return salida
 
 def sqlFmt(parametro,**kwargs):
     """
@@ -85,7 +93,7 @@ def sqlFmt(parametro,**kwargs):
         type = 'n'
         
     if type in ('r','q'):
-        resultado = parametro.strip()
+        resultado = parametro   #.strip(). Me estaba empezando a cabrear
     elif type == 'n' :
         warntype=True
         resultado = '{}'.format(parametro).strip()
@@ -137,6 +145,7 @@ def sqlClause(left,comparator,right=None,twarn=True,**kwargs):
 
 
     """
+    #print('{} : {} :{}'.format(left,comparator,right))
     # ajusto el formato de la parte izquierda
     # flags para evitar expresiones valor comp valor
     lwarntype=False
@@ -145,13 +154,15 @@ def sqlClause(left,comparator,right=None,twarn=True,**kwargs):
     # argumento izquierda
     izquierda,lwarntype = sqlFmt(left,side='L',warn=True,**kwargs)
     
-    # checkeo el caso raro del IS (NOT) (NULL/TRUE/FALSE) (realmente no es un operador, sino operador y valor)
-    if right is None:
-       if 'IS' in operador :
-         return '{} {}'.format(izquierda,operador ) # la clausula is null es como es
-       else:
-         print('El operador >{}< necesita un argumento derecha'.format(operador))   
-         return None
+
+    # y el mas raro todavia del EXISTS
+    if izquierda.strip() == '':
+        if 'EXISTS' in operador:
+            return '{} {}'.format(operador,sqlFmt(right,type='q') )
+        else:
+            print('El operador >{}< necesita un argumento izquierda'.format(operador))   
+            return None
+            
     # si la parte derecha es una lista solo vale para 'BETWEEN' y 'IN'
     if isinstance(right,(list,tuple)):
         # oracle admite una sintaxis (lista) = set pero mejor no plantearla
@@ -171,7 +182,16 @@ def sqlClause(left,comparator,right=None,twarn=True,**kwargs):
         return
         
     else:
+        if right is None:
+            if 'IS' in operador :
+                return '{} {}'.format(izquierda,operador ) # la clausula is null es como es
+            else:
+                print('El operador >{}< necesita un argumento derecha'.format(operador))   
+                return None
+
         derecha,rwarntype = sqlFmt(right,side='R',warn=True,**kwargs)
+        print(derecha)
+        # checkeo el caso raro del IS (NOT) (NULL/TRUE/FALSE) (realmente no es un operador, sino operador y valor)
     
     if twarn and lwarntype and rwarntype:
         print('Ambos lados son valores, no variables. Abortando')
@@ -180,12 +200,33 @@ def sqlClause(left,comparator,right=None,twarn=True,**kwargs):
     
     return '{} {} {}'.format(izquierda,comparator,derecha)
 
-def sqlCase(datos=None,**kwargs):
+def caseConstructor(datos=None,**kwargs):
     """
        Crea una sentencia case de la definicion lista_guias[i]
        Para categorias definidas a mano
+       
+       Caso ejemplo
+       
+       datos = {u'class': u'c',u'elem': [u'partido'],u'name': u'ideologia',
+               u'rules': [
+                         {u'class': u'c',u'elem': [u'partido',u'name': u'ideologia',u'ncode': 1,u'ndesc': 0,u'string': u''
+                        u'enum': [
+                                 {u'default': u'otros'},
+                                 {u'condition': u'in',u'result': u'Derecha',u'values': [3316, 4688]},
+                                 {u'condition': u'in',u'result': u'Centro',u'values': [1079, 4475]},
+                                 {u'condition': u'in',u'result': u'Izquierda',u'values': [3484]},
+                                 {u'condition': u'in',u'result': u'Extrema Izquierda',
+                                    u'values': [3736,5033,4850,5008,5041,2744,5026]},
+                                 {u'condition': u'in',u'result': u'Separatistas',u'values': [5063, 4991, 1528]},
+                                 {u'condition': u'in',u'result': u'Nacionalistas',u'values': [1533, 4744, 4223]}
+                                 ],
+                        }
+                        ]
+                }
+sqlCase(datos,table='votos_provincia')
+
     """
-    pprint(datos)
+    #pprint(datos)
     entrada =  datos
     enum = entrada['enum']
     elem = entrada['elem'][0]
@@ -256,6 +297,7 @@ def selConstructor(kwargs):
     return statement
 
 def fromConstructor(kwargs):
+    
     statement = 'FROM '
     definicion = 'tables'
     if definicion not in kwargs:
@@ -265,31 +307,23 @@ def fromConstructor(kwargs):
         entrada = kwargs[definicion]
     else:
         entrada = [kwargs[definicion],]
-    #if isinstance(kwargs[definicion],str):
-        #entrada = [kwargs[definicion],]
-    #else:
-        #entrada = kwargs[definicion]
       
     ind = 0
     num_elem = len(entrada)
-    for kelem in entrada:
-      elemento,adfijo=slicer(kelem)
-      #if elemento.strip().find(' ') == -1:
-      texto = elemento.strip()
-      #else:
-        #texto = '({})'.format(elemento)
+    texto = []
+    
+    for ind,kelem in enumerate(entrada):
+        elemento,adfijo=slicer(kelem)
+      
+        ktexto = elemento.strip()
 
-      if adfijo != '':
-        texto = '{} as {}'.format(texto,adfijo.strip())
-      elif num_elem > 1:
-        texto = '{} as t{}'.format(texto,ind)
-
-      if ind < (num_elem -1):
-        statement += ' {},'.format(texto)
-      else:
-        statement += ' ' + texto + ' '
-
-      ind += 1
+        if adfijo != '':
+            ktexto = '{} as {}'.format(texto,adfijo.strip())
+        elif num_elem > 1:
+            ktexto = '{} as t{}'.format(texto,ind)
+            
+        texto.append(ktexto)
+    statement += ', '.join(texto)
     return statement
     
 def whereConstructor(kwargs):
@@ -297,6 +331,7 @@ def whereConstructor(kwargs):
     statement = 'WHERE '
     definicion = 'where'
     complemento = 'base_filter'
+    
     if definicion not in kwargs:
        kstatement = ''
     else:
@@ -315,11 +350,31 @@ def whereConstructor(kwargs):
     else:
       return statement + ' ' + kstatement + ' '
       
-       
+def withConstructor(kwargs):
+    statement = 'WITH '
+    definicion = 'with'
+    if definicion not in kwargs:
+        return ''
+   
+    if isinstance(kwargs[definicion],(list,tuple)):
+        entrada = kwargs[definicion]
+    else:
+        entrada = [kwargs[definicion],]
+    ind = 0
+    num_elem = len(entrada)
+    texto = []
+    for elemento in entrada:
+        args=deepcopy(elemento['query'])
+        
+        texto.append('{} as {}'.format(elemento['name'],queryConstructor(**args)))
+        
+    statement += ', '.join(texto)
+ 
 def groupConstructor(kwargs):
     statement = 'GROUP BY '
     definicion = 'group'
-    
+ 
+ 
     if definicion not in kwargs:
        return ''
     
@@ -327,27 +382,16 @@ def groupConstructor(kwargs):
         entrada = kwargs[definicion]
     else:
         entrada = [kwargs[definicion],]
-    #if isinstance(kwargs[definicion],str):
-        #entrada = [kwargs[definicion],]
-    #else:
-        #entrada = kwargs[definicion]
       
     ind = 0
     num_elem = len(entrada)
+    texto = []
     for elemento in entrada:
-      #if elemento.strip().find(' ') == -1:
-      texto = elemento.strip()
-      #else:
-        #texto = '({})'.format(elemento)
-            
-      if ind < (num_elem -1):
-        statement += ' {},'.format(texto)
-      else:
-        statement += ' ' + texto + ' '
-
-      ind += 1
+      texto.append(elemento.strip())
     
-    if statement.strip() != 'GROUP BY ':
+    statement += ', '.join(texto)
+    
+    if statement.strip() != 'GROUP BY':
        if 'having' in kwargs:
             having_clause = searchConstructor('having',kwargs)
             if having_clause.strip() != '':
@@ -373,74 +417,42 @@ def orderConstructor(kwargs):
       
     ind = 0
     num_elem = len(entrada)
+    texto = []
     for kelem in entrada:
       elemento,adfijo=slicer(kelem)
-      if isinstance(elemento,int):
-        texto = '{}'.format(elemento)
-      #elif elemento.strip().find(' ') == -1:
-      texto = elemento.strip()
-      #else:
-        #texto = '({})'.format(elemento)
-
-      if adfijo != '':
-        texto = '{}  {}'.format(texto,adfijo.strip())
-
-      if ind < (num_elem -1):   
-          statement += ' {},'.format(texto)
-      else:
-        statement += ' ' + texto + ' '
-
-      ind += 1
+      texto.append('{} {}'.format(sqlFmt(elemento,side='l'),adfijo.strip()))
+    statement += ', '.join(texto)
     return statement
     
 def searchConstructor(definicion,kwargs):
     statement = ''
-
     if definicion not in kwargs:
        return ''    
     if isinstance(kwargs[definicion],(list,tuple)):
         entrada = kwargs[definicion]
     else:
         entrada = [kwargs[definicion],]
-    #if isinstance(kwargs[definicion],str):
-        #entrada = [kwargs[definicion],]
-    #else:
-        #entrada = kwargs[definicion]
       
     ind = 0
     num_elem = len(entrada)
     #print(num_elem,entrada)
-        
-    for kelem in entrada:
-      elemento,adfijo,parms=slicer(kelem,3)   
-      #if elemento.strip().find(' ') == -1:
-      texto = elemento.strip()
-      #else:
-      #	texto = '({})'.format(elemento)
-
-      nadfijo = adfijo.strip().upper()
-      if nadfijo in ('IN','NOT IN'):
-        texto = '{} {} ({})'.format(elemento.strip(),nadfijo,', '.join(parms))
-      elif nadfijo in ('BETWEEN','NOT BETWEEN'):
-        texto = '{} {} {} AND {}'.format(elemento.strip(),nadfijo,parms[0].strip(),parms[1].strip())
-      else:
-        if isinstance(elemento,dict):
-            nelemento = '({})'.format(searchConstructor(definicion,elemento))
-        else:
-            nelemento = elemento.strip()
-        if isinstance(parms,dict):
-            nparms = '({})'.format(searchConstructor(definicion,parms))
-        else:
-            nparms = parms.strip()
-  
-        texto = '{} {} {}'.format(nelemento,nadfijo,nparms)
-
-      if ind < (num_elem -1):
-        statement += ' {} AND'.format(texto)
-      else:
-        statement += ' ' + texto + ' '
-
-      ind += 1
+    
+    texto = []
+    for ind,kelem in enumerate(entrada):
+        ltype=None
+        rtype=None
+        izquierda,comparador,derecha=slicer(kelem,3,None)   
+        if isinstance(izquierda,dict):
+            args = deepcopy(izquierda) # no quiero efectos secundarios
+            izquierda='({})'.format(searchConstructor(definicion,args))
+            ltype='q'
+        if isinstance(derecha,dict):
+            args = deepcopy(derecha) # no quiero efectos secundarios
+            derecha='({})'.format(searchConstructor(definicion,args)) 
+            rtype='q'
+            
+        texto.append(sqlClause(izquierda,comparador,derecha,ltype=ltype,rtype=rtype,**kwargs))
+    statement = ' AND '.join(texto)
     return statement
   
 
@@ -457,13 +469,13 @@ def queryConstructor(**kwargs):
     '''
 
 	 
-    with_statement = ''
-    select_statement = selConstructor(kwargs)
-    from_statement = fromConstructor(kwargs)
+    with_statement = withConstructor(kwargs)+' '
+    select_statement = selConstructor(kwargs)+' '
+    from_statement = fromConstructor(kwargs)+' '
     join_statement = ''
-    where_statement = whereConstructor(kwargs)
-    group_statement = groupConstructor(kwargs)
-    order_statement = orderConstructor(kwargs)
+    where_statement = whereConstructor(kwargs)+' '
+    group_statement = groupConstructor(kwargs)+' '
+    order_statement = orderConstructor(kwargs)+' '
     
     '''
     with_statement
@@ -490,6 +502,7 @@ if __name__ == '__main__':
     end as categoria""" ,'partido',('seats','sum'))
   pepe['tables']='votos_provincia'
   pepe['group']=('categoria',)
+  pepe['lfile']='sempronio'
   """
   pepe['where']=(('campo','in','galba','oton','vitelio','vespasiano'),)
   pepe['tables'] = 'paco'

@@ -25,19 +25,6 @@ def is_number(s):
 
 
 
-
-def is_number(s):
-    try:
-        n=str(float(s))
-        if n == "nan" or n=="inf" or n=="-inf" : return False
-    except ValueError:
-        try:
-            complex(s) # for complex
-        except ValueError:
-            return False
-    return True
-
-
 def median(lista):
     '''
       calcula la mediana de una lista

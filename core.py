@@ -278,7 +278,7 @@ class Cubo:
                 if 'enum_fmt' in componente:
                     entrada['rules'][-1]['enum_fmt']=componente['enum_fmt']
                 if clase == 'c':
-                    entrada['rules'][-1]['elem'][-1]=sqlCase(entrada['rules'][-1])
+                    entrada['rules'][-1]['elem'][-1]=caseConstructor(entrada['rules'][-1])
             #pprint(entrada)
             #no deberia serme util 
             #if 'formula' in entrada:    

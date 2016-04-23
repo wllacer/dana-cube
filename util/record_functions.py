@@ -31,7 +31,7 @@ def slicer(lista,num_elem=2,defval=''):
     """
        De una lista de tamaño arbitrario (incluye un elemento atomico) se devuelve una lista de
        un numero limitado de campos (el parametro num_elem)
-       si la lista es de menor longitud se rellena con las entradas necesarias con el valor def_val
+       si la lista es de menor longitud se rellena con las entradas necesarias con el valor 'defval'
        si es mayor, el último elemento es una lista con el resto 
     """
 
@@ -140,4 +140,125 @@ def regFiller(record,**kwargs):
                  
     for k in range(num_elem):
         record.insert(pos_ini,value)
+
+def row2dict(row,keys):
+  '''
+    Convierte tupla en diccionario
+  '''
+  dic = dict()
+  for idx in range(len(row)):
+    dic[keys[idx]]=row[idx]
+  return dic
+
+def dict2row(dict,keys):
+  '''
+    Convierte diccionario en tupla
+  '''
+  row = [None for k in range(len(keys))]
+  for idx,clave in enumerate(keys):
+    if clave in dict:  #si la clave no existe lo dejamos en nulo
+      row[idx]=dict[idx]
+  return row
+
+def extrae(datos,campo):
+  '''
+    extrae columnas de un diccionario o lista bidimensional
+    salida en forma de lista
+    
+    Codigo mejorable ¿?
+  '''
+  
+  if isinstance(campo,(list,tuple)):
+     if isinstance(datos,dict):  
+       return [[datos[k][m] for m in campo] for k in sorted(datos)]
+     elif isinstance(datos,(list,tuple)) and isinstance(datos[0],dict):
+       return [[datos[k][m] for m in campo] for k in range(len(datos))]
+     elif isinstance(datos,(list,tuple)):
+       return [[datos[k][int(m)] for m in campo] for k in range(len(datos))]
+  else: 
+    if isinstance(datos,dict):  
+      return [datos[k][campo] for k in sorted(datos)]
+    elif isinstance(datos,(list,tuple)) and isinstance(campo,(int,long)):
+      return [datos[k][campo] for k in range(len(datos))]
+    elif isinstance(datos,(list,tuple)) and campo.isdigit():
+      return [datos[k][int(campo)] for k in range(len(datos))]
+    elif isinstance(datos,(list,tuple)) and isinstance(datos[0],dict):
+      return [datos[k][campo] for k in range(len(datos))]
+    else:
+      print ('error de asignacion')
+
+def trans(vector,reglas):
+  '''
+    trans transforma un vector de acuerdo con unas reglas
+    
+    transformacion = +regla
+    regla = {delta:funcion,**parmlist}|{o:origen,(d:destino|v:variacion)}|{map:funcion,**parmlist}
+    origen = index|index,factor
+    destino = index|index,factor
+    variacion=factor 
+    
+    delta  llama a una funcion que debe recibir el vector original y los parametros que se desee como diccionario
+            retorna un vector de diferencias (positivo aunemta,negativo disminuye)
+    map    invoca list(map) con los parametros que se indiquen      
+            
+    map puede incluirse como una opcion. TODO
+    find y reduce no por cambiar el tamaño del array. NO es mi intencion que esta función lo modifique
+  '''
+  if not isinstance(reglas,(list,tuple)):
+    print ( 'trans necesita una lista como parametro')
+    exit()
+    
+  vector_salida = [vector[i] for i in range(len(vector)) ]
+
+  for a in reglas:
+      if isinstance(a,(list,tuple)):
+        vector_salida = trans(vector_salida,a)
+      else:
+        vector_salida=ker_trans(vector_salida,a)
+  return vector_salida
+
+def ker_trans(vector,regla):
+  vector_salida = [vector[i] for i in range(len(vector)) ]
+
+  base_data = 0
+  # proceso la entrada 
+
+  if  'delta' in regla:
+    funcion = regla['delta']
+    parm_dict = dict()
+    for key in regla :
+      if key == 'delta':
+        continue
+      parm_dict[key] = regla[key]
+    
+    a_qty_delta = funcion(vector,**parm_dict)
+    for i in range(len(a_qty_delta)):
+      vector_salida[i] += a_qty_delta[i] 
+  else:
+      
+    if isinstance(regla['o'],(int,long)):
+      k_entrada = (regla['o'],1.0)
+    else :
+      k_entrada = regla['o']
+
+    de_idx = k_entrada[0]
+    de_qty = vector[de_idx]* k_entrada[1]  #integer division. es lo que me interesa en este caso
+    # proceso la salida
+    if 'd' in regla:
+      if isinstance(regla['d'],(int,long)):
+        k_salida = (regla['d'],1.0)
+      else :
+        k_salida = elem['d']
+
+      a_idx = k_salida[0]
+      a_qty = de_qty * k_salida[1]
+      vector_salida[de_idx] = vector_salida[de_idx] - de_qty
+      vector_salida[a_idx] += a_qty
+    elif 'v' in regla:  # variacion en el mismo elemento
+      a_idx = de_idx
+      a_qty = de_qty * regla['v'] 
+      vector_salida[de_idx] += a_qty
+    else:
+      pass
+  return vector_salida  
 
