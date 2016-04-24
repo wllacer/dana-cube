@@ -77,6 +77,8 @@ PyQt licensing might impose other restrictions, please keep an eye on it (AFAIK 
 
 __MASTER works__ but some pieces are lacking (Above all documentation). You can download the latest release to test it
 
+_Update Feast of St. Georg 2016_ I used lists for guide definition and retrieval. I've discovered that using dictionaries
+enhances performance over 10000 % (read __100 TIMES__ ), but i have to rewrite almost everything again
 
 _Update Saturday of the BVM_: New GUI based on the Model View elements of Qt. Still some parts missing
 

@@ -30,7 +30,8 @@
   * __DONE__ in guides allow blank filter
  
 * Performance
-  * _HP_ municipio as guide performance is a horror
+  * _HP_ municipio as guide performance is a horror. _WIP_ I used lists for guide definition and retrieval. I've discovered
+    that using dictionaries enhances performance over 10000 % (read __100 TIMES__ ), but i have to rewrite almost everything again
   
 * Behaviour
   * complex keying in guides
