@@ -14,7 +14,7 @@ from decimal import *
 from pprint import *
 from datetime import *
 
-
+import time
 
 def getDateIndexElement(max_date, min_date, char):
     #TODO formatos todavia usan %
@@ -44,7 +44,7 @@ def getDateIndexElement(max_date, min_date, char):
         max_rg = 12+1
         format = '%02d'
     elif char == 'Y':
-
+        # ????
         min_rg=int(Decimal(str(min_date[0:4])))
         max_rg=int(Decimal(str(max_date[0:4])))+1
         format = '%04d'
@@ -56,7 +56,7 @@ def getDateIndexElement(max_date, min_date, char):
         #TODO explorar la posibilidad de utilizar el paquete Dateutil 
         #minidx.append(QString(format % j)) 
         minidx.append(format % j) 
-        
+
     return minidx
 
 def getDateIndex(max_date,  min_date, fmt, **opciones):     

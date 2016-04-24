@@ -99,6 +99,8 @@ class TreeModel(QAbstractItemModel):
         self.rootItem = TreeItem(("", ""))
         self.datos = datos
         self.setupModelData(datos, self.rootItem)
+        self.rowHdr = self.datos.fmtHeader('row',separador='', sparse=True)
+        self.colHdr = self.datos.fmtHeader('col',separador='\n', sparse=False)
         
         
     def columnCount(self, parent):
@@ -142,10 +144,9 @@ class TreeModel(QAbstractItemModel):
                 if section == 0:
                     return ""
                 else:
-                    return ':'.join(self.datos.col_hdr_txt[section - 1])
+                    return self.colHdr[section]
             elif orientation == Qt.Vertical:
-                return ':'.join(self.datos.row_hdr_txt[section])
-
+                return self.rowHdr[section]
         return None
 
     def index(self, row, column, parent):
@@ -191,6 +192,7 @@ class TreeModel(QAbstractItemModel):
         parents = [parent]
         elemento = []
         
+        return
         for ind, columnData in enumerate(datos.array):
             datos_cabecera = [':'.join(self.datos.row_hdr_txt[ind]),]
             celda = datos_cabecera + columnData

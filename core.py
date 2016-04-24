@@ -33,6 +33,8 @@ from datalayer.query_constructor import *
 from datemgr import getDateSlots,getDateIndex
 from pprint import *
 
+import time
+
 def mergeString(string1,string2,connector):
     if len(string1.strip()) > 0 and len(string1.strip()) > 0:
         merge ='{} {} {}'.format(string1,connector,string2)
@@ -42,7 +44,7 @@ def mergeString(string1,string2,connector):
         merge = ''
     return merge
 
-def setParent(tree,clave):
+def setParent(tree,clave,debug=False):
     """
       define el padre de un elemento via la clave
     """
@@ -183,6 +185,7 @@ class Cubo:
         
         sqlString = queryConstructor(**sqlDef)
         return sqlString, code_fld,desc_fld 
+    
     
     def setGuidesDateSqlStatement(self, entrada, fields=None):
         #REFINE creo que fields sobra
@@ -325,9 +328,8 @@ class Cubo:
         # TODO ahora debo de poder integrar fechas y categorias dentro de una jerarquia
         #      probablemente el cursor += no es lo que se necesita en estos casos
         date_cache = {}
-        print('A procesar ',len(self.lista_guias))
+        #print(time.time(),'A procesar ',len(self.lista_guias))
         for ind,entrada in enumerate(self.lista_guias):
-            print(entrada['rules'])
             cursor = []
             for idx,componente in enumerate(entrada['rules']):
                 lista_compra={'nkeys':componente['ncode'],'ndesc':componente['ndesc']}
@@ -344,27 +346,27 @@ class Cubo:
                         pass
                     else:
                         sqlString = self.setGuidesDateSqlStatement(componente)
-                        print(ind,idx,sqlString,lista_compra)
                         row=getCursor(self.db,sqlString)
                         date_cache[campo] = [row[0][0], row[0][1]] 
                     cursor += getDateIndex(date_cache[campo][0]  #max_date
                                                    , date_cache[campo][1]  #min_date
                                                    , componente['date_fmt'],
                                                    **lista_compra)
-                    print(ind,idx,sqlString,lista_compra)
+                    
+                    print(time.time(),ind,idx,sqlString,lista_compra)
                 elif componente['class'] == 'c':
                     #FIXME placeholders, etc
                     nombres = [ [item['result'] if 'result' in item else item['default'],] for item in componente['enum']]
                     cursor += sorted(nombres)
                 else:  
                     sqlstring=componente['string']
-                    print(ind,idx,sqlstring,lista_compra)
                     cursor += getCursor(self.db,sqlstring,regHashFill,**lista_compra)
-                
+                    print(time.time(),ind,idx,sqlstring,lista_compra)                
                 cursor = sorted(cursor)
                 """
                   new code begin
                 """
+
                 entrada['dir_row']=dict()
                 if len(entrada['rules']) > 1:
                     entrada['dir_root_node']=[]  #DOC TODO nueva entrada
@@ -384,7 +386,7 @@ class Cubo:
                     else:
                         papa['children'].append(nodo)
                     
-                print(ind,idx,'creada')
+                print(time.time(),ind,idx,'creada')
                 """
                   new code end
                 """
@@ -492,7 +494,7 @@ class Vista:
          #TODO clarificar el codigo
          #REFINE solo esperamos un campo de datos. Hay que generalizarlo
         self.array = [ [None for k in range(len(self.col_hdr_idx))] for j in range(len(self.row_hdr_idx))]
-
+        print(time.time(),'a por el array')
         for i in range(0,self.dim_row):
             # el group by en las categorias necesita codigo especial
             if self.cubo.lista_guias[self.row_id]['rules'][i]['class'] == 'c':
@@ -524,8 +526,9 @@ class Vista:
                               'col':{'nkeys':len(self.cubo.lista_guias[self.col_id]['rules'][j]['elem']),
                                      'init':-1-len(self.cubo.lista_guias[self.col_id]['rules'][j]['elem'])}
                               }
-                print('Datos ',sqlstring,lista_compra)
+                
                 cursor_data=getCursor(self.cubo.db,sqlstring,regHasher2D,**lista_compra)
+                print(time.time(),'Datos ',sqlstring,lista_compra)
                 """
                   begin new code
                 """
@@ -540,7 +543,7 @@ class Vista:
                         continue
                     except IndexError:
                         print('{} o {} fuera de rango'.format(ind_1,ind_2))
-
+                print(time.time(),'Array ',sqlstring,lista_compra) 
                 """
                   old code
                 """
@@ -658,14 +661,14 @@ def experimental():
     #pprint(sorted(cubo.lista_guias[1]['dir_row'])) esto devuelve una lista con las claves
     #pprint(cubo.lista_guias)
     #pprint(cubo.lista_guias[6])   
-    vista=Vista(cubo,3,0,'sum','votes_presential')
-    row_hdr = vista.fmtHeader('row',sparse=True)
-    col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
-    idx = 0
-    print('',col_hdr)
-    for ind,record in enumerate(vista.array):
-        print(row_hdr[ind+1],record)
-        idx += 1
+    #vista=Vista(cubo,3,0,'sum','votes_presential')
+    #row_hdr = vista.fmtHeader('row',sparse=True)
+    #col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
+    #idx = 0
+    #print('',col_hdr)
+    #for ind,record in enumerate(vista.array):
+        #print(row_hdr[ind+1],record)
+        #idx += 1
 
 
 
