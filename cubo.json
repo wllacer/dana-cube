@@ -539,6 +539,35 @@
                 ], 
                 "name": "ideologia", 
                 "class": "c"
+            }, 
+            {
+                "prod": [
+                    {
+                        "source": {
+                            "filter": "provincia = ''", 
+                            "table": "localidades", 
+                            "code": "region", 
+                            "desc": "nombre"
+                        }, 
+
+                        "elem": "region", 
+                        "name": "region"
+                    }, 
+                    {
+                        "source": {
+                            "filter": "provincia <> '' and municipio = '' and isla = ''", 
+                            "table": "localidades", 
+                            "desc": "nombre", 
+                            "code": "provincia", 
+                            "grouped by": "region"
+                        }, 
+
+                        "elem": "provincia", 
+                        "name": "provincia"
+                    }
+                ], 
+                "name": "geo", 
+                "class": "h"
             }
         ], 
         "connect": {
