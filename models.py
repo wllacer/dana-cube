@@ -98,9 +98,9 @@ class TreeModel(QAbstractItemModel):
 
         self.rootItem = TreeItem(("", ""))
         self.datos = datos
-        self.setupModelData(datos, self.rootItem)
         self.rowHdr = self.datos.fmtHeader('row',separador='', sparse=True)
         self.colHdr = self.datos.fmtHeader('col',separador='\n', sparse=False)
+        self.setupModelData(datos, self.rootItem)
         
         
     def columnCount(self, parent):
@@ -192,26 +192,47 @@ class TreeModel(QAbstractItemModel):
         parents = [parent]
         elemento = []
         
-        return
-        for ind, columnData in enumerate(datos.array):
-            datos_cabecera = [':'.join(self.datos.row_hdr_txt[ind]),]
-            celda = datos_cabecera + columnData
+        guiaId = self.datos.row_id
+        iarray = datos.toIndexedTable()
+        
+        if 'dir_root_node' in self.datos.cubo.lista_guias[guiaId]:
+            pass
+        else:
+           for ind, columnData in enumerate(iarray):
+              datos_cabecera = self.rowHdr[ind+1]
+              indice = columnData[0]
+              celda = [datos_cabecera,] + columnData[1:]
+              self.rootItem.appendChild(TreeItem(celda,self.rootItem))
+        
+        
+        #iarray = datos.toIndexedTable()
+        #print(len(iarray),len(self.rowHdr))
+        #for ind, columnData in enumerate(iarray):
+            #try:
+                #datos_cabecera = self.rowHdr[ind+1]
+                #indice = columnData[0]
+                #celda = [datos_cabecera,] + columnData[1:]
+            #except IndexError:
+                #print('indice >{}<fuera de rango en row_hdr (>{}<)'.format(ind,len(self.rowHdr)))
+            #print(celda)
             
-            if self.datos.dim_row == 1:
-                parents[-1].appendChild(TreeItem(celda, parents[-1]))
-            else:
-                estructura = self.datos.row_hdr_idx[ind].split(':')
-                if len(estructura) > len(elemento): #un nivel mas
-                    if parents[-1].childCount() > 0:
-                        parents.append(parents[-1].child(parents[-1].childCount() - 1))
-                    elemento.append(estructura[-1])
-                else:  
-                    while len(estructura) < len(elemento):
-                        parents.pop()
-                        elemento.pop()
-                    if len(estructura) == len(elemento) and estructura[-1] != elemento[-1]:
-                        elemento[-1] = estructura[-1]
-                parents[-1].appendChild(TreeItem(celda, parents[-1]))
+            #if indice['parent'] is None:
+                #self.rootItem.appendChild(TreeItem(celda,self.rootItem))
+            ##if self.datos.dim_row == 1:
+                #parents[-1].appendChild(TreeItem(celda, parents[-1]))
+            #else:
+                #estructura = self.datos.row_hdr_idx[ind].split(':')
+                #if len(estructura) > len(elemento): #un nivel mas
+                    #if parents[-1].childCount() > 0:
+                        #parents.append(parents[-1].child(parents[-1].childCount() - 1))
+                    #elemento.append(estructura[-1])
+                #else:  
+                    #while len(estructura) < len(elemento):
+                        #parents.pop()
+                        #elemento.pop()
+                    #if len(estructura) == len(elemento) and estructura[-1] != elemento[-1]:
+                        #elemento[-1] = estructura[-1]
+                #parents[-1].appendChild(TreeItem(celda, parents[-1]))
 
     def emitDataChanged(self):
         self.dataChanged.emit(QModelIndex(),QModelIndex())

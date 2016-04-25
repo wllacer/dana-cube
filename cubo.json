@@ -2,9 +2,9 @@
     "default": {
         "cubo": "datos light", 
         "vista": {
-            "row": 6, 
+            "row": 2, 
             "agregado": "avg", 
-            "col": 0, 
+            "col": 1, 
             "elemento": "votes_percent"
         }
     }, 
