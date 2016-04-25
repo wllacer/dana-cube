@@ -12,6 +12,7 @@ Documentation, License etc.
 '''
 #from PyQt4.QtSql import *
 from PyQt5.QtSql import *
+from pprint import pprint
 
 def dbConnect(constring):
     '''
@@ -64,7 +65,9 @@ def getCursor(db, sql_string,funcion=None,**kwargs):
                 row.append(query.value(j))  
             if callable(funcion):
                 funcion(row,**kwargs)
-            cursor.append(row)
+            if row != []:
+                cursor.append(row)
+           
     return cursor
 
 def getAgrFunctions(db,plista = None):

@@ -121,6 +121,19 @@ def regHasher2D(record,**kwargs):
     else:
        return
 
+def regTree(record,**kwargs):
+    triad=[None,None,None]
+    regHasher2D(record,**kwargs)
+    triad[2]=record[-1] #datos
+    try:
+        triad[0]=kwargs['rdir'][record[0]] #row parent
+        triad[1]=kwargs['cdir'][record[1]] #col parent
+        del record[3:]
+        for k in range(3):
+          record[k]=triad[k]
+    except KeyError:
+        del record[:]
+    
 def regFiller(record,**kwargs):
 
     if 'pholder' in kwargs:

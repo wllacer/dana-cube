@@ -61,26 +61,32 @@ def setParent(tree,clave,debug=False):
     else:
        return None
 
-def getAttrString(tree,clave,name='desc',sparse=True,separator=None):
-    delimiter = ':'
-    nivel=getLevel(clave)
-    record=tree[clave]
-    if name not in record:
+def getAttrString(elem,name='desc',sparse=True,separator=None):
+    if name not in elem:
         return None
-
-    if isinstance(record[name],(list,tuple)):
-        texto = ' '.join(record[name])
+    
+    if isinstance(elem[name],(list,tuple)):
+        texto = ', '.join(elem[name])
+    elif isinstance(elem[name],dict):
+        return #Ni idea que hacer con ello. tampoco espero el caso
     else:
-        texto = '{}'.format(record[name])  #force as string whatever
+        texto = elem[name]
+        
+    if elem['parent'] is None:
+        return texto
+    elif not sparse:
+        return getAttrString(elem['parent'],name,sparse,separator)+separator+texto
+    else:
+        ind = 1
+        papi = elem['parent']
+        placeholder = ''
+        while papi is not None:
+            placeholder += separator
+            papi = papi['parent']
+            ind += 1
 
-    if nivel == 0:
-       return texto        
-    elif sparse:
-       prefix = separator * (nivel)
-       return prefix + texto
-    else :
-       return getAttrString(tree,delimiter.join(clave.split(delimiter)[0:nivel]),name,sparse,separator) + \
-              separator + texto
+        return placeholder+texto
+    
           
 class Cubo:
     def __init__(self, definicion):
@@ -363,9 +369,6 @@ class Cubo:
                     cursor += getCursor(self.db,sqlstring,regHashFill,**lista_compra)
                     print(time.time(),ind,idx,sqlstring,lista_compra)                
                 cursor = sorted(cursor)
-                """
-                  new code begin
-                """
 
                 entrada['dir_row']=dict()
                 if len(entrada['rules']) > 1:
@@ -387,21 +390,6 @@ class Cubo:
                         papa['children'].append(nodo)
                     
                 print(time.time(),ind,idx,'creada')
-                """
-                  new code end
-                """
-                """
-                  old code begin
-                """
-                #entrada['dir_row']=[record[0] for record in cursor]  #para navegar el indice con menos datos
-                ## pensado con descripciones en mas de un campo. la sintaxis luego es una pes
-                #if componente['ndesc'] == 0:
-                    #entrada['des_row']=[[record[0],] for record in cursor ] 
-                #else:
-                    #entrada['des_row']=[record[-componente['ndesc']:] for record in cursor] 
-                """
-                  old code end
-                """
                 
                 #print(time.strftime("%H:%M:%S"),dir_row[0])
                 #print(time.strftime("%H:%M:%S"),dir_row[0])
@@ -479,21 +467,14 @@ class Vista:
             
             self.row_hdr_idx = self.cubo.lista_guias[row]['dir_row']
             self.col_hdr_idx = self.cubo.lista_guias[col]['dir_row']
-            """
-             begin old code
-            """
-            #self.row_hdr_txt = self.cubo.lista_guias[row]['des_row']
-            #self.col_hdr_txt = self.cubo.lista_guias[col]['des_row']
-            """
-             end old code
-            """
         
             self.setDataMatrix()
             
     def  setDataMatrix(self):
          #TODO clarificar el codigo
          #REFINE solo esperamos un campo de datos. Hay que generalizarlo
-        self.array = [ [None for k in range(len(self.col_hdr_idx))] for j in range(len(self.row_hdr_idx))]
+        #self.array = [ [None for k in range(len(self.col_hdr_idx))] for j in range(len(self.row_hdr_idx))]
+        self.array = []
         print(time.time(),'a por el array')
         for i in range(0,self.dim_row):
             # el group by en las categorias necesita codigo especial
@@ -522,45 +503,53 @@ class Vista:
                 sqlstring=queryConstructor(**sqlDef)
                 
                 #
-                lista_compra={'row':{'nkeys':len(self.cubo.lista_guias[self.row_id]['rules'][i]['elem'])},
+                lista_compra={'row':{'nkeys':len(self.cubo.lista_guias[self.row_id]['rules'][i]['elem']),},
+                              'rdir':self.row_hdr_idx,
                               'col':{'nkeys':len(self.cubo.lista_guias[self.col_id]['rules'][j]['elem']),
-                                     'init':-1-len(self.cubo.lista_guias[self.col_id]['rules'][j]['elem'])}
+                                     'init':-1-len(self.cubo.lista_guias[self.col_id]['rules'][j]['elem']),},
+                              'cdir':self.col_hdr_idx
                               }
                 
-                cursor_data=getCursor(self.cubo.db,sqlstring,regHasher2D,**lista_compra)
-                print(time.time(),'Datos ',sqlstring,lista_compra)
-                """
-                  begin new code
-                """
-                for record in cursor_data:
-                    try:
-                        #self.row_hdr_idx[row[0]]['children'].append(row)
-                        #idx2_d[row[1]]['children'].append(row)
-                        ind_1 = self.row_hdr_idx[record[0]]['idx']
-                        ind_2 = self.col_hdr_idx[record[1]]['idx']
-                        self.array[ind_1][ind_2]=record[-1]
-                    except KeyError:
-                        continue
-                    except IndexError:
-                        print('{} o {} fuera de rango'.format(ind_1,ind_2))
-                print(time.time(),'Array ',sqlstring,lista_compra) 
-                """
-                  old code
-                """
-                ##print(time.strftime("%H:%M:%S"),cursor_data[0])
-                #for record in cursor_data:
-                    #try:
-                        #row_idx = self.row_hdr_idx.index(record[0])
-                        #col_idx = self.col_hdr_idx.index(record[1])
-                    ##REFINE En ciertas circunstancias debe o no provocarse y/o informar del error
-                    #except ValueError:
-                        #continue
-                    ##print('{} de {}, {} de {}'.format(row_idx,len(dir_row),col_idx,len(dir_col)))
-                    #self.array[row_idx][col_idx] = record[-1]
+                #cursor_data=getCursor(self.cubo.db,sqlstring,regHasher2D,**lista_compra)
+                self.array +=getCursor(self.cubo.db,sqlstring,regTree,**lista_compra)
+                print(time.time(),'Datos ',sqlstring)
+                
+    def toTable(self):
+        table = [ [None for k in range(len(self.col_hdr_idx))] for j in range(len(self.row_hdr_idx))]
+        for record in self.array:
+            try:
+                ind_1 = record[0]['idx']
+                ind_2 = record[1]['idx']
+                table[ind_1][ind_2]=record[-1]
+            except KeyError:
+                continue
+            except IndexError:
+                print('{} o {} fuera de rango'.format(ind_1,ind_2))
+        print(time.time(),'table ') 
+        return table
+    
+    def collapsedTable(self,table,row_hdr,col_hdr):
+       ctable = table[:]
+       for i,ivalue in enumerate(row_hdr):
+           if ivalue is None:
+               del ctable[i]
+           else:
+               for j,jvalue in enumerate(col_hdr):
+                   if jvalue is None:
+                       del ctable[i][j]
+       return ctable
+        
+    def toIndexedTable(self):
+        
+        itable = self.toTable()
+        for entry,value in self.row_hdr_idx.iteritems():
+            itable[value['idx']].insert(0,value)
+        print(time.time(),'itable ') 
+        return itable
 
     def fmtHeader(self,dimension, separador='\t', sparse=False, rango= None,  max_level=None):
         '''
-           TODO puede simplificarse
+
            TODO documentar
            TODO en el caso de fechas debe formatearse a algo presentable
         '''
@@ -594,80 +583,46 @@ class Vista:
                     pass
                 else:
                     continue
-            cab_col[entrada['idx']+1]=getAttrString(indice,key,'desc',sparse,separador)
-        """
-          begin old code
-        """
-        #if dimension == 'row':
-            #indice = self.cubo.lista_guias[self.row_id]['dir_row']
-            #datos  = self.cubo.lista_guias[self.row_id]['des_row']
-            #if max_level is None:
-                #max_level = self.dim_row
-        #elif dimension == 'col':
-            #indice = self.cubo.lista_guias[self.col_id]['dir_row']
-            #datos = self.cubo.lista_guias[self.col_id]['des_row']
-            #if max_level is None:
-                #max_level = self.dim_col
-        #else:
-            #print('Piden formatear la cabecera >{}< no implementada'.format(dimension))
-            #exit(-1)
-            
-        #for ind,key in enumerate(indice):
-            #cur_level = getLevel(key)
-            #if cur_level >= max_level:  #odio los indices en 0. siempre off by one 
-                #continue
-            #if rango is not None:
-                #if rango[0] <= ind <= rango[1]:
-                    #pass
-                #else:
-                    #continue
-            ##FIXME primera iteracion. Altamente ineficiente con indices chungos
-            #tmp_table = datos[ind][:]
-            #if len(tmp_table) >= cur_level +1:
-                #if sparse:
-                    #for k in range(0,cur_level):
-                        #tmp_table[k]=' '*8
-                #base = separador.join(tmp_table)
-            #else:
-                #tmp_idx_arr = key.split(':')
-                #base = separador.join(tmp_table)
-                #for k in range(cur_level,0,-1):
-                    #if not sparse:
-                        #idx=':'.join(tmp_idx_arr[0:k])
-                        #texto = separador.join(datos[indice.index(idx)])
-                    #else:
-                        #texto = ' '*8
-                    #base = '{}{}{}'.format(texto,separador,base)
-                    
-            #cab_col.append(base)
-                
-        """
-          end old code
-        """
+            cab_col[entrada['idx']+1]=getAttrString(entrada,'desc',sparse,separador)
         return cab_col
 
 def experimental():
     from util.jsonmgr import load_cubo
     vista = None
     mis_cubos = load_cubo()
-    cubo = Cubo(mis_cubos['datos locales'])
+    cubo = Cubo(mis_cubos['datos light'])
     #pprint(cubo.definition)
     #pprint(cubo.definition)
     #pprint(cubo.lista_funciones)
     #pprint(cubo.lista_campos)
     #pprint(cubo.lista_guias)
+    for ind,guia in enumerate(cubo.lista_guias):
+        print(ind,guia['name'])
     cubo.fillGuias()
     #pprint(cubo.lista_guias[1]['dir_row'])
     #pprint(sorted(cubo.lista_guias[1]['dir_row'])) esto devuelve una lista con las claves
     #pprint(cubo.lista_guias)
     #pprint(cubo.lista_guias[6])   
-    #vista=Vista(cubo,3,0,'sum','votes_presential')
+    vista=Vista(cubo,6,0,'sum','votes_presential')
+    
+    #tabla = vista.toTable()    
+    row_hdr = vista.fmtHeader('row',sparse=True)
+    pprint(row_hdr)
+    col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
+    pprint(col_hdr)
+    #idx = 0
+    #print('',col_hdr)
+    #for ind,record in enumerate(tabla):
+        #print(row_hdr[ind+1],record)
+        #idx += 1
+        
+    #tabla = vista.toIndexedTable()    
     #row_hdr = vista.fmtHeader('row',sparse=True)
     #col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
     #idx = 0
     #print('',col_hdr)
-    #for ind,record in enumerate(vista.array):
-        #print(row_hdr[ind+1],record)
+    #for record in  tabla:
+        #print(row_hdr[record[0]['idx']],record[1:])
         #idx += 1
 
 
