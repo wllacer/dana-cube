@@ -57,22 +57,6 @@ def getParentKey(clave,debug=False):
     else:
        return None
 
-def setParent(tree,clave,debug=False):
-    """
-      define el padre de un elemento via la clave
-    """
-    delimiter=':'
-    nivel=getLevel(clave)
-    if 'parent' in tree[clave]:
-        return tree[clave]['parent']
-    if nivel > 0:
-        padreKey = delimiter.join(clave.split(delimiter)[0:nivel])
-        try:
-            return tree[padreKey]
-        except KeyError:
-            return None # tengo que plantearme si crearlos sobre la marcha (para fechas)
-    else:
-       return None
 
 def getOrderedText(desc,sparse=True,separator=None):
     if desc is None:
@@ -87,31 +71,6 @@ def getOrderedText(desc,sparse=True,separator=None):
     texto += desc[-1]
     return texto
         
-def getAttrString(elem,name='desc',sparse=True,separator=None):
-    if name not in elem:
-        return None
-    
-    if isinstance(elem[name],(list,tuple)):
-        texto = ', '.join(elem[name])
-    elif isinstance(elem[name],dict):
-        return #Ni idea que hacer con ello. tampoco espero el caso
-    else:
-        texto = elem[name]
-        
-    if elem['parent'] is None:
-        return texto
-    elif not sparse:
-        return getAttrString(elem['parent'],name,sparse,separator)+separator+texto
-    else:
-        ind = 1
-        papi = elem['parent']
-        placeholder = ''
-        while papi is not None:
-            placeholder += separator
-            papi = papi['parent']
-            ind += 1
-
-        return placeholder+texto
     
           
 class Cubo:
@@ -131,8 +90,8 @@ class Cubo:
         
         self.dbdriver = self.definition['connect']['driver']
         
-
-        self.setGuias()
+        self.__setGuias()
+        
         self.lista_funciones = getAgrFunctions(self.db,self.lista_funciones)
         # no se usa en core. No se todavia en la parte GUI
         self.lista_campos = self.getFields()
@@ -161,7 +120,7 @@ class Cubo:
             lista_campos = self.lista_campos [ : ]
         return lista_campos
 
-    def setGuidesSqlStatement(self, entrada, fields):
+    def __setGuidesSqlStatement(self, entrada, fields):
         '''
           entrada es definition[guides][i][prod][j]: Contiene array
               -> source
@@ -219,7 +178,7 @@ class Cubo:
         return sqlString, code_fld,desc_fld 
     
     
-    def setGuidesDateSqlStatement(self, entrada, fields=None):
+    def __setGuidesDateSqlStatement(self, entrada, fields=None):
         #REFINE creo que fields sobra
         sqlDef=dict()
         sqlDef['tables'] = self.definition['table']
@@ -230,7 +189,7 @@ class Cubo:
                             ]
         return queryConstructor(**sqlDef)            
  
-    def setGuias(self):
+    def __setGuias(self):
         '''
            Crea la estructura lista_guias para cada una de las guias (dimensiones) que hemos definido en el cubo.
            Proceden de las reglas de produccion (prod) de la definicion
@@ -337,7 +296,7 @@ class Cubo:
                 else:
 
                     #entrada['elem'] += componente['elem'].split(',')
-                    (sqlString,code_fld,desc_fld) = self.setGuidesSqlStatement(componente,[])
+                    (sqlString,code_fld,desc_fld) = self.__setGuidesSqlStatement(componente,[])
                     entrada['rules'].append({'string':sqlString,
                                                     'ncode':code_fld,
                                                     'ndesc':desc_fld,
@@ -355,13 +314,6 @@ class Cubo:
             #if 'formula' in entrada:    
                 #del entrada['formula']
             
-    def fillGuias(self):
-        # TODO documentar y probablemente separar en funciones
-        # TODO ahora debo de poder integrar fechas y categorias dentro de una jerarquia
-        #      probablemente el cursor += no es lo que se necesita en estos casos
-        #print(time.time(),'A procesar ',len(self.lista_guias))
-        for ind in range(len(self.lista_guias)):
-            self.fillGuia(ind)
                 
     def fillGuia(self,guiaId):
         # TODO documentar y probablemente separar en funciones
@@ -386,7 +338,7 @@ class Cubo:
                 if campo in date_cache:
                     pass
                 else:
-                    sqlString = self.setGuidesDateSqlStatement(componente)
+                    sqlString = self.__setGuidesDateSqlStatement(componente)
                     row=getCursor(self.db,sqlString)
                     date_cache[campo] = [row[0][0], row[0][1]] 
                 cursor += getDateIndex(date_cache[campo][0]  #max_date
@@ -437,12 +389,12 @@ class Vista:
 
         self.row_hdr_idx = list()
         self.col_hdr_idx = list()
-        self.row_hdr_txt = list()
-        self.col_hdr_txt = list()
+        #self.row_hdr_txt = list()
+        #self.col_hdr_txt = list()
 
         self.dim_row = None
         self.dim_col = None
-        self.hierarchy= False
+        #self.hierarchy= False
         self.array = []
         
         self.setNewView(row, col)
@@ -500,9 +452,9 @@ class Vista:
             self.row_hdr_idx = self.cubo.lista_guias[row]['dir_row']
             self.col_hdr_idx = self.cubo.lista_guias[col]['dir_row']
         
-            self.setDataMatrix()
+            self.__setDataMatrix()
             
-    def  setDataMatrix(self):
+    def  __setDataMatrix(self):
          #TODO clarificar el codigo
          #REFINE solo esperamos un campo de datos. Hay que generalizarlo
         #self.array = [ [None for k in range(len(self.col_hdr_idx))] for j in range(len(self.row_hdr_idx))]
@@ -619,30 +571,13 @@ class Vista:
                     array[elem.ord][:]
             elem.setData(datos)
         print(time.time(),'Tree ',len(array),self.row_hdr_idx.count())  
-    def collapsedTable(self,table,row_hdr,col_hdr):
-       ctable = table[:]
-       for i,ivalue in enumerate(row_hdr):
-           if ivalue is None:
-               del ctable[i]
-           else:
-               for j,jvalue in enumerate(col_hdr):
-                   if jvalue is None:
-                       del ctable[i][j]
-       return ctable
-        
-    def toIndexedTable(self):
-        
-        itable = self.toTable()
-        for entry,value in self.row_hdr_idx.iteritems():
-            itable[value['idx']].insert(0,value)
-        print(time.time(),'itable ') 
-        return itable
 
     def fmtHeader(self,dimension, separador='\t', sparse=False, rango= None,  max_level=None):
         '''
 
            TODO documentar
            TODO en el caso de fechas debe formatearse a algo presentable
+           TODO some codepaths are not executed by now
         '''
         #print(dimension, separador, sparse, rango,  max_level)
 

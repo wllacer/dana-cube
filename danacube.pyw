@@ -32,21 +32,6 @@ from models import *
 #DONE 2 implementar sort en modelo
 #TODO uso de formato numerico directamente en la view setNumberFormat
 #ALERT dopado para que vaya siempre a datos de prueba
-'''
-# decorador para el cursor. tomado de http://stackoverflow.com/questions/8218900/how-can-i-change-the-cursor-shape-with-pyqt
-# estoy verde para usarlo
-def waiting_effects(function):
-    def new_function(*args, **kwargs):
-        app.setOverrideCursor(QCursor(Qt.WaitCursor))
-        try:
-            return function(*args, **kwargs)
-        except Exception as e:
-            raise e
-            print("Error {}".format(e.args[0]))
-        finally:
-            QApplication.restoreOverrideCursor()
-    return new_function
-'''
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -101,8 +86,6 @@ class MainWindow(QMainWindow):
         # para que aparezcan colapsados los indices jerarquicos
         self.max_row_level = self.vista.dim_row
         self.max_col_level  = self.vista.dim_col
-        self.max_row_level = 1
-        self.max_col_level  = 1
         self.row_range = [0, self.vista.row_hdr_idx.count() -1]
         self.col_range = [0, self.vista.col_hdr_idx.count() -1]
 
@@ -110,11 +93,13 @@ class MainWindow(QMainWindow):
         base = my_cubos['default']
 
         self.cubo=Cubo(my_cubos[base['cubo']])
+        
         app.setOverrideCursor(QCursor(Qt.WaitCursor))
-        #self.cubo.fillGuias()
         self.vista = Vista(self.cubo, base['vista']['row'], base['vista']['col'],base['vista']['agregado'],base['vista']['elemento']) 
         app.restoreOverrideCursor()   
+        
         self.vista.format = self.format
+        
         self.defineModel()
         
         
@@ -178,40 +163,6 @@ class MainWindow(QMainWindow):
             #app.setOverrideCursor(QCursor(Qt.WaitCursor))
             #self.refreshTable()
             #app.restoreOverrideCursor()
-    def zoomData(self):
-        zoomDlg = ZoomDlg(self.vista, self)
-#
-        zoomDlg.rowFCB.setCurrentIndex(self.row_range[0])
-        zoomDlg.rowTCB.setCurrentIndex(self.row_range[1])
-        zoomDlg.colFCB.setCurrentIndex(self.col_range[0])
-        zoomDlg.colTCB.setCurrentIndex(self.col_range[1])
-        zoomDlg.rowDimSpinBox.setValue(self.max_row_level)
-        zoomDlg.colDimSpinBox.setValue(self.max_col_level)
-        
-        refrescar = False
-        if zoomDlg.exec_():
-            if ( zoomDlg.rowFCB.currentIndex() != self.row_range[0] or
-                   zoomDlg.rowTCB.currentIndex() != self.row_range[1] or
-                   zoomDlg.colFCB.currentIndex() != self.col_range[0] or
-                   zoomDlg.colTCB.currentIndex() != self.col_range[1] ) :
-                self.row_range[0] = zoomDlg.rowFCB.currentIndex()
-                self.row_range[1] = zoomDlg.rowTCB.currentIndex()
-                self.col_range[0] = zoomDlg.colFCB.currentIndex()
-                self.col_range[1] = zoomDlg.colTCB.currentIndex()
-                refrescar = True
-
-            if ( zoomDlg.rowDimSpinBox.value != self.max_row_level or
-                    zoomDlg.colDimSpinBox.value != self.max_col_level ):
-                self.max_row_level = zoomDlg.rowDimSpinBox.value()
-                self.max_col_level = zoomDlg.colDimSpinBox.value()
-                refrescar = True
-
-            if refrescar:
-                #@waiting_effects
-                app.setOverrideCursor(QCursor(Qt.WaitCursor))
-                self.refreshTable()
-                app.restoreOverrideCursor()
-
                 
     def setNumberFormat(self):
         """ adapted from Rapid development with PyQT book (chapter 5) """        

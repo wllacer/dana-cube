@@ -42,57 +42,7 @@ def fmtNumber(number, fmtOptions):
     text = "{0}{1}{2}".format(sign, "".join(digits), fraction)#
     
     return text, sign
-"""
-class NumberSortModel(QSortFilterProxyModel):
 
-    def lessThan(self, left, right):
-        SORT_ROLE = 33
-        lvalor = left.data(SORT_ROLE)
-        rvalor = right.data(SORT_ROLE)
-        if left.column() == 0:
-            lvalue = lvalor
-            rvalue = rvalor
-        else:
-            lvalue = float(lvalor) if lvalor is not None else None
-            rvalue = float(rvalor) if rvalor is not None else None
-        return lvalue < rvalue
-"""
-"""
-class TreeItem(object):
-    def __init__(self, data, parent=None):
-        self.parentItem = parent
-        self.itemData = data
-        self.childItems = []
-
-    def appendChild(self, item):
-        self.childItems.append(item)
-
-    def child(self, row):
-        return self.childItems[row]
-
-    def childCount(self):
-        return len(self.childItems)
-
-    def columnCount(self):
-        return len(self.itemData)
-
-    def data(self, column):
-
-        try:
-            return self.itemData[column]
-        except IndexError:
-            return None
-
-    def parent(self):
-        return self.parentItem
-
-    def row(self):
-        if self.parentItem:
-            return self.parentItem.childItems.index(self)
-
-        return 0
-
-"""
 class TreeModel(QAbstractItemModel):
     def __init__(self, datos, parent=None):
         super(TreeModel, self).__init__(parent)
@@ -189,52 +139,6 @@ class TreeModel(QAbstractItemModel):
 
         return parentItem.childCount()
 
-    def setupModelData(self, datos, parent):
-
-        parents = [parent]
-        elemento = []
-        
-        guiaId = self.datos.row_id
-        iarray = datos.toIndexedTable()
-        
-        if 'dir_root_node' in self.datos.cubo.lista_guias[guiaId]:
-            pass
-        else:
-           for ind, columnData in enumerate(iarray):
-              datos_cabecera = self.rowHdr[ind+1]
-              indice = columnData[0]
-              celda = [datos_cabecera,] + columnData[1:]
-              self.rootItem.appendChild(TreeItem(celda,self.rootItem))
-        
-        
-        #iarray = datos.toIndexedTable()
-        #print(len(iarray),len(self.rowHdr))
-        #for ind, columnData in enumerate(iarray):
-            #try:
-                #datos_cabecera = self.rowHdr[ind+1]
-                #indice = columnData[0]
-                #celda = [datos_cabecera,] + columnData[1:]
-            #except IndexError:
-                #print('indice >{}<fuera de rango en row_hdr (>{}<)'.format(ind,len(self.rowHdr)))
-            #print(celda)
-            
-            #if indice['parent'] is None:
-                #self.rootItem.appendChild(TreeItem(celda,self.rootItem))
-            ##if self.datos.dim_row == 1:
-                #parents[-1].appendChild(TreeItem(celda, parents[-1]))
-            #else:
-                #estructura = self.datos.row_hdr_idx[ind].split(':')
-                #if len(estructura) > len(elemento): #un nivel mas
-                    #if parents[-1].childCount() > 0:
-                        #parents.append(parents[-1].child(parents[-1].childCount() - 1))
-                    #elemento.append(estructura[-1])
-                #else:  
-                    #while len(estructura) < len(elemento):
-                        #parents.pop()
-                        #elemento.pop()
-                    #if len(estructura) == len(elemento) and estructura[-1] != elemento[-1]:
-                        #elemento[-1] = estructura[-1]
-                #parents[-1].appendChild(TreeItem(celda, parents[-1]))
 
     def emitDataChanged(self):
         self.dataChanged.emit(QModelIndex(),QModelIndex())
