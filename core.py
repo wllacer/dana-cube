@@ -361,7 +361,7 @@ class Cubo:
         #      probablemente el cursor += no es lo que se necesita en estos casos
         #print(time.time(),'A procesar ',len(self.lista_guias))
         for ind in range(len(self.lista_guias)):
-            self.fillGuia[ind]
+            self.fillGuia(ind)
                 
     def fillGuia(self,guiaId):
         # TODO documentar y probablemente separar en funciones
@@ -615,11 +615,10 @@ class Vista:
         array = self.toTable()
         for key in self.row_hdr_idx.traverse(mode=1):
             elem = self.row_hdr_idx[key]
-            print(elem.ord)
-            datos = [ getOrderedText(elem.getFullDesc(),sparse=True,separator='\t'),] +\
+            datos = [ getOrderedText(elem.getFullDesc(),sparse=True,separator=''),] +\
                     array[elem.ord][:]
             elem.setData(datos)
-        
+        print(time.time(),'Tree ',len(array),self.row_hdr_idx.count())  
     def collapsedTable(self,table,row_hdr,col_hdr):
        ctable = table[:]
        for i,ivalue in enumerate(row_hdr):

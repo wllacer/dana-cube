@@ -103,15 +103,15 @@ class MainWindow(QMainWindow):
         self.max_col_level  = self.vista.dim_col
         self.max_row_level = 1
         self.max_col_level  = 1
-        self.row_range = [0, len(self.vista.row_hdr_idx) -1]
-        self.col_range = [0, len(self.vista.col_hdr_idx) -1]
+        self.row_range = [0, self.vista.row_hdr_idx.count() -1]
+        self.col_range = [0, self.vista.col_hdr_idx.count() -1]
 
     def autoCarga(self,my_cubos):
         base = my_cubos['default']
 
         self.cubo=Cubo(my_cubos[base['cubo']])
         app.setOverrideCursor(QCursor(Qt.WaitCursor))
-        self.cubo.fillGuias()
+        #self.cubo.fillGuias()
         self.vista = Vista(self.cubo, base['vista']['row'], base['vista']['col'],base['vista']['agregado'],base['vista']['elemento']) 
         app.restoreOverrideCursor()   
         self.vista.format = self.format

@@ -17,7 +17,7 @@ from PyQt5.QtWidgets import QApplication, QTreeView
 
 
 from core import Cubo,Vista
-
+from util.tree import *
 
 
 
@@ -57,6 +57,7 @@ class NumberSortModel(QSortFilterProxyModel):
             rvalue = float(rvalor) if rvalor is not None else None
         return lvalue < rvalue
 """
+"""
 class TreeItem(object):
     def __init__(self, data, parent=None):
         self.parentItem = parent
@@ -91,20 +92,21 @@ class TreeItem(object):
 
         return 0
 
-
+"""
 class TreeModel(QAbstractItemModel):
     def __init__(self, datos, parent=None):
         super(TreeModel, self).__init__(parent)
-
-        self.rootItem = TreeItem(("", ""))
+        datos.toTree()
+        self.rootItem = datos.row_hdr_idx.rootItem
         self.datos = datos
         self.rowHdr = self.datos.fmtHeader('row',separador='', sparse=True)
         self.colHdr = self.datos.fmtHeader('col',separador='\n', sparse=False)
-        self.setupModelData(datos, self.rootItem)
+        print('inicializado')
+        #self.setupModelData(datos, self.rootItem)
         
         
     def columnCount(self, parent):
-        return len(self.datos.col_hdr_idx) + 1
+        return self.datos.col_hdr_idx.count() + 1
 
     def data(self, index, role):
 
@@ -119,7 +121,7 @@ class TreeModel(QAbstractItemModel):
             
         item = index.internalPointer()
         if index.column() == 0:
-            return item.data(index.column())
+            return item.data(0)
         elif item.data(index.column()) is None:
             return None
         else:
