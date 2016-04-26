@@ -15,10 +15,16 @@ class TreeItem(object):
         self.key= key
         if desc is None:
             self.desc = key
+        elif isinstance(desc,(list,tuple)):
+            self.desc = ', '.join(desc)
         else:
             self.desc = desc
-        self.ord = ord
+         
         self.parentItem = parent
+        if ord is None:
+            self.ord = self.parent().childCount()
+        else:
+            self.ord = ord
         self.itemData = data
         self.childItems = []
 
@@ -41,6 +47,9 @@ class TreeItem(object):
         except IndexError:
             return None
 
+    def setData(self,data):
+        self.itemData = data
+        
     def parent(self):
         return self.parentItem
 
@@ -61,10 +70,12 @@ class TreeItem(object):
         fullDesc = [] #let the format be done outside
         fullDesc.append(self.desc)
         papi = self.parentItem
-        while papi is not Null:
+        while papi is not None:
+            if papi.parentItem is None:  #FIXME esto es un chapu
+                break
             fullDesc.insert(0,papi.desc) #Ojo insert, o sea al principio
             papi = papi.parentItem
-
+        return fullDesc
 
 class TreeDict(object):
     def __init__(self):
@@ -92,6 +103,9 @@ class TreeDict(object):
         except KeyError:
             return None
      
+    def count(self):
+        return len(self.content)
+    
     def queryAdd(self,node):
         if node.parentItem != None :
             pass
@@ -100,6 +114,10 @@ class TreeDict(object):
            if node.parentItem == None:
                node.parentItem = self.rootItem
         self.__add(node)
+        
+    def __getitem__(self, key):
+        return self.content[key]
+    
 
     def display(self, key=None, depth=_ROOT):
         # Obtenido de
@@ -127,12 +145,15 @@ class TreeDict(object):
         # Python generator. Loosly based on an algorithm from 
         # 'Essential LISP' by John R. Anderson, Albert T. Corbett, 
         # and Brian J. Reiser, page 239-241
-        if key is None:
-            yield '/'
-            queue = self.rootItem.childItems
-        else:
+        #if key is None:
+            #yield self.rootItem.childItems[0].key
+            #queue = self.rootItem.childItems[1:]
+        #else:
+        if key is not None:
             yield key
             queue = self.content[key].childItems
+        else:
+            queue = self.rootItem.childItems
         while queue:
             yield queue[0].key
             expansion = queue[0].childItems
