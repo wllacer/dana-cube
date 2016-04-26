@@ -75,7 +75,11 @@ PyQt licensing might impose other restrictions, please keep an eye on it (AFAIK 
 
 ## Actual Status
 
-__MASTER works__ but some pieces are lacking (Above all documentation). You can download the latest release to test it
+__MASTER works__ but some pieces are lacking (Above all documentation). The latest __release__ has still not converted
+to the new code
+
+_Update Feast of St. Cletus & Marcellin 2016_ I've changed a lot of internals in the move from lists to dictionaries (trees) for
+the guides. Performance is noticeable faster, and the code is better. Still haven't a release 
 
 _Update Feast of St. Georg 2016_ I used lists for guide definition and retrieval. I've discovered that using dictionaries
 enhances performance over 10000 % (read __100 TIMES__ ), but i have to rewrite almost everything again
