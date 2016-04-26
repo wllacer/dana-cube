@@ -26,6 +26,7 @@ FIXME y propagarse en el filtro si es jerarquico
 
 
 from util.record_functions import *
+from util.tree import *
 
 from datalayer.access_layer import *
 from datalayer.query_constructor import *
@@ -43,6 +44,18 @@ def mergeString(string1,string2,connector):
     else:
         merge = ''
     return merge
+
+def getParentKey(clave,debug=False):
+    """
+      define el padre de un elemento via la clave
+    """
+    delimiter=':'
+    nivel=getLevel(clave)
+    if nivel > 0:
+        padreKey = delimiter.join(clave.split(delimiter)[0:nivel])
+        return padreKey
+    else:
+       return None
 
 def setParent(tree,clave,debug=False):
     """
@@ -393,6 +406,63 @@ class Cubo:
                 
                 #print(time.strftime("%H:%M:%S"),dir_row[0])
                 #print(time.strftime("%H:%M:%S"),dir_row[0])
+    def fillGuia(self,guiaId):
+        # TODO documentar y probablemente separar en funciones
+        # TODO ahora debo de poder integrar fechas y categorias dentro de una jerarquia
+        #      probablemente el cursor += no es lo que se necesita en estos casos
+        date_cache = {}
+        #print(time.time(),'A procesar ',len(self.lista_guias))
+
+        entrada = self.lista_guias[guiaId]
+        cursor = []
+        for idx,componente in enumerate(entrada['rules']):
+            lista_compra={'nkeys':componente['ncode'],'ndesc':componente['ndesc']}
+            if componente['ncode'] < len(entrada['elem']):
+                lista_compra['nholder']=len(entrada['elem'])-componente['ncode']
+                if componente['ndesc'] != 1:
+                    lista_compra['pholder'] = - componente['ndesc']
+                    
+            if componente['class'] == 'd':
+                #REFINE asumo que solo existe un elemento origen en los campos fecha
+                campo = componente['elem'][-1]
+                # obtengo la fecha mayor y menor
+                if campo in date_cache:
+                    pass
+                else:
+                    sqlString = self.setGuidesDateSqlStatement(componente)
+                    row=getCursor(self.db,sqlString)
+                    date_cache[campo] = [row[0][0], row[0][1]] 
+                cursor += getDateIndex(date_cache[campo][0]  #max_date
+                                                , date_cache[campo][1]  #min_date
+                                                , componente['date_fmt'],
+                                                **lista_compra)
+                
+                print(time.time(),guiaId,idx,sqlString,lista_compra)
+            elif componente['class'] == 'c':
+                #FIXME placeholders, etc
+                nombres = [ [item['result'] if 'result' in item else item['default'],] for item in componente['enum']]
+                cursor += sorted(nombres)
+            else:  
+                sqlstring=componente['string']
+                cursor += getCursor(self.db,sqlstring,regHashFill,**lista_compra)
+                print(time.time(),guiaId,idx,sqlstring,lista_compra)                
+            cursor = sorted(cursor)
+
+        tree=TreeDict()
+        for entryNum,elem in enumerate(cursor):
+            if componente['ndesc'] == 0:
+                desc=[elem[0],] 
+            else:
+                desc=elem[-componente['ndesc']:] 
+            key=elem[0]
+            parentId = getParentKey(key)
+            tree.add(TreeItem(key,desc,entryNum),parentId)
+                
+        print(time.time(),guiaId,idx,'creada')
+        entrada['dir_row']=tree
+            
+                #print(time.strftime("%H:%M:%S"),dir_row[0])
+                #print(time.strftime("%H:%M:%S"),dir_row[0])
                 
 class Vista:
     #TODO falta documentar
@@ -598,18 +668,23 @@ def experimental():
     #pprint(cubo.lista_guias)
     for ind,guia in enumerate(cubo.lista_guias):
         print(ind,guia['name'])
-    cubo.fillGuias()
-    #pprint(cubo.lista_guias[1]['dir_row'])
+    #cubo.fillGuias()
+    ind= 5
+    cubo.fillGuia(ind)
+    cubo.lista_guias[ind]['dir_row'].display()
+    #pprint(cubo.lista_guias[ind]['dir_row'].content)
+    #for node in cubo.lista_guias[ind]['dir_row'].traverse(None,2):
+        #print(node)
     #pprint(sorted(cubo.lista_guias[1]['dir_row'])) esto devuelve una lista con las claves
     #pprint(cubo.lista_guias)
     #pprint(cubo.lista_guias[6])   
-    vista=Vista(cubo,6,0,'sum','votes_presential')
+    #vista=Vista(cubo,6,0,'sum','votes_presential')
     
     #tabla = vista.toTable()    
-    row_hdr = vista.fmtHeader('row',sparse=True)
-    pprint(row_hdr)
-    col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
-    pprint(col_hdr)
+    #row_hdr = vista.fmtHeader('row',sparse=True)
+    #pprint(row_hdr)
+    #col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
+    #pprint(col_hdr)
     #idx = 0
     #print('',col_hdr)
     #for ind,record in enumerate(tabla):
