@@ -11,8 +11,26 @@ Documentation, License etc.
 @package estimaciones
 '''
 #from PyQt4.QtSql import *
-from PyQt5.QtSql import *
+#from PyQt5.QtSql import *
+
+from  sqlalchemy import create_engine
+from  sqlalchemy.sql import text
+
 from pprint import pprint
+
+def Qt2Alchemy(driver):
+    
+    if driver == 'QSQLITE':
+        return 'sqlite'
+    elif driver == 'QMYSQL':
+        return 'mysql+mysqldb'
+    elif driver == 'QPSQL':
+        return 'postgresql+psycopg2'
+    elif driver  == 'QOCI':
+        return 'oracle+cx_oracle'
+    else:
+        return driver
+
 
 def dbConnect(constring):
     '''
@@ -24,23 +42,19 @@ def dbConnect(constring):
 	  dbuser
 	  dbpass
     '''
-    db = QSqlDatabase.addDatabase(constring['driver']);
-    
-    db.setDatabaseName(constring['dbname'])
-    
+    driver = Qt2Alchemy(constring['driver'])
+    dbname = constring['dbname']
     if constring['driver'] != 'QSQLITE':
-        db.setHostName(constring['dbhost'])
-        db.setUserName(constring['dbuser'])
-        db.setPassword(constring['dbpass'])
-    
-    ok = db.open()
-    # True if connected
-    if ok:        
-        return db
+        host = constring['dbhost']
+        user = constring['dbuser']
+        password = constring['dbpass']
+        context = '{}://{}:{}@{}/'.format(driver,user,password,host,dbname)
     else:
-        print('conexion a bd imposible')
-        sys.exit(-1)
-            
+        print(driver,dbname)
+        context = '{}:///{}'.format(driver,dbname)
+    engine = create_engine(context,echo=True)
+    return engine.connect()
+
 def getCursor(db, sql_string,funcion=None,**kwargs):
     '''
         ante una query devuelve un cursor normalizado:  una lista de registros, que a su vez es una lista de campos.
@@ -56,6 +70,20 @@ def getCursor(db, sql_string,funcion=None,**kwargs):
     if sql_string is None or sql_string.strip() == '':
         return None
       
+    sqlString=text(sql_string)
+    cursor= []
+    #TODO ¿sera posible que Alch me devuelva directamente una lista?
+    for row in db.execute(sqlString):
+        trow = list(row) #viene en tupla y no me conviene
+        if callable(funcion):
+            funcion(trow,**kwargs)
+        if trow != []:
+            cursor.append(trow)
+    return cursor
+
+
+
+"""
     cursor = []
     query = QSqlQuery(db)
     if query.exec_(sql_string):
@@ -69,7 +97,7 @@ def getCursor(db, sql_string,funcion=None,**kwargs):
                 cursor.append(row)
            
     return cursor
-
+"""
 def getAgrFunctions(db,plista = None):
     '''
       Devuelve la lista de funciones agregadas que soporta la base de datos

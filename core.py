@@ -646,7 +646,7 @@ def experimental():
         #print (ind,key,elem.ord,elem.desc)
         #ind += 1
 
-    vista=Vista(cubo,6,7,'sum','votes_percent')
+    vista=Vista(cubo,1,0,'sum','votes_percent')
     #tabla = vista.toKeyedTable()
     vista.toTree()
     print(vista.row_hdr_idx.count())
