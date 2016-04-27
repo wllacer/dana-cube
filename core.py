@@ -439,12 +439,11 @@ class Vista:
             
             self.dim_row = len(self.cubo.lista_guias[row]['rules'])
             self.dim_col = len(self.cubo.lista_guias[col]['rules'])
-            if  self.dim_row  > 1 or self.dim_col > 1: #No se si es necesario
-                self.hierarchy = True
-            
+
             for guia in self.cubo.lista_guias:
                 if 'dir_row' in guia:
                     del guia['dir_row']
+                    
             self.cubo.fillGuia(row)
             self.cubo.fillGuia(col)
             self.row_hdr_idx = self.cubo.lista_guias[row]['dir_row']
@@ -573,6 +572,44 @@ class Vista:
             elem.setData(datos)
         print(time.time(),'Tree ',len(array),self.row_hdr_idx.count())  
 
+    def toTree2D(self):
+        array = self.toTable()
+        for key in self.row_hdr_idx.traverse(mode=1):
+            elem = self.row_hdr_idx[key]
+            datos = [ getOrderedText(elem.getFullDesc(),sparse=True,separator=''),] +\
+                    array[elem.ord][:]
+            if STATISTICS :
+                stat_dict = stats(array[elem.ord])
+                elem.aux_data=stat_dict
+            elem.setData(datos)
+        for key in self.col_hdr_idx.traverse(mode=1):
+            elem = self.col_hdr_idx[key]
+            datos = [ getOrderedText(elem.getFullDesc(),sparse=True,separator=''),] +\
+                    [ array[ind][elem.ord] for ind in range(self.row_hdr_idx.count()) ]
+            if STATISTICS :
+                stat_dict = stats(datos[1:])
+                elem.aux_data=stat_dict
+            elem.setData(datos)
+         
+        print(time.time(),'Tree ',len(array),self.row_hdr_idx.count())  
+
+    def traspose(self):
+        print('antes row:{} col:{}'.format(self.row_id,self.col_id))
+        tmp_col = self.row_id
+        tmp_row = self.col_id
+        
+        self.row_id = tmp_row
+        self.col_id = tmp_col
+        
+        print('luego row:{} col:{}'.format(self.row_id,self.col_id))
+        
+        self.dim_row = len(self.cubo.lista_guias[self.row_id]['rules'])
+        self.dim_col = len(self.cubo.lista_guias[self.col_id]['rules'])
+
+        self.row_hdr_idx = self.cubo.lista_guias[self.row_id]['dir_row']
+        self.col_hdr_idx = self.cubo.lista_guias[self.col_id]['dir_row']
+
+        
     def fmtHeader(self,dimension, separador='\t', sparse=False, rango= None,  max_level=None):
         '''
 
@@ -653,28 +690,40 @@ def experimental():
 
     vista=Vista(cubo,0,2,'avg','votes_percent')
     #tabla = vista.toKeyedTable()
-    vista.toTree()
-    print(vista.row_hdr_idx.count())
+    vista.toTree2D()
+    col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
+    print(col_hdr)
+    for key in vista.row_hdr_idx.content:
+        elem = vista.row_hdr_idx[key]
+        pprint(elem)
+    vista.traspose()
+    col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
+    print(col_hdr)
+    for key in vista.row_hdr_idx.content:
+        elem = vista.row_hdr_idx[key]
+        pprint(elem)
+    #print(vista.row_hdr_idx.count())
     #presenta(vista)
     #for key in vista.row_hdr_idx.traverse(None,1):
         #print(key,vista.row_hdr_idx[key].desc,vista.row_hdr_idx[key].getFullDesc(),getOrderedText(vista.row_hdr_idx[key].getFullDesc(),sparse=False,separator=':'))
     #for elem in vista.array:
         #print(elem[0].desc,elem[1].desc,elem[2])
     
-    tabla = vista.toTable()    
-    row_hdr = vista.fmtHeader('row',sparse=True)
-    ###pprint(row_hdr)
-    col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
+    #tabla = vista.toTable()    
+    #row_hdr = vista.fmtHeader('row',sparse=True)
+    ####pprint(row_hdr)
+    #col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
     #pprint(col_hdr)
     #idx = 0
     #print('',col_hdr)
-    for ind,record in enumerate(tabla):
-        stat_data=stats(record)
-        for idx,item in enumerate(record):
-            if item is None:
-                continue
-            if item <= stat_data['out_low'] or item >= stat_data['out_hig']:
-                print('{} en {}:  {} es un outlier'.format(row_hdr[ind +1],col_hdr[idx+1],item))
+    #for ind,record in enumerate(tabla):
+
+        #stat_data=stats(record)
+        #for idx,item in enumerate(record):
+            #if item is None:
+                #continue
+            #if item <= stat_data['out_low'] or item >= stat_data['out_hig']:
+                #print('{} en {}:  {} es un outlier'.format(row_hdr[ind +1],col_hdr[idx+1],item))
         
 
         

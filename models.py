@@ -48,12 +48,10 @@ def fmtNumber(number, fmtOptions):
 class TreeModel(QAbstractItemModel):
     def __init__(self, datos, parent=None):
         super(TreeModel, self).__init__(parent)
-        datos.toTree()
+        datos.toTree2D()
         self.rootItem = datos.row_hdr_idx.rootItem
         self.datos = datos
-        self.rowHdr = self.datos.fmtHeader('row',separador='', sparse=True)
-        self.colHdr = self.datos.fmtHeader('col',separador='\n', sparse=False)
-        print('inicializado')
+        self.getHeaders()
         #self.setupModelData(datos, self.rootItem)
         
         
@@ -71,8 +69,13 @@ class TreeModel(QAbstractItemModel):
                 return Qt.AlignRight| Qt.AlignVCenter
         elif role == Qt.BackgroundRole:
             if index.column() != 0:
-               if isOutlier(item.data(index.column()),item.aux_data):
-                   return QColor(Qt.yellow)
+                if self.datos.format['yellowoutliers']:
+                    if isOutlier(item.data(index.column()),item.aux_data):
+                        return QColor(Qt.yellow)
+                if self.datos.format['rednegatives'] and item.data(index.column() < 0) :
+                    return QColor(Qt.red)
+                    
+               
         elif role not in (Qt.DisplayRole,33,):
             return None
             
@@ -144,7 +147,14 @@ class TreeModel(QAbstractItemModel):
             parentItem = parent.internalPointer()
 
         return parentItem.childCount()
-
-
+    
+    def getHeaders(self):
+        self.rowHdr = self.datos.fmtHeader('row',separador='', sparse=True)
+        self.colHdr = self.datos.fmtHeader('col',separador='\n', sparse=False)
+        
+    def emitModelReset(self):
+        self.modelReset.emit()
+        
     def emitDataChanged(self):
+        print('entro')
         self.dataChanged.emit(QModelIndex(),QModelIndex())

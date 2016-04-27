@@ -43,6 +43,7 @@ class MainWindow(QMainWindow):
         self.fileMenu = self.menuBar().addMenu("&Opciones")
         #TODO skipped has to be retougth with the new interface
         #self.fileMenu.addAction("&Zoom View ...", self.zoomData, "Ctrl+Z")
+        self.fileMenu.addAction("&Trasponer datos",self.traspose,"CtrlT")
         self.fileMenu.addAction("&Presentacion ...",self.setNumberFormat,"Ctrl+F")
         #
         self.format = dict(thousandsseparator=".", 
@@ -147,11 +148,20 @@ class MainWindow(QMainWindow):
             if self.vista is None:
                 self.vista = Vista(self.cubo, row, col, agregado, campo) 
                 self.vista.format = self.format
+                self.defineModel()
             else:
+                self.model.beginResetModel()                
                 self.vista.setNewView(row, col, agregado, campo)
-                
+                self.vista.toTree2D()
+                self.model.datos=self.vista
+                self.model.getHeaders()
+                self.model.rootItem = self.vista.row_hdr_idx.rootItem
+                self.model.endResetModel()
+                self.refreshTable()
 
-            self.defineModel()
+
+
+ 
             app.restoreOverrideCursor()
  
             # TODO hay que configurar algun tipo de evento para abrirlos y un parametro de configuracion
@@ -169,9 +179,20 @@ class MainWindow(QMainWindow):
         self.numberFormatDlg.show()
         self.numberFormatDlg.raise_()
         self.numberFormatDlg.activateWindow()
+        self.refreshTable()
 
+    def traspose(self):
+        self.model.beginResetModel()
+        self.vista.traspose()
+        self.model.getHeaders()
+        self.model.rootItem = self.vista.row_hdr_idx.rootItem
+        self.model.endResetModel()
+        self.refreshTable()
+        
+        
     def refreshTable(self):
-        self.model.emitDataChanged()
+        self.model.emitModelReset()
+
 if __name__ == '__main__':
 
     import sys
