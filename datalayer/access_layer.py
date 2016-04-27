@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
-BACKEND = 'Alchemy' #or 'QtSql'
+BACKEND = 'QtSql' #or 'QtSql'
 '''
 Documentation, License etc.
 
@@ -63,9 +63,9 @@ def getCursor(db, sql_string,funcion=None,**kwargs):
            **kwargs el diccionario de rigor para parametros variable
     """
     if BACKEND == 'Alchemy':
-        return getCursorAlch(db, sql_string,funcion=None,**kwargs)
+        return getCursorAlch(db, sql_string,funcion,**kwargs)
     elif BACKEND == 'QtSql':
-        return getCursorQt(db, sql_string,funcion=None,**kwargs)
+        return getCursorQt(db, sql_string,funcion,**kwargs)
     else:
         print('Not implemented')
         exit(-1)
