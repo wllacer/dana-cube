@@ -384,7 +384,7 @@
                     }, 
                     {
                         "source": {
-                            "filter": "region = 'CA01' and provincia <> '' and municipio = '' and isla = ''", 
+                            "filter": "provincia <> '' and municipio = '' and isla = ''", 
                             "table": "localidades", 
                             "desc": "nombre", 
                             "code": "provincia", 
@@ -396,7 +396,7 @@
                     }, 
                     {
                         "source": {
-                            "filter": "region = 'CA01' and municipio <> ''", 
+                            "filter": "municipio <> ''", 
                             "table": "localidades", 
                             "desc": "nombre", 
                             "code": "municipio", 
