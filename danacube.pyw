@@ -119,9 +119,6 @@ class MainWindow(QMainWindow):
             seleccion = str(dialog.cuboCB.currentText())
             self.cubo = Cubo(my_cubos[seleccion])
             
-            app.setOverrideCursor(QCursor(Qt.WaitCursor))
-            self.cubo.fillGuias()
-            app.restoreOverrideCursor()
             self.vista = None
         
         self.setWindowTitle("Cubo "+ seleccion)

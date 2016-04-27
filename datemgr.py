@@ -168,7 +168,7 @@ def getDateSlots(fieldname, driver='QSQLITE', zoom='n'):
         # base_col=('Y', 'Ym', 'YW', 'YW','m', 'md', 'mw', 'W', 'Ww', 'J', 'd', 'w', )
     else:
         base_col=('Y', 'Ym', 'YW', 'Ymv','m', 'mv', 'md', 'mw','mvw',  'W', 'Ww', 'J', 'd', 'w','v' )
-    zoom_col=('Ymd', 'Ymw', 'YmWw','YWw')    
+    zoom_col=('Ymd', 'Ymw','YWw')    
     #zoom_col=('YJ','Ymd', 'Ymw', 'YmWw','YWw')
         
     for i in base_col:

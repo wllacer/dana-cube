@@ -5,10 +5,6 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
-# para evitar problemas con utf-8, no lo recomiendan pero me funciona
-import sys
-reload(sys)
-sys.setdefaultencoding('utf-8')
 
 '''
 Documentation, License etc.
@@ -615,16 +611,23 @@ class Vista:
 
 def experimental():
     from util.jsonmgr import load_cubo
+    def presenta(vista):
+        guia=vista.row_hdr_idx
+        ind = 0
+        for key in guia.traverse(mode=1):
+            elem = guia[key]
+            print (ind,key,elem.ord,elem.desc,elem.parentItem.key)
+            ind += 1
     vista = None
     mis_cubos = load_cubo()
-    cubo = Cubo(mis_cubos['datos light'])
+    cubo = Cubo(mis_cubos['datos locales'])
     #pprint(cubo.definition)
     #pprint(cubo.definition)
     #pprint(cubo.lista_funciones)
     #pprint(cubo.lista_campos)
     #pprint(cubo.lista_guias)
-    #for ind,guia in enumerate(cubo.lista_guias):
-    #    print(ind,guia['name'])
+    for ind,guia in enumerate(cubo.lista_guias):
+        print(ind,guia['name'])
     #cubo.fillGuias()
     #ind= 5
     #cubo.fillGuia(ind)
@@ -643,24 +646,20 @@ def experimental():
         #print (ind,key,elem.ord,elem.desc)
         #ind += 1
 
-    vista=Vista(cubo,6,0,'sum','votes_presential')
-    tabla = vista.toKeyedTable()
+    vista=Vista(cubo,1,0,'sum','votes_percent')
+    #tabla = vista.toKeyedTable()
     vista.toTree()
-    guia=vista.row_hdr_idx
-    ind = 0
-    for key in guia.traverse(mode=1):
-        elem = guia[key]
-        print (ind,key,elem.ord,elem.desc,elem.itemData)
-        ind += 1
+    print(vista.row_hdr_idx.count())
+    #presenta(vista)
     #for key in vista.row_hdr_idx.traverse(None,1):
         #print(key,vista.row_hdr_idx[key].desc,vista.row_hdr_idx[key].getFullDesc(),getOrderedText(vista.row_hdr_idx[key].getFullDesc(),sparse=False,separator=':'))
     #for elem in vista.array:
         #print(elem[0].desc,elem[1].desc,elem[2])
     
     #tabla = vista.toTable()    
-    row_hdr = vista.fmtHeader('row',sparse=True)
-    ##pprint(row_hdr)
-    col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
+    #row_hdr = vista.fmtHeader('row',sparse=True)
+    ###pprint(row_hdr)
+    #col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
     #pprint(col_hdr)
     #idx = 0
     #print('',col_hdr)
@@ -680,5 +679,10 @@ def experimental():
 
 
 if __name__ == '__main__':
+    # para evitar problemas con utf-8, no lo recomiendan pero me funciona
+    import sys
+    reload(sys)
+    sys.setdefaultencoding('utf-8')
+
     experimental()
         
