@@ -76,6 +76,12 @@ class TreeItem(object):
             fullDesc.insert(0,papi.desc) #Ojo insert, o sea al principio
             papi = papi.parentItem
         return fullDesc
+    
+    def __str__(self): 
+        return '{}:{}'.format(self.key,self.desc)
+        
+    def __repr__(self): 
+        return '{}:{}'.format(self.key,self.desc)
 
 class TreeDict(object):
     def __init__(self):
