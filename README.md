@@ -63,6 +63,10 @@ Why a text file for definition? Getting the table definitions from the DB Catalo
 
 The tool is programmed in python2 + PyQt5?, but we test it also under python3.
 
+## Dependencies
+
+Besides PyQt, we use  [SqlAlchemy](http://www.sqlalchemy.org/) as a data backend (only core functionality). If you don't 
+want it, can be made to fallback to plain PyQt/QtSql (by hand, actually)
 
 ## License
 
@@ -78,6 +82,11 @@ PyQt licensing might impose other restrictions, please keep an eye on it (AFAIK 
 __MASTER works__ but some pieces are lacking (Above all documentation). The latest __release__ has still not converted
 to the new code
 
+_Update Feast of St. Peter Canisius 2016_ I've integrated SqlAlchemy as (selectable but default) backend. Couple of reasons why:
+    * Better licensing terms 
+    * PyQt/QtSql as open product lacks some drivers i find useful
+    * Gets me more debugging info
+    
 _Update Feast of St. Cletus & Marcellin 2016_ I've changed a lot of internals in the move from lists to dictionaries (trees) for
 the guides. Performance is noticeable faster, and the code is better. Still haven't a release 
 

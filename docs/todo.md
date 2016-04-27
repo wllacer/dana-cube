@@ -30,8 +30,9 @@
   * __DONE__ in guides allow blank filter
  
 * Performance
-  * _HP_ municipio as guide performance is a horror. _WIP_ I used lists for guide definition and retrieval. I've discovered
+  * __DONE__ municipio as guide performance is a horror. _WIP_ I used lists for guide definition and retrieval. I've discovered
     that using dictionaries enhances performance over 10000 % (read __100 TIMES__ ), but i have to rewrite almost everything again
+    used trees of dict, which also simplifies gui programming
   
 * Behaviour
   * complex keying in guides
@@ -64,10 +65,11 @@
     * Configuration management
 
 * __WIP__ GUI 
-    * GUI refactoring based on Model-View
+    * GUI refactoring based on Model-View (fairly advanced now)
     * GUI for definition   (__HP__ showstopper for release)
  
-* __EXPERIMENTAL__: use SqlAlchemy as data background, so dependencies on PyQt would only be on the presentation level
+* __WIP__: use SqlAlchemy as data background, so dependencies on PyQt would only be on the presentation level
+    * integration __DONE__. Now selectable by (internal) parameter. ¿Faster?
     * Date Management into alchemy
     * Cube/Rollp
  
