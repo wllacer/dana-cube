@@ -4,19 +4,23 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
-BACKEND = 'Alchemy' #or 'QtSql'
+BACKEND = 'Alchemy' #'Alchemy' #or 'QtSql'
 '''
 Documentation, License etc.
 
 @package estimaciones
 '''
 #from PyQt4.QtSql import *
+#transitional
+from  sqlalchemy import create_engine
+from  sqlalchemy.sql import text
+from PyQt5.QtSql import *    
 
-if BACKEND == 'Alchemy':
-    from  sqlalchemy import create_engine
-    from  sqlalchemy.sql import text
-else:
-    from PyQt5.QtSql import *    
+#if BACKEND == 'Alchemy':
+    #from  sqlalchemy import create_engine
+    #from  sqlalchemy.sql import text
+#else:
+    #from PyQt5.QtSql import *    
     
 from pprint import pprint
 
@@ -73,6 +77,10 @@ def getCursor(db, sql_string,funcion=None,**kwargs):
 def dbConnectAlch(constring):
 
     driver = Qt2Alchemy(constring['driver'])
+    if 'debug' in constring:
+        debug=constring['debug']
+    else:
+        debug=False
     dbname = constring['dbname']
     if constring['driver'] != 'QSQLITE':
         host = constring['dbhost']
@@ -82,7 +90,7 @@ def dbConnectAlch(constring):
     else:
         print(driver,dbname)
         context = '{}:///{}'.format(driver,dbname)
-    engine = create_engine(context,echo=True)
+    engine = create_engine(context,echo=debug)
     return engine.connect()
 
 def dbConnectQt(constring):

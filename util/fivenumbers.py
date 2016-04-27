@@ -57,7 +57,42 @@ def std(tabla):
     '''
     #return math.sqrt(avg(variance(tabla))) 
     return math.sqrt(sum(variance(tabla))/(len(tabla) -1))
-    
+ 
+def stats(plista):
+    res=dict()
+    datos = [item for item in plista if item is not None ]
+    res['count']=len(datos)
+    if len(datos) > 1:
+        res['avg']=avg(datos)
+        res['std']=std(datos)
+        summary=fivesummary(datos)
+        res['max']= summary[6]
+        res['median']=summary[3]
+        res['min']=summary[0]
+        res['out_low']=summary[1]
+        res['out_hig']=summary[5]
+    else:
+        res['avg']=None
+        res['std']=None
+        res['max']= None
+        res['median']=None
+        res['min']=None
+        res['out_low']=None
+        res['out_hig']=None
+
+    return res
+
+def isOutlier(item,stats_dict):
+    if item is None:
+        return False
+    if stats_dict['count'] >1:
+        if ( item <= stats_dict['out_low'] or item >= stats_dict['out_hig'] ):
+            return True
+    else:
+        return False
+
+
+        
 def fivesummary(plista, nan=False):
 
     t_lista = [] 

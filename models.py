@@ -14,10 +14,12 @@ import math
 
 from PyQt5.QtCore import QAbstractItemModel, QFile, QIODevice, QModelIndex, Qt, QSortFilterProxyModel
 from PyQt5.QtWidgets import QApplication, QTreeView
+from PyQt5.QtGui import QColor
 
 
 from core import Cubo,Vista
 from util.tree import *
+from util.fivenumbers import isOutlier
 
 
 
@@ -62,14 +64,18 @@ class TreeModel(QAbstractItemModel):
 
         if not index.isValid():
             return None
+        item = index.internalPointer()
+        
         if role == Qt.TextAlignmentRole:
             if index.column() != 0:
                 return Qt.AlignRight| Qt.AlignVCenter
-        
-        if role not in (Qt.DisplayRole,33,):
+        elif role == Qt.BackgroundRole:
+            if index.column() != 0:
+               if isOutlier(item.data(index.column()),item.aux_data):
+                   return QColor(Qt.yellow)
+        elif role not in (Qt.DisplayRole,33,):
             return None
             
-        item = index.internalPointer()
         if index.column() == 0:
             return item.data(0)
         elif item.data(index.column()) is None:

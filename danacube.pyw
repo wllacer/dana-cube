@@ -11,7 +11,7 @@ from pprint import pprint
 
 
 from PyQt5.QtCore import QAbstractItemModel, QFile, QIODevice, QModelIndex, Qt,QSortFilterProxyModel
-from PyQt5.QtGui import QCursor
+from PyQt5.QtGui import QCursor,QColor
 from PyQt5.QtWidgets import QApplication, QFileDialog, QMainWindow, QTreeView
 
 from core import Cubo,Vista

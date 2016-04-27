@@ -19,13 +19,15 @@ FIXME y propagarse en el filtro si es jerarquico
 #TODO En ciertas circunstancias debe o no provocarse y/o informar del error
 
 '''
-
+STATISTICS=True
 
 from util.record_functions import *
 from util.tree import *
 
 from datalayer.access_layer import *
 from datalayer.query_constructor import *
+
+from util.fivenumbers import stats
 
 from datemgr import getDateSlots,getDateIndex
 from pprint import *
@@ -565,6 +567,9 @@ class Vista:
             elem = self.row_hdr_idx[key]
             datos = [ getOrderedText(elem.getFullDesc(),sparse=True,separator=''),] +\
                     array[elem.ord][:]
+            if STATISTICS :
+                stat_dict = stats(array[elem.ord])
+                elem.aux_data=stat_dict
             elem.setData(datos)
         print(time.time(),'Tree ',len(array),self.row_hdr_idx.count())  
 
@@ -620,7 +625,7 @@ def experimental():
             ind += 1
     vista = None
     mis_cubos = load_cubo()
-    cubo = Cubo(mis_cubos['datos locales'])
+    cubo = Cubo(mis_cubos['datos provincia'])
     #pprint(cubo.definition)
     #pprint(cubo.definition)
     #pprint(cubo.lista_funciones)
@@ -646,7 +651,7 @@ def experimental():
         #print (ind,key,elem.ord,elem.desc)
         #ind += 1
 
-    vista=Vista(cubo,1,0,'sum','votes_percent')
+    vista=Vista(cubo,0,2,'avg','votes_percent')
     #tabla = vista.toKeyedTable()
     vista.toTree()
     print(vista.row_hdr_idx.count())
@@ -656,15 +661,21 @@ def experimental():
     #for elem in vista.array:
         #print(elem[0].desc,elem[1].desc,elem[2])
     
-    #tabla = vista.toTable()    
-    #row_hdr = vista.fmtHeader('row',sparse=True)
+    tabla = vista.toTable()    
+    row_hdr = vista.fmtHeader('row',sparse=True)
     ###pprint(row_hdr)
-    #col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
+    col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
     #pprint(col_hdr)
     #idx = 0
     #print('',col_hdr)
-    #for ind,record in enumerate(tabla):
-        #print(record)
+    for ind,record in enumerate(tabla):
+        stat_data=stats(record)
+        for idx,item in enumerate(record):
+            if item is None:
+                continue
+            if item <= stat_data['out_low'] or item >= stat_data['out_hig']:
+                print('{} en {}:  {} es un outlier'.format(row_hdr[ind +1],col_hdr[idx+1],item))
+        
 
         
     #tabla = vista.toIndexedTable()    
