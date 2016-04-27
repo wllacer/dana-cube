@@ -498,6 +498,7 @@ class Vista:
 
         table = [ [None for k in range(self.col_hdr_idx.count())] for j in range(self.row_hdr_idx.count())]
         for record in self.array:
+            print(record)
             try:
                 ind_1 = record[0].ord
                 ind_2 = record[1].ord
