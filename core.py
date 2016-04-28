@@ -207,9 +207,9 @@ class Cubo:
                 *   fmt      (opcional). Formato especial para los valores del campo 
                 *   enum_fmt (opcional)  en categorias formato de los elementos a enumerar si no son el defecto
  
-           * YA NO cursor el resultado normalizado (con rellenos) y agreagado de la guia en todos sus niveles
+
            * dir_row el array indice (para realizar busquedas)
-           * des_row el array con la descripción  TODO es mejorable su proceso
+
            
            Estos tres últimos elemnentos se cargan en self.fillGuias; separado para poder refrescarlo en cualquier
            momento
@@ -512,7 +512,7 @@ class Vista:
 
     def toKeyedTable(self):
         ktable = [ [None for k in range(self.col_hdr_idx.count()+1)] for j in range(self.row_hdr_idx.count()+1)]
-        ktable[0][0] = [None,] 
+        ktable[0][0] = None
         ind = 1
         for key in self.col_hdr_idx.traverse(mode=1):
             elem = self.col_hdr_idx[key]
@@ -533,10 +533,52 @@ class Vista:
 
            elem[1:] = table[ind][:]
         return ktable
+    def toCsv(self,row_sparse=True,col_sparse=False,translated=True,separator=';',string_sep="'"):
+        ctable = [ ['' for k in range(self.col_hdr_idx.count()+self.dim_row)] 
+                             for j in range(self.row_hdr_idx.count()+self.dim_col) ]
+     
+        ind = 1
+        def csvFormatString(cadena):
+            if separator in cadena:
+                return string_sep + cadena + string_sep
+            else:
+                return cadena
+        for key in self.col_hdr_idx.traverse(mode=1):
+            elem = self.col_hdr_idx[key]
+            desc = elem.getFullDesc()   
+            if col_sparse:
+                k = len(desc) -1
+                ctable[k][elem.ord +self.dim_row] = csvFormatString(desc[k])
+            else:
+                for k in range(len(desc)):
+                    ctable[k][elem.ord +self.dim_row] = csvFormatString(desc[k])
+
+            
+        for key in self.row_hdr_idx.traverse(mode=1):
+            elem = self.row_hdr_idx[key]
+            desc = elem.getFullDesc()   
+            if row_sparse:
+                k = len(desc) -1
+                ctable[elem.ord + self.dim_col][k]=csvFormatString(desc[k])
+            else:
+                for k in range(len(desc)):
+                    ctable[elem.ord + self.dim_col][k]=csvFormatString(desc[k])
+        table = self.toTable()
+        # probablemente este paso intermedio es innecesario
+        ind = 0
+        for elem in ctable[self.dim_col : ]:
+           elem[self.dim_row:] = [str(dato) if dato is not None else '' for dato in table[ind] ]
+           ind += 1
+        lineas=[]
+        for row in ctable:
+            print(row)
+            lineas.append(separator.join(row))
+            
+        return lineas
     
     def toNamedTable(self):
-        ntable = [ [None for k in range(self.col_hdr_idx.count()+1)] for j in range(self.row_hdr_idx.count()+1)]
-        ntable[0][0] = [None,] 
+        ntable = [ [ None for k in range(self.col_hdr_idx.count()+1)] for j in range(self.row_hdr_idx.count()+1)]
+        ntable[0][0] = None
         ind = 1
         for key in self.col_hdr_idx.traverse(mode=1):
             elem = self.col_hdr_idx[key]

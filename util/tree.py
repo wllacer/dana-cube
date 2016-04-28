@@ -78,10 +78,10 @@ class TreeItem(object):
         return fullDesc
     
     def __str__(self): 
-        return '{}:{}'.format(self.key,self.desc)
+        return '{}->{}'.format(self.key,self.desc)
         
     def __repr__(self): 
-        return '{}:{}'.format(self.key,self.desc)
+        return '{}->{}@{}'.format(self.key,self.desc,self.ord)
 
 class TreeDict(object):
     def __init__(self):

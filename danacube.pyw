@@ -187,7 +187,7 @@ class MainWindow(QMainWindow):
         self.model.getHeaders()
         self.model.rootItem = self.vista.row_hdr_idx.rootItem
         self.model.endResetModel()
-        self.refreshTable()
+        #self.refreshTable()
         
         
     def refreshTable(self):
