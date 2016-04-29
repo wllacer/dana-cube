@@ -1,10 +1,10 @@
 {
     "default": {
-        "cubo": "datos light", 
+        "cubo": "experimento", 
         "vista": {
-            "row": 5, 
+            "row": 3, 
             "agregado": "avg", 
-            "col": 1, 
+            "col": 2, 
             "elemento": "votes_percent"
         }
     }, 

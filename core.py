@@ -20,6 +20,7 @@ FIXME y propagarse en el filtro si es jerarquico
 
 '''
 STATISTICS=True
+DEBUG = True
 
 from util.record_functions import *
 from util.tree import *
@@ -175,17 +176,17 @@ class Cubo:
         sqlString = queryConstructor(**sqlDef)
         return sqlString, code_fld,desc_fld 
     
-    
     def __setGuidesDateSqlStatement(self, entrada, fields=None):
         #REFINE creo que fields sobra
         sqlDef=dict()
         sqlDef['tables'] = self.definition['table']
         if len(self.definition['base filter'].strip()) > 0:
            sqlDef['base_filter']=self.definition['base filter']
-        sqlDef['fields'] = [[entrada['elem'][0],'max'],
-                            [entrada['elem'][0],'min'],
+        sqlDef['fields'] = [[entrada['base_date'],'max'],
+                            [entrada['base_date'],'min'],
                             ]
-        return queryConstructor(**sqlDef)            
+        return queryConstructor(**sqlDef) 
+
     def __setGuias(self):
         '''
            Crea la estructura lista_guias para cada una de las guias (dimensiones) que hemos definido en el cubo.
@@ -205,6 +206,7 @@ class Cubo:
                 *   enum     (solo categorias) estructura de enumeracion
                 *   fmt      (opcional). Formato especial para los valores del campo 
                 *   enum_fmt (opcional)  en categorias formato de los elementos a enumerar si no son el defecto
+                *   base_date (solo fechas) campo original de fechas
  
 
            * dir_row el array indice (para realizar busquedas)
@@ -248,6 +250,10 @@ class Cubo:
                 if clase == 'd':
                     if 'mask' not in componente:
                         componente['mask'] = 'Ymd'  #(agrupado en año mes dia por defecto'
+                    if isinstance(componente['elem'],(list,tuple)):
+                        base_date = componente['elem'][-1] # asumo siempre un campo fecha
+                    else:
+                        base_date = componente['elem']
                     #
                     for k in range(len(componente['mask'])):
                         kmask = componente['mask'][0:k+1]                   
@@ -259,7 +265,8 @@ class Cubo:
                                     'elem':[datosfecha['elem'],],
                                     'name': nombre +'_'+ kmask,
                                     'date_fmt': datosfecha['mask'],
-                                    'class':clase
+                                    'class':clase,
+                                    'base_date':base_date
                                     })
 
                 elif clase == 'c':
@@ -293,7 +300,7 @@ class Cubo:
                                                     'class':clase})
                 if 'fmt' in componente:
                     guia['rules'][-1]['fmt']=componente['fmt']
-                print(guia['elem'])     
+
                 
     def fillGuia(self,guiaId):
         # TODO documentar y probablemente separar en funciones
@@ -305,6 +312,7 @@ class Cubo:
         entrada = self.lista_guias[guiaId]
         cursor = []
         for idx,componente in enumerate(entrada['rules']):
+            sqlString=''
             lista_compra={'nkeys':componente['ncode'],'ndesc':componente['ndesc']}
             if componente['ncode'] < len(entrada['elem']):
                 lista_compra['nholder']=len(entrada['elem'])-componente['ncode']
@@ -312,29 +320,38 @@ class Cubo:
                     lista_compra['pholder'] = - componente['ndesc']
                     
             if componente['class'] == 'd':
+                #TODO demasiadas vueltas                
                 #REFINE asumo que solo existe un elemento origen en los campos fecha
-                campo = componente['elem'][-1]
+                #campo = componente['elem'][-1]
+                campo= componente['base_date']
                 # obtengo la fecha mayor y menor
                 if campo in date_cache:
                     pass
                 else:
+                    #TODO solo se requiere consulta a la base de datos si el formato incluye 'Y'
                     sqlString = self.__setGuidesDateSqlStatement(componente)
                     row=getCursor(self.db,sqlString)
                     date_cache[campo] = [row[0][0], row[0][1]] 
+                    
                 cursor += getDateIndex(date_cache[campo][0]  #max_date
                                                 , date_cache[campo][1]  #min_date
                                                 , componente['date_fmt'],
                                                 **lista_compra)
                 
-                print(time.time(),guiaId,idx,sqlString,lista_compra)
             elif componente['class'] == 'c':
-                #FIXME placeholders, etc
-                nombres = [ [item['result'] if 'result' in item else item['default'],] for item in componente['enum']]
-                cursor += sorted(nombres)
+                if componente['string'] != '':
+                    sqlString=componente['string']
+                    cursor += getCursor(self.db,sqlString,regHashFill,**lista_compra)
+                else:
+                    nombres = [ [item['result'] if 'result' in item else item['default'],] for item in componente['enum']]
+                    for elem in nombres:
+                        regHashFill(elem,**lista_compra)
+                    cursor += sorted(nombres)
             else:  
-                sqlstring=componente['string']
-                cursor += getCursor(self.db,sqlstring,regHashFill,**lista_compra)
-                print(time.time(),guiaId,idx,sqlstring,lista_compra)                
+                sqlString=componente['string']
+                cursor += getCursor(self.db,sqlString,regHashFill,**lista_compra)
+            if DEBUG:            
+                print(time.time(),guiaId,idx,entrada['name'],sqlString,lista_compra)                
             cursor = sorted(cursor)
 
         tree=TreeDict()
@@ -346,12 +363,14 @@ class Cubo:
             key=elem[0]
             parentId = getParentKey(key)
             tree.add(TreeItem(key,entryNum,desc),parentId)
-                
-        print(time.time(),guiaId,idx,'creada')
+            
+        if DEBUG:              
+            print(time.time(),guiaId,idx,'creada')
         entrada['dir_row']=tree
             
                 #print(time.strftime("%H:%M:%S"),dir_row[0])
                 #print(time.strftime("%H:%M:%S"),dir_row[0])
+
                 
 class Vista:
     #TODO falta documentar
@@ -438,7 +457,8 @@ class Vista:
          #REFINE solo esperamos un campo de datos. Hay que generalizarlo
         #self.array = [ [None for k in range(len(self.col_hdr_idx))] for j in range(len(self.row_hdr_idx))]
         self.array = []
-        print(time.time(),'a por el array')
+        if DEBUG:
+            print(time.time(),'a por el array')
         for i in range(0,self.dim_row):
             # el group by en las categorias necesita codigo especial
             if self.cubo.lista_guias[self.row_id]['rules'][i]['class'] == 'c':
@@ -452,7 +472,6 @@ class Vista:
                 sqlDef['fields']= self.cubo.lista_guias[self.row_id]['rules'][i]['elem'] + \
                                   self.cubo.lista_guias[self.col_id]['rules'][j]['elem'] + \
                                   [(self.campo,self.agregado)]
-                pprint(sqlDef['fields'])
                 sqlDef['base_filter']=mergeString(self.filtro,self.cubo.definition['base filter'],'AND')
                 # esta desviacion es por las categorias
                 if self.cubo.lista_guias[self.col_id]['rules'][j]['class'] == 'c':
@@ -476,7 +495,8 @@ class Vista:
                 
                 #cursor_data=getCursor(self.cubo.db,sqlstring,regHasher2D,**lista_compra)
                 self.array +=getCursor(self.cubo.db,sqlstring,regTree,**lista_compra)
-                print(time.time(),'Datos ',sqlstring)
+                if DEBUG:
+                    print(time.time(),'Datos ',sqlstring)
                 
     def toTable(self):
 
@@ -490,7 +510,8 @@ class Vista:
                 continue
             except IndexError:
                 print('{} o {} fuera de rango'.format(ind_1,ind_2))
-        print(time.time(),'table ',len(table),self.row_hdr_idx.count(),len(table[0])) 
+        if DEBUG:
+            print(time.time(),'table ',len(table),self.row_hdr_idx.count(),len(table[0])) 
         return table
 
     def toKeyedTable(self):
@@ -554,7 +575,6 @@ class Vista:
            ind += 1
         lineas=[]
         for row in ctable:
-            print(row)
             lineas.append(separator.join(row))
             
         return lineas
@@ -595,7 +615,8 @@ class Vista:
                 stat_dict = stats(array[elem.ord])
                 elem.aux_data=stat_dict
             elem.setData(datos)
-        print(time.time(),'Tree ',len(array),self.row_hdr_idx.count())  
+        if DEBUG:
+            print(time.time(),'Tree ',len(array),self.row_hdr_idx.count())  
 
     def toTree2D(self):
         array = self.toTable()
@@ -615,18 +636,15 @@ class Vista:
                 stat_dict = stats(datos[1:])
                 elem.aux_data=stat_dict
             elem.setData(datos)
-         
-        print(time.time(),'Tree ',len(array),self.row_hdr_idx.count())  
+        if DEBUG:       
+            print(time.time(),'Tree ',len(array),self.row_hdr_idx.count())  
 
     def traspose(self):
-        print('antes row:{} col:{}'.format(self.row_id,self.col_id))
         tmp_col = self.row_id
         tmp_row = self.col_id
         
         self.row_id = tmp_row
         self.col_id = tmp_col
-        
-        print('luego row:{} col:{}'.format(self.row_id,self.col_id))
         
         self.dim_row = len(self.cubo.lista_guias[self.row_id]['rules'])
         self.dim_col = len(self.cubo.lista_guias[self.col_id]['rules'])

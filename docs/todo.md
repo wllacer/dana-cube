@@ -10,8 +10,7 @@
 * _WIP_ Code refactoring for clarity
   *__DONE__ data access layer isolation (2/4/16)
   *__DONE__ heavy simplification of core codepaths, and several internal structures.(6/4/16)
-  *__DONE__ handling of date indexes. Code is handicrafted and full of 's..t'. Integration of dateutil would solve a lot
-  of problems, but add a new dependency
+  *__DONE__ handling of date indexes. I devolved to a simple structure, each date format must be defined explicitly
   *__DONE__ Adapt GUI to new internal structures
   * name of elements in hierarchy YML
   
@@ -32,7 +31,9 @@
 * bugs
   * __DONE__ Kdevelop editor defaults is undermining Py 3 compatibility. Need to think about it (just better parametrization)
   * __DONE__ fivepoints metric 
+  * Normalize definition.prod.elem as list
   * _WIP_ Filters in guides pose some functional problems
+  * Dates as guides generate a lot of invalid dates (out of range, inexistent)
   * Dates as headers must be reformated
   * Integration of dates and categories in hierarchies
 
@@ -42,6 +43,7 @@
   * __DONE__ municipio as guide performance is a horror. _WIP_ I used lists for guide definition and retrieval. I've discovered
     that using dictionaries enhances performance over 10000 % (read __100 TIMES__ ), but i have to rewrite almost everything again
     used trees of dict, which also simplifies gui programming
+  * A decision has to be made to load guides with the cube or specifically for each view (later is new default)
   
 * Behaviour
   * complex keying in guides
@@ -55,8 +57,8 @@
 
 * Other output formats 
     * JSON
-    * _WIP_ CSV
-    * __DONE__Raw Array. In fact almost new device
+    * _WIP_ CSV  (? direct invocation of spreadsheet)
+    * __DONE__Raw Array. In fact almost new default
     * HTML table
     * ? graphical frontend as d3.js
     

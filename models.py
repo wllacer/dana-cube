@@ -22,8 +22,6 @@ from util.tree import *
 from util.fivenumbers import isOutlier
 
 
-
-
 def fmtNumber(number, fmtOptions):
     """ taken from Rapid development with PyQT book (chapter 5) """
 

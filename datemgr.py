@@ -61,7 +61,7 @@ def getDateIndexElement(max_date, min_date, char):
 
 def getDateIndex(max_date,  min_date, fmt, **opciones):     
     ''' 
-       TODO admite una leve posibilidad de mejora para excluir fechas imposibles
+       TODO supera los intervalos mínimos
        TODO esta clarisimo que ademas admite seria optimizacion
     '''
     #DELIMITER = '.'
