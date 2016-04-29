@@ -17,15 +17,24 @@
   
 * New use cases
   * _WIP_ diferent types of guides
-  * basic source a query instead of a table
-  * post filter row/columns
-  * more than one measure
-  * function recode
- 
+  * General
+    * Login screen for DB that need it
+    * Favorites function
+    * Preset time intervals as general option in cube (this,(N) period (today backwards),(N) last (not including))x(week,month,year)
+    * basic source a query instead of a table
+    * more than one measure
+    * function: recode (partially solved with categories)
+    * Data export (see below)
+  * Presentation
+    * Ability to handle collapse/expand on columns
+    * Data filtering (pre / post)
+    * Aditional info on double/right click (stats data | source data)
 * bugs
   * __DONE__ Kdevelop editor defaults is undermining Py 3 compatibility. Need to think about it (just better parametrization)
-  * fivepoints metric (?)
+  * __DONE__ fivepoints metric 
   * _WIP_ Filters in guides pose some functional problems
+  * Dates as headers must be reformated
+  * Integration of dates and categories in hierarchies
 
   * __DONE__ in guides allow blank filter
  
@@ -66,7 +75,7 @@
     * Configuration management
 
 * _WIP_  GUI 
-    * GUI refactoring based on Model-View (fairly advanced now)
+    * __DONE__ GUI refactoring based on Model-View (excluding new functionality)
     * GUI for definition   (__HP__ showstopper for release)
  
 * _WIP_ : use SqlAlchemy as data background, so dependencies on PyQt would only be on the presentation level

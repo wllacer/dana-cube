@@ -67,6 +67,8 @@ class TreeModel(QAbstractItemModel):
         if role == Qt.TextAlignmentRole:
             if index.column() != 0:
                 return Qt.AlignRight| Qt.AlignVCenter
+            else:
+                return Qt.AlignLeft| Qt.AlignVCenter
         elif role == Qt.BackgroundRole:
             if index.column() != 0:
                 if self.datos.format['yellowoutliers']:
@@ -80,6 +82,7 @@ class TreeModel(QAbstractItemModel):
             return None
             
         if index.column() == 0:
+            #TODO hay que reformatear fechas
             return item.data(0)
         elif item.data(index.column()) is None:
             return None
