@@ -400,7 +400,7 @@
                             "table": "localidades", 
                             "desc": "nombre", 
                             "code": "municipio", 
-                            "grouped by": "region,provincia"
+                            "grouped by": ["region","provincia"]
                         }, 
 
                         "elem": "municipio", 
@@ -595,7 +595,17 @@
                 "name": "fecha", 
                 "class": "d",
                 "type":"Ymd"
+            },            {
+                "prod": [
+                    {
+                        "elem": "strftime('%Y',fakedate)",
+                        "name": "año"
+                    }
+                ], 
+                "name": "cuatrimestre",
+                "class": "o"
             }
+                    
         ], 
         "connect": {
             "dbuser": null, 

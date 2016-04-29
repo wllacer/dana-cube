@@ -15,6 +15,7 @@ from pprint import *
 from datetime import *
 
 import time
+from util.record_functions import norm2List
 
 def getDateIndexElement(max_date, min_date, char):
     #TODO formatos todavia usan %
@@ -102,10 +103,9 @@ def getDateIndex(max_date,  min_date, fmt, **opciones):
     #return normalizado
         
 def getDateEntry(psource, fmt, driver='QSQLITE'):
-    if isinstance(psource,(list,tuple)):  #hay problemas de congruencia entre modulos
-       source = psource[0]
-    else:
-       source = psource
+    
+    source=norm2List(psource)[-1]  #no esta normalizao el uso de lista o parametros indivudales
+    
     marker = {}
     if driver == 'QSQLITE':
         function = 'strftime'

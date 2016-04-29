@@ -14,6 +14,26 @@ Documentation, License etc.
 
 from pprint import *
 
+def norm2List(entrada):
+    """
+       devuelve una entrada que puede ser una lista o un escalar como lista siempre
+       
+    """
+    if isinstance(entrada,(list,tuple)):
+       return entrada
+    else:
+       return [entrada ,]
+      
+def norm2String(entrada,separador=', '):
+    """
+       devuelve una entrada que puede ser una lista o un escalar como escalar siempre con un separador
+       
+    """
+    if isinstance(entrada,(list,tuple)):
+       return separador.join(entrada)
+    else:
+       return entrada
+   
 def ex(structure,value,defval=None):
     """
       devuelve el valor de la estructura definido por el indice value

@@ -266,14 +266,7 @@ def selConstructor(kwargs):
        if modifier in ('DISTINCT','FIRST'):
             statement += modifier + ' '
             
-    if isinstance(kwargs[definicion],(list,tuple)):
-        entrada = kwargs[definicion]
-    else:
-        entrada = [kwargs[definicion],]
-    #if isinstance(kwargs[definicion],str):
-      #entrada = [kwargs[definicion],]
-    #else:
-      #entrada = kwargs[definicion]
+    entrada=norm2List(kwargs[definicion])
       
     ind = 0
     num_elem = len(entrada)
@@ -302,12 +295,8 @@ def fromConstructor(kwargs):
     definicion = 'tables'
     if definicion not in kwargs:
        return ''
-    
-    if isinstance(kwargs[definicion],(list,tuple)):
-        entrada = kwargs[definicion]
-    else:
-        entrada = [kwargs[definicion],]
-      
+    entrada=norm2List(kwargs[definicion])
+
     ind = 0
     num_elem = len(entrada)
     texto = []
@@ -356,10 +345,8 @@ def withConstructor(kwargs):
     if definicion not in kwargs:
         return ''
    
-    if isinstance(kwargs[definicion],(list,tuple)):
-        entrada = kwargs[definicion]
-    else:
-        entrada = [kwargs[definicion],]
+    entrada=norm2List(kwargs[definicion])
+
     ind = 0
     num_elem = len(entrada)
     texto = []
@@ -378,10 +365,7 @@ def groupConstructor(kwargs):
     if definicion not in kwargs:
        return ''
     
-    if isinstance(kwargs[definicion],(list,tuple)):
-        entrada = kwargs[definicion]
-    else:
-        entrada = [kwargs[definicion],]
+    entrada=norm2List(kwargs[definicion])
       
     ind = 0
     num_elem = len(entrada)
@@ -406,14 +390,7 @@ def orderConstructor(kwargs):
     if definicion not in kwargs:
        return ''
     
-    if isinstance(kwargs[definicion],(list,tuple)):
-        entrada = kwargs[definicion]
-    else:
-        entrada = [kwargs[definicion],]
-    #if isinstance(kwargs[definicion],str):
-        #entrada = [kwargs[definicion],]
-    #else:
-        #entrada = kwargs[definicion]
+    entrada=norm2List(kwargs[definicion])
       
     ind = 0
     num_elem = len(entrada)
@@ -428,10 +405,8 @@ def searchConstructor(definicion,kwargs):
     statement = ''
     if definicion not in kwargs:
        return ''    
-    if isinstance(kwargs[definicion],(list,tuple)):
-        entrada = kwargs[definicion]
-    else:
-        entrada = [kwargs[definicion],]
+    
+    entrada=norm2List(kwargs[definicion])
       
     ind = 0
     num_elem = len(entrada)

@@ -59,6 +59,9 @@ class TreeItem(object):
 
         return 0
     
+    def depth(self):
+        return self.getLevel()
+    
     def getLevel(self):
         ind = 0
         papi = self.parentItem

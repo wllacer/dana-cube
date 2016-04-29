@@ -24,6 +24,7 @@
     * more than one measure
     * function: recode (partially solved with categories)
     * Data export (see below)
+    * include Time as valid format
   * Presentation
     * Ability to handle collapse/expand on columns
     * Data filtering (pre / post)
@@ -36,6 +37,8 @@
   * Dates as guides generate a lot of invalid dates (out of range, inexistent)
   * Dates as headers must be reformated
   * Integration of dates and categories in hierarchies
+  * KABOOM on cube change -> cancel
+  * tamaño de algun elemento de la lista
 
   * __DONE__ in guides allow blank filter
  

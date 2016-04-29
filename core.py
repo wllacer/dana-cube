@@ -35,6 +35,7 @@ from pprint import *
 
 import time
 
+
 def mergeString(string1,string2,connector):
     if len(string1.strip()) > 0 and len(string1.strip()) > 0:
         merge ='{} {} {}'.format(string1,connector,string2)
@@ -151,13 +152,15 @@ class Cubo:
           #REFINE grouped by determina la jerarquia explicitamente.
           #     hay que hallar la manera de determinarla implicitamente
           if 'grouped by' in entrada['source']:
-              sqlDef['fields'] += entrada['source']['grouped by'].split(',')
+              sqlDef['fields'] += norm2List(entrada['source']['grouped by'])
           if len(fields) > 0:
               sqlDef['fields'] += fields[:]
-          sqlDef['fields'] += entrada['source']['code'].split(',')
+
+          sqlDef['fields'] += norm2List(entrada['source']['code'])
           
+            
           if 'desc' in entrada['source']:
-              desc_tup = entrada['source']['desc'].split(',')
+              desc_tup = norm2List(entrada['source']['desc'])
               sqlDef['fields'] += desc_tup
               desc_fld = len(desc_tup)
         else:
@@ -172,7 +175,6 @@ class Cubo:
         sqlDef['order'] = [ str(x + 1) for x in range(code_fld)]
         
         sqlDef['select_modifier']='DISTINCT'
-        
         sqlString = queryConstructor(**sqlDef)
         return sqlString, code_fld,desc_fld 
     
@@ -243,17 +245,11 @@ class Cubo:
                     clase = guia['class']
                 ##TODO hay que normalizar lo de los elementos
                 if clase != 'd':  #las fechas generan dinamicamente guias jerarquicas
-                    if isinstance(componente['elem'],(list,tuple)): 
-                        guia['elem'] += componente['elem']
-                    else:
-                        guia['elem'] += [componente['elem'],]
+                    guia['elem'] +=norm2List(componente['elem'])
                 if clase == 'd':
                     if 'mask' not in componente:
                         componente['mask'] = 'Ymd'  #(agrupado en año mes dia por defecto'
-                    if isinstance(componente['elem'],(list,tuple)):
-                        base_date = componente['elem'][-1] # asumo siempre un campo fecha
-                    else:
-                        base_date = componente['elem']
+                        base_date = norm2List(componente['elem'])[-1]
                     #
                     for k in range(len(componente['mask'])):
                         kmask = componente['mask'][0:k+1]                   
@@ -290,7 +286,6 @@ class Cubo:
                         guia['rules'][-1]['enum_fmt']=componente['enum_fmt']
                     guia['rules'][-1]['elem'][-1]=caseConstructor(guia['rules'][-1])
                 else:
-                    #guia['elem'] += componente['elem'].split(',')
                     (sqlString,code_fld,desc_fld) = self.__setGuidesSqlStatement(componente,[])
                     guia['rules'].append({'string':sqlString,
                                                     'ncode':code_fld,
@@ -722,8 +717,9 @@ def experimental():
         #print(node)
     #pprint(sorted(cubo.lista_guias[1]['dir_row'])) esto devuelve una lista con las claves
     #pprint(cubo.lista_guias)
-    #pprint(cubo.lista_guias[6])   
-    ##cubo.fillGuia(5)
+
+    cubo.fillGuia(3)
+    pprint(cubo.lista_guias[3])   
     #guia=cubo.lista_guias[5]['dir_row']
     #ind = 0
     #for key in guia.traverse(mode=1):
