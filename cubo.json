@@ -436,7 +436,7 @@
     },
     "experimento": {
         "base filter": "", 
-        "table": "votos_provincia", 
+        "table": "votos_locales", 
         "guides": [
             {
                 "prod": [
@@ -568,6 +568,33 @@
                 ], 
                 "name": "geo", 
                 "class": "h"
+            }, 
+            {
+                "prod": [
+                    {
+                        "source": {
+                            "filter": "provincia <> '' and municipio = '' and isla = ''", 
+                            "table": "localidades", 
+                            "code": "provincia", 
+                            "desc": "nombre"
+                        }, 
+
+                        "elem": "substr(municipio,1,2)"
+                    }
+                ], 
+                "name": "provincial", 
+                "class": "o"
+            }, 
+            {
+                "prod": [
+                    {
+                        "fmt": "date", 
+                        "elem": "fakedate"
+                    }
+                ], 
+                "name": "fecha", 
+                "class": "d",
+                "type":"Ymd"
             }
         ], 
         "connect": {

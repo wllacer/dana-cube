@@ -101,7 +101,11 @@ def getDateIndex(max_date,  min_date, fmt, **opciones):
 
     #return normalizado
         
-def getDateEntry(source, fmt, driver='QSQLITE'):
+def getDateEntry(psource, fmt, driver='QSQLITE'):
+    if isinstance(psource,(list,tuple)):  #hay problemas de congruencia entre modulos
+       source = psource[0]
+    else:
+       source = psource
     marker = {}
     if driver == 'QSQLITE':
         function = 'strftime'

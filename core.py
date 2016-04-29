@@ -29,7 +29,7 @@ from datalayer.query_constructor import *
 
 from util.fivenumbers import stats
 
-from datemgr import getDateSlots,getDateIndex
+from datemgr import getDateIndex,getDateEntry
 from pprint import *
 
 import time
@@ -186,7 +186,6 @@ class Cubo:
                             [entrada['elem'][0],'min'],
                             ]
         return queryConstructor(**sqlDef)            
- 
     def __setGuias(self):
         '''
            Crea la estructura lista_guias para cada una de las guias (dimensiones) que hemos definido en el cubo.
@@ -219,99 +218,82 @@ class Cubo:
            FIXME Funciona perfectamente con el ejemplo que uso, necesito explorar otras posibilidades de definicion
            
         '''
-        #TODO Mejorar los nombres de las fechas
         #TODO indices con campos elementales no son problema, pero no se si funciona con definiciones raras
 
         
         self.lista_guias = []
         ind = 0
+        #para un posible backtrace
         nombres = [ entrada['name'] for entrada in self.definition['guides'] ]
-        #indice = nombres.index('partido')
-        #pprint(self.definition['guides'][indice])
         
         for entrada in self.definition['guides']:
-            # las guias clase = 'd' generan varias entradas
-            if entrada['class'] == 'd':
-                (slots,datetrees) = getDateSlots(entrada['prod'][0]['elem'],self.dbdriver)
-                #primero las jerarquizadas
-                for elemento in datetrees:
-                    self.lista_guias.append({'name':entrada['name'] +'_'+ elemento[-1]['mask'],
-                                             'class':'d','rules':[],'elem':[],
-                                             'formula':elemento})
-                    ind += 1
-                # luego las individuales
-                for elemento in slots:
-                    self.lista_guias.append({'name':entrada['name'] +'_'+ elemento['mask'],
-                                             'class':'d','rules':[],'elem':[],
-                                             'formula':elemento})
-                    ind += 1
-            else:
-                self.lista_guias.append({'name':entrada['name'],'class':entrada['class'],'rules':[],'elem':[]})
-                ind += 1
-
-        for entrada in self.lista_guias:
-            if 'formula' in entrada:
-                if isinstance(entrada['formula'],dict):  #error de definicion en getDateSlots. FIXME deberia desaparecer
-                    produccion = [entrada['formula'],]
-                else:
-                    produccion = entrada['formula']
-            else:
-                produccion = self.definition['guides'][nombres.index(entrada['name'])]['prod']
-            
+            guia = {'name':entrada['name'],'class':entrada['class'],'rules':[],'elem':[]}
+            self.lista_guias.append(guia)
+            produccion = entrada['prod']    
             for componente in produccion:
                 if 'name' in componente:
                     nombre = componente['name']
                 else:
-                    nombre = entrada['name']
+                    nombre = guia['name']
                 if 'class' in componente:
                     clase = componente['class']
                 else:
-                    clase = entrada['class']
+                    clase = guia['class']
                 ##TODO hay que normalizar lo de los elementos
-                if isinstance(componente['elem'],(list,tuple)): 
-                    entrada['elem'] += componente['elem']
-                else:
-                    entrada['elem'] += [componente['elem'],]
+                if clase != 'd':  #las fechas generan dinamicamente guias jerarquicas
+                    if isinstance(componente['elem'],(list,tuple)): 
+                        guia['elem'] += componente['elem']
+                    else:
+                        guia['elem'] += [componente['elem'],]
                 if clase == 'd':
-                    entrada['rules'].append({'string':'',
-                                'ncode':len(entrada['elem']),
-                                'ndesc':0,
-                                'elem':[componente['elem'],],
-                                'name':nombre +'_'+ componente['mask'],
-                                'date_fmt': componente['mask'],
-                                'class':clase
-                                })
+                    if 'mask' not in componente:
+                        componente['mask'] = 'Ymd'  #(agrupado en año mes dia por defecto'
+                    #
+                    for k in range(len(componente['mask'])):
+                        kmask = componente['mask'][0:k+1]                   
+                        datosfecha= getDateEntry(componente['elem'],kmask,self.dbdriver)
+                        guia['elem'] += [datosfecha['elem'],]
+                        guia['rules'].append({'string':'',
+                                    'ncode':len(guia['elem']),
+                                    'ndesc':0,
+                                    'elem':[datosfecha['elem'],],
+                                    'name': nombre +'_'+ kmask,
+                                    'date_fmt': datosfecha['mask'],
+                                    'class':clase
+                                    })
+
                 elif clase == 'c':
-                    entrada['rules'].append({'string':'',
-                                'ncode':len(entrada['elem']),
-                                'ndesc':0,
+                    if 'source' in componente:
+                        (sqlString,code_fld,desc_fld) = self.__setGuidesSqlStatement(componente,[])
+                    else:
+                        sqlString= ''
+                        code_fld = len(guia['elem'])
+                        desc_fld = 0
+                    guia['rules'].append({'string':sqlString,
+                                'ncode':code_fld,
+                                'ndesc':desc_fld,
                                 'elem':[componente['elem'],],
+                                #'elem':caseConstructor(guia['rules'][-1])
                                 'name':nombre,
                                 'class':clase,
                                 'enum':componente['categories'],
                                 })
 
+                    if 'enum_fmt' in componente:
+                        guia['rules'][-1]['enum_fmt']=componente['enum_fmt']
+                    guia['rules'][-1]['elem'][-1]=caseConstructor(guia['rules'][-1])
                 else:
-
-                    #entrada['elem'] += componente['elem'].split(',')
+                    #guia['elem'] += componente['elem'].split(',')
                     (sqlString,code_fld,desc_fld) = self.__setGuidesSqlStatement(componente,[])
-                    entrada['rules'].append({'string':sqlString,
+                    guia['rules'].append({'string':sqlString,
                                                     'ncode':code_fld,
                                                     'ndesc':desc_fld,
-                                                    'elem':entrada['elem'][:],
+                                                    'elem':guia['elem'][:],
                                                     'name':nombre,
                                                     'class':clase})
                 if 'fmt' in componente:
-                    entrada['rules'][-1]['fmt']=componente['fmt']
-                if 'enum_fmt' in componente:
-                    entrada['rules'][-1]['enum_fmt']=componente['enum_fmt']
-                if clase == 'c':
-                    entrada['rules'][-1]['elem'][-1]=caseConstructor(entrada['rules'][-1])
-            #pprint(entrada)
-            #no deberia serme util 
-            #if 'formula' in entrada:    
-                #del entrada['formula']
-            
+                    guia['rules'][-1]['fmt']=componente['fmt']
+                print(guia['elem'])     
                 
     def fillGuia(self,guiaId):
         # TODO documentar y probablemente separar en funciones
@@ -469,7 +451,8 @@ class Vista:
                 #sqlDef['select_modifier']=None
                 sqlDef['fields']= self.cubo.lista_guias[self.row_id]['rules'][i]['elem'] + \
                                   self.cubo.lista_guias[self.col_id]['rules'][j]['elem'] + \
-                                  [(self.campo,self.agregado)]    
+                                  [(self.campo,self.agregado)]
+                pprint(sqlDef['fields'])
                 sqlDef['base_filter']=mergeString(self.filtro,self.cubo.definition['base filter'],'AND')
                 # esta desviacion es por las categorias
                 if self.cubo.lista_guias[self.col_id]['rules'][j]['class'] == 'c':
@@ -704,7 +687,7 @@ def experimental():
             ind += 1
     vista = None
     mis_cubos = load_cubo()
-    cubo = Cubo(mis_cubos['datos provincia'])
+    cubo = Cubo(mis_cubos['experimento'])
     #pprint(cubo.definition)
     #pprint(cubo.definition)
     #pprint(cubo.lista_funciones)
@@ -730,22 +713,22 @@ def experimental():
         #print (ind,key,elem.ord,elem.desc)
         #ind += 1
 
-    vista=Vista(cubo,0,2,'avg','votes_percent')
+    vista=Vista(cubo,3,0,'avg','votes_percent')
     #tabla = vista.toKeyedTable()
     vista.toTree2D()
-    col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
-    print(col_hdr)
-    for key in vista.row_hdr_idx.content:
-        elem = vista.row_hdr_idx[key]
-        pprint(elem)
-    vista.traspose()
-    col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
-    print(col_hdr)
-    for key in vista.row_hdr_idx.content:
-        elem = vista.row_hdr_idx[key]
-        pprint(elem)
+    #col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
+    #print(col_hdr)
+    #for key in vista.row_hdr_idx.content:
+        #elem = vista.row_hdr_idx[key]
+        #pprint(elem)
+    #vista.traspose()
+    #col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
+    #print(col_hdr)
+    #for key in vista.row_hdr_idx.content:
+        #elem = vista.row_hdr_idx[key]
+        #pprint(elem)
     #print(vista.row_hdr_idx.count())
-    #presenta(vista)
+    presenta(vista)
     #for key in vista.row_hdr_idx.traverse(None,1):
         #print(key,vista.row_hdr_idx[key].desc,vista.row_hdr_idx[key].getFullDesc(),getOrderedText(vista.row_hdr_idx[key].getFullDesc(),sparse=False,separator=':'))
     #for elem in vista.array:

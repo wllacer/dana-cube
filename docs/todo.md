@@ -8,11 +8,11 @@
    * __DONE__ Date Handling codepaths tested (2/4/16)
 
 * _WIP_ Code refactoring for clarity
-  * _DONE_ data access layer isolation (2/4/16)
-  * _DONE_ heavy simplification of core codepaths, and several internal structures.(6/4/16)
-  * _DONE_ handling of date indexes. Code is handicrafted and full of 's..t'. Integration of dateutil would solve a lot
+  *__DONE__ data access layer isolation (2/4/16)
+  *__DONE__ heavy simplification of core codepaths, and several internal structures.(6/4/16)
+  *__DONE__ handling of date indexes. Code is handicrafted and full of 's..t'. Integration of dateutil would solve a lot
   of problems, but add a new dependency
-  * _DONE_ Adapt GUI to new internal structures
+  *__DONE__ Adapt GUI to new internal structures
   * name of elements in hierarchy YML
   
 * New use cases
@@ -36,19 +36,20 @@
   
 * Behaviour
   * complex keying in guides
-  * _DONE_ collapsed hierarchy as default. Define ways of opening it 
-  * _DONE_ Open maximized
-  * _DONE_ Ability of expand only an entry
+  *__DONE__ collapsed hierarchy as default. Define ways of opening it 
+  *__DONE__ Open maximized
+  *__DONE__ Ability of expand only an entry
   * Hierarchical dates
-  * _DONE_ allow to skip entries. I skip entries by default
+  *__DONE__ allow to skip entries. I skip entries by default
   *
 
 
 * Other output formats 
     * JSON
-    * CSV
-    * Raw Array
+    * _WIP_ CSV
+    * __DONE__Raw Array. In fact almost new device
     * HTML table
+    * ? graphical frontend as d3.js
     
 * SQL error handling
 
@@ -61,14 +62,14 @@
 
 * Use of CUBE / ROLLUP sintax where available
 
-* __WIP__Packaging
+* _WIP_ Packaging
     * Configuration management
 
-* __WIP__ GUI 
+* _WIP_  GUI 
     * GUI refactoring based on Model-View (fairly advanced now)
     * GUI for definition   (__HP__ showstopper for release)
  
-* __WIP__: use SqlAlchemy as data background, so dependencies on PyQt would only be on the presentation level
+* _WIP_ : use SqlAlchemy as data background, so dependencies on PyQt would only be on the presentation level
     * integration __DONE__. Now selectable by (internal) parameter. ¿Faster?
     * Date Management into alchemy
     * Cube/Rollp
@@ -80,4 +81,6 @@
 * __EXPERIMENTAL__: Integration with [pandas](http://pandas.pydata.org/) as data provider
 
 * __EXPERIMENTAL__: Integration with Django (use django as data source, core as django tool)
+
+* __EXPERIMENTAL__: Integration of [plotly](https://plot.ly/) as reporting tool
 
