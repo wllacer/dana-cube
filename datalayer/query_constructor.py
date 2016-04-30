@@ -200,9 +200,9 @@ def sqlClause(left,comparator,right=None,twarn=True,**kwargs):
     
     return '{} {} {}'.format(izquierda,comparator,derecha)
 
-def caseConstructor(datos=None,**kwargs):
+def caseConstructor(name,datos=None,**kwargs):
     """
-       Crea una sentencia case de la definicion lista_guias[i]
+       Crea una sentencia case de la definicion guias[i][prod][j]
        Para categorias definidas a mano
        
        Caso ejemplo
@@ -228,9 +228,9 @@ sqlCase(datos,table='votos_provincia')
     """
     #pprint(datos)
     entrada =  datos
-    enum = entrada['enum']
-    elem = entrada['elem'][0]
-    name = entrada['name']
+    enum = entrada['categories']
+    elem = norm2List(entrada['elem'])[0]
+    #name = entrada['name']
     
     default = ''
     selector = ''

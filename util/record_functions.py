@@ -159,7 +159,7 @@ def regFiller(record,**kwargs):
     if 'pholder' in kwargs:
         pos_ini = kwargs['pholder']
     else:
-        pos_ini = -1
+        pos_ini = 1
         
     if 'nholder' in kwargs:
         num_elem = kwargs['nholder']

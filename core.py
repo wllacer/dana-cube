@@ -21,6 +21,7 @@ FIXME y propagarse en el filtro si es jerarquico
 '''
 STATISTICS=True
 DEBUG = True
+TRACE=True
 
 from util.record_functions import *
 from util.tree import *
@@ -167,10 +168,10 @@ class Cubo:
           sqlDef['tables'] = self.definition['table']
           if len(self.definition['base filter'].strip()) > 0:
              sqlDef['base filter']=self.definition['base_filter']
-          sqlDef['fields'] = entrada['elem'].split(",")
+             
+          sqlDef['fields'] = norm2List(entrada['elem'])
           
         code_fld = len(sqlDef['fields']) - desc_fld  
-        
         
         sqlDef['order'] = [ str(x + 1) for x in range(code_fld)]
         
@@ -266,27 +267,51 @@ class Cubo:
                                     })
 
                 elif clase == 'c':
-                    if 'source' in componente:
+                    #TODO falta por documentar lo especifico de las categorias
+                    #FIXME la generacion del CASE requiere unos parametros que se calculan luego.
+                    #      eso entorpece el codigo
+                    elem=norm2List(componente['elem'])
+                    # en lugar de una defincion compleja tengo algo suave
+                    if 'case_sql' in componente:
+                        k1 =' '.join(componente['case_sql']).replace('$$1',elem[-1]).replace('$$2',nombre)
+                        elem[-1]= k1
+                    else:
+                        elem[-1] = [caseConstructor(nombre,componente),]
+                          
+                    if 'source' in componente:  #TODO no usada. No parece tener sentido
                         (sqlString,code_fld,desc_fld) = self.__setGuidesSqlStatement(componente,[])
+                        enum = None
+                    elif 'categories' not in componente:
+                        aux_entrada = { 'elem':elem }
+                        (sqlString,code_fld,desc_fld) = self.__setGuidesSqlStatement(aux_entrada,[])
+                        enum = None
                     else:
                         sqlString= ''
                         code_fld = len(guia['elem'])
                         desc_fld = 0
+                        enum=componente['categories']
+
                     guia['rules'].append({'string':sqlString,
                                 'ncode':code_fld,
                                 'ndesc':desc_fld,
-                                'elem':[componente['elem'],],
+                                'elem': elem,
                                 #'elem':caseConstructor(guia['rules'][-1])
                                 'name':nombre,
                                 'class':clase,
-                                'enum':componente['categories'],
+                                'enum':enum
                                 })
 
                     if 'enum_fmt' in componente:
                         guia['rules'][-1]['enum_fmt']=componente['enum_fmt']
-                    guia['rules'][-1]['elem'][-1]=caseConstructor(guia['rules'][-1])
+                    if 'categories' not in componente:
+                       aux_entrada = { 'elem':guia['rules'][-1]['elem'][-1]}
+                       (sqlString,code_fld,desc_fld) = self.__setGuidesSqlStatement(aux_entrada,[])
+                       print(sqlString)
+                    else:
+                       guia['rules'][-1]['enum']=componente['categories'] 
                 else:
                     (sqlString,code_fld,desc_fld) = self.__setGuidesSqlStatement(componente,[])
+
                     guia['rules'].append({'string':sqlString,
                                                     'ncode':code_fld,
                                                     'ndesc':desc_fld,
@@ -295,7 +320,6 @@ class Cubo:
                                                     'class':clase})
                 if 'fmt' in componente:
                     guia['rules'][-1]['fmt']=componente['fmt']
-
                 
     def fillGuia(self,guiaId):
         # TODO documentar y probablemente separar en funciones
@@ -311,8 +335,11 @@ class Cubo:
             lista_compra={'nkeys':componente['ncode'],'ndesc':componente['ndesc']}
             if componente['ncode'] < len(entrada['elem']):
                 lista_compra['nholder']=len(entrada['elem'])-componente['ncode']
-                if componente['ndesc'] != 1:
+                if  componente['ndesc'] == 0:
+                    lista_compra['ndesc']= componente['ncode']
+                elif componente['ndesc'] != 1:
                     lista_compra['pholder'] = - componente['ndesc']
+                
                     
             if componente['class'] == 'd':
                 #TODO demasiadas vueltas                
@@ -342,13 +369,13 @@ class Cubo:
                     for elem in nombres:
                         regHashFill(elem,**lista_compra)
                     cursor += sorted(nombres)
+
             else:  
                 sqlString=componente['string']
                 cursor += getCursor(self.db,sqlString,regHashFill,**lista_compra)
-            if DEBUG:            
-                print(time.time(),guiaId,idx,entrada['name'],sqlString,lista_compra)                
-            cursor = sorted(cursor)
-
+            if DEBUG:
+                print(time.time(),guiaId,idx,sqlString)
+        cursor = sorted(cursor)
         tree=TreeDict()
         for entryNum,elem in enumerate(cursor):
             if componente['ndesc'] == 0:
@@ -452,8 +479,6 @@ class Vista:
          #REFINE solo esperamos un campo de datos. Hay que generalizarlo
         #self.array = [ [None for k in range(len(self.col_hdr_idx))] for j in range(len(self.row_hdr_idx))]
         self.array = []
-        if DEBUG:
-            print(time.time(),'a por el array')
         for i in range(0,self.dim_row):
             # el group by en las categorias necesita codigo especial
             if self.cubo.lista_guias[self.row_id]['rules'][i]['class'] == 'c':
@@ -705,7 +730,7 @@ def experimental():
     #pprint(cubo.definition)
     #pprint(cubo.lista_funciones)
     #pprint(cubo.lista_campos)
-    #pprint(cubo.lista_guias)
+    #pprint(cubo.lista_guias[6])
     for ind,guia in enumerate(cubo.lista_guias):
         print(ind,guia['name'])
     #cubo.fillGuias()
@@ -718,8 +743,8 @@ def experimental():
     #pprint(sorted(cubo.lista_guias[1]['dir_row'])) esto devuelve una lista con las claves
     #pprint(cubo.lista_guias)
 
-    cubo.fillGuia(3)
-    pprint(cubo.lista_guias[3])   
+    #cubo.fillGuia(5)
+    #pprint(cubo.lista_guias[5])   
     #guia=cubo.lista_guias[5]['dir_row']
     #ind = 0
     #for key in guia.traverse(mode=1):
@@ -727,9 +752,10 @@ def experimental():
         #print (ind,key,elem.ord,elem.desc)
         #ind += 1
 
-    vista=Vista(cubo,3,0,'avg','votes_percent')
+    vista=Vista(cubo,6,2,'avg','votes_percent')
+    pprint(vista.array)
     #tabla = vista.toKeyedTable()
-    vista.toTree2D()
+    #vista.toTree2D()
     #col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
     #print(col_hdr)
     #for key in vista.row_hdr_idx.content:
@@ -742,7 +768,7 @@ def experimental():
         #elem = vista.row_hdr_idx[key]
         #pprint(elem)
     #print(vista.row_hdr_idx.count())
-    presenta(vista)
+    #presenta(vista)
     #for key in vista.row_hdr_idx.traverse(None,1):
         #print(key,vista.row_hdr_idx[key].desc,vista.row_hdr_idx[key].getFullDesc(),getOrderedText(vista.row_hdr_idx[key].getFullDesc(),sparse=False,separator=':'))
     #for elem in vista.array:

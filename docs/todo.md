@@ -25,6 +25,7 @@
     * function: recode (partially solved with categories)
     * Data export (see below)
     * include Time as valid format
+    * programatically predesigned case
   * Presentation
     * Ability to handle collapse/expand on columns
     * Data filtering (pre / post)
