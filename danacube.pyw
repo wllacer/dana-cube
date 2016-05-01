@@ -10,26 +10,26 @@ from __future__ import unicode_literals
 from pprint import pprint
 
 
-from PyQt5.QtCore import QAbstractItemModel, QFile, QIODevice, QModelIndex, Qt,QSortFilterProxyModel
-from PyQt5.QtGui import QCursor,QColor
-from PyQt5.QtWidgets import QApplication, QFileDialog, QMainWindow, QTreeView
+from PyQt5.QtCore import Qt,QSortFilterProxyModel
+from PyQt5.QtGui import QCursor
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView
 
 from core import Cubo,Vista
 from dialogs import *
 from util.jsonmgr import load_cubo
 from models import *
 
-#FIXED 1 zoom view breaks. Some variables weren't available 
+#FIXED 1 zoom view breaks. Some variables weren't available
 #     FIXME zoom doesn't trigger any action with the new interface
-#FIXED 1 config view doesn't fire. Definition too early     
+#FIXED 1 config view doesn't fire. Definition too early
 #     FIXED 2 there's no code to handle it now
-#          FIXME right justified
-#          FIXME refreshTable
+#          FIXED right justified
+#          FIXED refreshTable
 #
-#FIXED 1 cursor en trabajo app.setOverrideCursor             
-# TODO formateo de la tabla
+#FIXED 1 cursor en trabajo app.setOverrideCursor
+#FIXED formateo de la tabla
 #FIXED 2 formateo de los elementos
-#DONE 2 implementar sort en modelo
+#FIXED implementar sort en modelo
 #TODO uso de formato numerico directamente en la view setNumberFormat
 #ALERT dopado para que vaya siempre a datos de prueba
 class MainWindow(QMainWindow):
@@ -46,10 +46,10 @@ class MainWindow(QMainWindow):
         self.fileMenu.addAction("&Trasponer datos",self.traspose,"CtrlT")
         self.fileMenu.addAction("&Presentacion ...",self.setNumberFormat,"Ctrl+F")
         #
-        self.format = dict(thousandsseparator=".", 
+        self.format = dict(thousandsseparator=".",
                                     decimalmarker=",",
                                     decimalplaces=2,
-                                    rednegatives=False, 
+                                    rednegatives=False,
                                     yellowoutliers=True)
 
         self.vista = None
@@ -57,9 +57,9 @@ class MainWindow(QMainWindow):
         self.cubo =  None
         self.view = QTreeView(self)
         self.view.setModel(self.model)
-        
-        
-        self.view.setSortingEnabled(True);
+
+
+        self.view.setSortingEnabled(True)
         #self.view.setRootIsDecorated(False)
         self.view.setAlternatingRowColors(True)
         self.view.sortByColumn(0, Qt.AscendingOrder)
@@ -69,7 +69,7 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(self.view)
         self.setWindowTitle("Cubos")
-        
+
     def defineModel(self):
         """
         definimos el modelo. Tengo que ejecutarlo cada vez que cambie la vista. TODO no he conseguido hacerlo dinamicamente
@@ -94,16 +94,16 @@ class MainWindow(QMainWindow):
         base = my_cubos['default']
 
         self.cubo=Cubo(my_cubos[base['cubo']])
-        
+
         app.setOverrideCursor(QCursor(Qt.WaitCursor))
-        self.vista = Vista(self.cubo, base['vista']['row'], base['vista']['col'],base['vista']['agregado'],base['vista']['elemento']) 
-        app.restoreOverrideCursor()   
-        
+        self.vista = Vista(self.cubo, base['vista']['row'], base['vista']['col'],base['vista']['agregado'],base['vista']['elemento'])
+        app.restoreOverrideCursor()
+
         self.vista.format = self.format
-        
+
         self.defineModel()
-        
-        
+
+
     def initCube(self):
         #FIXME casi funciona ... vuelve a leer el fichero cada vez
         my_cubos = load_cubo()
@@ -114,21 +114,21 @@ class MainWindow(QMainWindow):
             del my_cubos['default']
 
         #realiza la seleccion del cubo
-        
+
         dialog = CuboDlg(my_cubos, self)
         if dialog.exec_():
             seleccion = str(dialog.cuboCB.currentText())
             self.cubo = Cubo(my_cubos[seleccion])
-            
+
             self.vista = None
-        
+
         self.setWindowTitle("Cubo "+ seleccion)
         self.requestVista()
-       
+
     def requestVista(self):
 
         vistaDlg = VistaDlg(self.cubo, self)
-        
+
         #TODO  falta el filtro
         if self.vista is  None:
             pass
@@ -137,20 +137,20 @@ class MainWindow(QMainWindow):
             vistaDlg.colCB.setCurrentIndex(self.vista.col_id)
             vistaDlg.agrCB.setCurrentIndex(self.cubo.getFunctions().index(self.vista.agregado))
             vistaDlg.fldCB.setCurrentIndex(self.cubo.getFields().index(self.vista.campo))
- 
+
         if vistaDlg.exec_():
             row =vistaDlg.rowCB.currentIndex()
             col = vistaDlg.colCB.currentIndex()
             agregado = vistaDlg.agrCB.currentText()
             campo = vistaDlg.fldCB.currentText()
-            
+
             app.setOverrideCursor(QCursor(Qt.WaitCursor))
             if self.vista is None:
-                self.vista = Vista(self.cubo, row, col, agregado, campo) 
+                self.vista = Vista(self.cubo, row, col, agregado, campo)
                 self.vista.format = self.format
                 self.defineModel()
             else:
-                self.model.beginResetModel()                
+                self.model.beginResetModel()
                 self.vista.setNewView(row, col, agregado, campo)
                 self.vista.toTree2D()
                 self.model.datos=self.vista
@@ -161,19 +161,18 @@ class MainWindow(QMainWindow):
 
 
 
- 
+
             app.restoreOverrideCursor()
- 
+
             # TODO hay que configurar algun tipo de evento para abrirlos y un parametro de configuracion
-            
+
             ##@waiting_effects
             #app.setOverrideCursor(QCursor(Qt.WaitCursor))
             #self.refreshTable()
             #app.restoreOverrideCursor()
-                
+
     def setNumberFormat(self):
-        """ adapted from Rapid development with PyQT book (chapter 5) """        
-        #FIXME no funciona con la nueva arquitectura
+        """ adapted from Rapid development with PyQT book (chapter 5) """
         self.numberFormatDlg = NumberFormatDlg(self.format, self.refreshTable, self)
 
         self.numberFormatDlg.show()
@@ -182,20 +181,25 @@ class MainWindow(QMainWindow):
         self.refreshTable()
 
     def traspose(self):
+        app.setOverrideCursor(QCursor(Qt.WaitCursor))
         self.model.beginResetModel()
         self.vista.traspose()
         self.model.getHeaders()
         self.model.rootItem = self.vista.row_hdr_idx.rootItem
         self.model.endResetModel()
+        app.restoreOverrideCursor()
         #self.refreshTable()
-        
-        
+
+
     def refreshTable(self):
         self.model.emitModelReset()
 
 if __name__ == '__main__':
 
     import sys
+    # con utf-8, no lo recomiendan pero me funciona
+    reload(sys)
+    sys.setdefaultencoding('utf-8')
 
     app = QApplication(sys.argv)
     window = MainWindow()

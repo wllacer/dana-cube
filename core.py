@@ -22,6 +22,7 @@ FIXME y propagarse en el filtro si es jerarquico
 STATISTICS=True
 DEBUG = True
 TRACE=True
+DELIMITER=':'
 
 from util.record_functions import *
 from util.tree import *
@@ -50,10 +51,9 @@ def getParentKey(clave,debug=False):
     """
       define el padre de un elemento via la clave
     """
-    delimiter=':'
     nivel=getLevel(clave)
     if nivel > 0:
-        padreKey = delimiter.join(clave.split(delimiter)[0:nivel])
+        padreKey = DELIMITER.join(clave.split(DELIMITER)[0:nivel])
         return padreKey
     else:
        return None
@@ -69,6 +69,7 @@ def getOrderedText(desc,sparse=True,separator=None):
             texto +=separator
         else:
             texto += (desc[j]+separator)
+    # especial fechas. no se que efectos secundarios puede tener
     texto += desc[-1]
     return texto
         
@@ -384,7 +385,7 @@ class Cubo:
                 desc=elem[-componente['ndesc']:] 
             key=elem[0]
             parentId = getParentKey(key)
-            tree.add(TreeItem(key,entryNum,desc),parentId)
+            tree.append(TreeItem(key,entryNum,desc),parentId)
             
         if DEBUG:              
             print(time.time(),guiaId,idx,'creada')
@@ -688,10 +689,12 @@ class Vista:
         """
         if dimension == 'row':
             indice = self.cubo.lista_guias[self.row_id]['dir_row']
+            id=self.row_id
             if max_level is None:
                 max_level = self.dim_row
         elif dimension == 'col':
             indice = self.cubo.lista_guias[self.col_id]['dir_row']
+            id=self.col_id
             if max_level is None:
                 max_level = self.dim_col
         else:
@@ -703,15 +706,18 @@ class Vista:
         for key in indice.traverse(None,1):
             idx = indice[key].ord
             desc = indice[key].getFullDesc()
-            cur_level = getLevel(key)
+            cur_level = indice[key].getLevel() #getLevel(key)
             if cur_level >= max_level:  #odio los indices en 0. siempre off by one 
                 continue
             if rango is not None:
-                if rango[0] <= ind <= rango[1]:
+                if rango[0] <= idx <= rango[1]:
                     pass
                 else:
                     continue
-            cab_col[idx+1]=getOrderedText(desc,sparse,separador)
+            texto=getOrderedText(desc,sparse,separador)
+            # chapuzilla por ver si las fechas pueden modificarse
+            print(texto,texto.split(DELIMITER)[-1])
+            cab_col[idx+1]= texto if not sparse else texto.split(DELIMITER)[-1]
         return cab_col
 
 def experimental():
@@ -752,18 +758,18 @@ def experimental():
         #print (ind,key,elem.ord,elem.desc)
         #ind += 1
 
-    vista=Vista(cubo,6,2,'avg','votes_percent')
-    pprint(vista.array)
+    vista=Vista(cubo,5,2,'avg','votes_percent')
+    #pprint(vista.array)
     #tabla = vista.toKeyedTable()
     #vista.toTree2D()
-    #col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
-    #print(col_hdr)
+    col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
+    print(col_hdr)
     #for key in vista.row_hdr_idx.content:
         #elem = vista.row_hdr_idx[key]
         #pprint(elem)
     #vista.traspose()
-    #col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
-    #print(col_hdr)
+    row_hdr = vista.fmtHeader('row',separador='\n',sparse='True')
+    print(col_hdr)
     #for key in vista.row_hdr_idx.content:
         #elem = vista.row_hdr_idx[key]
         #pprint(elem)

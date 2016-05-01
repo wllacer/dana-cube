@@ -108,6 +108,8 @@ class TreeModel(QAbstractItemModel):
                 else:
                     return self.colHdr[section]
             elif orientation == Qt.Vertical:
+                #chapuza para solo coger parte de las fechas
+                #return self.rowHdr[section].split(DELIMITER)[-1]
                 return self.rowHdr[section]
         return None
 

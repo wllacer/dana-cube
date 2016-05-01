@@ -37,9 +37,10 @@
   * _WIP_ Filters in guides pose some functional problems
   * Dates as guides generate a lot of invalid dates (out of range, inexistent)
   * Dates as headers must be reformated
-  * Integration of dates and categories in hierarchies
+  * Integration of dates and categories in hierarchies (casi irresoluble, penaliza el rendimiento)
   * KABOOM on cube change -> cancel
   * tamaño de algun elemento de la lista
+  * Alchemy no carga en Python3
 
   * __DONE__ in guides allow blank filter
  

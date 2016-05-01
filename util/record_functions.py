@@ -13,6 +13,7 @@ Documentation, License etc.
 '''
 
 from pprint import *
+DELIMITER=':'
 
 def norm2List(entrada):
     """
@@ -69,7 +70,7 @@ def getLevel(entrada):
        el : es separador de nivel (espero que eso no entre en conflicto con textos reales TODO
        
     '''
-    level = entrada.count(':')
+    level = entrada.count(DELIMITER)
     return level
     
 def getRecordLevel(record):
@@ -113,7 +114,7 @@ def regHasher(record,**kwargs):
     else:
         num_components = len(record) -1
         
-    indice = ':'.join(record[0:num_components])
+    indice = DELIMITER.join(record[0:num_components])
     record.insert(0,indice)
 
 def regHasher2D(record,**kwargs):
@@ -129,7 +130,7 @@ def regHasher2D(record,**kwargs):
             pos_ini = dimension['init']
         else:
             pos_ini = 0
-        indice[k] = ':'.join(record[pos_ini:pos_ini+num_components])
+        indice[k] = DELIMITER.join(record[pos_ini:pos_ini+num_components])
         
     for k in ('row','col'):
         if k == 'row':

@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 from pprint import pprint
 
 (_ROOT, _DEPTH, _BREADTH) = range(3)
-
+DELIMITER=':'
 
 class TreeItem(object):
     
@@ -60,15 +60,22 @@ class TreeItem(object):
         return 0
     
     def depth(self):
-        return self.getLevel()
-    
-    def getLevel(self):
+        """
+          la profundidad del arbol en ese punto. Empezando desde 1
+        """
         ind = 0
         papi = self.parentItem
-        while papi is not Null:
+        while papi is not None:
             papi = papi.parentItem
             ind += 1
-   
+        return ind
+    
+    def getLevel(self):
+        """
+          el nivel actual. empieza en 0
+        """
+        return self.depth() -1
+    
     def getFullDesc(self):
         fullDesc = [] #let the format be done outside
         fullDesc.append(self.desc)
@@ -84,7 +91,7 @@ class TreeItem(object):
         return '{}->{}'.format(self.key,self.desc)
         
     def __repr__(self): 
-        return '{}->{}@{}'.format(self.key,self.desc,self.ord)
+        return 'TreeItem({},{},{})'.format(self.key,self.ord,self.desc)
 
 class TreeDict(object):
     def __init__(self):
@@ -92,19 +99,19 @@ class TreeDict(object):
         self.rootItemKey="/"
         self.rootItem=TreeItem(self.rootItemKey,-1,"RootNode")
         
-    def __add(self,node):
+    def __append(self,node):
         if node.parentItem == None:
             node.parentItem = self.rootItem
         self.content[node.key]=node
         node.parentItem.appendChild(node)
     
-    def add(self,node,parentKey=None):
+    def append(self,node,parentKey=None):
         if parentKey is None:
-            self.__add(node)
+            self.__append(node)
         else:
         # este lo dejo fallar
             node.parentItem = self.content[parentKey]
-            self.__add(node)
+            self.__append(node)
         
     def searchNode(self,key):
         try:

@@ -68,26 +68,26 @@ def sqlFmt(parametro,**kwargs):
     
     """
     warntype=False
-    type = ex(kwargs,'type')
-    table = ex(kwargs,'table')
-    lado = ex(kwargs,'side','')
-    warn=ex(kwargs,'warn')
+    type = kwargs.get('type')
+    table = kwargs.get('table')
+    lado = kwargs.get('side','')
+    warn=kwargs.get('warn')
     
     # determinar el tipo correcto es un poco complicado
     if lado.upper() == 'L':
-       type=ex(kwargs,'ltype',type)
+       type=kwargs.get('ltype',type)
        if not type:
            type = 'r'           
-       table=ex(kwargs,'ltable',table)
+       table=kwargs.get('ltable',table)
            
     elif lado.upper() == 'R':
-       type=ex(kwargs,'rtype',type)
+       type=kwargs.get('rtype',type)
        if not type:
            if isinstance(parametro,(int,float)):
                type = 'n'
            else:
                type = 't'
-       table=ex(kwargs,'ltable',table)
+       table=kwargs.get('ltable',table)
     
     if not type and isinstance(parametro,(int,float)):
         type = 'n'
@@ -235,9 +235,9 @@ sqlCase(datos,table='votos_provincia')
     default = ''
     selector = ''
     # para los resultados
-    table=ex(kwargs,'table')
-    fmt_res=ex(entrada,'fmt','t')
-    fmt_val=ex(entrada,'enum_fmt')
+    table=kwargs.get('table')
+    fmt_res=entrada.get('fmt','t')
+    fmt_val=entrada.get('enum_fmt')
     # aqui creo la sentencia
     casetree=[]
     for entry in enum:
