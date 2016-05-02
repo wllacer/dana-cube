@@ -25,7 +25,8 @@
     * function: recode (partially solved with categories)
     * Data export (see below)
     * include Time as valid format
-    * programatically predesigned case
+    * __DONE__ programatically predesigned case
+    * Row functions
   * Presentation
     * Ability to handle collapse/expand on columns
     * Data filtering (pre / post)
@@ -37,7 +38,7 @@
   * _WIP_ Filters in guides pose some functional problems
   * Dates as guides generate a lot of invalid dates (out of range, inexistent)
   * Dates as headers must be reformated
-  * Integration of dates and categories in hierarchies (casi irresoluble, penaliza el rendimiento)
+  * Integration of dates and categories in hierarchies (casi irresoluble, penaliza gravemente el rendimiento)
   * KABOOM on cube change -> cancel
   * tamaño de algun elemento de la lista
   * Alchemy no carga en Python3
@@ -90,7 +91,9 @@
     * Date Management into alchemy
     * Cube/Rollp
  
-* __EXPERIMENTAL__: Substitute PySlide for PyQt (licensing issues)
+* __EXPERIMENTAL__: Substitute PySlide for PyQt (licensing issues). 
+
+* __EXPERIMENTAL__ : Use [qtpy](https://pypi.python.org/pypi/QtPy) as a wrapper of the various qt APIs
 
 * __EXPERIMENTAL__: Definition language compatible to CUBES (?)
 
