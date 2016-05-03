@@ -13,6 +13,9 @@
   *__DONE__ handling of date indexes. I devolved to a simple structure, each date format must be defined explicitly
   *__DONE__ Adapt GUI to new internal structures
   * name of elements in hierarchy YML
+
+* Definition generation by application
+  * SQL pregeneration
   
 * New use cases
   * _WIP_ diferent types of guides

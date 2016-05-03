@@ -582,26 +582,38 @@
                         "elem": "substr(municipio,1,2)",
                         "name": "provincia"
                         
-                    },{
-                        "source": {
-                            "filter": "tipo = 'M'", 
-                            "table": "geo", 
-                            "code": "codigo", 
-                            "desc": "nombre"
-                        },
-                        "related via":{
-                            "table": "geo_rel",
-                            "parent_elem":"padre",
-                            "child_elem":"hijo",
-                            "filter": "geo_rel.tipo_padre = 'P'"
-                        },
-                        "name": "localidad",
-                        "elem": "municipio"
                     }
                 ], 
                 "name": "provincial", 
                 "class": "o"
-            }, 
+            },
+            {
+                "prod": [
+                        {
+                        "source": {
+                            "filter": "tipo = 'P'", 
+                            "table": "geo", 
+                            "code": "codigo", 
+                            "desc": "nombre"
+                        },
+                        "related via":[{
+                            "table": "geo_rel",
+                            "clause": [
+                                {
+                                    "rel_elem":"hijo",
+                                    "base_elem":"votos_locales.municipio"
+                                }
+                                ],
+                            "filter": "geo_rel.tipo_padre = 'P'"
+                        }
+                        ],
+                        "name": "localidad",
+                        "elem": "geo_rel.padre"
+                    }
+                ], 
+                "name": "prov indirecto", 
+                "class": "o"
+            },
             {
                 "prod": [
                     {

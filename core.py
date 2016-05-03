@@ -130,7 +130,14 @@ class Cubo:
                   -> desc
                   -> table
                   -> filter
-                  -> grouped by (no usada)
+                  -> grouped by (no usada excepto en join en una misma tabla)
+              -> related_via (para joins)
+                  -> table
+                    "table": "geo_rel",
+                    "parent_elem":"padre",
+                    "child_elem":"hijo",
+                    "filter": "geo_rel.tipo_padre = 'P'"
+
               -> fmt
               -> elem
             parametros implicitos  (para campos sin source, es decir base general
@@ -319,6 +326,8 @@ class Cubo:
                                                     'elem':guia['elem'][:],
                                                     'name':nombre,
                                                     'class':clase})
+                if 'related via' in componente:
+                    guia['rules'][-1]['join']=componente['related via']
                 if 'fmt' in componente:
                     guia['rules'][-1]['fmt']=componente['fmt']
                 
@@ -494,6 +503,32 @@ class Vista:
                                   self.cubo.lista_guias[self.col_id]['rules'][j]['elem'] + \
                                   [(self.campo,self.agregado)]
                 sqlDef['base_filter']=mergeString(self.filtro,self.cubo.definition['base filter'],'AND')
+                sqlDef['join']=[]
+                #TODO claro candidato a ser incluido en una funcion
+                if 'join' in self.cubo.lista_guias[self.row_id]['rules'][i]:
+                   row_join = self.cubo.lista_guias[self.row_id]['rules'][i]['join']
+                   for entry in row_join:
+                       print('iter x')
+                       join_entry = dict()
+                       join_entry['table'] = entry.get('table')
+                       join_entry['join_filter'] = entry.get('filter')
+                       join_entry['join_clause'] = []
+                       for clausula in entry['clause']:
+                           entrada = (clausula.get('rel_elem'),'=',clausula.get('base_elem'))
+                           join_entry['join_clause'].append(entrada)
+                       sqlDef['join'].append(join_entry)
+                if 'join' in self.cubo.lista_guias[self.col_id]['rules'][j]:
+                   col_join = self.cubo.lista_guias[self.col_id]['rules'][j]['join']
+                   for entry in col_join:
+                       print('iter y')
+                       join_entry = dict()
+                       join_entry['table'] = entry.get('table')
+                       join_entry['join_filter'] = entry.get('filter')
+                       join_entry['join_clause'] = []
+                       for clausula in entry['clause']:
+                           entrada = (clausula.get('rel_elem'),'=',clausula.get('base_elem'))
+                           join_entry['join_clause'].append(entrada)
+                       sqlDef['join'].append(join_entry)
                 # esta desviacion es por las categorias
                 if self.cubo.lista_guias[self.col_id]['rules'][j]['class'] == 'c':
                     group_col = [self.cubo.lista_guias[self.col_id]['rules'][j]['name'],]
@@ -702,7 +737,7 @@ class Vista:
             exit(-1)
 
         cab_col = [None for k in range(indice.count() +1)]
-        
+        print(indice.count())
         for key in indice.traverse(None,1):
             idx = indice[key].ord
             desc = indice[key].getFullDesc()
@@ -716,8 +751,7 @@ class Vista:
                     continue
             texto=getOrderedText(desc,sparse,separador)
             # chapuzilla por ver si las fechas pueden modificarse
-            print(texto,texto.split(DELIMITER)[-1])
-            cab_col[idx+1]= texto if not sparse else texto.split(DELIMITER)[-1]
+            cab_col[idx+1]= texto if not sparse else desc[-1]
         return cab_col
 
 def experimental():
@@ -749,14 +783,14 @@ def experimental():
     #pprint(sorted(cubo.lista_guias[1]['dir_row'])) esto devuelve una lista con las claves
     #pprint(cubo.lista_guias)
 
-    #cubo.fillGuia(5)
+    cubo.fillGuia(5)
     #pprint(cubo.lista_guias[5])   
-    #guia=cubo.lista_guias[5]['dir_row']
-    #ind = 0
-    #for key in guia.traverse(mode=1):
-        #elem = guia[key]
-        #print (ind,key,elem.ord,elem.desc)
-        #ind += 1
+    guia=cubo.lista_guias[5]['dir_row']
+    ind = 0
+    for key in guia.traverse(mode=1):
+        elem = guia[key]
+        print (ind,key,elem.ord,elem.desc)
+        ind += 1
 
     vista=Vista(cubo,5,2,'avg','votes_percent')
     #pprint(vista.array)

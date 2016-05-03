@@ -15,10 +15,11 @@ from util.record_functions import *
 from pprint import *
 from copy import deepcopy
 
+CLAUSE_PARMS = ('type','ltype','rtype','table','ltable','rtable','side','warn')
 
 def getFmtArgs(kwargs):
     salida = dict()
-    for ind in ('type','ltype','rtype','table','ltable','rtable','side','warn'):
+    for ind in CLAUSE_PARMS:
        if ind in kwargs:
          salida[ind]=kwargs[ind]
     return salida
@@ -85,14 +86,14 @@ def sqlFmt(parametro,**kwargs):
        if not type:
            if isinstance(parametro,(int,float)):
                type = 'n'
-           else:
-               type = 't'
+           else: # cambio de politica de defecto si tiene comillas texto, si no parametro
+               type = 'r'
        table=kwargs.get('ltable',table)
     
     if not type and isinstance(parametro,(int,float)):
         type = 'n'
         
-    if type in ('r','q'):
+    if type in ('r','q','p'):
         resultado = parametro   #.strip(). Me estaba empezando a cabrear
     elif type == 'n' :
         warntype=True
@@ -108,7 +109,8 @@ def sqlFmt(parametro,**kwargs):
         
     # prefijo si me viene indicado para campos, claro    
     if table is not None and  type == 'r':
-        resultado = '{}.{}'.format(table,resultado)
+        if '.' not in resultado:
+            resultado = '{}.{}'.format(table,resultado)
 
     if warn == True:    
         return resultado,warntype
@@ -417,19 +419,48 @@ def searchConstructor(definicion,kwargs):
         ltype=None
         rtype=None
         izquierda,comparador,derecha=slicer(kelem,3,None)   
+        gargs=getFmtArgs(kwargs)
         if isinstance(izquierda,dict):
             args = deepcopy(izquierda) # no quiero efectos secundarios
             izquierda='({})'.format(searchConstructor(definicion,args))
-            ltype='q'
+            gargs['ltype']='q'
         if isinstance(derecha,dict):
             args = deepcopy(derecha) # no quiero efectos secundarios
             derecha='({})'.format(searchConstructor(definicion,args)) 
-            rtype='q'
-            
-        texto.append(sqlClause(izquierda,comparador,derecha,ltype=ltype,rtype=rtype,**kwargs))
+            gargs['rtype']='q'  
+        texto.append(sqlClause(izquierda,comparador,derecha,**gargs))
     statement = ' AND '.join(texto)
     return statement
   
+def joinConstructor(kwargs):
+    
+    definicion = 'join'
+    if definicion not in kwargs:
+        return ''
+    if kwargs[definicion] is None:
+        return ''
+    entrada=norm2List(kwargs[definicion])
+    statement = ''
+    ind = 0
+    num_elem = len(entrada)
+    texto = []
+    definicion = 'join_clause'
+    for elemento in entrada:
+        prefijo = elemento.get('join_modifier','')
+        tabla = elemento.get('table','')
+        join_filter=elemento.get('join_filter','')
+        args=deepcopy(elemento)
+        args['rtype']='r'
+        join_clause = searchConstructor(definicion,args)
+        if join_filter != '' and join_clause != '':
+            join_clause = '{} AND {}'.format(join_clause,join_filter).strip()
+        else:
+            join_clause = '{}{}'.format(join_clause,join_filter).strip()
+        texto.append('{} JOIN {} ON {}'.format(prefijo, tabla, join_clause))
+        
+    statement += ' '.join(texto)
+    return statement 
+
 
 def queryConstructor(**kwargs):
     '''
@@ -447,7 +478,7 @@ def queryConstructor(**kwargs):
     with_statement = withConstructor(kwargs)+' '
     select_statement = selConstructor(kwargs)+' '
     from_statement = fromConstructor(kwargs)+' '
-    join_statement = ''
+    join_statement = joinConstructor(kwargs)+' '
     where_statement = whereConstructor(kwargs)+' '
     group_statement = groupConstructor(kwargs)+' '
     order_statement = orderConstructor(kwargs)+' '
