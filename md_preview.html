@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title></title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <link rel="stylesheet" href="/home/werner/buttondown.css">
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<nav id="TOC">
+<ul>
+<li><a href="#dana-cube">dana-cube</a><ul>
+<li><a href="#whats-the-problem">What's the problem:</a></li>
+<li><a href="#what-we-provide">What we provide</a></li>
+<li><a href="#license">License</a></li>
+<li><a href="#actual-status">Actual Status</a></li>
+<li><a href="#historical-info">Historical info</a><ul>
+<li><a href="#history">History:</a></li>
+<li><a href="#current-plans-just-for-historical-value.-nothing-came-out-of-it">Current Plans (Just for historical value. Nothing came out of it)</a></li>
+</ul></li>
+<li><a href="#help-needed">Help Needed</a></li>
+<li><a href="#out-there-...">Out there ...</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="dana-cube">dana-cube</h1>
+<p>Dana-cube is a tool to automate the design, execution and visualization of cross reference queries, aka pivot tables aka multidimensional aggregate queries.</p>
+<h2 id="whats-the-problem">What's the problem:</h2>
+<p>A common problem an SQL database users is to solve the need to resolve an aggregate (sum, aver,...) by two or more parameters, f.i. Give me the sum of sales per country and per line of product The, very simple, SQL query gives a tabular result (country,line,sum(sales)) but the normal way we want to is as a spreadsheet (countries as rows, lines as columns) but this is NOT usually available in most data query programs. Resourceful users can use MS Access cross reference queries to get this or use Pivot Tables available in several spreadsheet programs, but the cost -and most ofter the unwieldness- of linking REAL databases to this products do not make them really sustainable options in the long run.</p>
+<p>At the other end of the spectrum, very expensive (in more senses than cost) OLAP products tend to serve the same end, but are usually an overkill; and for various reasons distribution in an organization is restricted, lowering its impact</p>
+<h2 id="what-we-provide">What we provide</h2>
+<p>We provide a database, OS agnostic environment for runing and managing those kind of queries and show them in tabular fashion.</p>
+<p>We have created an environment where you can run an arbitrary aggregate query and show it in tabular fashion.</p>
+<figure>
+<img src="docs/screenshot.png" title="Title" alt="Screenshot" /><figcaption>Screenshot</figcaption>
+</figure>
+<p>This is <strong>not an end user tool</strong> , rather it is designed to be used for knowledgable users (DBAs, developers, data owners) or as a ready made <strong>API</strong> cum sample tool to ne integrated in other's people work (as it still is in heavy development, <em>Caveat emptor</em> ).</p>
+<p>Each instance of the application runs against what we call a Cube. This is the view of a data table (or table-like DB object -a view, a select statement, ...) and the definition of the potential indexes over which to search. This indexes can be scalar fields or hierarchical structures. If the index is a date field; we automatically provide (for SQLITE, MySQL, PostGreSQL and Oracle, atm) for several subindexes (years, years-month, ...) The definition of the Cube is a simple text (Json) file like this</p>
+<p><code>&quot;datos light&quot;: {         &quot;base filter&quot;: &quot;&quot;,          &quot;table&quot;: &quot;votos_locales&quot;,          &quot;guides&quot;: [             {                 &quot;prod&quot;: [                     {                         &quot;source&quot;: {                             &quot;filter&quot;: &quot;&quot;,                              &quot;table&quot;: &quot;partidos&quot;,                              &quot;code&quot;: &quot;code&quot;,                              &quot;desc&quot;: &quot;acronym&quot;                         },                          &quot;fmt&quot;: &quot;txt&quot;,                          &quot;elem&quot;: &quot;partido&quot;                     }                 ],                  &quot;name&quot;: &quot;partido&quot;,                  &quot;class&quot;: &quot;o&quot;             },              ...         ],          &quot;connect&quot;: {             &quot;dbuser&quot;: null,              &quot;dbhost&quot;: null,              &quot;driver&quot;: &quot;QSQLITE&quot;,              &quot;dbname&quot;: &quot;/home/werner/projects/dana-cube.git/ejemplo_dana.db&quot;,              &quot;dbpass&quot;: null         },          &quot;fields&quot;: [             &quot;votes_presential&quot;,              &quot;votes_percent&quot;,              &quot;ord&quot;         ]     },</code></p>
+<p>Why a text file for definition? Getting the table definitions from the DB Catalog is one of the areas not standarized in SQL, nor the underlying tool i'm using (QtSQL) abstract them. Although we have plans to overcome it, it is no trivial task and we decided to postpone its implementation to a point when the tool is more mature. Second, text files are easy to distribute and for &quot;emergency' changes.</p>
+<p>The tool is programmed in python2 + PyQt5?, but we test it also under python3.</p>
+<h2 id="license">License</h2>
+<p>For my part, while I (Werner Llácer Viciano) retain all ownership of the code, you can use it as you see fit.</p>
+<p>Good policy would be to, at least, acknowledge my autorship of this piece of code and, even better, to send upstream all corrections and enhancements to the original functionality.</p>
+<p>PyQt licensing might impose other restrictions, please keep an eye on it (AFAIK it is <strong>GPL</strong> licensed)</p>
+<h2 id="actual-status">Actual Status</h2>
+<p><strong>MASTER works</strong> but some pieces are lacking (Above all documentation). You can download the latest release to test it</p>
+<p><em>Update Saturday of the BVM</em>: New GUI based on the Model View elements of Qt. Still some parts missing</p>
+<p><em>Update Feria after Feast of St. Vincent Ferrer 2016</em>: <strong>MASTER WORKS</strong>. Only functionality missing is a statistical test (fivepoints) i've disabled pending further revisions. Outside of this, it's functionally identical to the '12 version</p>
+<p><em>Update Feast of St. Vincent Ferrer 2016</em>: Work has progressed steadily. Upgrade to new versions seems to work, and i'm in a process of heavy refactoring of the core functionality. Sadly that implies that <em>MASTER</em> is broken, and might be for some time. I made a release from the old codebase which does work. Still have to master Github to know how to mantain them in parallel, so pls. be patient with bugs in there</p>
+<p><em>Update Easter Monday 2016</em>: work has resumed. At first we'll center only in Python 3 -and Qt 5- compatibility).</p>
+<p>I hope to make some inroads into new functionality.</p>
+<p>Active tasks can be read <a href="../docs/todo.md">here</a></p>
+<h2 id="historical-info">Historical info</h2>
+<h3 id="history">History:</h3>
+<p>As of June,12 2012 HEAD is loaded with functional code (it just lacks some UI functions we want in 0.1). The user interface is rather primitive and has been &quot;lifted&quot; from the &quot;numbers&quot; example of Mark Summerfield's book &quot;Rapid GUI Programming with Python and Qt. Definitive Guide to PyQt?&quot;</p>
+<h3 id="current-plans-just-for-historical-value.-nothing-came-out-of-it">Current Plans (Just for historical value. Nothing came out of it)</h3>
+<p>Updated at the Feast of St. Agnes, 2014 In case you haven't noticed it, development has stalled, but i'm still out there. I hope to resume work in the short term. Probably i'll drop QtSql? as DB backend ...</p>
+<p>Updated at the Feast of the Sacred Hearth of Jesus, 2012. Due to some rather unexpected events -not all negative-, release schedule is in a bit of flux. But let's see how things develop Version 0.1 Due July, 1. Although HEAD should be usable by now. We plan to have all the core functionality implemented by then, with only minor functional aspects wanting. UI, error handling and doc will still be primitive we could introduce several intermediate releases and</p>
+<p>By September, 15 release Version 0.2 Our milestone for this version is to introduce an n-dimensional interface (several queries shown at once -or at least in tabs), and to close other known deficiences (and as much of the unknown posible ;-)</p>
+<p>We have still no plans to introduce an UI to generate the YAML (text) definition file at the core of the product. We try to be DB agnostic and the retrieval of the catalog is not an standard area, nor QtSQl abstract this. We are researching into this ...</p>
+<h2 id="help-needed">Help Needed</h2>
+<p>We could profit from someone knowledgable in UI development. I'm a DBA type and, well, it's kind of difficult for me</p>
+<p>Testers are welcome.</p>
+<h2 id="out-there-...">Out there ...</h2>
+<p>If you feel my package isn't cooked enough for you (nor for me either :-( ) have a look at the <a href="https://github.com/DataBrewery/cubes">Cubes project</a> It might be of interest for you</p>
+<p>A.M.D.G. &amp; B.V.M.</p>
+</body>
+</html>

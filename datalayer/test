@@ -1,0 +1,2 @@
+from qtpy import QtCore
+print(QtCore.__version__)
