@@ -34,11 +34,11 @@ class TreeModel(QAbstractItemModel):
         
         
     def columnCount(self, parent):
-        max_col=2
-        for k in self.datos.content:
-            e=self.datos.content[k]
-            if isinstance(e.itemData,(list,tuple)) and len(e.itemData) >= max_col:
-                max_col = len(e.itemData) +1
+        max_col=20
+        #for k in self.datos.content:
+            #e=self.datos.content[k]
+            #if isinstance(e.itemData,(list,tuple)) and len(e.itemData) >= max_col:
+                #max_col = len(e.itemData) +1
         return max_col
               
         #return self.datos.col_hdr_idx.count() + 1
