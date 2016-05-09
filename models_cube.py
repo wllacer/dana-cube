@@ -20,7 +20,7 @@ from PyQt5.QtGui import QColor
 from core import Cubo,Vista
 from util.tree import *
 from util.fivenumbers import isOutlier
-
+#from util.record_functions import norm2String
 from json2tree import *
 
 
@@ -64,7 +64,16 @@ class TreeModel(QAbstractItemModel):
         elif item.data(index.column() -1) is None:
             return None
         else:
-            return item.data(index.column() -1)
+            try:
+                tipo = ITEM_ATTR[item.type][index.column() -1]
+            except (KeyError, IndexError):
+                tipo = None
+            if tipo is None:    
+                return item.data(index.column() -1)
+            elif isinstance(item.data(index.column() -1),(list,tuple)):
+                return tipo+':'+norm2String(item.data(index.column() -1))
+            else:
+                return tipo+':'+item.data(index.column() -1)
             #return item.data(1) #OJO para este caso
                 #return text
             #return item.data(index.column())
@@ -118,7 +127,9 @@ class TreeModel(QAbstractItemModel):
 
         return self.createIndex(parentItem.row(), 0, parentItem)
 
-    def rowCount(self, parent):
+    def rowCount(self, parent=None):
+        if parent is None:
+            return len(self.datos.content)
         if parent.column() > 0:
             return 0
 

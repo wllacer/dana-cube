@@ -59,11 +59,28 @@ class MainWindow(QMainWindow):
         #self.view.setRootIsDecorated(False)
         self.view.setAlternatingRowColors(True)
         self.view.sortByColumn(0, Qt.AscendingOrder)
+        self.view.resizeColumnToContents(0)
         #ALERT
         #self.initCube()
         self.defineModel()
+        
+        
+        self.definitionSplitter = QSplitter(Qt.Vertical)
+        self.definitionSplitter.addWidget(self.view)
+#        self.definitionSplitter.addWidget(self.messageView)
+        self.querySplitter = QSplitter(Qt.Horizontal)
+#        self.querySplitter.addWidget(self.groupsList)
+#        self.querySplitter.addWidget(self.definitionSplitter)
+        self.setCentralWidget(self.definitionSplitter)
 
-        self.setCentralWidget(self.view)
+        self.querySplitter.setStretchFactor(0, 1)
+        self.querySplitter.setStretchFactor(1, 3)
+        self.definitionSplitter.setStretchFactor(0, 1)
+        self.definitionSplitter.setStretchFactor(1, 2)
+
+#        self.setCentralWidget(self.view)
+        
+        
         self.setWindowTitle("Gestión de Cubos")
 
     def defineModel(self):

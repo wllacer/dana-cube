@@ -24,6 +24,38 @@ ITEM_TYPE=set(['#entry','#ientry','default','cubo','connect','fields','guides','
                'domain','values',
                'join','case',
                'join_table','join_clause','category'])
+ATTR_DICT=set([u'agregado',
+     u'base filter',
+     u'case_sql',
+     u'categories',
+     u'class',
+     u'col',
+     u'condition',
+     u'cubo',
+     u'date_fmt',
+     u'dbhost',
+     u'dbname',
+     u'dbpass',
+     u'dbuser',
+     u'default',
+     u'desc',
+     u'driver',
+     u'elem',
+     u'elemento',
+     u'enum_fmt',
+     u'filter',
+     u'fmt',
+     u'grouped_by',
+     u'join operator',
+     u'left',
+     u'name',
+     u'result',
+     u'right',
+     u'right_values',
+     u'row',
+     u'table',
+     u'type'])
+
 
      #'categories',
      #'clause',
@@ -399,12 +431,13 @@ def load3(file):
                     kattr = ATTR_TRANS[attr]
                 else:
                     kattr = attr
-                if attr in ITEM_TYPE:
+                if kattr in ITEM_TYPE:
                     continue
                 if kattr in ITEM_ATTR[tipo]:
                     kidx = ITEM_ATTR[tipo].index(kattr)
                     if kattr in LIST_ATTR:
                         #print(kattr,attr,estructura[attr])
+                        print(attr)
                         valores = norm2String(estructura[attr])
                         #cubeTree.append(CubeItem('#ientry',nclave,data=valores,desc=kattr,parent=cubeTree[clave]))
                         data[kidx]=valores
@@ -414,7 +447,7 @@ def load3(file):
                         data[kidx]= estructura[attr]
                 else:
                     #pass
-                    print(attr,'not in ',tipo)
+                    print(attr,'not in ',tipo,clave)
                 cubeTree[clave].setData(data)   
         elif isinstance(estructura,(list,tuple)):
             for ind,item in enumerate(estructura):
@@ -476,7 +509,7 @@ def load3(file):
                     append_elem('domain',clave,reglas['source'],cubeTree[clave_papa])
                 if 'categories' in reglas:
                     clave = '{}{}{}'.format(clave_papa,DELIMITER,'case')
-                    clave_case = append_elem('case',clave,reglas,cubeTree[clave_papa])
+                    clave_case = append_elem('case',clave,None,cubeTree[clave_papa])
                     for idx,entrada in enumerate(reglas['categories']):
                             clave='{}{}{}'.format(clave_case,DELIMITER,entrada.get('result','default'))
                             append_elem('category',clave,entrada,cubeTree[clave_case],ord=idx)                           
@@ -546,11 +579,15 @@ if __name__ == '__main__':
                 #CHILD_TYPE[item]=set()
             #CHILD_TYPE[item].add(m)
     #pprint(CHILD_TYPE)
-
-    cubeTree = load3(fichero)
+    pepe = set()
+    for k in ITEM_ATTR:
+        for elem in ITEM_ATTR[k]:
+          pepe.add(elem)
+    pprint(pepe)
+    #cubeTree = load3(fichero)
     
-    for entrada in cubeTree.rootItem.childItems:
-        fullPrint(entrada)
+    #for entrada in cubeTree.rootItem.childItems:
+        #fullPrint(entrada)
  
         
     #types=set()
