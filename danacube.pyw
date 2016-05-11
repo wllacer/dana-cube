@@ -19,6 +19,8 @@ from dialogs import *
 from util.jsonmgr import load_cubo
 from models import *
 
+from user_functions import *
+
 #FIXED 1 zoom view breaks. Some variables weren't available
 #     FIXME zoom doesn't trigger any action with the new interface
 #FIXED 1 config view doesn't fire. Definition too early
@@ -33,6 +35,8 @@ from models import *
 #TODO uso de formato numerico directamente en la view setNumberFormat
 #ALERT dopado para que vaya siempre a datos de prueba
 class MainWindow(QMainWindow):
+
+    
     def __init__(self):
         super(MainWindow, self).__init__()
         #CHANGE here
@@ -46,6 +50,12 @@ class MainWindow(QMainWindow):
         self.fileMenu.addAction("&Trasponer datos",self.traspose,"CtrlT")
         self.fileMenu.addAction("&Presentacion ...",self.setNumberFormat,"Ctrl+F")
         #
+        self.fileMenu = self.menuBar().addMenu("&Funciones de usuario")
+        self.restorator = self.fileMenu.addAction("&Restaurar valores originales",self.restoreData,"Ctrl+R")
+        self.restorator.setEnabled(False)
+        for ind,item in enumerate(USER_FUNCTION_LIST):
+             self.fileMenu.addAction(USER_FUNCTION_LIST[ind][1],lambda: self.dispatch(ind))        
+        
         self.format = dict(thousandsseparator=".",
                                     decimalmarker=",",
                                     decimalplaces=2,
@@ -190,7 +200,48 @@ class MainWindow(QMainWindow):
         app.restoreOverrideCursor()
         #self.refreshTable()
 
+    def restoreData(self):
+        app.setOverrideCursor(QCursor(Qt.WaitCursor))
+        self.model.beginResetModel()
+        for key in self.model.datos.row_hdr_idx.traverse(mode=1):
+            item = self.model.datos.row_hdr_idx[key]
+            try:  #alguien deberia de estrangularme. adios cajas negras
+                if item.orig_data is not None:
+                    item.itemData = item.orig_data[:]
+                    item.orig_data = None
+            except AttributeError:
+                continue
+        #self.model.rootItem = self.vista.row_hdr_idx.rootItem    
+        self.model.endResetModel()
+        app.restoreOverrideCursor()
+        self.restorator.setEnabled(False)
 
+    
+    def dispatch(self,ind):
+        
+        self.restorator.setEnabled(True)
+        app.setOverrideCursor(QCursor(Qt.WaitCursor))
+        self.model.beginResetModel()
+
+        for key in self.model.datos.row_hdr_idx.traverse(mode=1):
+            item = self.model.datos.row_hdr_idx[key]
+            try:  #alguien deberia de estrangularme. adios cajas negras
+                if item.orig_data is None:
+                    item.orig_data = item.itemData[:]
+            except AttributeError:
+                item.orig_data = item.itemData[:]
+            if USER_FUNCTION_LIST[ind][2] == 'row':
+                item.itemData[1:]=USER_FUNCTION_LIST[ind][0](item.itemData[1:])
+            elif USER_FUNCTION_LIST[ind][2] == 'item':
+                USER_FUNCTION_LIST[ind][0](item)
+            elif USER_FUNCTION_LIST[ind][2] == 'map':
+                 item.itemData[1:]=list(map(USER_FUNCTION_LIST[ind][0],item.itemData[1:]))
+        #self.model.rootItem = self.vista.row_hdr_idx.rootItem    
+        self.model.endResetModel()
+        app.restoreOverrideCursor()
+            
+   
+        
     def refreshTable(self):
         self.model.emitModelReset()
 
