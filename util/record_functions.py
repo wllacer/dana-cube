@@ -31,9 +31,12 @@ def norm2String(entrada,separador=', '):
        
     """
     if isinstance(entrada,(list,tuple)):
-       return separador.join(entrada)
+        if isinstance(entrada[0],(int,float)):
+            return separador.join([str(elem) for elem in entrada])
+        else:
+            return separador.join(entrada)
     else:
-       return entrada
+        return entrada
    
 def ex(structure,value,defval=None):
     """
