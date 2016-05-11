@@ -20,41 +20,32 @@ from PyQt5.QtGui import QColor
 from core import Cubo,Vista
 from util.tree import *
 from util.fivenumbers import isOutlier
+#from util.record_functions import norm2String
+from json2tree import *
 
-
-def fmtNumber(number, fmtOptions):
-    """ taken from Rapid development with PyQT book (chapter 5) """
-
-    fraction, whole = math.modf(number)
-    sign = "-" if whole < 0 else ""
-    whole = "{0}".format(int(math.floor(abs(whole))))
-    digits = []
-    for i, digit in enumerate(reversed(whole)):
-        if i and i % 3 == 0:
-            digits.insert(0, fmtOptions["thousandsseparator"])
-        digits.insert(0, digit)
-    if fmtOptions["decimalplaces"]:
-        fraction = "{0:.7f}".format(abs(fraction))
-        fraction = (fmtOptions["decimalmarker"] +
-                fraction[2:fmtOptions["decimalplaces"] + 2])
-    else:
-        fraction = ""
-    text = "{0}{1}{2}".format(sign, "".join(digits), fraction)#
-    
-    return text, sign
 
 class TreeModel(QAbstractItemModel):
     def __init__(self, datos, parent=None):
         super(TreeModel, self).__init__(parent)
-        datos.toTree2D()
-        self.rootItem = datos.row_hdr_idx.rootItem
-        self.datos = datos
-        self.getHeaders()
+        self.datos = load(datos)
+        self.rootItem = self.datos.rootItem
+        #self.getHeaders()
         #self.setupModelData(datos, self.rootItem)
         
         
     def columnCount(self, parent):
-        return self.datos.col_hdr_idx.count() + 1
+        max_col = 0
+        for k in ITEM_ATTR.values():
+            if len(k) > max_col:
+                max_col = len(k)
+        return max_col + 1
+        #for k in self.datos.content:
+            #e=self.datos.content[k]
+            #if isinstance(e.itemData,(list,tuple)) and len(e.itemData) >= max_col:
+                #max_col = len(e.itemData) +1
+        #return max_col
+              
+        #return self.datos.col_hdr_idx.count() + 1
 
     def data(self, index, role):
 
@@ -64,32 +55,32 @@ class TreeModel(QAbstractItemModel):
         
         if role == Qt.TextAlignmentRole:
             if index.column() != 0:
-                return Qt.AlignRight| Qt.AlignVCenter
+                return Qt.AlignLeft| Qt.AlignVCenter
             else:
                 return Qt.AlignLeft| Qt.AlignVCenter
-        elif role == Qt.BackgroundRole:
-            if index.column() != 0:
-                if self.datos.format['yellowoutliers']:
-                    if isOutlier(item.data(index.column()),item.aux_data):
-                        return QColor(Qt.yellow)
-                if self.datos.format['rednegatives'] and item.data(index.column() < 0) :
-                    return QColor(Qt.red)
-                    
                
         elif role not in (Qt.DisplayRole,33,):
             return None
-            
+        #FIXME por que ese desplazamiento    
         if index.column() == 0:
             #TODO hay que reformatear fechas
-            return item.data(0)
-        elif item.data(index.column()) is None:
-            return None
+            return item.key.split(DELIMITER)[-1]
+        #elif item.data(index.column() -1) is None:
+            #return None
         else:
-            if role == Qt.DisplayRole:
-                text, sign = fmtNumber(item.data(index.column()),self.datos.format)
-                return '{}{}'.format(sign,text)
-            else:
-                return item.data(index.column())
+            try:
+                tipo = ITEM_ATTR[item.type][index.column() -1]
+            except (KeyError, IndexError):
+                tipo = None
+            if tipo is None:    
+                return item.data(index.column() -1)
+            elif item.data(index.column() -1) is None:
+                return tipo
+            elif isinstance(item.data(index.column() -1),(list,tuple)):
+                return '{}:{}'.format(tipo,norm2String(item.data(index.column() -1)))
+            else:                
+                return '{}:{}'.format(tipo,item.data(index.column() -1))
+            #return item.data(1) #OJO para este caso
                 #return text
             #return item.data(index.column())
 
@@ -106,15 +97,16 @@ class TreeModel(QAbstractItemModel):
                 if section == 0:
                     return ""
                 else:
-                    return self.colHdr[section]
+                    #return self.colHdr[section]
+                    return ""
             elif orientation == Qt.Vertical:
                 #chapuza para solo coger parte de las fechas
                 #return self.rowHdr[section].split(DELIMITER)[-1]
-                return self.rowHdr[section]
+                #return self.rowHdr[section]
+                return ""
         return None
 
     def index(self, row, column, parent):
-        
         if not self.hasIndex(row, column, parent):
             return QModelIndex()
 
@@ -141,7 +133,9 @@ class TreeModel(QAbstractItemModel):
 
         return self.createIndex(parentItem.row(), 0, parentItem)
 
-    def rowCount(self, parent):
+    def rowCount(self, parent=None):
+        if parent is None:
+            return len(self.datos.content)
         if parent.column() > 0:
             return 0
 
@@ -153,8 +147,9 @@ class TreeModel(QAbstractItemModel):
         return parentItem.childCount()
     
     def getHeaders(self):
-        self.rowHdr = self.datos.fmtHeader('row',separador='', sparse=True)
-        self.colHdr = self.datos.fmtHeader('col',separador='\n', sparse=False)
+        return
+        #self.rowHdr = self.datos.fmtHeader('row',separador='', sparse=True)
+        #self.colHdr = self.datos.fmtHeader('col',separador='\n', sparse=False)
         
     def emitModelReset(self):
         self.modelReset.emit()

@@ -15,7 +15,7 @@
   * name of elements in hierarchy YML
 
 * Definition generation by application
-  * SQL pregeneration
+  * SQL pregeneration (only partially makes sense)
   
 * New use cases
   * _WIP_ diferent types of guides
@@ -24,6 +24,7 @@
     * Favorites function
     * Preset time intervals as general option in cube (this,(N) period (today backwards),(N) last (not including))x(week,month,year)
     * basic source a query instead of a table
+    * Dynamic Filtering
     * more than one measure
     * function: recode (partially solved with categories)
     * Data export (see below)
@@ -109,5 +110,5 @@
 
 * __EXPERIMENTAL__: Use of Graphs ¿? either Qt internal, D3.js or plotly
 
-* __EXPERIMENTAL__: QtPy
+* __ABANDONADO__: QtPy  (no incluye librerias QtSQL)
 
