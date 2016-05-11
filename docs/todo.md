@@ -30,6 +30,7 @@
     * include Time as valid format
     * __DONE__ programatically predesigned case
     * Row functions
+    * Grand Total
   * Presentation
     * Ability to handle collapse/expand on columns
     * Data filtering (pre / post)
@@ -105,4 +106,8 @@
 * __EXPERIMENTAL__: Integration with Django (use django as data source, core as django tool)
 
 * __EXPERIMENTAL__: Integration of [plotly](https://plot.ly/) as reporting tool
+
+* __EXPERIMENTAL__: Use of Graphs ¿? either Qt internal, D3.js or plotly
+
+* __EXPERIMENTAL__: QtPy
 
