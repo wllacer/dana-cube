@@ -81,8 +81,10 @@
 * Other output formats 
     * JSON
     * _WIP_ CSV  (? direct invocation of spreadsheet)
+    *    Hidden/Shown rows/columns
     * __DONE__Raw Array. In fact almost new default
     * HTML table
+    * Printing
     * ? graphical frontend as d3.js
     
 * SQL error handling

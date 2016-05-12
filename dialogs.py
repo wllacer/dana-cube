@@ -13,7 +13,58 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
+class propertySheetDlg(QDialog):
+    """
+       Genera (mas o menos) una hoja de propiedades
+       TODO faltan datos adicionales para cada item, otro widget, cfg del widget, formato de salida
+       FIXME los botones estan fatal colocados
+    """
+    def __init__(self,title,ctexts,cdata,parent=None):   
+        super(propertySheetDlg, self).__init__(parent)
+        # cargando parametros de defecto
+        self.cdata = cdata
+        #
+        InicioLabel = QLabel(title)
+        #
+        self.entradas=[]
+        for k,item in enumerate(ctexts):
+            triada = []
+            triada.append(QLabel(item))
+            triada.append(QLineEdit(self.cdata[k]))
+            triada[0].setBuddy(triada[1])
+            self.entradas.append(triada)            
 
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel,
+                                     Qt.Vertical)
+
+        fieldLayout = QGridLayout()
+        linea = 0
+        for linea,triada in enumerate(self.entradas):
+            fieldLayout.addWidget(triada[0], linea, 0)
+            fieldLayout.addWidget(triada[1], linea, 1, 1, 5)
+        
+        buttonLayout = QVBoxLayout()
+        buttonLayout.addWidget(buttonBox)
+        fieldLayout.addLayout(buttonLayout,0, 8, 3, 1)
+        
+        self.setLayout(fieldLayout)
+
+        
+        buttonBox.accepted.connect(self.accept)
+        buttonBox.rejected.connect(self.reject)
+
+        self.setWindowTitle("Item editor")
+        
+
+    def accept(self):
+        for k in range(len(self.cdata)):
+            valor = self.entradas[k][1].text()
+            if valor == '' and self.cdata[k] is None:
+               continue
+            self.cdata[k] = self.entradas[k][1].text()
+        QDialog.accept(self)
+        
+        
 class CuboDlg(QDialog):
     def __init__(self, dict_cubos, parent=None):
         super(CuboDlg, self).__init__(parent)
@@ -34,10 +85,13 @@ class CuboDlg(QDialog):
         grid.addWidget(self.cuboCB, 1, 1)
         grid.addWidget(buttonBox, 4, 0, 1, 2)
 
+
         self.setLayout(grid)
         
         buttonBox.accepted.connect(self.accept)
         buttonBox.rejected.connect(self.reject)
+        
+
                             
 class VistaDlg(QDialog):
     def __init__(self, cubo_eleg,  parent=None):
@@ -245,3 +299,20 @@ class NumberFormatDlg(QDialog):
                 self.yellowOutlierCheckBox.isChecked())
 
         self.callback()
+
+
+def main():
+    app = QApplication(sys.argv)
+    
+    title = 'Hoja de seleccion de propiedades'
+    ctexts = (u"C's", u'EH Bildu', u'EAJ-PNV', u'PP', u'PSOE', u'PODEMOS', u'GBAI', u'CCa-PNC', u'IU-UPeC', u'M\xc9S', u'DL', u'PODEMOS-COMPROM\xcdS', u'N\xd3S', u'EN COM\xda', u'PODEMOS-En Marea-ANOVA-EU', u'ERC-CATSI')
+    cdata = [None for k in range(len(ctexts))]
+
+    form = propertySheetDlg(title,ctexts,cdata)
+    form.show()
+    if form.exec_():
+        print('a la vuelta de publicidad',cdata)
+        sys.exit()
+
+if __name__ == '__main__':
+    main()

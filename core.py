@@ -783,16 +783,16 @@ def experimental():
     #pprint(sorted(cubo.lista_guias[1]['dir_row'])) esto devuelve una lista con las claves
     #pprint(cubo.lista_guias)
 
-    cubo.fillGuia(5)
-    #pprint(cubo.lista_guias[5])   
-    guia=cubo.lista_guias[5]['dir_row']
-    ind = 0
-    for key in guia.traverse(mode=1):
-        elem = guia[key]
-        print (ind,key,elem.ord,elem.desc)
-        ind += 1
+    #cubo.fillGuia(1)
+    ##pprint(cubo.lista_guias[5])   
+    #guia=cubo.lista_guias[5]['dir_row']
+    #ind = 0
+    #for key in guia.traverse(mode=1):
+        #elem = guia[key]
+        #print (ind,key,elem.ord,elem.desc)
+        #ind += 1
 
-    vista=Vista(cubo,5,2,'avg','votes_percent')
+    vista=Vista(cubo,1,0,'avg','votes_percent')
     #pprint(vista.array)
     #tabla = vista.toKeyedTable()
     #vista.toTree2D()
@@ -802,8 +802,8 @@ def experimental():
         #elem = vista.row_hdr_idx[key]
         #pprint(elem)
     #vista.traspose()
-    row_hdr = vista.fmtHeader('row',separador='\n',sparse='True')
-    print(col_hdr)
+    #row_hdr = vista.fmtHeader('row',separador='\n',sparse='True')
+    #print(col_hdr)
     #for key in vista.row_hdr_idx.content:
         #elem = vista.row_hdr_idx[key]
         #pprint(elem)
