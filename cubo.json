@@ -2,10 +2,10 @@
     "default": {
         "cubo": "experimento", 
         "vista": {
-            "row": 3, 
-            "agregado": "avg", 
-            "col": 2, 
-            "elemento": "votes_percent"
+            "row": 1, 
+            "agregado": "sum", 
+            "col": 0, 
+            "elemento": "votes_presential"
         }
     }, 
     "experimento": {

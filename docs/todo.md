@@ -15,15 +15,19 @@
   * name of elements in hierarchy YML
 
 * In Progres
-  * Row functions
+  * __WIP__ Row functions. Infraestructure is __DONE__.
+        * Special cases await (election simulator)
+        * function with parameters
   * Grand Total
   * Dynamic Filter
-  * 
+  * Context menu https://wiki.python.org/moin/PyQt/Creating%20a%20context%20menu%20for%20a%20tree%20view
+ 
+ 
 * Definition generation by application
   * SQL pregeneration (only partially makes sense)
   
 * New use cases
-  * _WIP_ diferent types of guides
+  * _WIP_ diferent types of guides  (on hold till definition settles
   * General
     * Login screen for DB that need it
     * Favorites function
@@ -95,16 +99,16 @@
 * _WIP_ Packaging
     * Configuration management
 
-* _WIP_  GUI 
+* GUI 
     * __DONE__ GUI refactoring based on Model-View (excluding new functionality)
-    * GUI for definition   (__HP__ showstopper for release)
+    * _WIP_ GUI for definition. Browse Ok Edit Haaard   (__HP__ showstopper for release)
  
 * _WIP_ : use SqlAlchemy as data background, so dependencies on PyQt would only be on the presentation level
     * integration __DONE__. Now selectable by (internal) parameter. ¿Faster?
     * Date Management into alchemy
     * Cube/Rollp
  
-* __EXPERIMENTAL__: Substitute PySlide for PyQt (licensing issues). 
+* __EXPERIMENTAL__: __PASS__ Substitute PySlide for PyQt (licensing issues) (but only Qt4.8)
 
 * __EXPERIMENTAL__ : Use [qtpy](https://pypi.python.org/pypi/QtPy) as a wrapper of the various qt APIs
 
@@ -118,5 +122,5 @@
 
 * __EXPERIMENTAL__: Use of Graphs ¿? either Qt internal, D3.js or plotly
 
-* __ABANDONADO__: QtPy  (no incluye librerias QtSQL)
+* __EXPERIMENTAL__: __PASS__ QtPy  (no incluye librerias QtSQL)
 

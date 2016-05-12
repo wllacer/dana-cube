@@ -54,7 +54,7 @@ class MainWindow(QMainWindow):
         self.restorator = self.fileMenu.addAction("&Restaurar valores originales",self.restoreData,"Ctrl+R")
         self.restorator.setEnabled(False)
         for ind,item in enumerate(USER_FUNCTION_LIST):
-             self.fileMenu.addAction(USER_FUNCTION_LIST[ind][1],lambda: self.dispatch(ind))        
+             self.fileMenu.addAction(USER_FUNCTION_LIST[ind][1],lambda  idx=ind: self.dispatch(idx))        
         
         self.format = dict(thousandsseparator=".",
                                     decimalmarker=",",
@@ -68,7 +68,8 @@ class MainWindow(QMainWindow):
         self.view = QTreeView(self)
         self.view.setModel(self.model)
 
-
+        #TODO como crear menu de contexto https://wiki.python.org/moin/PyQt/Creating%20a%20context%20menu%20for%20a%20tree%20view
+        
         self.view.setSortingEnabled(True)
         #self.view.setRootIsDecorated(False)
         self.view.setAlternatingRowColors(True)
@@ -218,11 +219,20 @@ class MainWindow(QMainWindow):
 
     
     def dispatch(self,ind):
-        
-        self.restorator.setEnabled(True)
-        app.setOverrideCursor(QCursor(Qt.WaitCursor))
-        self.model.beginResetModel()
 
+        self.restorator.setEnabled(True)
+        
+        app.setOverrideCursor(QCursor(Qt.WaitCursor))
+        
+        if USER_FUNCTION_LIST[ind][2] == 'colkey':
+           col_key = [None for k in range(self.model.datos.col_hdr_idx.count())]
+           idx = 0
+           for key in self.model.datos.col_hdr_idx.traverse(mode=1):
+               col_key[idx] = key.split(':')[-1]
+               idx += 1
+               
+        self.model.beginResetModel()
+        
         for key in self.model.datos.row_hdr_idx.traverse(mode=1):
             item = self.model.datos.row_hdr_idx[key]
             try:  #alguien deberia de estrangularme. adios cajas negras
@@ -236,7 +246,9 @@ class MainWindow(QMainWindow):
                 USER_FUNCTION_LIST[ind][0](item)
             elif USER_FUNCTION_LIST[ind][2] == 'map':
                  item.itemData[1:]=list(map(USER_FUNCTION_LIST[ind][0],item.itemData[1:]))
-        #self.model.rootItem = self.vista.row_hdr_idx.rootItem    
+            elif USER_FUNCTION_LIST[ind][2] == 'colkey':
+                USER_FUNCTION_LIST[ind][0](item,col_key)
+            
         self.model.endResetModel()
         app.restoreOverrideCursor()
             

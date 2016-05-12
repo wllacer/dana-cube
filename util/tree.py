@@ -87,6 +87,16 @@ class TreeItem(object):
             papi = papi.parentItem
         return fullDesc
     
+    def __getitem__(self,key):
+        if key == 'key':
+            return self.key
+        elif key == 'desc':
+            return self.desc
+        elif key == 'ord':
+            return self.ord
+        else:
+            return self.itemData[key]
+        
     def __str__(self): 
         return '{}->{}'.format(self.key,self.desc)
         
