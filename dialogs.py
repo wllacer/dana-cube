@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-## Copyright (c) 2012 Werner Llacer. All rights reserved.. Under the terms of the GPL 2
-## Portions copyright (c) 2008 Qtrac Ltd. All rights reserved.. Under the terms of the GPL 2
+## Copyright (c) 2012,2016 Werner Llacer. All rights reserved.. Under the terms of the LGPL 2
+## numberFormatDlg inspired by Portions copyright (c) 2008 Qtrac Ltd. All rights reserved.. Under the terms of the GPL 2
 
 from __future__ import division
 from __future__ import print_function
@@ -29,29 +29,95 @@ class WPropertySheet(QTableWidget):
        TODO procesar los parametros del 2 en adelante
     """
     def __init__(self,context,parent=None):   
-        super(WPropertySheet, self).__init__(parent)
+        super(WPropertySheet, self).__init__(len(context),1,parent)
         # cargando parametros de defecto
         self.context = context
 
-        self.setRowCount(len(context))
-        self.setColumnCount(1)
+        #self.setRowCount(len(context))
+        #self.setColumnCount(1)
         
         cabeceras = [ k[0] for k in self.context ]
-        cdata     = [ k[1] for k in self.context ]
-        for k,item in enumerate(cdata):
-            #tableItem= QTableWidgetItem(str(item))
-            #self.sheet.setItem(k,0,tableItem)
-            #self.sheet.setCellWidget(k,0,QLineEdit(str(item) if item is not None else None))
-            editItem = QLineEdit()
-            editItem.setText(str(item) if item is not None else '')
-            self.setCellWidget(k,0,editItem)
+        for k in range(len(self.context)):
+            self.add(k)
+        #cdata     = [ k[1] for k in self.context ]
+        #for k,item in enumerate(cdata):
+            ##tableItem= QTableWidgetItem(str(item))
+            ##self.sheet.setItem(k,0,tableItem)
+            ##self.sheet.setCellWidget(k,0,QLineEdit(str(item) if item is not None else None))
+            #editItem = QLineEdit()
+            #editItem.setText(str(item) if item is not None else '')
+            #self.setCellWidget(k,0,editItem)
 
 
         self.setVerticalHeaderLabels(cabeceras)
         
         #self.resizeColumnsToContents()
         self.resizeRowsToContents()
+    """
+      skeletor:
+        if type is None or type == QLineEdit:
+            pass
+        elif type == QCheckBox:
+            pass
+        elif type == QSpinBox:
+            pass
+        else:
+            print('Noooop',x)
+      
+    """
+    def add(self,x,y=0):
+        item = self.context[x][1]
+        type = self.context[x][2]
+        editItem = None
+        if type is None or type == QLineEdit:
+            editItem = QLineEdit()
+            editItem.setText(str(item) if item is not None else '')
+        elif type == QCheckBox:
+            editItem = QCheckBox()
+            editItem.setChecked(item)
+        elif type == QSpinBox:
+            editItem = QSpinBox()
+            editItem.setValue(item)
+        else:
+            print('Noooop',x)
+        if self.context[x][3] is not None:
+            #TODO ejecuto los metodos dinamicamente. por ahora solo admite parametros en lista  
+            #TODO vale como funcion utilitaria
+            for func in self.context[x][3]:
+                shoot = getattr(editItem,func)
+                if isinstance(self.context[x][3][func],(list,tuple)):
+                    parms = self.context[x][3][func]
+                else:
+                    parms = (self.context[x][3][func],)
+                shoot(*parms)
 
+        self.setCellWidget(x,y,editItem)
+
+    def set(self,x,y,value):
+        type = self.context[x][2]
+        if type is None or type == QLineEdit:
+            self.cellWidget(x,y).setText(value)
+        elif type == QCheckBox:
+            self.cellWidget(x,y).setChecked(value)
+        elif type == QSpinBox:
+            self.cellWidget(x,y).setValue(value)
+        else:
+            print('Noooop',x)
+
+        
+    def get(self,x,y):
+        type = self.context[x][2]
+        if type is None or type == QLineEdit:
+            return self.cellWidget(x,y).text()
+        elif type == QCheckBox:
+            return self.cellWidget(x,y).isChecked()
+        elif type == QSpinBox:
+            return self.cellWidget(x,y).value()
+        else:
+            print('Noooop',x)
+        
+
+    
     def values(self,col=0):
         """
            devuelve los valores actuales para la columna
@@ -61,7 +127,7 @@ class WPropertySheet(QTableWidget):
             #if self.sheet.cellWidget(k,0) is None:
                 #print('elemento {} vacio'.format(k))
                 #continue
-            valores.append(self.cellWidget(k,col).text())
+            valores.append(self.get(k,0))
         return valores
 
         
@@ -262,104 +328,134 @@ class ZoomDlg(QDialog):
         buttonBox.rejected.connect(self.reject)
 
 class NumberFormatDlg(QDialog):
-    # Copyright (c) 2008 Qtrac Ltd. All rights reserved. Under the terms of GPL2.
-    # portions modified by Werner Llacer
+
     def __init__(self, format, callback, parent=None):
         super(NumberFormatDlg, self).__init__(parent)
 
         punctuationRe = QRegExp(r"[ ,;:.]")
         
-        thousandsLabel = QLabel("&Thousands separator")
-        self.thousandsEdit = QLineEdit(format["thousandsseparator"])
-        thousandsLabel.setBuddy(self.thousandsEdit)
-        self.thousandsEdit.setMaxLength(1)
-        self.thousandsEdit.setValidator(QRegExpValidator(
-                punctuationRe, self))
+        self.context=[]
+        """
+context[0] titulos de las filas
+           context[1] valores iniciales
+           context[2] widget a utilizar (defecto QLineEdit)
+           context[3] llamadas de configuracion del widget
+           context[4] signal,slots (me temo que a mano)
+        """        
+        thousands = [None for j in range(5)]
+        thousands[0]="&Thousands separator"
+        thousands[1]=format["thousandsseparator"]
+        thousands[2]=QLineEdit
+        thousands[3]={'setMaxLength':1,
+                 'setValidator':QRegExpValidator(punctuationRe, self)
+                 }
+        #thousands[4]={"textEdited['QString']":self.checkAndFix}
+        thousands[4]={"textEditedEvent":self.checkAndFix}
         
-        decimalMarkerLabel = QLabel("Decimal &marker")
-        self.decimalMarkerEdit = QLineEdit(format["decimalmarker"])
-        decimalMarkerLabel.setBuddy(self.decimalMarkerEdit)
-        self.decimalMarkerEdit.setMaxLength(1)
-        self.decimalMarkerEdit.setValidator(QRegExpValidator(
-                punctuationRe, self))
-        self.decimalMarkerEdit.setInputMask("X")
+        decimalmarker = [None for j in range(5)]
+        decimalmarker[0]="Decimal &marker"
+        decimalmarker[1]=format["decimalmarker"]
+        decimalmarker[2]=QLineEdit
+        decimalmarker[3]={'setMaxLength':1,
+                 'setValidator':QRegExpValidator(punctuationRe, self),
+                 'setInputMask':"X"
+                 }
         
-        decimalPlacesLabel = QLabel("&Decimal places")
-        self.decimalPlacesSpinBox = QSpinBox()
-        decimalPlacesLabel.setBuddy(self.decimalPlacesSpinBox)
-        self.decimalPlacesSpinBox.setRange(0, 6)
-        self.decimalPlacesSpinBox.setValue(format["decimalplaces"])
         
-        self.redNegativesCheckBox = QCheckBox("&Red negative numbers")
-        self.redNegativesCheckBox.setChecked(format["rednegatives"])
+        decimalplaces = [None for j in range(5)]
+        decimalplaces[0]="&Decimal places"
+        decimalplaces[1]=format["decimalplaces"]
+        decimalplaces[2]=QSpinBox
+        decimalplaces[3]={"setRange":(0,6)}
+                          
+        rednegatives = [None for j in range(5)]
+        rednegatives[0]="Red negative numbers"
+        rednegatives[1]=format["rednegatives"]
+        rednegatives[2]=QCheckBox
+        rednegatives[3]=None        
+
+        yellowoutliers = [None for j in range(5)]
+        yellowoutliers[0]="&Yellow outliers"
+        yellowoutliers[1]=format["yellowoutliers"]
+        yellowoutliers[2]=QCheckBox
+        yellowoutliers[3]=None        
         
-        self.yellowOutlierCheckBox = QCheckBox("&Yellow outliers")
-        self.yellowOutlierCheckBox.setChecked(format["yellowoutliers"])
+        self.context.append(thousands)
+        self.context.append(decimalmarker)
+        self.context.append(decimalplaces)
+        self.context.append(rednegatives)
+        self.context.append(yellowoutliers)
+        
         
         self.format = format
         self.callback = callback
 
+        
         grid = QGridLayout()
-        grid.addWidget(thousandsLabel, 0, 0)
-        grid.addWidget(self.thousandsEdit, 0, 1)
-        grid.addWidget(decimalMarkerLabel, 1, 0)
-        grid.addWidget(self.decimalMarkerEdit, 1, 1)
-        grid.addWidget(decimalPlacesLabel, 2, 0)
-        grid.addWidget(self.decimalPlacesSpinBox, 2, 1)
-        grid.addWidget(self.redNegativesCheckBox, 3, 0, 1, 2)
-        grid.addWidget(self.yellowOutlierCheckBox, 4, 0, 1, 2)
+        self.sheet = WPropertySheet(self.context)
+        grid.addWidget(self.sheet, 0, 0)
         self.setLayout(grid)
+        self.setMinimumSize(QSize(300,220))
 
-        self.thousandsEdit.textEdited['QString'].connect(self.checkAndFix)
-        self.decimalMarkerEdit.textEdited['QString'].connect(self.checkAndFix)
-        self.decimalPlacesSpinBox.valueChanged[int].connect(self.apply)
-        self.redNegativesCheckBox.toggled[bool].connect(self.apply)
-        self.yellowOutlierCheckBox.toggled[bool].connect(self.apply)
+        self.sheet.cellWidget(0,0).textEdited['QString'].connect(self.checkAndFix)
+        self.sheet.cellWidget(1,0).textEdited['QString'].connect(self.checkAndFix)
+        self.sheet.cellWidget(2,0).valueChanged[int].connect(self.apply)
+        self.sheet.cellWidget(3,0).toggled[bool].connect(self.apply)
+        self.sheet.cellWidget(4,0).toggled[bool].connect(self.apply)
+        
         self.setWindowTitle("Set Number Format (`Live')")
 
 
     def checkAndFix(self):
         #thousands = unicode(self.thousandsEdit.text())
         #decimal = unicode(self.decimalMarkerEdit.text())
-        thousands = self.thousandsEdit.text()
-        decimal = self.decimalMarkerEdit.text()
+        thousands = self.sheet.get(0,0)
+        decimal = self.sheet.get(1,0)
         if thousands == decimal:
-            self.thousandsEdit.clear()
-            self.thousandsEdit.setFocus()
+            self.sheet.cellWidget(0,0).clear()
+            self.sheet.cellWidget(0,0).setFocus()
         if len(decimal) == 0:
-            self.decimalMarkerEdit.setText(".")
-            self.decimalMarkerEdit.selectAll()
-            self.decimalMarkerEdit.setFocus()
+            self.sheet.set(1,0,".")
+            self.sheet.cellWidget(1,0).selectAll()
+            self.sheet.cellWidget(1,0).setFocus()
+        
         self.apply()
 
 
     def apply(self):
         self.format["thousandsseparator"] = (
                 #unicode(self.thousandsEdit.text()))
-                self.thousandsEdit.text())
+                self.sheet.get(0,0))
         self.format["decimalmarker"] = (
                 #unicode(self.decimalMarkerEdit.text()))
-                self.decimalMarkerEdit.text())
+                self.sheet.get(1,0))
         self.format["decimalplaces"] = (
-                self.decimalPlacesSpinBox.value())
+                self.sheet.get(2,0))
         self.format["rednegatives"] = (
-                self.redNegativesCheckBox.isChecked())
+                self.sheet.get(3,0))
         self.format["yellowoutilers"] = (
-                self.yellowOutlierCheckBox.isChecked())
+                self.sheet.get(3,0))
 
         self.callback()
 
-
 def main():
     app = QApplication(sys.argv)
+
+    format = dict(thousandsseparator=".",
+                                    decimalmarker=",",
+                                    decimalplaces=2,
+                                    rednegatives=False,
+                                    yellowoutliers=True)
+
+     
+    #title = 'Hoja de seleccion de propiedades'
+    #ctexts = (u"C's", u'EH Bildu', u'EAJ-PNV', u'PP', u'PSOE', u'PODEMOS', u'GBAI', u'CCa-PNC', u'IU-UPeC', u'M\xc9S', u'DL', u'PODEMOS-COMPROM\xcdS', u'N\xd3S', u'EN COM\xda', u'PODEMOS-En Marea-ANOVA-EU', u'ERC-CATSI')
+    #context=[[ctexts[k],None] for k in range(len(ctexts))]
+    #context[3][1]='oleole'
+    #context[4][1]=5
+    #form = propertySheetDlg(context)
     
-    title = 'Hoja de seleccion de propiedades'
-    ctexts = (u"C's", u'EH Bildu', u'EAJ-PNV', u'PP', u'PSOE', u'PODEMOS', u'GBAI', u'CCa-PNC', u'IU-UPeC', u'M\xc9S', u'DL', u'PODEMOS-COMPROM\xcdS', u'N\xd3S', u'EN COM\xda', u'PODEMOS-En Marea-ANOVA-EU', u'ERC-CATSI')
-    context=[[ctexts[k],None] for k in range(len(ctexts))]
-    context[3][1]='oleole'
-    context[4][1]=5
- 
-    form = propertySheetDlg(title,context)
+    form = NumberFormatDlg(format,None)
     form.show()
     if form.exec_():
         cdata = [context[k][1] for k in range(len(ctexts))]
