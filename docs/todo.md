@@ -20,6 +20,7 @@
         * function with parameters
   * Grand Total
   * Dynamic Filter
+        * _WIP_ rough UI is in place (propertySheetEditor)
   * Context menu https://wiki.python.org/moin/PyQt/Creating%20a%20context%20menu%20for%20a%20tree%20view
  
  

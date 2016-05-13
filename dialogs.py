@@ -13,42 +13,92 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
+from pprint import pprint
+
+        
+class WPropertySheet(QTableWidget):
+    """
+        Version del TableWidget para simular hojas de propiedades
+        se inicializa con el array context
+           context[0] titulos de las filas
+           context[1] valores iniciales
+           context[2] widget a utilizar (defecto QLineEdit)
+           context[3] listas de valores para el widget (combos)
+           context[4] rutinas de validacion
+           ...
+       TODO procesar los parametros del 2 en adelante
+    """
+    def __init__(self,context,parent=None):   
+        super(WPropertySheet, self).__init__(parent)
+        # cargando parametros de defecto
+        self.context = context
+
+        self.setRowCount(len(context))
+        self.setColumnCount(1)
+        
+        cabeceras = [ k[0] for k in self.context ]
+        cdata     = [ k[1] for k in self.context ]
+        for k,item in enumerate(cdata):
+            #tableItem= QTableWidgetItem(str(item))
+            #self.sheet.setItem(k,0,tableItem)
+            #self.sheet.setCellWidget(k,0,QLineEdit(str(item) if item is not None else None))
+            editItem = QLineEdit()
+            editItem.setText(str(item) if item is not None else '')
+            self.setCellWidget(k,0,editItem)
+
+
+        self.setVerticalHeaderLabels(cabeceras)
+        
+        #self.resizeColumnsToContents()
+        self.resizeRowsToContents()
+
+    def values(self,col=0):
+        """
+           devuelve los valores actuales para la columna
+        """
+        valores =[]
+        for k in range(self.rowCount()):     
+            #if self.sheet.cellWidget(k,0) is None:
+                #print('elemento {} vacio'.format(k))
+                #continue
+            valores.append(self.cellWidget(k,col).text())
+        return valores
+
+        
+        
 class propertySheetDlg(QDialog):
     """
        Genera (mas o menos) una hoja de propiedades
        TODO faltan datos adicionales para cada item, otro widget, cfg del widget, formato de salida
        FIXME los botones estan fatal colocados
     """
-    def __init__(self,title,ctexts,cdata,parent=None):   
+    def __init__(self,title,context,parent=None):   
         super(propertySheetDlg, self).__init__(parent)
         # cargando parametros de defecto
-        self.cdata = cdata
+        self.context = context
         #
         InicioLabel = QLabel(title)
         #
-        self.entradas=[]
-        for k,item in enumerate(ctexts):
-            triada = []
-            triada.append(QLabel(item))
-            triada.append(QLineEdit(self.cdata[k]))
-            triada[0].setBuddy(triada[1])
-            self.entradas.append(triada)            
+        self.sheet=WPropertySheet(context)
 
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel,
-                                     Qt.Vertical)
+                                     Qt.Horizontal)
 
-        fieldLayout = QGridLayout()
-        linea = 0
-        for linea,triada in enumerate(self.entradas):
-            fieldLayout.addWidget(triada[0], linea, 0)
-            fieldLayout.addWidget(triada[1], linea, 1, 1, 5)
+
+        #formLayout = QHBoxLayout()
+        meatLayout = QVBoxLayout()
+        buttonLayout = QHBoxLayout()
         
-        buttonLayout = QVBoxLayout()
+       
+        meatLayout.addWidget(InicioLabel)
+        meatLayout.addWidget(self.sheet)
+        
+        #formLayout.addLayout(meatLayout)        
         buttonLayout.addWidget(buttonBox)
-        fieldLayout.addLayout(buttonLayout,0, 8, 3, 1)
+        meatLayout.addLayout(buttonLayout)
         
-        self.setLayout(fieldLayout)
-
+        self.setLayout(meatLayout)
+        self.setMinimumSize(QSize(480,480))
         
         buttonBox.accepted.connect(self.accept)
         buttonBox.rejected.connect(self.reject)
@@ -57,13 +107,12 @@ class propertySheetDlg(QDialog):
         
 
     def accept(self):
-        for k in range(len(self.cdata)):
-            valor = self.entradas[k][1].text()
-            if valor == '' and self.cdata[k] is None:
+        datos = self.sheet.values()
+        for k,valor in enumerate(datos):
+            if valor == '' and self.context[k][1] is None:
                continue
-            self.cdata[k] = self.entradas[k][1].text()
+            self.context[k][1] = valor
         QDialog.accept(self)
-        
         
 class CuboDlg(QDialog):
     def __init__(self, dict_cubos, parent=None):
@@ -306,11 +355,14 @@ def main():
     
     title = 'Hoja de seleccion de propiedades'
     ctexts = (u"C's", u'EH Bildu', u'EAJ-PNV', u'PP', u'PSOE', u'PODEMOS', u'GBAI', u'CCa-PNC', u'IU-UPeC', u'M\xc9S', u'DL', u'PODEMOS-COMPROM\xcdS', u'N\xd3S', u'EN COM\xda', u'PODEMOS-En Marea-ANOVA-EU', u'ERC-CATSI')
-    cdata = [None for k in range(len(ctexts))]
-
-    form = propertySheetDlg(title,ctexts,cdata)
+    context=[[ctexts[k],None] for k in range(len(ctexts))]
+    context[3][1]='oleole'
+    context[4][1]=5
+ 
+    form = propertySheetDlg(title,context)
     form.show()
     if form.exec_():
+        cdata = [context[k][1] for k in range(len(ctexts))]
         print('a la vuelta de publicidad',cdata)
         sys.exit()
 
