@@ -1,0 +1,179 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+## Copyright (c) 2012,2016 Werner Llacer. All rights reserved.. Under the terms of the LGPL 2
+## numberFormatDlg inspired by Portions copyright (c) 2008 Qtrac Ltd. All rights reserved.. Under the terms of the GPL 2
+
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+#from future_builtins import *
+
+import sys
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+
+from pprint import pprint
+from util.record_functions import norm2List
+ 
+
+class WPowerTable(QTableWidget):
+    # TODO mas tipos
+    # TODO un defecto razonable
+    def addCell(self,x,y,colDef,defVal=None):
+        item = defVal
+        type = colDef[0]
+        typeSpec = colDef[1]
+
+        editItem = None
+        if type is None or type == QLineEdit:
+            editItem = QLineEdit()
+            editItem.setText(str(item) if item is not None else '')
+        elif type == QCheckBox:
+            editItem = QCheckBox()
+            editItem.setChecked(item)
+        elif type == QSpinBox:
+            print(item)
+            editItem = QSpinBox()
+            editItem.setValue(item)
+        else:
+            print('Noooop',x)
+        if typeSpec is not None:
+            #TODO ejecuto los metodos dinamicamente. por ahora solo admite parametros en lista  
+            #TODO vale como funcion utilitaria
+            for func in typeSpec:
+                shoot = getattr(editItem,func)
+                if isinstance(typeSpec[func],(list,tuple)):
+                    parms = typeSpec[func]
+                else:
+                    parms = (typeSpec[func],)
+                shoot(*parms)
+
+        self.setCellWidget(x,y,editItem)
+
+    def set(self,x,y,value):
+        if isinstance(self.cellWidget(x,y),QLineEdit):
+            self.cellWidget(x,y).setText(value)
+        elif isinstance(self.cellWidget(x,y),QCheckBox):
+            self.cellWidget(x,y).setChecked(value)
+        elif isinstance(self.cellWidget(x,y),QSpinBox):
+            self.cellWidget(x,y).setValue(value)
+        else:
+            self.cellWidget(x,y).setText(value)
+            print('Noooop',x,y)
+
+        
+    def get(self,x,y):
+        if isinstance(self.cellWidget(x,y),QLineEdit):
+            return self.cellWidget(x,y).text()
+        elif isinstance(self.cellWidget(x,y),QCheckBox):
+            return self.cellWidget(x,y).isChecked()
+        elif isinstance(self.cellWidget(x,y),QSpinBox):
+            return self.cellWidget(x,y).value()
+        else:
+            print('Noooop',x,y)
+            return self.cellWidget(x,y).text()
+        
+    
+class WDataSheet(WPowerTable):
+    """
+        Version del TableWidget para simular hojas de entrada de datos
+        se inicializa con el context
+           context[0] titulos de las filas
+           context[1 -n] columnas
+                context[k][0] valores iniciales (si es comun)
+                context[k][1] widget a utilizar (defecto QLineEdit)
+                context[k][2] parametrizacion del widget (metodo:valor)
+           ...
+           m numero de filas a generar
+          
+    """
+    def __init__(self,context,rows,parent=None): 
+        
+        cols=len(context -1)
+
+        super(WPropertySheet, self).__init__(rows,cols,parent)
+        # cargando parametros de defecto
+        self.context = context
+        
+        cabeceras = [ k[0] for k in range(rows) ]
+        for k in range(rows):
+            self.addRow(k)
+
+        self.setVerticalHeaderLabels(cabeceras)
+        
+
+        self.resizeRowsToContents()
+
+    def addRow(self,line):
+        for y,colDef in enumerate(context[1:]):
+            self.addCell(line,y,colDef)
+            
+        
+
+    def values():
+        valores=[]
+        for x in range(self.rowCount()):
+            linea=[]
+            for y in range(self.columnCount()):
+                linea.append(self.get(x,y))
+            valores.append(linea)
+        return valores
+     
+    def valueCol(self,col=0):
+        """
+           devuelve los valores actuales para la columna
+        """
+        valores =[]
+        for k in range(self.rowCount()):     
+            #if self.sheet.cellWidget(k,0) is None:
+                #print('elemento {} vacio'.format(k))
+                #continue
+            valores.append(self.get(k,0))
+        return valores
+ 
+ 
+class WPropertySheet(WPowerTable):
+    """
+        Version del TableWidget para simular hojas de propiedades
+        se inicializa con el array context
+           context[0] titulos de las filas
+           context[1] valores iniciales
+           context[2] widget a utilizar (defecto QLineEdit)
+           context[3] parametrizacion del widget (metodo:valor)
+           ...
+       TODO añadir mas widgets
+    """
+    def __init__(self,context,parent=None): 
+        
+        rows=len(context)
+        cols=1
+
+        super(WPropertySheet, self).__init__(rows,cols,parent)
+        # cargando parametros de defecto
+        self.context = context
+        
+        cabeceras = [ k[0] for k in self.context ]
+        for k in range(len(self.context)):
+            self.addCell(k,0,context[k][2:],context[k][1])
+
+        self.setVerticalHeaderLabels(cabeceras)
+        
+
+        self.resizeRowsToContents()
+
+    
+    def values(self,col=0):
+        """
+           devuelve los valores actuales para la columna
+        """
+        valores =[]
+        for k in range(self.rowCount()):     
+            #if self.sheet.cellWidget(k,0) is None:
+                #print('elemento {} vacio'.format(k))
+                #continue
+            valores.append(self.get(k,0))
+        return valores
+
+        
+        
