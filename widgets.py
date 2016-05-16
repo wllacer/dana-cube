@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 ## Copyright (c) 2012,2016 Werner Llacer. All rights reserved.. Under the terms of the LGPL 2
-## numberFormatDlg inspired by Portions copyright (c) 2008 Qtrac Ltd. All rights reserved.. Under the terms of the GPL 2
+
 
 from __future__ import division
 from __future__ import print_function
@@ -109,9 +109,14 @@ class WDataSheet(WPowerTable):
         for y,colDef in enumerate(context[1:]):
             self.addCell(line,y,colDef)
             
-        
-
-    def values():
+    def fill(self,data):
+        rows=min(self.rowCount(),len(data))
+        cols=min(self.columnCount(),len(data[0]))
+        for x in range(rows):
+            for y in range(cols):
+                self.set(x,y,data[x][y])
+            
+    def values(self):
         valores=[]
         for x in range(self.rowCount()):
             linea=[]
@@ -129,7 +134,7 @@ class WDataSheet(WPowerTable):
             #if self.sheet.cellWidget(k,0) is None:
                 #print('elemento {} vacio'.format(k))
                 #continue
-            valores.append(self.get(k,0))
+            valores.append(self.get(k,col))
         return valores
  
  
@@ -169,9 +174,6 @@ class WPropertySheet(WPowerTable):
         """
         valores =[]
         for k in range(self.rowCount()):     
-            #if self.sheet.cellWidget(k,0) is None:
-                #print('elemento {} vacio'.format(k))
-                #continue
             valores.append(self.get(k,0))
         return valores
 

@@ -14,41 +14,46 @@
   *__DONE__ Adapt GUI to new internal structures
   * name of elements in hierarchy YML
 
-* In Progres
-  * __WIP__ Row functions. Infraestructure is __DONE__.
+* Now In Progres
+  * __DONE__ Row functions. _WIP_ lack some further testing
         * Special cases await (election simulator)
-        * function with parameters
+        * function with parameters: 
+               * one per column
+               * one per row
+               * kwarg list
+  * Data filtering
+  * Charting output (use of matplotlib (https://www.boxcontrol.net/embedding-matplotlib-plot-on-pyqt5-gui.html)
+  * Export infraestructure
   * Grand Total
   * Dynamic Filter
         * _WIP_ rough UI is in place (propertySheetEditor)
-  * Context menu https://wiki.python.org/moin/PyQt/Creating%20a%20context%20menu%20for%20a%20tree%20view
+
  
  
 * Definition generation by application
-  * SQL pregeneration (only partially makes sense)
+  * __HOLD__ SQL pregeneration (only partially makes sense)
   
 * New use cases
-  * _WIP_ diferent types of guides  (on hold till definition settles
+  * __HOLD__  _WIP_ diferent types of guides  (on hold till definition settles
   * General
     * Login screen for DB that need it
-    * Favorites function
+    * _WIP_ Favorites function (definitions in new configuration)
     * Preset time intervals as general option in cube (this,(N) period (today backwards),(N) last (not including))x(week,month,year)
     * basic source a query instead of a table
     * more than one measure
-    * function: recode (partially solved with categories)
+    * __DONE__ function: recode (partially solved with categories/ user functions)
     * Data export (see below)
     * include Time as valid format
     * __DONE__ programatically predesigned case
-    * Row functions
-    * Grand Total
   * Presentation
     * Ability to handle collapse/expand on columns
-    * Data filtering (pre / post)
     * Aditional info on double/right click (stats data | source data)
   * Configuration
     * create from directory entry
     * ready made entries
-    
+  * Context menu https://wiki.python.org/moin/PyQt/Creating%20a%20context%20menu%20for%20a%20tree%20view
+  * __HOLD__ (configuration) Preset time intervals as general option in cube (this,(N) period (today backwards),(N) last (not including))x(week,month,year)    
+
 * bugs
   * __DONE__ Kdevelop editor defaults is undermining Py 3 compatibility. Need to think about it (just better parametrization)
   * __DONE__ fivepoints metric 
@@ -67,7 +72,7 @@
   * __DONE__ municipio as guide performance is a horror. _WIP_ I used lists for guide definition and retrieval. I've discovered
     that using dictionaries enhances performance over 10000 % (read __100 TIMES__ ), but i have to rewrite almost everything again
     used trees of dict, which also simplifies gui programming
-  * A decision has to be made to load guides with the cube or specifically for each view (later is new default)
+  * A decision has to be made to load guides with the cube or specifically for each view
   
 * Behaviour
   * complex keying in guides
@@ -113,7 +118,8 @@
  
 * __EXPERIMENTAL__: __PASS__ Substitute PySlide for PyQt (licensing issues) (but only Qt4.8)
 
-* __EXPERIMENTAL__ : Use [qtpy](https://pypi.python.org/pypi/QtPy) as a wrapper of the various qt APIs
+* __EXPERIMENTAL__ : __HOLD__ Use [qtpy](https://pypi.python.org/pypi/QtPy) as a wrapper of the various qt APIs. Doesn't
+                    include bindings for QtSQL
 
 * __EXPERIMENTAL__: Definition language compatible to CUBES (?)
 
@@ -123,7 +129,5 @@
 
 * __EXPERIMENTAL__: Integration of [plotly](https://plot.ly/) as reporting tool
 
-* __EXPERIMENTAL__: Use of Graphs ¿? either Qt internal, D3.js or plotly
-
-* __EXPERIMENTAL__: __PASS__ QtPy  (no incluye librerias QtSQL)
+* __EXPERIMENTAL__: Use of Graphs ¿? either Qt internal, D3.js or plotly (matplotlib for sure)
 

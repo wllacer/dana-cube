@@ -54,7 +54,7 @@ class MainWindow(QMainWindow):
         self.restorator = self.fileMenu.addAction("&Restaurar valores originales",self.restoreData,"Ctrl+R")
         self.restorator.setEnabled(False)
         for ind,item in enumerate(USER_FUNCTION_LIST):
-             self.fileMenu.addAction(USER_FUNCTION_LIST[ind][1],lambda  idx=ind: self.dispatch(idx))        
+             self.fileMenu.addAction(USER_FUNCTION_LIST[ind][0],lambda  idx=ind: self.dispatch(idx))        
         
         self.format = dict(thousandsseparator=".",
                                     decimalmarker=",",
@@ -217,22 +217,34 @@ class MainWindow(QMainWindow):
         app.restoreOverrideCursor()
         self.restorator.setEnabled(False)
 
-    
-    def dispatch(self,ind):
-
-        self.restorator.setEnabled(True)
-        
-        app.setOverrideCursor(QCursor(Qt.WaitCursor))
-        
-        if USER_FUNCTION_LIST[ind][2] == 'colkey':
-           col_key = [None for k in range(self.model.datos.col_hdr_idx.count())]
+    def funDispatch(self,entry,ind):
+        pprint(entry)
+        if entry[1] in ('colkey','colparm','rowparm'):
+           if entry[1] in ('colkey','colparm'):
+               guia = self.model.datos.col_hdr_idx
+           else:
+               guia = self.model.datos.row_hdr_idx
+           a_key = [None for k in range(guia.count())]
+           a_desc = [None for k in range(guia.count())]
            idx = 0
-           for key in self.model.datos.col_hdr_idx.traverse(mode=1):
-               col_key[idx] = key.split(':')[-1]
+           for key in guia.traverse(mode=1):
+               a_key[idx] = key.split(':')[-1]
+               a_desc[idx] = guia[key].desc
                idx += 1
-               
-        self.model.beginResetModel()
-        
+           print(a_key)
+           if entry[1] in ('colparm',):
+              a_spec = [ [a_desc[k],None,None,None] for k in range(len(a_desc))]
+              parmDialog = propertySheetDlg('Introduzca los valores a simular',a_spec, self)
+              if parmDialog.exec_():
+                  pass
+                  #print([a_spec[k][1] for k in range(len(a_spec))])
+ 
+        elif entry[1] in 'kwargs':
+              a_spec = [ [argumento,None,None,None] for argumento in USER_KWARGS_LIST[entry[0]]]
+              parmDialog = propertySheetDlg('Introduzca los valores a simular',a_spec, self)
+              if parmDialog.exec_():
+                  pass
+            
         for key in self.model.datos.row_hdr_idx.traverse(mode=1):
             item = self.model.datos.row_hdr_idx[key]
             try:  #alguien deberia de estrangularme. adios cajas negras
@@ -240,14 +252,33 @@ class MainWindow(QMainWindow):
                     item.orig_data = item.itemData[:]
             except AttributeError:
                 item.orig_data = item.itemData[:]
-            if USER_FUNCTION_LIST[ind][2] == 'row':
-                item.itemData[1:]=USER_FUNCTION_LIST[ind][0](item.itemData[1:])
-            elif USER_FUNCTION_LIST[ind][2] == 'item':
-                USER_FUNCTION_LIST[ind][0](item)
-            elif USER_FUNCTION_LIST[ind][2] == 'map':
-                 item.itemData[1:]=list(map(USER_FUNCTION_LIST[ind][0],item.itemData[1:]))
-            elif USER_FUNCTION_LIST[ind][2] == 'colkey':
-                USER_FUNCTION_LIST[ind][0](item,col_key)
+            if entry[1] == 'row':
+                item.itemData[1:]=entry[0](item.itemData[1:])
+            elif entry[1] == 'item':
+                entry[0](item)
+            elif entry[1] == 'map':
+                 item.itemData[1:]=list(map(entry[0],item.itemData[1:]))
+            elif entry[1] in ('colkey',):
+                entry[0](item,a_key)
+            elif entry[1] in ('colparm','rowparm','kwargs'):
+                col_parm=[(a_spec[k][0],a_spec[k][1]) for k in range(len(a_spec))] #nombre y valor
+                entry[0](item,col_parm)
+
+            
+        
+    def dispatch(self,ind):
+        #TODO reducir el numero de arrays temporales
+
+        self.restorator.setEnabled(True)
+        
+        app.setOverrideCursor(QCursor(Qt.WaitCursor))
+        
+        self.model.beginResetModel()
+        print(USER_FUNCTION_LIST[ind])
+        print(USER_FUNCTION_LIST[ind][1])
+        for elem in USER_FUNCTION_LIST[ind][1]:
+            print(elem)
+            self.funDispatch(elem,ind)
             
         self.model.endResetModel()
         app.restoreOverrideCursor()

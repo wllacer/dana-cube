@@ -28,6 +28,29 @@ def dhont(escanos,data):
          
   return res
 
+def resultados(partido):
+    datos ={
+        "C's":14.0382822541147,
+        "CCa-PNC":0.327843488841832,
+        "DL":2.26783878634305,
+        "EAJ-PNV":1.20945172577815,
+        "EH Bildu":0.876122122040471,
+        "EN COMÚ":3.72133439799253,
+        "ERC-CATSI":2.40333940776187,
+        "GBAI":0.122531253309765,
+        "IU-UPeC":3.70205679981684,
+        "MÉS":0.136074096879415,
+        "NÓS":0.282583040951081,
+        "PODEMOS":12.7611604239852,
+        "PODEMOS-COMPROMÍS":2.69120804771348,
+        "PODEMOS-En Marea-ANOVA-EU":1.63769352340476,
+        "PP":28.9374594531795,
+        "PSOE":22.1801820596102
+        }
+    return datos[partido]
+
+    return 
+
 def escanos(provincia):
     asignacion = {"01":4,"02":4,"03":12,"04":6,"05":3,"06":6,"07":8,"08":31,"09":4,"10":4,
                 "11":9,"12":5,"13":5,"14":6,"15":8,"16":3,"17":6,"18":7,"19":3,"20":6,
@@ -44,7 +67,7 @@ def porcentaje(row):
     suma=sum(filter(None,row))
     return list(map(lambda item: item*100/suma if item is not None else None,row))
 
-def simula(item):
+def asigna(item):
     prov = item['key'].split(':')[-1]
     puestos = escanos(prov)
     if puestos is None:
@@ -52,7 +75,23 @@ def simula(item):
         return
     else:
         item.itemData[1:] = dhont(puestos,item.itemData[1:])
-  
+
+
+def factoriza(item,colparm):
+    for k,entrada in enumerate(colparm):
+        oldratio = resultados(entrada[0])
+        if entrada[1] is None or entrada[1] in ('','0'):
+            continue
+        print(entrada[1])
+        newratio = float(entrada[1])
+        if newratio is None  or oldratio == 0:  #FIXME para evitar division por 0 pereo no tiene mucho sentido
+            continue
+        factor = newratio/oldratio
+        if item.itemData[k +1] is None:
+            continue
+        pprint(item.itemData[k +1])
+        item.itemData[k+1] = item.itemData[k+1]*factor
+
 def unPodemos(item,colkey):
     potemos = colkey.index('3736')+1
     for candidatura in ('5008','5041','5033'):
@@ -81,15 +120,28 @@ def borraIU(item,colkey):
 def newScenario(item,colkey):
     borraIU(item,colkey)
     unPodemos(item,colkey)
-    simula(item)
-            
-USER_FUNCTION_LIST=( (porcentaje,'Porcentajes calculados en la fila','row'),
-                     (simula,'simulacion de escaños','item'),
-                     (borraIU,'Integra IU en Podemos','colkey'),
-                     (unPodemos,'Solo presenta una columna de Podemos','colkey'),
-                     (newScenario,'Todo lo anterior','colkey'),
-              )
+    #asigna(item)
 
+def simula(item,colparm):
+    factoriza(item,colparm)
+    asigna(item)
+            
+USER_FUNCTION_LIST=( ('Porcentajes calculados en la fila',((porcentaje,'row',),)),
+                     ('Asignacion de escaños',((asigna,'item',),)),
+                     ('Integra IU en Podemos',((borraIU,'colkey',),)),
+                     ('Solo presenta una columna de Podemos',((unPodemos,'colkey',),)),
+                     ('Todo lo anterior',(
+                                           (borraIU,'colkey',),
+                                           (unPodemos,'colkey',),
+                                           (asigna,'item',)
+                                         )),
+                     ('Simulacion resultados',(
+                                           (borraIU,'colkey',),
+                                           (unPodemos,'colkey',),
+                                           (asigna,'item',),
+                                           (simula,'colparm',))),
+              )
+USER_KWARGS_LIST = { simula:(None,)}
     
 row=[15,26,74,66,None,24]
-print(USER_FUNCTION_LIST[0][0](row))
+print(USER_FUNCTION_LIST[0][1][0][0](row))
