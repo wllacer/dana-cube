@@ -188,6 +188,26 @@ class TreeDict(object):
             elif mode == _BREADTH:
                 queue = queue[1:] + expansion  # width-first
 
+    def restrictedTraverse(self, key=None, mode=_DEPTH):
+        # 
+        # Basado en el anterior
+        # FIXME solo valido para arboles equilibrados
+        #
+        if key is not None:
+            yield key
+            queue = self.content[key].childItems
+        else:
+            queue = self.rootItem.childItems
+        while queue:
+            if queue[0].childCount() > 0:
+                yield queue[0].key
+                expansion = queue[0].childItems   
+            else:
+                expansion = []
+            if mode == _DEPTH:
+                queue = expansion + queue[1:]  # depth-first
+            elif mode == _BREADTH:
+                queue = queue[1:] + expansion  # width-first
 
 if __name__ == '__main__':
     # Copyright (C) by Brett Kromkamp 2011-2014 (brett@perfectlearn.com)

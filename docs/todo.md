@@ -21,10 +21,13 @@
                * one per column
                * one per row
                * kwarg list
-  * Data filtering
+        * _TODO_ fumctions and hidden columns
   * Charting output (use of matplotlib (https://www.boxcontrol.net/embedding-matplotlib-plot-on-pyqt5-gui.html)
   * Export infraestructure
-  * Grand Total
+  * Grand Total (only row)
+    * From cube  (__DONE__)
+    * Calculated  _WIP_ grand total done. partial still not
+    * Presentation _WIP_ presents but can be improved
   * Dynamic Filter
         * _WIP_ rough UI is in place (propertySheetEditor)
 

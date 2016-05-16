@@ -157,6 +157,18 @@ def regTree(record,**kwargs):
           record[k]=triad[k]
     except KeyError:
         del record[:]
+
+def regTree1D(record,**kwargs):
+    duad=[None,None]
+    regHasher(record,**kwargs)
+    duad[1]=record[-1] #datos
+    try:
+        duad[0]=kwargs['dir'][record[0]] #col parent
+        del record[2:]
+        for k in range(2):
+          record[k]=duad[k]
+    except KeyError:
+        del record[:]
     
 def regFiller(record,**kwargs):
 

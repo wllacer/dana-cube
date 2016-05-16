@@ -21,6 +21,7 @@ from models import *
 
 from user_functions import *
 
+STATISTICS = False
 #FIXED 1 zoom view breaks. Some variables weren't available
 #     FIXME zoom doesn't trigger any action with the new interface
 #FIXED 1 config view doesn't fire. Definition too early
@@ -274,16 +275,60 @@ class MainWindow(QMainWindow):
         app.setOverrideCursor(QCursor(Qt.WaitCursor))
         
         self.model.beginResetModel()
-        print(USER_FUNCTION_LIST[ind])
-        print(USER_FUNCTION_LIST[ind][1])
+
         for elem in USER_FUNCTION_LIST[ind][1]:
-            print(elem)
             self.funDispatch(elem,ind)
-            
+            if len(elem) > 2: 
+                if elem[2] == 'leaf':
+               
+                    self.recalcGrandTotal()
         self.model.endResetModel()
         app.restoreOverrideCursor()
             
    
+    def recalcGrandTotal(self):
+        agregado = self.model.datos.agregado.lower()
+        acumuladores = [{'max':0,'min':0,'sum':0,'count':0} for k in range(self.model.columnCount(None) -1)]
+        data = False
+        act_level = 0
+        for key in self.model.datos.row_hdr_idx.traverse(mode=2):
+            elem = self.model.datos.row_hdr_idx[key]
+            if act_level != elem.depth():
+                if data:
+                    break
+                else:
+                    act_level = elem.depth()
+            # determino en que nivel hay datos. No ire mas abajo
+            #FIXME queda mas limpio con itemData[1:
+            for ind,valor in enumerate(elem.itemData):
+                if ind == 0:
+                    continue
+                if valor is not None:
+                    data = True
+                    if agregado == 'avg':
+                        acumuladores[ind -1]['count'] += 1
+                        acumuladores[ind -1]['sum'] += valor
+                    elif agregado == 'max':
+                        acumuladores[ind -1]['max']=max(valor,acumuladores[ind -1]['max'])
+                    elif agregado == 'min':
+                        acumuladores[ind -1]['min']=min(valor,acumuladores[ind -1]['min'])
+                    elif agregado == 'count':
+                        acumuladores[ind -1]['count'] += valor
+                    elif agregado == 'sum':
+                        acumuladores[ind -1]['sum'] += valor
+        pprint(acumuladores)            
+        elem = self.model.datos.row_hdr_idx['']
+        for ind,valor in enumerate(elem.itemData):
+            if ind == 0:
+                continue
+            if agregado == 'avg':
+               if acumuladores[ind -1]['count'] != 0:
+                    elem.itemData[ind] = acumuladores[ind -1]['sum']/acumuladores[ind -1]['count']
+               else:
+                   elem.itemData[ind] = None
+            else:
+               elem.itemData[ind] = acumuladores[ind -1][agregado]
+ 
         
     def refreshTable(self):
         self.model.emitModelReset()

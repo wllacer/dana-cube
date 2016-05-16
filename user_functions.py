@@ -49,7 +49,30 @@ def resultados(partido):
         }
     return datos[partido]
 
-    return 
+def resultadosAgr(partido):
+    datos ={
+        "C's":14.0382822541147,
+        "CCa-PNC":0.327843488841832,
+        "DL":2.26783878634305,
+        "EAJ-PNV":1.20945172577815,
+        "EH Bildu":0.876122122040471,
+        #"EN COMÚ":3.72133439799253,
+        "ERC-CATSI":2.40333940776187,
+        "GBAI":0.122531253309765,
+        #"IU-UPeC":3.70205679981684,
+        #"MÉS":0.136074096879415,
+        "NÓS":0.282583040951081,
+        "PODEMOS":12.7611604239852 + 0.136074096879415 + 3.70205679981684 + 2.69120804771348 +1.63769352340476 +3.72133439799253,
+        #"PODEMOS-COMPROMÍS":2.69120804771348,
+        #"PODEMOS-En Marea-ANOVA-EU":1.63769352340476,
+        "PP":28.9374594531795,
+        "PSOE":22.1801820596102
+        }
+    try:
+        return datos[partido]
+    except KeyError:
+        return None
+
 
 def escanos(provincia):
     asignacion = {"01":4,"02":4,"03":12,"04":6,"05":3,"06":6,"07":8,"08":31,"09":4,"10":4,
@@ -87,9 +110,26 @@ def factoriza(item,colparm):
         if newratio is None  or oldratio == 0:  #FIXME para evitar division por 0 pereo no tiene mucho sentido
             continue
         factor = newratio/oldratio
+        
         if item.itemData[k +1] is None:
             continue
-        pprint(item.itemData[k +1])
+        print(k,item.itemData[0],item.itemData[k+1],factor)
+        item.itemData[k+1] = item.itemData[k+1]*factor
+
+def factorizaAgregado(item,colparm):
+    for k,entrada in enumerate(colparm):
+        oldratio = resultadosAgr(entrada[0])
+        if entrada[1] is None or entrada[1] in ('','0'):
+            continue
+        print(entrada[1])
+        newratio = float(entrada[1])
+        if newratio is None  or oldratio == 0:  #FIXME para evitar division por 0 pereo no tiene mucho sentido
+            continue
+        factor = newratio/oldratio
+        
+        if item.itemData[k +1] is None:
+            continue
+        print(k,item.itemData[0],item.itemData[k+1],factor)
         item.itemData[k+1] = item.itemData[k+1]*factor
 
 def unPodemos(item,colkey):
@@ -98,13 +138,30 @@ def unPodemos(item,colkey):
         cakey = colkey.index(candidatura) +1
         if item.itemData[cakey] is None:
             continue
-        item.itemData[potemos] = item.itemData[cakey]  #solo uno puede ser nulo
+        if item.itemData[potemos] is None:
+            item.itemData[potemos] = item.itemData[cakey]  #solo uno puede ser nulo
+        else:
+            item.itemData[potemos] += item.itemData[cakey]  #solo uno puede ser nulo
         item.itemData[cakey]=None
     #print(item.itemData[potemos],item.orig_data[potemos])    
     #print(item.itemData[cakey],item.orig_data[cakey])    
     
 def borraIU(item,colkey):
     difunta = colkey.index('4850') +1
+    if item.itemData[difunta] is None:
+        return
+    for candidatura in ('3736','5008','5041','5033'):
+        cakey = colkey.index(candidatura) +1
+        if item.itemData[cakey] is not None:  #se presentaban en la provincia
+            if item.itemData[difunta] is None:
+                pass #deberia ser break pero bueno
+            else:
+                item.itemData[cakey] += item.itemData[difunta]
+                item.itemData[difunta]=None
+            break
+
+def borraMes(item,colkey):
+    difunta = colkey.index('4976') +1
     if item.itemData[difunta] is None:
         return
     for candidatura in ('3736','5008','5041','5033'):
@@ -127,21 +184,25 @@ def simula(item,colparm):
     asigna(item)
             
 USER_FUNCTION_LIST=( ('Porcentajes calculados en la fila',((porcentaje,'row',),)),
-                     ('Asignacion de escaños',((asigna,'item',),)),
+                     ('Asignacion de escaños',((asigna,'item','leaf'),)),
                      ('Integra IU en Podemos',((borraIU,'colkey',),)),
+                     ('Integra Mès en Podemos',((borraMes,'colkey',),)),
                      ('Solo presenta una columna de Podemos',((unPodemos,'colkey',),)),
                      ('Todo lo anterior',(
                                            (borraIU,'colkey',),
+                                           (borraMes,'colkey'),
                                            (unPodemos,'colkey',),
                                            (asigna,'item',)
                                          )),
                      ('Simulacion resultados',(
                                            (borraIU,'colkey',),
+                                           (borraMes,'colkey',),
                                            (unPodemos,'colkey',),
-                                           (asigna,'item',),
-                                           (simula,'colparm',))),
+                                           (factorizaAgregado,'colparm',),
+                                           (asigna,'item','leaf'),
+                                           )),
               )
-USER_KWARGS_LIST = { simula:(None,)}
+KWARGS_LIST = { simula:(None,)}
     
 row=[15,26,74,66,None,24]
 print(USER_FUNCTION_LIST[0][1][0][0](row))

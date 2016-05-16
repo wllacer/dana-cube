@@ -21,6 +21,8 @@ from core import Cubo,Vista
 from util.tree import *
 from util.fivenumbers import isOutlier
 
+GRAND_TOTAL = True
+STATISTICS = False
 
 def fmtNumber(number, fmtOptions):
     """ taken from Rapid development with PyQT book (chapter 5) """
@@ -48,10 +50,24 @@ class TreeModel(QAbstractItemModel):
         super(TreeModel, self).__init__(parent)
         datos.toTree2D()
         self.rootItem = datos.row_hdr_idx.rootItem
+          
         self.datos = datos
         self.getHeaders()
         #self.setupModelData(datos, self.rootItem)
-        
+        """
+           gran total
+        """
+        if GRAND_TOTAL:
+            itemData = auxData = [None for k in range(self.columnCount(None))]
+            children = self.rootItem.childItems
+            granTotal = datos.grandTotal()
+            itemData[0]=' Total'
+            for entry in granTotal:
+                pos = entry[0].ord +1
+                itemData[pos]=entry[1]
+            datos.row_hdr_idx.append(TreeItem('',0,'Gran Total',itemData),None)
+            pprint(datos.row_hdr_idx.content[''])
+            datos.row_hdr_idx[''].aux_data = [0 for k in range(0,10)] #FIXME vaya chapuza
         
     def columnCount(self, parent):
         return self.datos.col_hdr_idx.count() + 1
@@ -69,7 +85,7 @@ class TreeModel(QAbstractItemModel):
                 return Qt.AlignLeft| Qt.AlignVCenter
         elif role == Qt.BackgroundRole:
             if index.column() != 0:
-                if self.datos.format['yellowoutliers']:
+                if self.datos.format['yellowoutliers'] and STATISTICS:
                     if isOutlier(item.data(index.column()),item.aux_data):
                         return QColor(Qt.yellow)
                 if self.datos.format['rednegatives'] and item.data(index.column() < 0) :

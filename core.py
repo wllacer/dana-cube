@@ -19,7 +19,7 @@ FIXME y propagarse en el filtro si es jerarquico
 #TODO En ciertas circunstancias debe o no provocarse y/o informar del error
 
 '''
-STATISTICS=True
+STATISTICS=False
 DEBUG = True
 TRACE=True
 DELIMITER=':'
@@ -553,7 +553,49 @@ class Vista:
                 self.array +=getCursor(self.cubo.db,sqlstring,regTree,**lista_compra)
                 if DEBUG:
                     print(time.time(),'Datos ',sqlstring)
-                
+    
+    def grandTotal(self):
+        array = []
+        for j in range(0,self.dim_col):
+            sqlDef=dict()
+            sqlDef['tables']=self.cubo.definition['table']
+            #sqlDef['select_modifier']=None
+            sqlDef['fields']= self.cubo.lista_guias[self.col_id]['rules'][j]['elem'] + \
+                                [(self.campo,self.agregado)]
+            sqlDef['base_filter']=mergeString(self.filtro,self.cubo.definition['base filter'],'AND')
+            sqlDef['join']=[]
+            #TODO claro candidato a ser incluido en una funcion
+            if 'join' in self.cubo.lista_guias[self.col_id]['rules'][j]:
+                col_join = self.cubo.lista_guias[self.col_id]['rules'][j]['join']
+                for entry in col_join:
+                    print('iter y')
+                    join_entry = dict()
+                    join_entry['table'] = entry.get('table')
+                    join_entry['join_filter'] = entry.get('filter')
+                    join_entry['join_clause'] = []
+                    for clausula in entry['clause']:
+                        entrada = (clausula.get('rel_elem'),'=',clausula.get('base_elem'))
+                        join_entry['join_clause'].append(entrada)
+                    sqlDef['join'].append(join_entry)
+            # esta desviacion es por las categorias
+            group_col = self.cubo.lista_guias[self.col_id]['rules'][j]['elem']
+            sqlDef['group']= group_col
+            #sqlDef['having']=None
+            #sqlDef['order']=None
+            sqlstring=queryConstructor(**sqlDef)
+            
+            #
+            lista_compra={'nkeys':len(self.cubo.lista_guias[self.col_id]['rules'][j]['elem']),
+                          'init':-1-len(self.cubo.lista_guias[self.col_id]['rules'][j]['elem']),
+                          'dir':self.col_hdr_idx
+                         }
+            
+            #cursor_data=getCursor(self.cubo.db,sqlstring,regHasher2D,**lista_compra)
+            array +=getCursor(self.cubo.db,sqlstring,regTree1D,**lista_compra)
+            if DEBUG:
+                print(time.time(),'Datos ',sqlstring)
+        return array
+        
     def toTable(self):
 
         table = [ [None for k in range(self.col_hdr_idx.count())] for j in range(self.row_hdr_idx.count())]
@@ -593,6 +635,7 @@ class Vista:
 
            elem[1:] = table[ind][:]
         return ktable
+    
     def toCsv(self,row_sparse=True,col_sparse=False,translated=True,separator=';',string_sep="'"):
         ctable = [ ['' for k in range(self.col_hdr_idx.count()+self.dim_row)] 
                              for j in range(self.row_hdr_idx.count()+self.dim_col) ]
@@ -792,12 +835,12 @@ def experimental():
         #print (ind,key,elem.ord,elem.desc)
         #ind += 1
 
-    vista=Vista(cubo,1,0,'avg','votes_percent')
-    #pprint(vista.array)
+    vista=Vista(cubo,3,0,'sum','votes_presential')
+    pprint(vista.grandTotal())
     #tabla = vista.toKeyedTable()
     #vista.toTree2D()
-    col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
-    print(col_hdr)
+    #col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
+    #print(col_hdr)
     #for key in vista.row_hdr_idx.content:
         #elem = vista.row_hdr_idx[key]
         #pprint(elem)
@@ -809,8 +852,10 @@ def experimental():
         #pprint(elem)
     #print(vista.row_hdr_idx.count())
     #presenta(vista)
-    #for key in vista.row_hdr_idx.traverse(None,1):
+    print(vista.dim_row)
+    for key in vista.row_hdr_idx.traverse(None,2):
         #print(key,vista.row_hdr_idx[key].desc,vista.row_hdr_idx[key].getFullDesc(),getOrderedText(vista.row_hdr_idx[key].getFullDesc(),sparse=False,separator=':'))
+        print(key,vista.row_hdr_idx[key].desc,vista.row_hdr_idx[key].depth())
     #for elem in vista.array:
         #print(elem[0].desc,elem[1].desc,elem[2])
     
