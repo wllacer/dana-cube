@@ -50,13 +50,19 @@ class TreeItem(object):
             return None
         
     def getPayload(self):
-        return self.itemData[1:]
+        if self.itemData is None or len(self.itemData) == 1:
+            return None
+        else:
+            return self.itemData[1:]
     
     def getStatistics(self):
         return self.statsData
     
     def getLabel(self):
-        return self.itemData[0]
+        if self.itemData is None:
+            return None
+        else:
+            return self.itemData[0]
     
     def isLeaf(self):
         if len(self.childItems) == 0:
@@ -68,10 +74,16 @@ class TreeItem(object):
         self.itemData = data
         
     def setPayload(self,data):
-        self.itemData[1:] = data[:]
+        if self.itemData is None:
+            self.itemData = [None,] + data
+        else:
+            self.itemData[1:] = data[:]
     
     def setLabel(self,label):
-        self.itemData[0]=label
+        if self.itemData is None:
+            self.itemData = [label ,]
+        else:
+            self.itemData[0]=label
         
     def setStatistics(self):
         stat_dict = stats(self.getPayload())
