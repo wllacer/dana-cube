@@ -94,56 +94,22 @@ class CuboDlg(QDialog):
         buttonBox.rejected.connect(self.reject)
         
 
-                            
-class VistaDlg(QDialog):
-    def __init__(self, cubo_eleg,  parent=None):
-        super(VistaDlg, self).__init__(parent)
+class VistaDlg(propertySheetDlg):
+    def __init__(self, cubo,parametros,parent=None):
+        title = 'Eliga los parametros de la vista'
+        self.context = []
+        self.context.append(['Guia filas',parametros[0],QComboBox,None,cubo.getGuideNames()],)
+        self.context.append(['Guia columnas',parametros[1],QComboBox,None,cubo.getGuideNames()],)
+        self.context.append(['Función agregacion',parametros[2],QComboBox,None,cubo.getFunctions()],)
+        self.context.append(['Campo de datos',parametros[3],QComboBox,None,cubo.getFields()],)
+        self.context.append(['Con totales',parametros[4],QCheckBox,None],)
+        self.context.append(['Con estadisticas',parametros[5],QCheckBox,None],)
         
-        self.cubo = cubo_eleg
-        datos_cubo = self.cubo.lista_guias
+        super(VistaDlgNew, self).__init__(title,self.context,parent)
         
-        listaCampos = [ item['name'] for item in datos_cubo]
+        #self.sheet.resizeColumnsToContents()
         
-        InicioLabel = QLabel("Defina los parametros de la vista")
-        rowLbl = QLabel("&Row")
-        self.rowCB = QComboBox()
-        self.rowCB.addItems(listaCampos)
-        rowLbl.setBuddy(self.rowCB)
- 
-        colLbl = QLabel("&Col")
-        self.colCB = QComboBox()
-        self.colCB.addItems(listaCampos)
-        colLbl.setBuddy(self.colCB)
         
-        agrLbl = QLabel("&Functiom")
-        self.agrCB=QComboBox()
-        self.agrCB.addItems(self.cubo.getFunctions())
-        agrLbl.setBuddy(self.agrCB)
-
-        fldLbl = QLabel("&Element")
-        self.fldCB=QComboBox()
-        self.fldCB.addItems(self.cubo.getFields())
-        fldLbl.setBuddy(self.fldCB)
-
-        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|
-                                                        QDialogButtonBox.Cancel)
-
-        grid = QGridLayout()
-        grid.addWidget(InicioLabel, 0, 0)
-        grid.addWidget(rowLbl, 1, 0)
-        grid.addWidget(self.rowCB, 1, 1)
-        grid.addWidget(colLbl, 2, 0)
-        grid.addWidget(self.colCB, 2, 1)
-        grid.addWidget(agrLbl, 3,  0)
-        grid.addWidget(self.agrCB, 3, 1)
-        grid.addWidget(fldLbl, 4, 0)
-        grid.addWidget(self.fldCB, 4, 1)
-        grid.addWidget(buttonBox, 6, 0, 1, 2)
-        self.setLayout(grid)
-  
-        buttonBox.accepted.connect(self.accept)
-        buttonBox.rejected.connect(self.reject)
-
         
         
 class ZoomDlg(QDialog):
@@ -325,7 +291,7 @@ context[0] titulos de las filas
 
         self.callback()
 
-def main():
+def mainNF():
     app = QApplication(sys.argv)
 
     format = dict(thousandsseparator=".",
@@ -346,6 +312,22 @@ def main():
     form.show()
     if form.exec_():
         cdata = [context[k][1] for k in range(len(ctexts))]
+        print('a la vuelta de publicidad',cdata)
+        sys.exit()
+
+def main():
+    from core import Cubo
+    from util.jsonmgr import load_cubo
+    
+    app = QApplication(sys.argv)
+    parametros = [ 1, 0, 2,3, False, False ]
+    mis_cubos = load_cubo()
+    cubo = Cubo(mis_cubos['experimento'])
+    
+    form = VistaDlg(cubo, parametros)
+    form.show()
+    if form.exec_():
+        cdata = [form.context[k][1] for k in range(len(parametros))]
         print('a la vuelta de publicidad',cdata)
         sys.exit()
 

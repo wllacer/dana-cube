@@ -139,6 +139,60 @@ class MainWindow(QMainWindow):
 
     def requestVista(self):
 
+        parametros = [None for k in range(6)]
+        
+        vistaDlg = VistaDlg(self.cubo,parametros, self)
+
+        #TODO  falta el filtro
+        if self.vista is  None:
+            pass
+        else:
+            vistaDlg.sheet.set(0,0,self.vista.row_id)
+            vistaDlg.sheet.set(1,0,self.vista.col_id)
+            vistaDlg.sheet.set(2,0,self.cubo.getFunctions().index(self.vista.agregado))
+            vistaDlg.sheet.set(3,0,self.cubo.getFields().index(self.vista.campo))
+            vistaDlg.sheet.set(4,0,self.vista.totalizado)
+            vistaDlg.sheet.set(5,0,self.vista.stats)
+
+        if vistaDlg.exec_():
+            row = vistaDlg.context[0][1]
+            col = vistaDlg.context[1][1]
+            agregado = self.cubo.getFunctions()[vistaDlg.context[2][1]]
+            #campo = self.cubo.getFunctions()[vistaDlg.context[3][1]]
+            campo = vistaDlg.sheet.cellWidget(3,0).currentText()
+            totalizado = vistaDlg.context[4][1]
+            stats = vistaDlg.context[5][1]
+            print(row,col,agregado,campo,totalizado,stats)
+            app.setOverrideCursor(QCursor(Qt.WaitCursor))
+            if self.vista is None:
+                self.vista = Vista(self.cubo, row, col, agregado, campo, totalizado = totalizado, stats=stats)
+                self.vista.format = self.format
+                self.defineModel()
+            else:
+                self.model.beginResetModel()
+                self.vista.setNewView(row, col, agregado, campo, totalizado = totalizado, stats=stats)
+                self.vista.toTree2D()
+                self.model.datos=self.vista
+                self.model.getHeaders()
+                self.model.rootItem = self.vista.row_hdr_idx.rootItem
+                self.model.endResetModel()
+                self.view.expandToDepth(2)
+                self.refreshTable()
+
+
+
+
+            app.restoreOverrideCursor()
+
+            # TODO hay que configurar algun tipo de evento para abrirlos y un parametro de configuracion
+
+            ##@waiting_effects
+            #app.setOverrideCursor(QCursor(Qt.WaitCursor))
+            #self.refreshTable()
+            #app.restoreOverrideCursor()
+            
+    def requestVistaOld(self):
+
         vistaDlg = VistaDlg(self.cubo, self)
 
         #TODO  falta el filtro

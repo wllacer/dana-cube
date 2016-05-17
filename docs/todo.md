@@ -29,7 +29,7 @@
     * From cube  (__DONE__)
     * Calculated  
     * Presentation 
-    * _TODO_ functionally not its place (now in view should be in model)
+    * _HOLD_ functionally not its place (now in view should be in model)
   * Dynamic Filter
         * _WIP_ rough UI is in place (propertySheetEditor)
 
@@ -72,6 +72,7 @@
   * tamaño de algun elemento de la lista
   * Alchemy no carga en Python3
   * Cabeceras de columnas con GRAND_TOTAL one off
+  * en el WPowerWidget separar configuracion de datos para poder usar tuplas
 
   * __DONE__ in guides allow blank filter
  

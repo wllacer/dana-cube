@@ -98,6 +98,12 @@ class Cubo:
         # no se usa en core. No se todavia en la parte GUI
         self.lista_campos = self.getFields()
     #
+    def getGuideNames(self):
+        tabla = []
+        for guia in self.lista_guias:
+            tabla.append(guia['name'])
+        return tuple(tabla)
+
     def getFunctions(self):
         '''
            INTERFAZ EXTERNA
@@ -720,7 +726,7 @@ class Vista:
         if DEBUG:
             print(time.time(),'Tree ',len(array),self.row_hdr_idx.count())  
 
-    def toTree2D(self,grandTotal=True):
+    def toTree2D(self):
         array = self.toTable()
         for key in self.row_hdr_idx.traverse(mode=1):
             elem = self.row_hdr_idx[key]
@@ -737,7 +743,7 @@ class Vista:
             if self.stats:
                 elem.setStatistics()
 
-        if grandTotal:
+        if self.totalizado:
             self.row_hdr_idx.rebaseTree()
             tabla = self.grandTotal()
             datos =['Gran Total',]+[elem[1] for elem in tabla]

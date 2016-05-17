@@ -24,25 +24,46 @@ class WPowerTable(QTableWidget):
         item = defVal
         type = colDef[0]
         typeSpec = colDef[1]
-
+        if len(colDef) > 2:
+            listVals = colDef[2]
+        else:
+            listVals = None
+            
         editItem = None
         if type is None or type == QLineEdit:
             editItem = QLineEdit()
             editItem.setText(str(item) if item is not None else '')
         elif type == QCheckBox:
             editItem = QCheckBox()
-            editItem.setChecked(item)
+            if item is None:
+                editItem.setChecked(False)
+            else:
+                editItem.setChecked(item)
         elif type == QSpinBox:
-            print(item)
             editItem = QSpinBox()
             editItem.setValue(item)
+        elif type == QComboBox:
+            editItem = QComboBox()
+            if listVals is not None:
+                editItem.addItems(listVals)
+            if item is None:
+                pass
+            else:
+                print(item)
+                editItem.setCurrentIndex(item)
+
+              
         else:
             print('Noooop',x)
         if typeSpec is not None:
             #TODO ejecuto los metodos dinamicamente. por ahora solo admite parametros en lista  
             #TODO vale como funcion utilitaria
             for func in typeSpec:
-                shoot = getattr(editItem,func)
+                try:
+                    shoot = getattr(editItem,func)
+                except AttributeError:
+                    print(typeSpec,item)
+                    exit()
                 if isinstance(typeSpec[func],(list,tuple)):
                     parms = typeSpec[func]
                 else:
@@ -55,9 +76,14 @@ class WPowerTable(QTableWidget):
         if isinstance(self.cellWidget(x,y),QLineEdit):
             self.cellWidget(x,y).setText(value)
         elif isinstance(self.cellWidget(x,y),QCheckBox):
-            self.cellWidget(x,y).setChecked(value)
+            if value is None:
+                self.cellWidget(x,y).setChecked(False)
+            else:
+                self.cellWidget(x,y).setChecked(value)
         elif isinstance(self.cellWidget(x,y),QSpinBox):
             self.cellWidget(x,y).setValue(value)
+        elif isinstance(self.cellWidget(x,y),QComboBox):
+            self.cellWidget(x,y).setCurrentIndex(value)
         else:
             self.cellWidget(x,y).setText(value)
             print('Noooop',x,y)
@@ -70,6 +96,8 @@ class WPowerTable(QTableWidget):
             return self.cellWidget(x,y).isChecked()
         elif isinstance(self.cellWidget(x,y),QSpinBox):
             return self.cellWidget(x,y).value()
+        elif isinstance(self.cellWidget(x,y),QComboBox):
+            return self.cellWidget(x,y).currentIndex()
         else:
             print('Noooop',x,y)
             return self.cellWidget(x,y).text()
@@ -166,7 +194,7 @@ class WPropertySheet(WPowerTable):
         
 
         self.resizeRowsToContents()
-
+        self.horizontalHeader().setStretchLastSection(True)
     
     def values(self,col=0):
         """
