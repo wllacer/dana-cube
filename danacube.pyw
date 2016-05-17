@@ -94,7 +94,7 @@ class MainWindow(QMainWindow):
         proxyModel.setSortRole(33)
         self.view.setModel(proxyModel)
         self.model = newModel #proxyModel
-
+        self.view.expandToDepth(2)
         # estas vueltas para permitir ordenacion
         # para que aparezcan colapsados los indices jerarquicos
         self.max_row_level = self.vista.dim_row
@@ -219,7 +219,6 @@ class MainWindow(QMainWindow):
         self.restorator.setEnabled(False)
 
     def funDispatch(self,entry,ind):
-        pprint(entry)
         if entry[1] in ('colkey','colparm','rowparm'):
            if entry[1] in ('colkey','colparm'):
                guia = self.model.datos.col_hdr_idx
@@ -232,7 +231,6 @@ class MainWindow(QMainWindow):
                a_key[idx] = key.split(':')[-1]
                a_desc[idx] = guia[key].desc
                idx += 1
-           print(a_key)
            if entry[1] in ('colparm',):
               a_spec = [ [a_desc[k],None,None,None] for k in range(len(a_desc))]
               parmDialog = propertySheetDlg('Introduzca los valores a simular',a_spec, self)
@@ -280,55 +278,11 @@ class MainWindow(QMainWindow):
             self.funDispatch(elem,ind)
             if len(elem) > 2: 
                 if elem[2] == 'leaf':
-               
-                    self.recalcGrandTotal()
+                    self.vista.recalcGrandTotal()
         self.model.endResetModel()
         app.restoreOverrideCursor()
             
-   
-    def recalcGrandTotal(self):
-        agregado = self.model.datos.agregado.lower()
-        acumuladores = [{'max':0,'min':0,'sum':0,'count':0} for k in range(self.model.columnCount(None) -1)]
-        data = False
-        act_level = 0
-        for key in self.model.datos.row_hdr_idx.traverse(mode=2):
-            elem = self.model.datos.row_hdr_idx[key]
-            if act_level != elem.depth():
-                if data:
-                    break
-                else:
-                    act_level = elem.depth()
-            # determino en que nivel hay datos. No ire mas abajo
-            #FIXME queda mas limpio con itemData[1:
-            for ind,valor in enumerate(elem.itemData):
-                if ind == 0:
-                    continue
-                if valor is not None:
-                    data = True
-                    if agregado == 'avg':
-                        acumuladores[ind -1]['count'] += 1
-                        acumuladores[ind -1]['sum'] += valor
-                    elif agregado == 'max':
-                        acumuladores[ind -1]['max']=max(valor,acumuladores[ind -1]['max'])
-                    elif agregado == 'min':
-                        acumuladores[ind -1]['min']=min(valor,acumuladores[ind -1]['min'])
-                    elif agregado == 'count':
-                        acumuladores[ind -1]['count'] += valor
-                    elif agregado == 'sum':
-                        acumuladores[ind -1]['sum'] += valor
-        pprint(acumuladores)            
-        elem = self.model.datos.row_hdr_idx['']
-        for ind,valor in enumerate(elem.itemData):
-            if ind == 0:
-                continue
-            if agregado == 'avg':
-               if acumuladores[ind -1]['count'] != 0:
-                    elem.itemData[ind] = acumuladores[ind -1]['sum']/acumuladores[ind -1]['count']
-               else:
-                   elem.itemData[ind] = None
-            else:
-               elem.itemData[ind] = acumuladores[ind -1][agregado]
- 
+    
         
     def refreshTable(self):
         self.model.emitModelReset()

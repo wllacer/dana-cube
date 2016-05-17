@@ -105,7 +105,6 @@ def factoriza(item,colparm):
         oldratio = resultados(entrada[0])
         if entrada[1] is None or entrada[1] in ('','0'):
             continue
-        print(entrada[1])
         newratio = float(entrada[1])
         if newratio is None  or oldratio == 0:  #FIXME para evitar division por 0 pereo no tiene mucho sentido
             continue
@@ -113,7 +112,6 @@ def factoriza(item,colparm):
         
         if item.itemData[k +1] is None:
             continue
-        print(k,item.itemData[0],item.itemData[k+1],factor)
         item.itemData[k+1] = item.itemData[k+1]*factor
 
 def factorizaAgregado(item,colparm):
@@ -121,7 +119,7 @@ def factorizaAgregado(item,colparm):
         oldratio = resultadosAgr(entrada[0])
         if entrada[1] is None or entrada[1] in ('','0'):
             continue
-        print(entrada[1])
+
         newratio = float(entrada[1])
         if newratio is None  or oldratio == 0:  #FIXME para evitar division por 0 pereo no tiene mucho sentido
             continue
@@ -129,7 +127,7 @@ def factorizaAgregado(item,colparm):
         
         if item.itemData[k +1] is None:
             continue
-        print(k,item.itemData[0],item.itemData[k+1],factor)
+
         item.itemData[k+1] = item.itemData[k+1]*factor
 
 def unPodemos(item,colkey):

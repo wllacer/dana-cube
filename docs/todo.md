@@ -22,12 +22,14 @@
                * one per row
                * kwarg list
         * _TODO_ fumctions and hidden columns
+        * _TODO_ Provide a consistent API
   * Charting output (use of matplotlib (https://www.boxcontrol.net/embedding-matplotlib-plot-on-pyqt5-gui.html)
   * Export infraestructure
-  * Grand Total (only row)
+  * __DONE__ Grand Total (only row)
     * From cube  (__DONE__)
-    * Calculated  _WIP_ grand total done. partial still not
-    * Presentation _WIP_ presents but can be improved
+    * Calculated  
+    * Presentation 
+    * _TODO_ functionally not its place (now in view should be in model)
   * Dynamic Filter
         * _WIP_ rough UI is in place (propertySheetEditor)
 

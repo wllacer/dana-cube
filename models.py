@@ -26,7 +26,6 @@ STATISTICS = False
 
 def fmtNumber(number, fmtOptions):
     """ taken from Rapid development with PyQT book (chapter 5) """
-
     fraction, whole = math.modf(number)
     sign = "-" if whole < 0 else ""
     whole = "{0}".format(int(math.floor(abs(whole))))
@@ -54,20 +53,6 @@ class TreeModel(QAbstractItemModel):
         self.datos = datos
         self.getHeaders()
         #self.setupModelData(datos, self.rootItem)
-        """
-           gran total
-        """
-        if GRAND_TOTAL:
-            itemData = auxData = [None for k in range(self.columnCount(None))]
-            children = self.rootItem.childItems
-            granTotal = datos.grandTotal()
-            itemData[0]=' Total'
-            for entry in granTotal:
-                pos = entry[0].ord +1
-                itemData[pos]=entry[1]
-            datos.row_hdr_idx.append(TreeItem('',0,'Gran Total',itemData),None)
-            pprint(datos.row_hdr_idx.content[''])
-            datos.row_hdr_idx[''].aux_data = [0 for k in range(0,10)] #FIXME vaya chapuza
         
     def columnCount(self, parent):
         return self.datos.col_hdr_idx.count() + 1

@@ -508,7 +508,6 @@ class Vista:
                 if 'join' in self.cubo.lista_guias[self.row_id]['rules'][i]:
                    row_join = self.cubo.lista_guias[self.row_id]['rules'][i]['join']
                    for entry in row_join:
-                       print('iter x')
                        join_entry = dict()
                        join_entry['table'] = entry.get('table')
                        join_entry['join_filter'] = entry.get('filter')
@@ -520,7 +519,6 @@ class Vista:
                 if 'join' in self.cubo.lista_guias[self.col_id]['rules'][j]:
                    col_join = self.cubo.lista_guias[self.col_id]['rules'][j]['join']
                    for entry in col_join:
-                       print('iter y')
                        join_entry = dict()
                        join_entry['table'] = entry.get('table')
                        join_entry['join_filter'] = entry.get('filter')
@@ -568,7 +566,6 @@ class Vista:
             if 'join' in self.cubo.lista_guias[self.col_id]['rules'][j]:
                 col_join = self.cubo.lista_guias[self.col_id]['rules'][j]['join']
                 for entry in col_join:
-                    print('iter y')
                     join_entry = dict()
                     join_entry['table'] = entry.get('table')
                     join_entry['join_filter'] = entry.get('filter')
@@ -717,7 +714,7 @@ class Vista:
         if DEBUG:
             print(time.time(),'Tree ',len(array),self.row_hdr_idx.count())  
 
-    def toTree2D(self):
+    def toTree2D(self,grandTotal=True):
         array = self.toTable()
         for key in self.row_hdr_idx.traverse(mode=1):
             elem = self.row_hdr_idx[key]
@@ -735,9 +732,73 @@ class Vista:
                 stat_dict = stats(datos[1:])
                 elem.aux_data=stat_dict
             elem.setData(datos)
+        if grandTotal:
+            self.row_hdr_idx.rebaseTree()
+            tabla = self.grandTotal()
+            datos =['Gran Total',]+[elem[1] for elem in tabla]
+            elem = self.row_hdr_idx['//']
+            if STATISTICS :
+                stat_dict = stats(datos[1:])
+                elem.aux_data=stat_dict
+            elem.setData(datos)
+                    
         if DEBUG:       
             print(time.time(),'Tree ',len(array),self.row_hdr_idx.count())  
 
+    def recalcGrandTotal(self):
+        def cargaAcumuladores():
+            if elem.isLeaf():
+                for k in range(len(acumuladores)):
+                    for ind,item in enumerate(elem.getPayload()):
+                        if item is not None:
+                            acumuladores[k][ind]['max'] = max(acumuladores[k][ind]['max'],item)
+                            acumuladores[k][ind]['min'] = min(acumuladores[k][ind]['min'],item)
+                            acumuladores[k][ind]['sum'] += item
+                            acumuladores[k][ind]['count'] += 1
+        def procesa():
+            if self.agregado == 'avg':
+                datos = [item['sum']/item['count'] if item['count'] != 0 else None for item in acumuladores[-1] ]
+            else:
+                datos = [item[self.agregado] if item[self.agregado] != 0 else None for item in acumuladores[-1] ]
+            padres[-1].setPayload(datos)
+            if STATISTICS :
+                stat_dict = stats(datos)
+                padres[-1].aux_data=stat_dict
+
+        
+        arbol = self.row_hdr_idx
+        numcol = self.col_hdr_idx.count()
+        padres = []
+        acumuladores = []
+        for key in arbol.traverse(mode=1):
+            elem = arbol[key]
+            prof = elem.depth()
+            if len(padres) < prof:
+                padres.append(elem.parentItem)
+                acumuladores.append([ {'max':0,'min':0,'count':0,'sum':0} for k in range(numcol)])
+                cargaAcumuladores()
+            elif len(padres) == prof:
+                if padres[-1] == elem.parentItem:
+                    cargaAcumuladores()
+                else:
+                    print('cambio de padre')
+            elif len(padres) > prof:
+                procesa()
+                del padres[-1]
+                del acumuladores[-1]
+                cargaAcumuladores()
+                #if padres[-1] == elem.parentItem:
+                    #print('no cambia nada')
+                #else:
+                    #print('nuevo padre')
+                    #padres.append(elem.parentItem)
+                print('para atras')
+        else:
+            while padres[-1].parent() is not None:
+                procesa()
+                del padres[-1]
+                del acumuladores[-1]
+    
     def traspose(self):
         tmp_col = self.row_id
         tmp_row = self.col_id
@@ -780,7 +841,7 @@ class Vista:
             exit(-1)
 
         cab_col = [None for k in range(indice.count() +1)]
-        print(indice.count())
+
         for key in indice.traverse(None,1):
             idx = indice[key].ord
             desc = indice[key].getFullDesc()
@@ -836,14 +897,15 @@ def experimental():
         #ind += 1
 
     vista=Vista(cubo,3,0,'sum','votes_presential')
-    pprint(vista.grandTotal())
+    #pprint(vista.grandTotal())
     #tabla = vista.toKeyedTable()
-    #vista.toTree2D()
+    vista.toTree2D()
+    vista.recalcGrandTotal()
     #col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
     #print(col_hdr)
     #for key in vista.row_hdr_idx.content:
         #elem = vista.row_hdr_idx[key]
-        #pprint(elem)
+        #print(elem,elem.itemData,elem.depth())
     #vista.traspose()
     #row_hdr = vista.fmtHeader('row',separador='\n',sparse='True')
     #print(col_hdr)
@@ -852,10 +914,13 @@ def experimental():
         #pprint(elem)
     #print(vista.row_hdr_idx.count())
     #presenta(vista)
-    print(vista.dim_row)
-    for key in vista.row_hdr_idx.traverse(None,2):
-        #print(key,vista.row_hdr_idx[key].desc,vista.row_hdr_idx[key].getFullDesc(),getOrderedText(vista.row_hdr_idx[key].getFullDesc(),sparse=False,separator=':'))
-        print(key,vista.row_hdr_idx[key].desc,vista.row_hdr_idx[key].depth())
+    #print(vista.dim_row)
+    #vista.row_hdr_idx.rebaseTree()
+    #pprint(vista.row_hdr_idx.content)
+    #print(vista.row_hdr_idx['//'].key)
+    #for key in vista.row_hdr_idx.traverse(None,1):
+        ##print(key,vista.row_hdr_idx[key].desc,vista.row_hdr_idx[key].getFullDesc(),getOrderedText(vista.row_hdr_idx[key].getFullDesc(),sparse=False,separator=':'))
+        #print(key,vista.row_hdr_idx[key].desc,vista.row_hdr_idx[key].depth())
     #for elem in vista.array:
         #print(elem[0].desc,elem[1].desc,elem[2])
     

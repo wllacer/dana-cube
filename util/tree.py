@@ -46,9 +46,28 @@ class TreeItem(object):
             return self.itemData[column]
         except IndexError:
             return None
+        
+    def getPayload(self):
+        return self.itemData[1:]
+    
+    def getLabel(self):
+        return self.itemData[0]
+    
+    def isLeaf(self):
+        if len(self.childItems) == 0:
+            return True
+        else:
+            return False
 
     def setData(self,data):
         self.itemData = data
+        
+    def setPayload(self,data):
+        self.itemData[1:] = data[:]
+    
+    def setLabel(self,label):
+        self.itemData[0]=label
+        
         
     def parent(self):
         return self.parentItem
@@ -108,6 +127,17 @@ class TreeDict(object):
         self.content={}
         self.rootItemKey="/"
         self.rootItem=TreeItem(self.rootItemKey,-1,"RootNode")
+
+
+    def rebaseTree(self):
+        self.content['//']=self.rootItem
+        self.content['//'].key = '//'
+        self.content['//'].desc= "Grand Total"
+        newRoot=TreeItem(self.rootItemKey,-1,"RootNode")
+        newRoot.appendChild(self.rootItem)
+        self.rootItem.parentItem = newRoot
+        self.rootItem = newRoot
+       
         
     def __append(self,node):
         if node.parentItem == None:
