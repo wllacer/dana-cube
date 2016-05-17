@@ -57,7 +57,8 @@
     * create from directory entry
     * ready made entries
   * Context menu https://wiki.python.org/moin/PyQt/Creating%20a%20context%20menu%20for%20a%20tree%20view
-  * __HOLD__ (configuration) Preset time intervals as general option in cube (this,(N) period (today backwards),(N) last (not including))x(week,month,year)    
+  * __HOLD__ (configuration) Preset time intervals as general option in cube (this,(N) period (today backwards),(N) last (not including))x(week,month,year) 
+  * Traspose on actual data not view base data
 
 * bugs
   * __DONE__ Kdevelop editor defaults is undermining Py 3 compatibility. Need to think about it (just better parametrization)
@@ -70,6 +71,7 @@
   * KABOOM on cube change -> cancel
   * tamaño de algun elemento de la lista
   * Alchemy no carga en Python3
+  * Cabeceras de columnas con GRAND_TOTAL one off
 
   * __DONE__ in guides allow blank filter
  

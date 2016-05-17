@@ -19,7 +19,7 @@ FIXME y propagarse en el filtro si es jerarquico
 #TODO En ciertas circunstancias debe o no provocarse y/o informar del error
 
 '''
-STATISTICS=False
+
 DEBUG = True
 TRACE=True
 DELIMITER=':'
@@ -407,14 +407,15 @@ class Cubo:
 class Vista:
     #TODO falta documentar
     #TODO falta implementar la five points metric
-    def __init__(self, cubo,row, col,  agregado, campo, filtro=''):
+    def __init__(self, cubo,row, col,  agregado, campo, filtro='',totalizado=True, stats=True):
         
         self.cubo = cubo
         # deberia verificar la validez de estos datos
         self.agregado=agregado
         self.campo = campo
         self.filtro = filtro
-        
+        self.totalizado = True
+        self.stats = True
         self.row_id = None   #son row y col. a asignar en setnewview
         self.col_id = None
 
@@ -430,7 +431,7 @@ class Vista:
         
         self.setNewView(row, col)
         
-    def setNewView(self,row, col, agregado=None, campo=None, filtro=''):
+    def setNewView(self,row, col, agregado=None, campo=None, filtro='',totalizado=True, stats=True):
         
         dim_max = len(self.cubo.lista_guias)
         
@@ -464,6 +465,12 @@ class Vista:
         if self.filtro != filtro:
             procesar = True
             self.filtro = filtro
+        if self.totalizado != totalizado:
+            procesar = True
+            self.totalizado = totalizado
+        if self.stats != stats:
+            procesar = True
+            self.stats = stats
             
         if procesar:
         
@@ -707,10 +714,9 @@ class Vista:
             elem = self.row_hdr_idx[key]
             datos = [ getOrderedText(elem.getFullDesc(),sparse=True,separator=''),] +\
                     array[elem.ord][:]
-            if STATISTICS :
-                stat_dict = stats(array[elem.ord])
-                elem.aux_data=stat_dict
             elem.setData(datos)
+            if self.stats:
+                elem.setStatistics()
         if DEBUG:
             print(time.time(),'Tree ',len(array),self.row_hdr_idx.count())  
 
@@ -720,27 +726,26 @@ class Vista:
             elem = self.row_hdr_idx[key]
             datos = [ getOrderedText(elem.getFullDesc(),sparse=True,separator=''),] +\
                     array[elem.ord][:]
-            if STATISTICS :
-                stat_dict = stats(array[elem.ord])
-                elem.aux_data=stat_dict
             elem.setData(datos)
+            if self.stats:
+                elem.setStatistics()
         for key in self.col_hdr_idx.traverse(mode=1):
             elem = self.col_hdr_idx[key]
             datos = [ getOrderedText(elem.getFullDesc(),sparse=True,separator=''),] +\
                     [ array[ind][elem.ord] for ind in range(self.row_hdr_idx.count()) ]
-            if STATISTICS :
-                stat_dict = stats(datos[1:])
-                elem.aux_data=stat_dict
             elem.setData(datos)
+            if self.stats:
+                elem.setStatistics()
+
         if grandTotal:
             self.row_hdr_idx.rebaseTree()
             tabla = self.grandTotal()
             datos =['Gran Total',]+[elem[1] for elem in tabla]
             elem = self.row_hdr_idx['//']
-            if STATISTICS :
-                stat_dict = stats(datos[1:])
-                elem.aux_data=stat_dict
             elem.setData(datos)
+            if self.stats:
+                elem.setStatistics()
+
                     
         if DEBUG:       
             print(time.time(),'Tree ',len(array),self.row_hdr_idx.count())  
@@ -761,9 +766,8 @@ class Vista:
             else:
                 datos = [item[self.agregado] if item[self.agregado] != 0 else None for item in acumuladores[-1] ]
             padres[-1].setPayload(datos)
-            if STATISTICS :
-                stat_dict = stats(datos)
-                padres[-1].aux_data=stat_dict
+            if self.stats :
+                padres[-1].setStatistics()
 
         
         arbol = self.row_hdr_idx

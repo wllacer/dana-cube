@@ -21,7 +21,7 @@ from models import *
 
 from user_functions import *
 
-STATISTICS = False
+
 #FIXED 1 zoom view breaks. Some variables weren't available
 #     FIXME zoom doesn't trigger any action with the new interface
 #FIXED 1 config view doesn't fire. Definition too early
@@ -169,6 +169,7 @@ class MainWindow(QMainWindow):
                 self.model.getHeaders()
                 self.model.rootItem = self.vista.row_hdr_idx.rootItem
                 self.model.endResetModel()
+                self.view.expandToDepth(2)
                 self.refreshTable()
 
 
@@ -199,6 +200,7 @@ class MainWindow(QMainWindow):
         self.model.getHeaders()
         self.model.rootItem = self.vista.row_hdr_idx.rootItem
         self.model.endResetModel()
+        self.view.expandToDepth(2)
         app.restoreOverrideCursor()
         #self.refreshTable()
 
@@ -215,6 +217,7 @@ class MainWindow(QMainWindow):
                 continue
         #self.model.rootItem = self.vista.row_hdr_idx.rootItem    
         self.model.endResetModel()
+        self.view.expandToDepth(2)
         app.restoreOverrideCursor()
         self.restorator.setEnabled(False)
 
@@ -232,17 +235,20 @@ class MainWindow(QMainWindow):
                a_desc[idx] = guia[key].desc
                idx += 1
            if entry[1] in ('colparm',):
+              app.restoreOverrideCursor()
               a_spec = [ [a_desc[k],None,None,None] for k in range(len(a_desc))]
               parmDialog = propertySheetDlg('Introduzca los valores a simular',a_spec, self)
               if parmDialog.exec_():
                   pass
                   #print([a_spec[k][1] for k in range(len(a_spec))])
- 
+              app.setOverrideCursor(QCursor(Qt.WaitCursor))
         elif entry[1] in 'kwargs':
+              app.restoreOverrideCursor()
               a_spec = [ [argumento,None,None,None] for argumento in USER_KWARGS_LIST[entry[0]]]
               parmDialog = propertySheetDlg('Introduzca los valores a simular',a_spec, self)
               if parmDialog.exec_():
                   pass
+              app.setOverrideCursor(QCursor(Qt.WaitCursor))
             
         for key in self.model.datos.row_hdr_idx.traverse(mode=1):
             item = self.model.datos.row_hdr_idx[key]
@@ -262,8 +268,10 @@ class MainWindow(QMainWindow):
             elif entry[1] in ('colparm','rowparm','kwargs'):
                 col_parm=[(a_spec[k][0],a_spec[k][1]) for k in range(len(a_spec))] #nombre y valor
                 entry[0](item,col_parm)
-
-            
+            if self.vista.stats :
+               item.setStatistics()
+               
+             
         
     def dispatch(self,ind):
         #TODO reducir el numero de arrays temporales

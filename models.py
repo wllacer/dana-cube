@@ -21,8 +21,6 @@ from core import Cubo,Vista
 from util.tree import *
 from util.fivenumbers import isOutlier
 
-GRAND_TOTAL = True
-STATISTICS = False
 
 def fmtNumber(number, fmtOptions):
     """ taken from Rapid development with PyQT book (chapter 5) """
@@ -70,8 +68,8 @@ class TreeModel(QAbstractItemModel):
                 return Qt.AlignLeft| Qt.AlignVCenter
         elif role == Qt.BackgroundRole:
             if index.column() != 0:
-                if self.datos.format['yellowoutliers'] and STATISTICS:
-                    if isOutlier(item.data(index.column()),item.aux_data):
+                if self.datos.format['yellowoutliers'] and self.datos.stats:
+                    if isOutlier(item.data(index.column()),item.getStatistics()):
                         return QColor(Qt.yellow)
                 if self.datos.format['rednegatives'] and item.data(index.column() < 0) :
                     return QColor(Qt.red)

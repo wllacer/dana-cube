@@ -5,6 +5,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from pprint import pprint
+from util.fivenumbers import stats
 
 (_ROOT, _DEPTH, _BREADTH) = range(3)
 DELIMITER=':'
@@ -26,6 +27,7 @@ class TreeItem(object):
         else:
             self.ord = ord
         self.itemData = data
+        self.statsData = None
         self.childItems = []
 
     def appendChild(self, item):
@@ -50,6 +52,9 @@ class TreeItem(object):
     def getPayload(self):
         return self.itemData[1:]
     
+    def getStatistics(self):
+        return self.statsData
+    
     def getLabel(self):
         return self.itemData[0]
     
@@ -68,7 +73,10 @@ class TreeItem(object):
     def setLabel(self,label):
         self.itemData[0]=label
         
-        
+    def setStatistics(self):
+        stat_dict = stats(self.getPayload())
+        self.statsData=stat_dict
+
     def parent(self):
         return self.parentItem
 
