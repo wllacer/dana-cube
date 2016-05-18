@@ -35,6 +35,37 @@ from user_functions import *
 #FIXED implementar sort en modelo
 #TODO uso de formato numerico directamente en la view setNumberFormat
 #ALERT dopado para que vaya siempre a datos de prueba
+
+def waiting_effects(function):
+    """
+      decorator from http://stackoverflow.com/questions/8218900/how-can-i-change-the-cursor-shape-with-pyqt
+      para poner el cursor en busy/libre al ejectuar una funcion que va a tardar
+    """
+    def new_function(*args, **kwargs):
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+        try:
+            return function(*args, **kwargs)
+        except Exception as e:
+            raise e
+            print("Error {}".format(e.args[0]))
+        finally:
+            QApplication.restoreOverrideCursor()
+    return new_function
+
+#def model_change(model):
+    #"""
+    #""" 
+    #def new_function(*args, **kwargs):
+        #model.beginResetModel()       
+        #try:
+            #return function(*args, **kwargs)
+        #except Exception as e:
+            #raise e
+            #print("Error {}".format(e.args[0]))
+        #finally:
+            #model.endResetModel()
+    #return new_function
+
 class MainWindow(QMainWindow):
 
     
@@ -101,21 +132,37 @@ class MainWindow(QMainWindow):
         self.max_col_level  = self.vista.dim_col
         self.row_range = [0, self.vista.row_hdr_idx.count() -1]
         self.col_range = [0, self.vista.col_hdr_idx.count() -1]
-
+        
+    @waiting_effects
     def autoCarga(self,my_cubos):
         base = my_cubos['default']
-
         self.cubo=Cubo(my_cubos[base['cubo']])
-
-        app.setOverrideCursor(QCursor(Qt.WaitCursor))
         self.vista = Vista(self.cubo, base['vista']['row'], base['vista']['col'],base['vista']['agregado'],base['vista']['elemento'])
-        app.restoreOverrideCursor()
-
         self.vista.format = self.format
-
         self.defineModel()
+        
+        
+    def changeView(self,row, col, agregado, campo, total=True, estad=True):
+        self.vista.setNewView(row, col, agregado, campo, totalizado=total, stats=estad)
+        self.vista.toTree2D()
+        self.model.beginResetModel()       
+        self.model.datos=self.vista
+        self.model.getHeaders()
+        self.model.rootItem = self.vista.row_hdr_idx.rootItem
+        self.model.endResetModel()
+        self.view.expandToDepth(2)
+        
+    #@waiting_effects
+    def cargaVista(self,row, col, agregado, campo, total=True, estad=True):
+        if self.vista is None:
+            self.vista = Vista(self.cubo, row, col, agregado, campo, totalizado=total, stats=estad)
+            self.vista.format = self.format
+            self.defineModel()
+        else:
+            self.changeView(row, col, agregado, campo, total,estad)
+            self.refreshTable()
 
-
+        
     def initCube(self):
         #FIXME casi funciona ... vuelve a leer el fichero cada vez
         my_cubos = load_cubo()
@@ -161,81 +208,8 @@ class MainWindow(QMainWindow):
             totalizado = parametros[4]
             stats = parametros[5]
 
-            print(row,col,agregado,campo,totalizado,stats)
-            app.setOverrideCursor(QCursor(Qt.WaitCursor))
-            if self.vista is None:
-                self.vista = Vista(self.cubo, row, col, agregado, campo, totalizado = totalizado, stats=stats)
-                self.vista.format = self.format
-                self.defineModel()
-            else:
-                self.model.beginResetModel()
-                self.vista.setNewView(row, col, agregado, campo, totalizado = totalizado, stats=stats)
-                self.vista.toTree2D()
-                self.model.datos=self.vista
-                self.model.getHeaders()
-                self.model.rootItem = self.vista.row_hdr_idx.rootItem
-                self.model.endResetModel()
-                self.view.expandToDepth(2)
-                self.refreshTable()
+            self.cargaVista(row,col,agregado,campo,totalizado,stats)
 
-
-
-
-            app.restoreOverrideCursor()
-
-            # TODO hay que configurar algun tipo de evento para abrirlos y un parametro de configuracion
-
-            ##@waiting_effects
-            #app.setOverrideCursor(QCursor(Qt.WaitCursor))
-            #self.refreshTable()
-            #app.restoreOverrideCursor()
-            
-    def requestVistaOld(self):
-
-        vistaDlg = VistaDlg(self.cubo, self)
-
-        #TODO  falta el filtro
-        if self.vista is  None:
-            pass
-        else:
-            vistaDlg.rowCB.setCurrentIndex(self.vista.row_id)
-            vistaDlg.colCB.setCurrentIndex(self.vista.col_id)
-            vistaDlg.agrCB.setCurrentIndex(self.cubo.getFunctions().index(self.vista.agregado))
-            vistaDlg.fldCB.setCurrentIndex(self.cubo.getFields().index(self.vista.campo))
-
-        if vistaDlg.exec_():
-            row =vistaDlg.rowCB.currentIndex()
-            col = vistaDlg.colCB.currentIndex()
-            agregado = vistaDlg.agrCB.currentText()
-            campo = vistaDlg.fldCB.currentText()
-
-            app.setOverrideCursor(QCursor(Qt.WaitCursor))
-            if self.vista is None:
-                self.vista = Vista(self.cubo, row, col, agregado, campo)
-                self.vista.format = self.format
-                self.defineModel()
-            else:
-                self.model.beginResetModel()
-                self.vista.setNewView(row, col, agregado, campo)
-                self.vista.toTree2D()
-                self.model.datos=self.vista
-                self.model.getHeaders()
-                self.model.rootItem = self.vista.row_hdr_idx.rootItem
-                self.model.endResetModel()
-                self.view.expandToDepth(2)
-                self.refreshTable()
-
-
-
-
-            app.restoreOverrideCursor()
-
-            # TODO hay que configurar algun tipo de evento para abrirlos y un parametro de configuracion
-
-            ##@waiting_effects
-            #app.setOverrideCursor(QCursor(Qt.WaitCursor))
-            #self.refreshTable()
-            #app.restoreOverrideCursor()
 
     def setNumberFormat(self):
         """ adapted from Rapid development with PyQT book (chapter 5) """
@@ -245,35 +219,39 @@ class MainWindow(QMainWindow):
         self.numberFormatDlg.raise_()
         self.numberFormatDlg.activateWindow()
         self.refreshTable()
-
+        
+    @waiting_effects
     def traspose(self):
-        app.setOverrideCursor(QCursor(Qt.WaitCursor))
         self.model.beginResetModel()
         self.vista.traspose()
         self.model.getHeaders()
         self.model.rootItem = self.vista.row_hdr_idx.rootItem
         self.model.endResetModel()
         self.view.expandToDepth(2)
-        app.restoreOverrideCursor()
         #self.refreshTable()
 
+    @waiting_effects
     def restoreData(self):
-        app.setOverrideCursor(QCursor(Qt.WaitCursor))
+        #app.setOverrideCursor(QCursor(Qt.WaitCursor))
         self.model.beginResetModel()
         for key in self.model.datos.row_hdr_idx.traverse(mode=1):
             item = self.model.datos.row_hdr_idx[key]
-            try:  #alguien deberia de estrangularme. adios cajas negras
-                if item.orig_data is not None:
-                    item.itemData = item.orig_data[:]
-                    item.orig_data = None
-            except AttributeError:
-                continue
+            item.restoreBackup()
         #self.model.rootItem = self.vista.row_hdr_idx.rootItem    
         self.model.endResetModel()
         self.view.expandToDepth(2)
-        app.restoreOverrideCursor()
+        #app.restoreOverrideCursor()
         self.restorator.setEnabled(False)
 
+    def requestFunctionParms(self,spec,values):
+        app.restoreOverrideCursor()
+        parmDialog = propertySheetDlg('Introduzca los valores a simular',spec,values, self)
+        if parmDialog.exec_():
+            pass
+            #print([a_spec[k][1] for k in range(len(a_spec))])
+        app.setOverrideCursor(QCursor(Qt.WaitCursor))
+
+        
     def funDispatch(self,entry,ind):
         #FIXME clarificar codificacion. es enrevesada
         if entry[1] in ('colkey','colparm','rowparm'):
@@ -281,38 +259,29 @@ class MainWindow(QMainWindow):
                guia = self.model.datos.col_hdr_idx
            else:
                guia = self.model.datos.row_hdr_idx
+               
            a_key = [None for k in range(guia.count())]
            a_desc = [None for k in range(guia.count())]
            a_data = [ None for k in range(guia.count())]
+           
            idx = 0
            for key in guia.traverse(mode=1):
                a_key[idx] = key.split(':')[-1]
                a_desc[idx] = guia[key].desc
                idx += 1
-           if entry[1] in ('colparm',):
-              app.restoreOverrideCursor()
+               
+           if entry[1] in ('colparm','rowparm'):
               a_spec = [ [a_desc[k],None,None] for k in range(len(a_desc))]
-              parmDialog = propertySheetDlg('Introduzca los valores a simular',a_spec,a_data, self)
-              if parmDialog.exec_():
-                  pass
-                  #print([a_spec[k][1] for k in range(len(a_spec))])
-              app.setOverrideCursor(QCursor(Qt.WaitCursor))
+              self.requestFunctionParms(a_spec,a_data)
+              
         elif entry[1] in 'kwargs':
-              app.restoreOverrideCursor()
               a_spec = [ [argumento,None,None] for argumento in USER_KWARGS_LIST[entry[0]]]
               a_data = [ None for k in range(len(a_desc))]
-              parmDialog = propertySheetDlg('Introduzca los valores a simular',a_spec, a_data, self)
-              if parmDialog.exec_():
-                  pass
-              app.setOverrideCursor(QCursor(Qt.WaitCursor))
-            
+              self.requestFunctionParms(a_spec,a_data)            
+              
         for key in self.model.datos.row_hdr_idx.traverse(mode=1):
             item = self.model.datos.row_hdr_idx[key]
-            try:  #alguien deberia de estrangularme. adios cajas negras
-                if item.orig_data is None:
-                    item.orig_data = item.itemData[:]
-            except AttributeError:
-                item.orig_data = item.itemData[:]
+            item.setBackup()
             if entry[1] == 'row':
                 item.itemData[1:]=entry[0](item.itemData[1:])
             elif entry[1] == 'item':

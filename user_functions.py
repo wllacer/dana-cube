@@ -38,16 +38,20 @@ def resultados(partido):
         "EN COMÚ":3.72133439799253,
         "ERC-CATSI":2.40333940776187,
         "GBAI":0.122531253309765,
-        "IU-UPeC":3.70205679981684,
-        "MÉS":0.136074096879415,
+        #"IU-UPeC":3.70205679981684,
+        #"MÉS":0.136074096879415,
         "NÓS":0.282583040951081,
-        "PODEMOS":12.7611604239852,
+        "PODEMOS":12.7611604239852 + 3.70205679981684 +0.136074096879415,
         "PODEMOS-COMPROMÍS":2.69120804771348,
         "PODEMOS-En Marea-ANOVA-EU":1.63769352340476,
         "PP":28.9374594531795,
         "PSOE":22.1801820596102
         }
-    return datos[partido]
+    try:
+        return datos[partido]
+    except KeyError:
+        return None
+
 
 def resultadosAgr(partido):
     datos ={
@@ -94,10 +98,10 @@ def asigna(item):
     prov = item['key'].split(':')[-1]
     puestos = escanos(prov)
     if puestos is None:
-        item.itemData[1:]= [ None for k in range(len(item.itemData)-1)]
+        item.setPayload([ None for k in range(item.lenPayload())])
         return
     else:
-        item.itemData[1:] = dhont(puestos,item.itemData[1:])
+        item.setPayload(dhont(puestos,item.getPayload()))
 
 
 def factoriza(item,colparm):
@@ -105,14 +109,17 @@ def factoriza(item,colparm):
         oldratio = resultados(entrada[0])
         if entrada[1] is None or entrada[1] in ('','0'):
             continue
+        elif entrada[1] == '0.0':
+            item.spi(k,0.0)
+            continue
         newratio = float(entrada[1])
         if newratio is None  or oldratio == 0:  #FIXME para evitar division por 0 pereo no tiene mucho sentido
             continue
         factor = newratio/oldratio
         
-        if item.itemData[k +1] is None:
+        if item.gpi(k) is None:
             continue
-        item.itemData[k+1] = item.itemData[k+1]*factor
+        item.spi(k,item.gpi(k)*factor)
 
 def factorizaAgregado(item,colparm):
     for k,entrada in enumerate(colparm):
@@ -125,10 +132,10 @@ def factorizaAgregado(item,colparm):
             continue
         factor = newratio/oldratio
         
-        if item.itemData[k +1] is None:
+        if item.gpi(k) is None:
             continue
 
-        item.itemData[k+1] = item.itemData[k+1]*factor
+        item.spi(k,item.gpi(k)*factor)
 
 def unPodemos(item,colkey):
     potemos = colkey.index('3736')+1
@@ -192,11 +199,18 @@ USER_FUNCTION_LIST=( ('Porcentajes calculados en la fila',((porcentaje,'row',),)
                                            (unPodemos,'colkey',),
                                            (asigna,'item',)
                                          )),
-                     ('Simulacion resultados',(
+                     ('Simulacion resultados Podemos Agregado',(
                                            (borraIU,'colkey',),
                                            (borraMes,'colkey',),
                                            (unPodemos,'colkey',),
                                            (factorizaAgregado,'colparm',),
+                                           (asigna,'item','leaf'),
+                                           )),
+                    
+                     ('Simulacion resultados Podemos separados',(
+                                           (borraIU,'colkey',),
+                                           (borraMes,'colkey',),
+                                           (factoriza,'colparm',),
                                            (asigna,'item','leaf'),
                                            )),
               )

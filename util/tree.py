@@ -32,6 +32,7 @@ class TreeItem(object):
             self.ord = ord
         self.itemData = data
         self.statsData = None
+        self.origData = None
         self.childItems = []
 
     def appendChild(self, item):
@@ -77,13 +78,40 @@ class TreeItem(object):
     def setData(self,data):
         self.itemData = data
         
+    def setBackup(self):
+        if self.origData is None :
+            self.origData = self.itemData[:]
+
+    def restoreBackup(self):
+        if self.origData is not None :
+            self.itemData = self.origData[:]
+        else:
+            self.itemData = None
+      
+    def lenPayload(self):
+        return len(self.itemData) -1
+    
     def setPayload(self,data):
         if self.itemData is None:
             self.itemData = [None,] + data
-        #FIXME ¿como se comporta cuando solo esta definda la etiqueta            
         else:
             self.itemData[1:] = data[:]
     
+    def getPayloadItem(self,ind):
+        try:
+            return self.itemData[ind +1]
+        except IndexError:
+            return None      
+    
+    def gpi(self,ind):
+        return self.getPayloadItem(ind)
+    
+    def setPayloadItem(self,ind,data):
+        self.itemData[ind +1]=data
+    
+    def spi(self,ind,data):
+        self.setPayloadItem(ind,data)
+        
     def setLabel(self,label):
         if self.itemData is None:
             self.itemData = [label ,]
