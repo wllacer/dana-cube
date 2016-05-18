@@ -25,14 +25,15 @@ class propertySheetDlg(QDialog):
        TODO faltan datos adicionales para cada item, otro widget, cfg del widget, formato de salida
        FIXME los botones estan fatal colocados
     """
-    def __init__(self,title,context,parent=None):   
+    def __init__(self,title,context,data,parent=None):   
         super(propertySheetDlg, self).__init__(parent)
         # cargando parametros de defecto
         self.context = context
+        self.data = data
         #
         InicioLabel = QLabel(title)
         #
-        self.sheet=WPropertySheet(context)
+        self.sheet=WPropertySheet(context,data)
 
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel,
                                      Qt.Horizontal)
@@ -64,7 +65,7 @@ class propertySheetDlg(QDialog):
         for k,valor in enumerate(datos):
             if valor == '' and self.context[k][1] is None:
                continue
-            self.context[k][1] = valor
+            self.data[k] = valor
         QDialog.accept(self)
         
 class CuboDlg(QDialog):
@@ -98,14 +99,14 @@ class VistaDlg(propertySheetDlg):
     def __init__(self, cubo,parametros,parent=None):
         title = 'Eliga los parametros de la vista'
         self.context = []
-        self.context.append(['Guia filas',parametros[0],QComboBox,None,cubo.getGuideNames()],)
-        self.context.append(['Guia columnas',parametros[1],QComboBox,None,cubo.getGuideNames()],)
-        self.context.append(['Función agregacion',parametros[2],QComboBox,None,cubo.getFunctions()],)
-        self.context.append(['Campo de datos',parametros[3],QComboBox,None,cubo.getFields()],)
-        self.context.append(['Con totales',parametros[4],QCheckBox,None],)
-        self.context.append(['Con estadisticas',parametros[5],QCheckBox,None],)
+        self.context.append(('Guia filas',QComboBox,None,cubo.getGuideNames()),)
+        self.context.append(('Guia columnas',QComboBox,None,cubo.getGuideNames()),)
+        self.context.append(('Función agregacion',QComboBox,None,cubo.getFunctions()),)
+        self.context.append(('Campo de datos',QComboBox,None,cubo.getFields()),)
+        self.context.append(('Con totales',QCheckBox,None),)
+        self.context.append(('Con estadisticas',QCheckBox,None),)
         
-        super(VistaDlgNew, self).__init__(title,self.context,parent)
+        super(VistaDlg, self).__init__(title,self.context,parametros,parent)
         
         #self.sheet.resizeColumnsToContents()
         
@@ -190,62 +191,53 @@ class NumberFormatDlg(QDialog):
         self.context=[]
         """
 context[0] titulos de las filas
-           context[1] valores iniciales
-           context[2] widget a utilizar (defecto QLineEdit)
-           context[3] llamadas de configuracion del widget
-           context[4] signal,slots (me temo que a mano)
-        """        
-        thousands = [None for j in range(5)]
-        thousands[0]="&Thousands separator"
-        thousands[1]=format["thousandsseparator"]
-        thousands[2]=QLineEdit
-        thousands[3]={'setMaxLength':1,
-                 'setValidator':QRegExpValidator(punctuationRe, self)
-                 }
-        #thousands[4]={"textEdited['QString']":self.checkAndFix}
-        thousands[4]={"textEditedEvent":self.checkAndFix}
-        
-        decimalmarker = [None for j in range(5)]
-        decimalmarker[0]="Decimal &marker"
-        decimalmarker[1]=format["decimalmarker"]
-        decimalmarker[2]=QLineEdit
-        decimalmarker[3]={'setMaxLength':1,
-                 'setValidator':QRegExpValidator(punctuationRe, self),
-                 'setInputMask':"X"
-                 }
-        
-        
-        decimalplaces = [None for j in range(5)]
-        decimalplaces[0]="&Decimal places"
-        decimalplaces[1]=format["decimalplaces"]
-        decimalplaces[2]=QSpinBox
-        decimalplaces[3]={"setRange":(0,6)}
-                          
-        rednegatives = [None for j in range(5)]
-        rednegatives[0]="Red negative numbers"
-        rednegatives[1]=format["rednegatives"]
-        rednegatives[2]=QCheckBox
-        rednegatives[3]=None        
-
-        yellowoutliers = [None for j in range(5)]
-        yellowoutliers[0]="&Yellow outliers"
-        yellowoutliers[1]=format["yellowoutliers"]
-        yellowoutliers[2]=QCheckBox
-        yellowoutliers[3]=None        
-        
-        self.context.append(thousands)
-        self.context.append(decimalmarker)
-        self.context.append(decimalplaces)
-        self.context.append(rednegatives)
-        self.context.append(yellowoutliers)
-        
+           context[1] widget a utilizar (defecto QLineEdit)
+           context[2] llamadas de configuracion del widget
+           context[3] signal,slots (me temo que a mano)
+        """
+        self.context = (
+                        ("Thousands separator",
+                            QLineEdit,
+                            {'setMaxLength':1,'setValidator':QRegExpValidator(punctuationRe, self)},
+                            None,
+                        ),
+                        ("Decimal marker",
+                            QLineEdit,
+                            {'setMaxLength':1,
+                                'setValidator':QRegExpValidator(punctuationRe, self),
+                                'setInputMask':"X"
+                         },
+                         None,
+                        ),
+                        ("Decimal places",
+                            QSpinBox,
+                            {"setRange":(0,6)},
+                            None,
+                        ),
+                        ("Red negative numbers",
+                            QCheckBox,
+                            None,
+                            None,
+                        ),
+                        ("&Yellow outliers",
+                            QCheckBox,
+                            None,
+                            None,
+                        )
+                      )
+        self.data = [format["thousandsseparator"],
+                        format["decimalmarker"],
+                        format["decimalplaces"],
+                        format["rednegatives"],
+                        format["yellowoutliers"],
+                    ]
         
         self.format = format
         self.callback = callback
 
         
         grid = QGridLayout()
-        self.sheet = WPropertySheet(self.context)
+        self.sheet = WPropertySheet(self.context,self.data)
         grid.addWidget(self.sheet, 0, 0)
         self.setLayout(grid)
         self.setMinimumSize(QSize(300,220))

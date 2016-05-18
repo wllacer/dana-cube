@@ -140,28 +140,27 @@ class MainWindow(QMainWindow):
     def requestVista(self):
 
         parametros = [None for k in range(6)]
+       
+        #TODO  falta el filtro
+        if self.vista is not  None:
+            parametros[0]=self.vista.row_id
+            parametros[1]=self.vista.col_id
+            parametros[2]=self.cubo.getFunctions().index(self.vista.agregado)
+            parametros[3]=self.cubo.getFields().index(self.vista.campo)
+            parametros[4]=self.vista.totalizado
+            parametros[5]=self.vista.stats
         
         vistaDlg = VistaDlg(self.cubo,parametros, self)
-
-        #TODO  falta el filtro
-        if self.vista is  None:
-            pass
-        else:
-            vistaDlg.sheet.set(0,0,self.vista.row_id)
-            vistaDlg.sheet.set(1,0,self.vista.col_id)
-            vistaDlg.sheet.set(2,0,self.cubo.getFunctions().index(self.vista.agregado))
-            vistaDlg.sheet.set(3,0,self.cubo.getFields().index(self.vista.campo))
-            vistaDlg.sheet.set(4,0,self.vista.totalizado)
-            vistaDlg.sheet.set(5,0,self.vista.stats)
-
+            
         if vistaDlg.exec_():
-            row = vistaDlg.context[0][1]
-            col = vistaDlg.context[1][1]
-            agregado = self.cubo.getFunctions()[vistaDlg.context[2][1]]
-            #campo = self.cubo.getFunctions()[vistaDlg.context[3][1]]
-            campo = vistaDlg.sheet.cellWidget(3,0).currentText()
-            totalizado = vistaDlg.context[4][1]
-            stats = vistaDlg.context[5][1]
+            row = parametros[0]
+            col = parametros[1]
+            agregado = self.cubo.getFunctions()[parametros[2]]
+            #campo = self.cubo.getFunctions()[parametros[1]]
+            campo = vistaDlg.sheet.cellWidget(3,0).currentText() #otra manera de localizar
+            totalizado = parametros[4]
+            stats = parametros[5]
+
             print(row,col,agregado,campo,totalizado,stats)
             app.setOverrideCursor(QCursor(Qt.WaitCursor))
             if self.vista is None:
@@ -276,6 +275,7 @@ class MainWindow(QMainWindow):
         self.restorator.setEnabled(False)
 
     def funDispatch(self,entry,ind):
+        #FIXME clarificar codificacion. es enrevesada
         if entry[1] in ('colkey','colparm','rowparm'):
            if entry[1] in ('colkey','colparm'):
                guia = self.model.datos.col_hdr_idx
@@ -283,6 +283,7 @@ class MainWindow(QMainWindow):
                guia = self.model.datos.row_hdr_idx
            a_key = [None for k in range(guia.count())]
            a_desc = [None for k in range(guia.count())]
+           a_data = [ None for k in range(guia.count())]
            idx = 0
            for key in guia.traverse(mode=1):
                a_key[idx] = key.split(':')[-1]
@@ -290,16 +291,17 @@ class MainWindow(QMainWindow):
                idx += 1
            if entry[1] in ('colparm',):
               app.restoreOverrideCursor()
-              a_spec = [ [a_desc[k],None,None,None] for k in range(len(a_desc))]
-              parmDialog = propertySheetDlg('Introduzca los valores a simular',a_spec, self)
+              a_spec = [ [a_desc[k],None,None] for k in range(len(a_desc))]
+              parmDialog = propertySheetDlg('Introduzca los valores a simular',a_spec,a_data, self)
               if parmDialog.exec_():
                   pass
                   #print([a_spec[k][1] for k in range(len(a_spec))])
               app.setOverrideCursor(QCursor(Qt.WaitCursor))
         elif entry[1] in 'kwargs':
               app.restoreOverrideCursor()
-              a_spec = [ [argumento,None,None,None] for argumento in USER_KWARGS_LIST[entry[0]]]
-              parmDialog = propertySheetDlg('Introduzca los valores a simular',a_spec, self)
+              a_spec = [ [argumento,None,None] for argumento in USER_KWARGS_LIST[entry[0]]]
+              a_data = [ None for k in range(len(a_desc))]
+              parmDialog = propertySheetDlg('Introduzca los valores a simular',a_spec, a_data, self)
               if parmDialog.exec_():
                   pass
               app.setOverrideCursor(QCursor(Qt.WaitCursor))
@@ -320,7 +322,7 @@ class MainWindow(QMainWindow):
             elif entry[1] in ('colkey',):
                 entry[0](item,a_key)
             elif entry[1] in ('colparm','rowparm','kwargs'):
-                col_parm=[(a_spec[k][0],a_spec[k][1]) for k in range(len(a_spec))] #nombre y valor
+                col_parm=[(a_spec[k][0],a_data[k]) for k in range(len(a_spec))] #nombre y valor
                 entry[0](item,col_parm)
             if self.vista.stats :
                item.setStatistics()
@@ -342,6 +344,7 @@ class MainWindow(QMainWindow):
                 if elem[2] == 'leaf':
                     self.vista.recalcGrandTotal()
         self.model.endResetModel()
+        self.view.expandToDepth(2)
         app.restoreOverrideCursor()
             
     

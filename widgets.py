@@ -112,6 +112,7 @@ class WDataSheet(WPowerTable):
                 context[k][0] valores iniciales (si es comun)
                 context[k][1] widget a utilizar (defecto QLineEdit)
                 context[k][2] parametrizacion del widget (metodo:valor)
+                context[k][3] lista adicinal de valores (para QComboBox y similares)
            ...
            m numero de filas a generar
           
@@ -171,13 +172,13 @@ class WPropertySheet(WPowerTable):
         Version del TableWidget para simular hojas de propiedades
         se inicializa con el array context
            context[0] titulos de las filas
-           context[1] valores iniciales
-           context[2] widget a utilizar (defecto QLineEdit)
-           context[3] parametrizacion del widget (metodo:valor)
+           context[1] widget a utilizar (defecto QLineEdit)
+           context[2] parametrizacion del widget (metodo:valor)
            ...
-       TODO añadir mas widgets
+       FIXME que pasa cuando context != data
+       
     """
-    def __init__(self,context,parent=None): 
+    def __init__(self,context,data,parent=None): 
         
         rows=len(context)
         cols=1
@@ -188,7 +189,7 @@ class WPropertySheet(WPowerTable):
         
         cabeceras = [ k[0] for k in self.context ]
         for k in range(len(self.context)):
-            self.addCell(k,0,context[k][2:],context[k][1])
+            self.addCell(k,0,context[k][1:],data[k])
 
         self.setVerticalHeaderLabels(cabeceras)
         

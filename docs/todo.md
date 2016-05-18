@@ -73,6 +73,8 @@
   * Alchemy no carga en Python3
   * Cabeceras de columnas con GRAND_TOTAL one off
   * en el WPowerWidget separar configuracion de datos para poder usar tuplas
+  * RED NEGATIVE NUMBERS no funciona correctamente
+  * en WPropertySheet que ocurre si context != data
 
   * __DONE__ in guides allow blank filter
  

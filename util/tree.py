@@ -5,6 +5,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from pprint import pprint
+
 from util.fivenumbers import stats
 
 (_ROOT, _DEPTH, _BREADTH) = range(3)
@@ -23,7 +24,10 @@ class TreeItem(object):
          
         self.parentItem = parent
         if ord is None:
-            self.ord = self.parent().childCount()
+            if parent is not None:
+                self.ord = self.parent().childCount()
+            else:
+                self.ord = 0
         else:
             self.ord = ord
         self.itemData = data
@@ -76,6 +80,7 @@ class TreeItem(object):
     def setPayload(self,data):
         if self.itemData is None:
             self.itemData = [None,] + data
+        #FIXME ¿como se comporta cuando solo esta definda la etiqueta            
         else:
             self.itemData[1:] = data[:]
     
@@ -260,32 +265,8 @@ class TreeDict(object):
                 queue = queue[1:] + expansion  # width-first
 
 if __name__ == '__main__':
-    # Copyright (C) by Brett Kromkamp 2011-2014 (brett@perfectlearn.com)
-    # You Programming (http://www.youprogramming.com)
-    # May 03, 2014
-
-
-    (_ROOT, _DEPTH, _BREADTH) = range(3)
-
-    tree = TreeDict()
-
-    tree.add(TreeItem("Harry"))  # 
-    tree.add(TreeItem("Jane"), "Harry")
-    tree.add(TreeItem("Bill"), "Harry")
-    tree.add(TreeItem("Joe"), "Jane")
-    tree.add(TreeItem("Diane"), "Jane")
-    tree.add(TreeItem("George"), "Diane")
-    tree.add(TreeItem("Mary"), "Diane")
-    tree.add(TreeItem("Jill"), "George")
-    tree.add(TreeItem("Carol"), "Jill")
-    tree.add(TreeItem("Grace"), "Bill")
-    tree.add(TreeItem("Mark"), "Jane")
-    print(tree.content)
-    tree.display("Harry")
-    print("***** DEPTH-FIRST ITERATION *****")
-    for node in tree.traverse("Harry"):
-        print(node)
-    print("***** BREADTH-FIRST ITERATION *****")
-    for node in tree.traverse("Harry", mode=_BREADTH):
-        print(node)
-
+     item=TreeItem('alfa')
+     #item.setLabel('omega')
+     datos = [1,2,3,4,5]
+     item.setPayload(datos)
+     print(item,item.itemData)
