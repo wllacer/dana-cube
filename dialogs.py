@@ -17,7 +17,14 @@ from pprint import pprint
 
 from widgets import * 
  
-        
+"""
+  DEBUG DATA start
+"""
+cubo = None
+from core import Cubo, Vista
+from util.jsonmgr import load_cubo
+from datalayer.directory import camposDeTipo
+
         
 class propertySheetDlg(QDialog):
     """
@@ -67,7 +74,189 @@ class propertySheetDlg(QDialog):
                continue
             self.data[k] = valor
         QDialog.accept(self)
+
+from util.fechas import *
+class dateFilterDlg(QDialog):
+
+    def __init__(self,vista=None,datos=None,parent=None):   
+        """
+          This is exploratory parameters are at will
+          TODO definir formatos de entrada y salida
+        """
+        if datos is None:
+            self.data = []
+        else:
+            self.data = datos
+            
+        #TODO como hacer celdas invalidas para entrar en ellas
+        super(dateFilterDlg, self).__init__(parent)
+        # cargando parametros de defecto
+        self.context = []
+        self.descriptores = camposDeTipo("fecha",vista.cubo.db,vista.cubo.definition['table'])
+        for k in self.descriptores:
+            self.context.append(('\t {}'.format(k),
+                                  (QComboBox,None,CLASES_INTERVALO),
+                                  (QComboBox,None,TIPOS_INTERVALO),
+                                  (QSpinBox,{"setRange":(1,366)},None,1),
+                                  )
+                        )
+        rows = len(self.context)
+        cols = max( [len(item) -1 for item in self.context ])
+        self.sheet1=WPowerTable(rows,cols)
+        for i,linea in enumerate(self.context):
+            for j in range(1,len(linea)):
+                self.sheet1.addCell(i,j -1,linea[j])
+            self.sheet1.set(i,2,1)                
+            self.sheet1.cellWidget(i,0).currentIndexChanged.connect(lambda :self.seleccionCriterio(i))
+            self.sheet1.cellWidget(i,1).currentIndexChanged.connect(lambda :self.seleccionIntervalo(i))
+
+       #FIXME valor inicial        
+        cabeceras = [ k[0] for k in self.context ]
+        self.sheet1.setVerticalHeaderLabels(cabeceras)
+         
+        #self.context=[]
+        #for k in vista.cubo.getGuideNames():
+            #self.context.append(('\t{}'.format(k),
+                                 #(QComboBox,None,('=','>','<','>=','<=','como','!=','desde','hasta')),
+                                 #(QComboBox,None,None),
+                               #))
+        #self.data = data
+        #
+        InicioLabel1 = QLabel('Filtre el rango temporal que desea')
+        #InicioLabel2 = QLabel('Filtre por los campos que desee')
+        #
+        #rows = len(self.context)
+        #cols = max( [len(item) -1 for item in self.context ])
         
+        #self.sheet2=WPowerTable(rows,cols)
+        #for i,linea in enumerate(self.context):
+            #for j in range(1,len(linea)):
+                #self.sheet2.addCell(i,j -1,linea[j])
+        #cabeceras = [ k[0] for k in self.context ]
+        #self.sheet2.setVerticalHeaderLabels(cabeceras)
+
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel,
+                                     Qt.Horizontal)
+
+
+        #formLayout = QGridLayout()
+        meatLayout = QVBoxLayout()
+        #meatLayout = QGridLayout()
+        buttonLayout = QHBoxLayout()
+        
+
+        meatLayout.addWidget(InicioLabel1)
+        meatLayout.addWidget(self.sheet1)
+       
+        #meatLayout.addWidget(InicioLabel1)
+        #meatLayout.addWidget(self.sheet1,10)
+        #meatLayout.addWidget(InicioLabel2,2,0)
+        #meatLayout.addWidget(self.sheet2,3,0,5,3)
+        
+        ##formLayout.addLayout(meatLayout)        
+        buttonLayout.addWidget(buttonBox)
+        meatLayout.addLayout(buttonLayout)
+        
+        self.setLayout(meatLayout)
+        self.setMinimumSize(QSize(500,200))
+        buttonBox.accepted.connect(self.accept)
+        buttonBox.rejected.connect(self.reject)
+
+        self.setWindowTitle("Item editor")
+        
+       
+    def seleccionCriterio(self,idx):
+        print('criterio',self.sheet1.get(idx,0))
+        if self.sheet1.get(idx,0) == 0:
+            print(' a todo')
+            if not self.sheet1.cellWidget(idx,1).isHidden():
+                self.sheet1.cellWidget(idx,1).hide()
+                print('cerre el tipo')
+            if not self.sheet1.cellWidget(idx,2).isHidden():
+                self.sheet1.cellWidget(idx,2).hide()
+                print('cerre el contador')
+
+        if self.sheet1.get(idx,0) == 1:
+            if self.sheet1.cellWidget(idx,1).isHidden():
+                 self.sheet1.cellWidget(idx,1).show()
+
+            if not self.sheet1.cellWidget(idx,2).isHidden():
+                self.sheet1.cellWidget(idx,2).hide()
+                
+        else:
+            if self.sheet1.cellWidget(idx,1).isHidden():
+                self.sheet1.cellWidget(idx,1).show()
+            if self.sheet1.cellWidget(idx,2).isHidden():
+                self.sheet1.cellWidget(idx,2).show()
+
+            
+    def seleccionIntervalo(self,idx):
+       return    
+   
+    def accept(self):
+        self.data = self.sheet1.values()
+        pprint(self.data)
+        for k,valor in enumerate(self.data):
+            if valor[0] == 0:
+                continue
+            else:
+                desde,hasta = dateRange(valor[0],valor[1],periodo=valor[2])
+                print("{} BETWEEN '{}' AND '{}'".format(self.descriptores[k],desde,hasta))
+            #if valor == '' and self.context[k][1] is None:
+               #continue
+            #self.data[k] = valor
+        QDialog.accept(self)
+    
+class dataEntrySheetDlg(QDialog):
+    """
+       Genera (mas o menos) una hoja de entrada de datos
+       TODO faltan datos adicionales para cada item, otro widget, cfg del widget, formato de salida
+       FIXME los botones estan fatal colocados
+    """
+    def __init__(self,title,context,numrows,data,parent=None):   
+        super(propertySheetDlg, self).__init__(parent)
+        # cargando parametros de defecto
+        self.context = context
+        self.data = data
+        #
+        InicioLabel = QLabel(title)
+        #
+        self.sheet=WDataSheet(context,numrows)
+        self.sheet.fill(data)
+
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel,
+                                     Qt.Horizontal)
+
+
+        #formLayout = QHBoxLayout()
+        meatLayout = QVBoxLayout()
+        buttonLayout = QHBoxLayout()
+        
+       
+        meatLayout.addWidget(InicioLabel)
+        meatLayout.addWidget(self.sheet)
+        
+        #formLayout.addLayout(meatLayout)        
+        buttonLayout.addWidget(buttonBox)
+        meatLayout.addLayout(buttonLayout)
+        
+        self.setLayout(meatLayout)
+        self.setMinimumSize(QSize(480,480))
+        
+        buttonBox.accepted.connect(self.accept)
+        buttonBox.rejected.connect(self.reject)
+
+        self.setWindowTitle("Item editor")
+        
+
+    def accept(self):
+        self.data = self.sheet.values()
+        #for k,valor in enumerate(datos):
+            #if valor == '' and self.context[k][1] is None:
+               #continue
+            #self.data[k] = valor
+        QDialog.accept(self)
+
 class CuboDlg(QDialog):
     def __init__(self, dict_cubos, parent=None):
         super(CuboDlg, self).__init__(parent)
@@ -315,12 +504,12 @@ def main():
     parametros = [ 1, 0, 2,3, False, False ]
     mis_cubos = load_cubo()
     cubo = Cubo(mis_cubos['experimento'])
-    
-    form = VistaDlg(cubo, parametros)
+    vista=Vista(cubo,1,0,'sum','votes_presential')
+    form = dateFilterDlg(vista)
     form.show()
     if form.exec_():
-        cdata = [form.context[k][1] for k in range(len(parametros))]
-        print('a la vuelta de publicidad',cdata)
+        #cdata = [form.context[k][1] for k in range(len(parametros))]
+        #print('a la vuelta de publicidad',cdata)
         sys.exit()
 
 if __name__ == '__main__':

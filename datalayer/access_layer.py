@@ -5,6 +5,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 BACKEND = 'Alchemy' #'Alchemy' #or 'QtSql'
+DRIVERS = ('sqlite','mysql','postgresql','oracle') #('db2','odbc') todavia no implementadas
 '''
 Documentation, License etc.
 
@@ -24,15 +25,38 @@ from PyQt5.QtSql import *
     
 from pprint import pprint
 
-def Qt2Alchemy(driver):
-    
-    if driver == 'QSQLITE':
+
+def driver2if(driver):
+    if   BACKEND == 'Alchemy':
+        return driver2Qt(driver.lower())
+    elif BACKEND == 'QtSql':
+        return driver2Alch(driver.lower())
+    else:
+        print('Not implemented')
+        exit(-1)
+
+def driver2Qt(pdriver):
+    driver = pdriver.lower()
+    if driver in ('sqlite','qsqlite'): #solo compatibilidad codigo actural
+        return 'QSQLITE'
+    elif driver in ('mysql','mariadb'):
+        return 'QMYSQL'
+    elif driver ('postgresql','postgres','pg'):
+        return 'QPSQL'
+    elif driver == 'oracle':
+        return 'QOCI'
+    else:
+        return driver
+      
+def driver2Alch(pdriver):
+    driver = pdriver.lower()
+    if driver in ('sqlite','qsqlite'):
         return 'sqlite'
-    elif driver == 'QMYSQL':
+    elif driver in ('mysql','mariadb'):
         return 'mysql+mysqldb'
-    elif driver == 'QPSQL':
+    elif driver in ('postgresql','postgres','pg'):
         return 'postgresql+psycopg2'
-    elif driver  == 'QOCI':
+    elif driver == 'oracle':
         return 'oracle+cx_oracle'
     else:
         return driver
@@ -76,13 +100,13 @@ def getCursor(db, sql_string,funcion=None,**kwargs):
     
 def dbConnectAlch(constring):
 
-    driver = Qt2Alchemy(constring['driver'])
+    driver = driver2Alch(constring['driver'])
     if 'debug' in constring:
         debug=constring['debug']
     else:
         debug=False
     dbname = constring['dbname']
-    if constring['driver'] != 'QSQLITE':
+    if constring['driver'] not in ('QSQLITE','sqlite'):
         host = constring['dbhost']
         user = constring['dbuser']
         password = constring['dbpass']
@@ -94,11 +118,11 @@ def dbConnectAlch(constring):
     return engine.connect()
 
 def dbConnectQt(constring):
-    db = QSqlDatabase.addDatabase(constring['driver']);
+    db = QSqlDatabase.addDatabase(driver2Qt(constring['driver']));
     
     db.setDatabaseName(constring['dbname'])
     
-    if constring['driver'] != 'QSQLITE':
+    if constring['driver'] not in ('QSQLITE','sqlite'):
         db.setHostName(constring['dbhost'])
         db.setUserName(constring['dbuser'])
         db.setPassword(constring['dbpass'])

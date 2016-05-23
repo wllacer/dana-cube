@@ -59,6 +59,7 @@
   * Context menu https://wiki.python.org/moin/PyQt/Creating%20a%20context%20menu%20for%20a%20tree%20view
   * __HOLD__ (configuration) Preset time intervals as general option in cube (this,(N) period (today backwards),(N) last (not including))x(week,month,year) 
   * Traspose on actual data not view base data
+  * Replayable log (w || w&o parameters ?)
 
 * bugs
   * __DONE__ Kdevelop editor defaults is undermining Py 3 compatibility. Need to think about it (just better parametrization)
@@ -75,8 +76,9 @@
   * en el WPowerWidget separar configuracion de datos para poder usar tuplas
   * RED NEGATIVE NUMBERS no funciona correctamente
   * en WPropertySheet que ocurre si context != data
-  * Restore y estadísticas
-
+  * Restore y estadísticas 
+  * Ocultar celdas en WPowerWidget
+  
   * __DONE__ in guides allow blank filter
  
 * Performance

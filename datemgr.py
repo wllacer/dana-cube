@@ -104,10 +104,10 @@ def getDateIndex(max_date,  min_date, fmt, **opciones):
         
 def getDateEntry(psource, fmt, driver='QSQLITE'):
     
-    source=norm2List(psource)[-1]  #no esta normalizao el uso de lista o parametros indivudales
+    source=norm2List(psource)[-1]  #no esta normalizado el uso de lista o parametros indivudales
     
     marker = {}
-    if driver == 'QSQLITE':
+    if driver in ('QSQLITE','sqlite'):
         function = 'strftime'
         marker["Y"] = '%Y'
         marker["m"]= '%m'
@@ -115,7 +115,7 @@ def getDateEntry(psource, fmt, driver='QSQLITE'):
         marker["d"] = '%d'
         marker["w"] = '%w'
         marker["J"] = '%J'
-    elif driver == 'QMYSQL':
+    elif driver in ('mysql','mariadb'):
         function = 'DATE_FORMAT' 
         marker["Y"] = '%Y'
         marker["m"]= '%c'
@@ -123,7 +123,7 @@ def getDateEntry(psource, fmt, driver='QSQLITE'):
         marker["d"] = '%d'
         marker["w"] = '%w'
         marker["J"] = '%j'
-    elif driver in ('QPSQL', 'QOCI'):
+    elif driver in ('postgresql','postgres','pg','oracle'):
         function = 'to_char'   
         marker["Y"] =  'YYYY'
         marker["m"]= 'MM'
@@ -147,7 +147,7 @@ def getDateEntry(psource, fmt, driver='QSQLITE'):
             fmt_string += DELIMITER
         fmt_string += marker[char]
     element = function + "("
-    if driver == 'QSQLITE':
+    if driver in ('QSQLITE','sqlite'):
         element += "'" + fmt_string + "'," + source
     else:
         element += source + ",'" + fmt_string +  "'"
@@ -167,7 +167,7 @@ def getDateSlots(fieldname, driver='QSQLITE', zoom='n'):
     """
     base_collection= []
     zoom_collection=[]
-    if driver == 'QSQLITE':
+    if driver  in ('QSQLITE','sqlite'):
         base_col=('Y', 'Ym', 'YW', 'YW','m', 'md', 'mw', 'W', 'Ww','d', 'w', )
         # base_col=('Y', 'Ym', 'YW', 'YW','m', 'md', 'mw', 'W', 'Ww', 'J', 'd', 'w', )
     else:

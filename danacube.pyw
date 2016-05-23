@@ -152,7 +152,7 @@ class MainWindow(QMainWindow):
         self.model.endResetModel()
         self.view.expandToDepth(2)
         
-    #@waiting_effects
+    @waiting_effects
     def cargaVista(self,row, col, agregado, campo, total=True, estad=True):
         if self.vista is None:
             self.vista = Vista(self.cubo, row, col, agregado, campo, totalizado=total, stats=estad)
@@ -237,6 +237,9 @@ class MainWindow(QMainWindow):
         for key in self.model.datos.row_hdr_idx.traverse(mode=1):
             item = self.model.datos.row_hdr_idx[key]
             item.restoreBackup()
+            if self.vista.stats :
+               item.setStatistics()
+
         #self.model.rootItem = self.vista.row_hdr_idx.rootItem    
         self.model.endResetModel()
         self.view.expandToDepth(2)
@@ -283,11 +286,11 @@ class MainWindow(QMainWindow):
             item = self.model.datos.row_hdr_idx[key]
             item.setBackup()
             if entry[1] == 'row':
-                item.itemData[1:]=entry[0](item.itemData[1:])
+                item.setPayload(entry[0](item.getPayload()))
             elif entry[1] == 'item':
                 entry[0](item)
             elif entry[1] == 'map':
-                 item.itemData[1:]=list(map(entry[0],item.itemData[1:]))
+                 item.setPayload(list(map(entry[0],item.getPayload())))
             elif entry[1] in ('colkey',):
                 entry[0](item,a_key)
             elif entry[1] in ('colparm','rowparm','kwargs'):
@@ -297,14 +300,11 @@ class MainWindow(QMainWindow):
                item.setStatistics()
                
              
-        
+    @waiting_effects    
     def dispatch(self,ind):
         #TODO reducir el numero de arrays temporales
 
         self.restorator.setEnabled(True)
-        
-        app.setOverrideCursor(QCursor(Qt.WaitCursor))
-        
         self.model.beginResetModel()
 
         for elem in USER_FUNCTION_LIST[ind][1]:
@@ -314,7 +314,7 @@ class MainWindow(QMainWindow):
                     self.vista.recalcGrandTotal()
         self.model.endResetModel()
         self.view.expandToDepth(2)
-        app.restoreOverrideCursor()
+
             
     
         

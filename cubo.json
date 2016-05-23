@@ -226,7 +226,7 @@
         "connect": {
             "dbuser": null, 
             "dbhost": null, 
-            "driver": "QSQLITE", 
+            "driver": "sqlite", 
             "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db", 
             "dbpass": null
         }, 

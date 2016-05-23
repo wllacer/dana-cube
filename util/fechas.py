@@ -17,6 +17,10 @@ from pprint import pprint
 
 from datetime import date,datetime
 from dateutil.relativedelta import *
+from dateutil.rrule import *
+
+CLASES_INTERVALO = ('todo','actual','intervalo','ultimo intervalo Abierto','ultimo intervalo Cerrado')
+TIPOS_INTERVALO = ('año','cuatrimestre','trimestre','mes','quincena','semana','dia')
 
 
 def ldm(anyo,mes):
@@ -31,30 +35,39 @@ def ldm(anyo,mes):
            return 28
    
         
-def dateRange(clase,range,fecha=None,periodo=None):
+def dateRange(clase_idx,range_idx,fecha=None,intervalo=None):
     if fecha is None:
         fecha = date.today()+relativedelta(days=-1)
-    if periodo is None:
-        periodo = 0
+    if intervalo is None:
+        intervalo = 0
     intervalo = [None,None]
-    if    clase == mCLASES[0]:
-        intervalo = dateActual(range,fecha,periodo)
-    elif  clase == mCLASES[1]:
-        intervalo = datePeriodo(range,fecha,periodo)
-    elif  clase == mCLASES[2]:
-        intervalo = dateUltimoAbierto(range,fecha,periodo)
-    elif  clase == mCLASES[3]:
-        intervalo = dateUltimoCerrado(range,fecha,periodo)
+    try:
+        clase = CLASES_INTERVALO[clase_idx]
+        range = TIPOS_INTERVALO[range_idx]
+    except IndexError:
+        print('La clase o tipo de intervalos temporales no esta definida')
+        return intervalo
+
+    if    clase == CLASES_INTERVALO[0]:
+        return intervalo
+    elif    clase == CLASES_INTERVALO[1]:
+        intervalo = dateActual(range,fecha,intervalo)
+    elif  clase == CLASES_INTERVALO[2]:
+        intervalo = datePeriodo(range,fecha,intervalo)
+    elif  clase == CLASES_INTERVALO[3]:
+        intervalo = dateUltimoAbierto(range,fecha,intervalo)
+    elif  clase == CLASES_INTERVALO[4]:
+        intervalo = dateUltimoCerrado(range,fecha,intervalo)
     return intervalo
         
-def dateActual(flag,HOY,periodo=None):
+def dateActual(flag,HOY,intervalo=None):
     # actual:
     DESDE = None
     HASTA = None
-    if flag == 'año':
+    if flag == TIPOS_INTERVALO[0]:
        DESDE = date(HOY.year,1,1)
        HASTA = date(HOY.year,12,31)
-    elif flag == 'cuatrimestre':
+    elif flag == TIPOS_INTERVALO[1]:
        if HOY.month in (1,2,3,4):
             DESDE = date(HOY.year,1,1)
             HASTA = date(HOY,year,4,30)
@@ -64,7 +77,7 @@ def dateActual(flag,HOY,periodo=None):
        elif HOY.month in (9,10,11,12):
             DESDE = date(HOY.year,9,1)
             HASTA = date(HOY.year,12,31)
-    elif flag == 'trimestre':
+    elif flag == TIPOS_INTERVALO[2]:
        if HOY.month in (1,2,3):
             DESDE = date(HOY.year,1,1)
             HASTA = date(HOY.year,3,31)
@@ -77,102 +90,109 @@ def dateActual(flag,HOY,periodo=None):
        elif HOY.month in (10,11,12):
             DESDE = date(HOY.year,10,1)
             HASTA = date(HOY.year,12,31)
-    elif flag == 'mes':
+    elif flag == TIPOS_INTERVALO[3]:
        DESDE = date(HOY.year,HOY.month,1)
        HASTA = date(HOY.year,HOY.month,ldm(HOY.year,HOY.month))
-    elif flag == 'quincena':
+    elif flag == TIPOS_INTERVALO[4]:
        if HOY.day <= 15:
            DESDE=date(HOY.year,HOY.month,1)
            HASTA=date(HOY.year,HOY.month,15)
        else:
            DESDE=date(HOY.year,HOY.month,16)
            HASTA=date(HOY.year,HOY.month,ldm(HOY.year,HOY.month))
-    elif flag == 'semana':
+    elif flag == TIPOS_INTERVALO[5]:
        diasemana = HOY.weekday()
        DESDE = HOY+relativedelta(days=-(diasemana))
        HASTA = HOY+relativedelta(days=+(6-diasemana))
-    elif flag == 'dia':
+    elif flag == TIPOS_INTERVALO[6]:
        DESDE=HASTA=HOY
        
     return DESDE,HASTA
 
-def datePeriodo(flag,HOY,periodos=None):
+def datePeriodo(flag,HOY,intervalos=None):
     # actual:
     HASTA = HOY
-    if periodos is None:
+    if intervalos is None:
        factor = 1
     else:
-       factor = periodos
-    if flag == 'año':
+       factor = intervalos
+    if flag == TIPOS_INTERVALO[0]:
         DESDE=HOY+relativedelta(years=-factor)
-    elif flag == 'cuatrimestre':
+    elif flag == TIPOS_INTERVALO[1]:
         DESDE=HOY+relativedelta(months=-factor*4)
-    elif flag == 'trimestre':
+    elif flag == TIPOS_INTERVALO[2]:
         DESDE=HOY+relativedelta(months=-factor*3)
-    elif flag == 'mes':
+    elif flag == TIPOS_INTERVALO[3]:
         DESDE=HOY+relativedelta(months=-factor)
-    elif flag == 'quincena':
+    elif flag == TIPOS_INTERVALO[4]:
         DESDE=HOY+relativedelta(days=-factor*15)
-    elif flag == 'semana':
+    elif flag == TIPOS_INTERVALO[5]:
         DESDE=HOY+relativedelta(days=-factor*7)
-    elif flag == 'dia':
-       DESDE=HASTA=HOY      
+    elif flag == TIPOS_INTERVALO[6]:
+        HASTA=HOY
+        DESDE = HASTA+relativedelta(days=-(factor -1))
     return DESDE,HASTA
 
-def dateUltimoAbierto(flag,HOY,periodos=None):
+def dateUltimoAbierto(flag,HOY,intervalos=None):
     # actual:
     DESDE,HASTA = dateActual(flag,HOY)
-    if periodos is None:
+    if intervalos is None:
        factor = 1
     else:
-       factor = periodos
-    if flag == 'año':
+       factor = intervalos
+    if flag == TIPOS_INTERVALO[0]:
         DESDE=DESDE+relativedelta(years=-factor)
-    elif flag == 'cuatrimestre':
+    elif flag == TIPOS_INTERVALO[1]:
         DESDE=DESDE+relativedelta(months=-factor*4)
-    elif flag == 'trimestre':
+    elif flag == TIPOS_INTERVALO[2]:
         DESDE=DESDE+relativedelta(months=-factor*3)
-    elif flag == 'mes':
+    elif flag == TIPOS_INTERVALO[3]:
         DESDE=DESDE+relativedelta(months=-factor)
-    elif flag == 'quincena':
+    elif flag == TIPOS_INTERVALO[4]:
         DESDE=DESDE+relativedelta(days=-factor*15)
-    elif flag == 'semana':
+    elif flag == TIPOS_INTERVALO[5]:
         DESDE=DESDE+relativedelta(days=-factor*7)
-    elif flag == 'dia':
-       DESDE=HASTA=HOY      
+    elif flag == TIPOS_INTERVALO[6]:
+        HASTA=HOY
+        DESDE = HASTA+relativedelta(days=-(factor -1))
+
     return DESDE,HASTA
 
-def dateUltimoCerrado(flag,HOY,periodos=None):
+def dateUltimoCerrado(flag,HOY,intervalos=None):
     # actual:
     HASTA,PFIN = dateActual(flag,HOY)
     HASTA=HASTA+relativedelta(days=-1)
-    if periodos is None:
+    if intervalos is None:
        factor = 1
     else:
-       factor = periodos
-    if flag == 'año':
+       factor = intervalos
+    if flag == TIPOS_INTERVALO[0]:
         DESDE = HASTA+relativedelta(years=-factor,days=+1)
-    elif flag == 'cuatrimestre':
+    elif flag == TIPOS_INTERVALO[1]:
         DESDE = HASTA+relativedelta(months=-factor*4,days=+1)
-    elif flag == 'trimestre':
+    elif flag == TIPOS_INTERVALO[2]:
         DESDE = HASTA+relativedelta(months=-factor*3,days=+1)
-    elif flag == 'mes':  #el calculo del mes es un poco mas sutil (debe calcularse desde el inico del mes anterior,el +1 dia no funciona
+    elif flag == TIPOS_INTERVALO[3]:  #el calculo del mes es un poco mas sutil (debe calcularse desde el inico del mes anterior,el +1 dia no funciona
         HASTA = HASTA+relativedelta(days=+1)
         DESDE = HASTA+relativedelta(months=-factor)
         HASTA = HASTA+relativedelta(days=-1)
-    elif flag == 'quincena':
+    elif flag == TIPOS_INTERVALO[4]:
         DESDE = HASTA+relativedelta(days=-(factor*15 -1))
-    elif flag == 'semana':
+    elif flag == TIPOS_INTERVALO[5]:
         DESDE = HASTA+relativedelta(days=-(factor*7 -1))
-    elif flag == 'dia':
-       DESDE=HASTA    
+    elif flag == TIPOS_INTERVALO[6]:
+        if HASTA == date.today():
+           HASTA = HASTA+relativedate(days=-1)
+           DESDE = HASTA+relativedelta(days=-(factor))
+        else:
+           DESDE = HASTA+relativedelta(days=-(factor -1))
     return DESDE,HASTA
 
 def test():
     AHORA = datetime.now() 
     HOY   = date.today()
-    mCLASES = ('actual','intervalo','ultimoAbierto','ultimoCerrado')
-    mTYPES = ('año','cuatrimestre','trimestre','mes','quincena','semana','dia')
+    CLASES_INTERVALO = ('actual','intervalo','ultimoAbierto','ultimoCerrado')
+    TIPOS_INTERVALO = ('año','cuatrimestre','trimestre','mes','quincena','semana','dia')
     #print(AHORA,HOY)
     #DESDE = date(HOY.year,1,1)
     #print(DESDE)
@@ -182,14 +202,25 @@ def test():
     #HASTA = None
     print('el actual')
     periodo = 3
-    for flag in mTYPES:
+    for flag in TIPOS_INTERVALO:
         print(flag)
         print ('\t actual  de {0[0]} a {0[1]}'.format(dateActual(flag,HOY)))
         print ('\t periodo de {0[0]} a {0[1]}'.format(datePeriodo(flag,HOY,periodo)))
         print ('\t abieto  de {0[0]} a {0[1]}'.format(dateUltimoAbierto(flag,HOY,periodo)))
         print ('\t cerrado de {0[0]} a {0[1]}'.format(dateUltimoCerrado(flag,HOY,periodo)))
-
+        
+        
+        intervalo = dateUltimoCerrado(flag,HOY,periodo)
+        dtintervalo = list(map(lambda d: datetime(d.year,d.month,d.day),intervalo))
+#        print(intervalo,dtintervalo)
+        pprint (list(rrule(DAILY,dtstart=dtintervalo[0]).between(dtintervalo[0],dtintervalo[1],inc=True)))
+        
 if __name__ == '__main__':
 
     #experimental()
+    # para evitar problemas con utf-8, no lo recomiendan pero me funciona
+    import sys
+    reload(sys)
+    sys.setdefaultencoding('utf-8')
+
     test()

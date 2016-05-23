@@ -26,7 +26,7 @@ else:
     from PyQt5.QtSql import * 
     from PyQt5.QtCore import QVariant
     
-from access_layer import *
+from datalayer.access_layer import *
 
 def fullName(schema=None,table=None,col=None):
     cadena = ''
@@ -183,7 +183,7 @@ def getInspector(definition):
 
 if __name__ == "__main__":
     
-    definition={'driver':'QSQLITE','dbname': '/home/werner/projects/dana-cube.git/ejemplo_dana.db',
+    definition={'driver':'sqlite','dbname': '/home/werner/projects/dana-cube.git/ejemplo_dana.db',
                 'dbhost':None,'dbuser':None,'dbpass':None,'debug':False } 
     #dirQt(definition)
     #dirAlchI(definition)

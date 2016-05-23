@@ -20,6 +20,13 @@ from util.record_functions import norm2List
 class WPowerTable(QTableWidget):
     # TODO mas tipos
     # TODO un defecto razonable
+
+    def __init__(self,rows=0,cols=0,parent=None):
+        super(WPowerTable,self).__init__(rows,cols,parent)
+        self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum);
+        #self.resizeRowsToContents()
+        #self.resizeColumnsToContents()
+        
     def addCell(self,x,y,colDef,defVal=None):
         item = defVal
         type = colDef[0]
@@ -41,7 +48,10 @@ class WPowerTable(QTableWidget):
                 editItem.setChecked(item)
         elif type == QSpinBox:
             editItem = QSpinBox()
-            editItem.setValue(item)
+            if item is None:    
+                editItem.setValue(0)
+            else:
+                editItem.setValue(item)
         elif type == QComboBox:
             editItem = QComboBox()
             if listVals is not None:
@@ -51,7 +61,6 @@ class WPowerTable(QTableWidget):
             else:
                 print(item)
                 editItem.setCurrentIndex(item)
-
               
         else:
             print('Noooop',x)
@@ -71,6 +80,15 @@ class WPowerTable(QTableWidget):
                 shoot(*parms)
 
         self.setCellWidget(x,y,editItem)
+
+    def values(self):
+        valores=[]
+        for x in range(self.rowCount()):
+            linea=[]
+            for y in range(self.columnCount()):
+                linea.append(self.get(x,y))
+            valores.append(linea)
+        return valores
 
     def set(self,x,y,value):
         if isinstance(self.cellWidget(x,y),QLineEdit):
@@ -145,14 +163,14 @@ class WDataSheet(WPowerTable):
             for y in range(cols):
                 self.set(x,y,data[x][y])
             
-    def values(self):
-        valores=[]
-        for x in range(self.rowCount()):
-            linea=[]
-            for y in range(self.columnCount()):
-                linea.append(self.get(x,y))
-            valores.append(linea)
-        return valores
+    #def values(self):
+        #valores=[]
+        #for x in range(self.rowCount()):
+            #linea=[]
+            #for y in range(self.columnCount()):
+                #linea.append(self.get(x,y))
+            #valores.append(linea)
+        #return valores
      
     def valueCol(self,col=0):
         """
