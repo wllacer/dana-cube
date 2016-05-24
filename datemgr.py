@@ -28,20 +28,21 @@ def getDateIndexElement(max_date, min_date, char):
         min_rg = 0
         max_rg = 5 + 1
         format = '%01d'
+    #
     elif char == 'd':
-        min_rg = 0
+        min_rg = 1
         max_rg = 31 +1
         format = '%02d'
     elif char == 'J':
-        min_rg = 0
+        min_rg = 1
         max_rg = 366 +1
         format = '%03d'
     elif char == 'W':
-        min_rg = 0
+        min_rg = 1
         max_rg = 53 +1
         format = '%02d'
     elif char == 'm':
-        min_rg = 0
+        min_rg = 1
         max_rg = 12+1
         format = '%02d'
     elif char == 'Y':
