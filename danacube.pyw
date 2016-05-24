@@ -228,7 +228,11 @@ class MainWindow(QMainWindow):
         self.model.rootItem = self.vista.row_hdr_idx.rootItem
         self.model.endResetModel()
         self.view.expandToDepth(2)
+
         #self.refreshTable()
+        #app.restoreOverrideCursor()
+        #self.refreshTable()file:///home/werner/projects/dana-cube.git/danacube.pyw
+
 
     @waiting_effects
     def restoreData(self):
