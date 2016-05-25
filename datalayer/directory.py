@@ -20,7 +20,7 @@ Documentation, License etc.
 #from PyQt4.QtSql import *
 if BACKEND == 'Alchemy':
     from  sqlalchemy import create_engine,inspect,MetaData, types
-    from  sqlalchemy.exc import CompileError
+    from  sqlalchemy.exc import CompileError, OperationalError
     from  sqlalchemy.sql import text
 else:
     from PyQt5.QtSql import * 
@@ -71,24 +71,28 @@ def dirAlchI(definition):
     for schema in schemata:
         print(fullName(schema))
         for table_name in inspector.get_table_names(schema):
-            print('\t',fullName(schema,table_name))
-            for column in inspector.get_columns(table_name,schema):
-                #print('\t\t',campo.name(),campo.type(),campo.length(),campo.precision())
-                #pprint(column)
-                try:
-                    name = column['name']
-                    tipo = column.get('type','TEXT')
-                    print("\t\t",fullName(schema,table_name,name),tipo)
-                except CompileError: 
-                #except CompileError:
-                    print('Columna sin tipo')
-            for fk in inspector.get_foreign_keys(table_name,schema):
+            try:
+                print('\t',fullName(schema,table_name))
+                for column in inspector.get_columns(table_name,schema):
+                    #print('\t\t',campo.name(),campo.type(),campo.length(),campo.precision())
+                    #pprint(column)
+                    try:
+                        name = column['name']
+                        tipo = column.get('type','TEXT')
+                        print("\t\t",fullName(schema,table_name,name),tipo,typeHandler(tipo))
+                    except CompileError: 
+                    #except CompileError:
+                        print('Columna sin tipo')
+                for fk in inspector.get_foreign_keys(table_name,schema):
 
-                print("\t\t",fullName(schema,table_name,fk['constrained_columns']),'{}.{}()'.format(fk.get('referred_schema',''),
-                                                                        fk['referred_table'],
-                                                                        fk['referred_columns']
-                                                                    )
-                    )
+                    print("\t\t",fullName(schema,table_name,fk['constrained_columns']),'{}.{}()'.format(fk.get('referred_schema',''),
+                                                                            fk['referred_table'],
+                                                                            fk['referred_columns']
+                                                                        )
+                        )
+            except OperationalError:
+                print('error operativo en ',schema,table_name)
+                continue
 
 def dirAlchM(definition):
     from sqlalchemy import MetaData
@@ -185,6 +189,8 @@ if __name__ == "__main__":
     
     definition={'driver':'sqlite','dbname': '/home/werner/projects/dana-cube.git/ejemplo_dana.db',
                 'dbhost':None,'dbuser':None,'dbpass':None,'debug':False } 
+    definition={'driver':'mysql','dbname': 'fiction',
+                'dbhost':'localhost','dbuser':'root','dbpass':'toor','debug':False } 
     #dirQt(definition)
     #dirAlchI(definition)
     #dirAlchM(definition)

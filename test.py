@@ -116,7 +116,51 @@ def sql():
 
   print(queryConstructor(**pepe))
 
-   
+from datalayer.access_layer import *
+from datalayer.directory import *
+from util.tree import *
+
+def getSchemas(inspector,catalogo):
+    if len(inspector.get_schema_names()) is 0:
+        print('No schema available')
+        schemata =[None,]
+    else:
+        default_schema = inspector.default_schema_name
+        print(default_schema,inspector.get_schema_names())
+        for schema in inspector.get_schema_names():  #behaviour with default
+           catalogo.append(TreeItem(schema,data=[schema,True if schema == default_schema else False]))
+           for table_name in inspector.get_table_names(schema):
+               pass
+               
+    #return schemata
+
+def dir2tree():
+
+    definition={'driver':'sqlite','dbname': '/home/werner/projects/dana-cube.git/ejemplo_dana.db',
+                'dbhost':None,'dbuser':None,'dbpass':None,'debug':False } 
+    definition={'driver':'mysql','dbname': 'fiction',
+                'dbhost':'localhost','dbuser':'root','dbpass':'toor','debug':False } 
+    
+    catalogo = TreeDict()
+    inspector = getInspector(definition)    
+    getSchemas(inspector,catalogo)
+    for k in catalogo.traverse(mode=1):
+        print(k)
+
+def mysqlSchema():
+    definition={'driver':'mysql','dbname': 'fiction',
+                'dbhost':'localhost','dbuser':'root','dbpass':'toor','debug':False } 
+    #dirQt(definition)
+    dirAlchI(definition)
+    #dirAlchM(definition)
+    #conn = dbConnectAlch(definition)
+    #getTableFields(conn,'votos_locales')
+    #getTableFields(conn,'votos_locales','default') #TODO deberia contemplarse
+    #getTableFields(conn,'mio.tuyo')
+    #getTableFields(conn,'votos_v')
+    #pprint(getTableFields(conn,'votos_locales'))
+    #print(filter(lambda item: item[1] == 'fecha',getTableFields(conn,'votos_locales')))
+    #print(camposDeTipo('numerico',conn,'votos_locales'))
 
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
@@ -125,4 +169,5 @@ if __name__ == '__main__':
     sys.setdefaultencoding('utf-8')
 
     #experimental()
-    sql()
+    #dir2tree()
+    mysqlSchema()
