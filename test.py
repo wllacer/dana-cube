@@ -131,6 +131,7 @@ def getSchemas(inspector,catalogo):
            catalogo.append(TreeItem(schema,data=[schema,True if schema == default_schema else False]))
            for table_name in inspector.get_table_names(schema):
                pass
+           
                
     #return schemata
 
@@ -138,8 +139,8 @@ def dir2tree():
 
     definition={'driver':'sqlite','dbname': '/home/werner/projects/dana-cube.git/ejemplo_dana.db',
                 'dbhost':None,'dbuser':None,'dbpass':None,'debug':False } 
-    definition={'driver':'mysql','dbname': 'fiction',
-                'dbhost':'localhost','dbuser':'root','dbpass':'toor','debug':False } 
+    definition={'driver':'postgresql','dbname': 'pagila',
+                'dbhost':'localhost','dbuser':'werner','dbpass':None,'debug':False } 
     
     catalogo = TreeDict()
     inspector = getInspector(definition)    
@@ -150,7 +151,11 @@ def dir2tree():
 def mysqlSchema():
     definition={'driver':'mysql','dbname': 'fiction',
                 'dbhost':'localhost','dbuser':'root','dbpass':'toor','debug':False } 
+    definition={'driver':'mysql','dbname': 'fiction',
+                'dbhost':'localhost','dbuser':'root','dbpass':'toor','debug':False } 
     #dirQt(definition)
+    definition={'driver':'postgresql','dbname': 'pagila',
+                'dbhost':'localhost','dbuser':'werner','dbpass':None,'debug':False } 
     dirAlchI(definition)
     #dirAlchM(definition)
     #conn = dbConnectAlch(definition)

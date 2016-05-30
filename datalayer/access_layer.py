@@ -110,7 +110,7 @@ def dbConnectAlch(constring):
         host = constring['dbhost']
         user = constring['dbuser']
         password = constring['dbpass']
-        context = '{}://{}:{}@{}/'.format(driver,user,password,host,dbname)
+        context = '{}://{}:{}@{}/{}'.format(driver,user,password,host,dbname)
     else:
         print(driver,dbname)
         context = '{}:///{}'.format(driver,dbname)

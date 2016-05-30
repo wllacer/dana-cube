@@ -69,7 +69,9 @@ def dirAlchI(definition):
         schemata=inspector.get_schema_names()  #behaviour with default
 
     for schema in schemata:
-        print(fullName(schema))
+        print(fullName(schema),len(inspector.get_table_names(schema)))
+        if schema == 'public':
+            schema = None
         for table_name in inspector.get_table_names(schema):
             try:
                 print('\t',fullName(schema,table_name))
@@ -83,13 +85,24 @@ def dirAlchI(definition):
                     except CompileError: 
                     #except CompileError:
                         print('Columna sin tipo')
+                print()
                 for fk in inspector.get_foreign_keys(table_name,schema):
-
-                    print("\t\t",fullName(schema,table_name,fk['constrained_columns']),'{}.{}()'.format(fk.get('referred_schema',''),
-                                                                            fk['referred_table'],
-                                                                            fk['referred_columns']
-                                                                        )
-                        )
+                    print("\t\t{1} ---> {0} via".format(fullName(schema,table_name),
+                                         fullName(fk.get('referred_schema',None), 
+                                                         fk['referred_table'])
+                                                   ))
+                    for k in range(max(len(fk['constrained_columns']),len(fk['referred_columns']))):
+                        if k < len(fk['referred_columns']):
+                            refered = fk['referred_columns'][k]
+                        else:
+                            refered = ''
+                        if k < len(fk['constrained_columns']):
+                            constrained = fk['constrained_columns'][k]
+                        else:
+                            constrained = ''
+                        print('\t\t\t {:24}  {:24}'.format(refered,constrained))
+                                      
+                print()
             except OperationalError:
                 print('error operativo en ',schema,table_name)
                 continue
@@ -165,8 +178,8 @@ def typeHandler(type):
     elif isinstance(type,types.Time):
           return 'hora'
     else:
-          print('Tipo {} no contemplado'.format(type))
-          return 'ND'
+          # print('Tipo {} no contemplado'.format(type))
+          return '{}'.format(type)
      
 
 def camposDeTipo(tipo,conn,tname,schema=None):
