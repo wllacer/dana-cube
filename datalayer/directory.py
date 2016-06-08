@@ -53,14 +53,18 @@ def dirQt(definition):
             campo = record.field(ind)
             print('\t\t',campo.name(),QVariant.typeToName(campo.type()),campo.length(),campo.precision())
         
-def dirAlchI(definition):
+def dirAlchI(definition, conn = None):
            
     #from sqlalchemy import inspect  
     #from sqlalchemy.exc import CompileError
-    db=dbConnectAlch(definition)
-    engine=db.engine #incredible
+    if conn is None:
+        db=dbConnectAlch(definition)
+    else:
+        db = conn
     if db is None:
         print('Wooook')
+
+    engine=db.engine #incredible
     inspector = inspect(engine)
     if len(inspector.get_schema_names()) is 0:
         schemata =[None,]

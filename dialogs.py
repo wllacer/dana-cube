@@ -59,7 +59,7 @@ class propertySheetDlg(QDialog):
         meatLayout.addLayout(buttonLayout)
         
         self.setLayout(meatLayout)
-        self.setMinimumSize(QSize(480,480))
+        self.setMinimumSize(QSize(480,310))
         
         buttonBox.accepted.connect(self.accept)
         buttonBox.rejected.connect(self.reject)

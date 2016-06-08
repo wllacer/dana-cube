@@ -11,6 +11,7 @@ Documentation, License etc.
 '''
 
 import json
+import os
 
 def load_cubo(fichero="cubo.json"):
 
@@ -20,10 +21,22 @@ def load_cubo(fichero="cubo.json"):
             my_dict = json.load(infile)
     except IOError:
         print('Error de E/S en fichero %s'%fichero)
-        my_dict= {}
+        my_dict= None
     return my_dict
 
 def dump_structure(data, fichero="cubo.json"):
     with open(fichero,'w') as outfile:
         json.dump(data,outfile, sort_keys=False,indent=4,ensure_ascii=False)
     
+
+def getConfigFileName():
+            # Configuration file
+    name = '.danabrowse.json'
+    if os.name == "nt":
+        appdir = os.path.expanduser('~/Application Data/Dana')
+        if not os.path.isdir(appdir):
+            os.mkdir(appdir)
+        configFilename = appdir + "/"+name
+    else:
+        configFilename = os.path.expanduser('~/'+name)
+    return configFilename

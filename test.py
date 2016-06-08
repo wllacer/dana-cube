@@ -167,12 +167,80 @@ def mysqlSchema():
     #print(filter(lambda item: item[1] == 'fecha',getTableFields(conn,'votos_locales')))
     #print(camposDeTipo('numerico',conn,'votos_locales'))
 
+def multischema():
+    definition = []
+    definition.append({'driver':'sqlite','dbname': '/home/werner/projects/dana-cube.git/ejemplo_dana.db',
+                'dbhost':None,'dbuser':None,'dbpass':None,'debug':False })
+    definition.append({'driver':'mysql','dbname': None,
+                'dbhost':'localhost','dbuser':'root','dbpass':'toor','debug':False })
+    definition.append({'driver':'postgresql','dbname': 'pagila',
+                'dbhost':'localhost','dbuser':'werner','dbpass':None,'debug':False } )
+
+    definition.append({'driver':'mysql','dbname': 'fiction',\
+                'dbhost':'localhost','dbuser':'demo','dbpass':'demo123','debug':False }) 
+    conn = []
+    
+    for conf in definition:
+        if conf['driver'] == 'mysql' and conf['dbname'] is None:
+            pass
+        else:
+            conn.append(dbConnectAlch(conf))
+      
+    for conexion in conn:
+        engine=conexion.engine #incredible
+        inspector = inspect(engine)
+        if len(inspector.get_schema_names()) is 0:
+            schemata =[None,]
+        else:
+            schemata=inspector.get_schema_names()  #behaviour with default
+        print(engine,inspector.default_schema_name,schemata)
+        
+        for schema in schemata:
+            if schema == inspector.default_schema_name:
+                schema = None
+            for entry in inspector.get_sorted_table_and_fkc_names(schema):
+
+            #for table_name in inspector.get_table_names(schema):
+                try:
+                    print(entry[0])
+                    if entry[1] is not None or len(entry[1][0]) == 0:
+                        pprint(entry[1])
+                    #print('\t',schema,table_name)
+                    #for column in inspector.get_columns(table_name,schema):
+                        #try:
+                            #name = column['name']
+                            #tipo = column.get('type','TEXT')
+                            #print("\t\t",fullName(schema,table_name,name),tipo,typeHandler(tipo))
+                        #except CompileError: 
+                        ##except CompileError:
+                            #print('Columna sin tipo')
+
+                except OperationalError:
+                    print('error operativo en ',schema,table_name)
+                    continue
+
+
+        conexion.close()
+def recrea_config():
+    from util.jsonmgr import dump_structure,getConfigFileName
+    definition = {'Conexiones':dict()}
+    definition['Conexiones']['Elecciones 2105']={'driver':'sqlite','dbname': '/home/werner/projects/dana-cube.git/ejemplo_dana.db',
+                'dbhost':None,'dbuser':None,'dbpass':None,'debug':False }
+    definition['Conexiones']['Pagila']={'driver':'postgresql','dbname': 'pagila',
+                'dbhost':'localhost','dbuser':'werner','dbpass':None,'debug':False } 
+
+    definition['Conexiones']['MariaBD Local']={'driver':'mysql','dbname': 'fiction',\
+                'dbhost':'localhost','dbuser':'demo','dbpass':'demo123','debug':False }
+    dump_structure(definition,getConfigFileName())
+    
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
     import sys
     reload(sys)
     sys.setdefaultencoding('utf-8')
-
+    
     #experimental()
     #dir2tree()
-    mysqlSchema()
+    #mysqlSchema()
+    #multischema()
+    recrea_config()

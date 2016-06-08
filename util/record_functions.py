@@ -205,8 +205,9 @@ def dict2row(dict,keys):
   '''
   row = [None for k in range(len(keys))]
   for idx,clave in enumerate(keys):
-    if clave in dict:  #si la clave no existe lo dejamos en nulo
-      row[idx]=dict[idx]
+      row[idx]=dict.get(clave)
+    #if clave in dict:  #si la clave no existe lo dejamos en nulo
+      #row[idx]=dict[idx]
   return row
 
 def extrae(datos,campo):

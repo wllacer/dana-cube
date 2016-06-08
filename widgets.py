@@ -23,7 +23,7 @@ class WPowerTable(QTableWidget):
 
     def __init__(self,rows=0,cols=0,parent=None):
         super(WPowerTable,self).__init__(rows,cols,parent)
-        self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum);
+        #self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum);
         #self.resizeRowsToContents()
         #self.resizeColumnsToContents()
         
