@@ -112,7 +112,6 @@ def dbConnectAlch(constring):
         password = constring['dbpass']
         context = '{}://{}:{}@{}/{}'.format(driver,user,password,host,dbname)
     else:
-        print(driver,dbname)
         context = '{}:///{}'.format(driver,dbname)
     engine = create_engine(context,echo=debug)
     return engine.connect()

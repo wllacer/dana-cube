@@ -13,7 +13,8 @@ import os
 from PyQt5.QtCore import Qt,QSortFilterProxyModel, QCoreApplication, QSize
 from PyQt5.QtGui import QCursor, QStandardItemModel, QStandardItem, QIcon
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QSplitter, QAbstractItemView, QMenu,\
-          QDialog, QLineEdit,QLabel,QDialogButtonBox, QVBoxLayout, QHBoxLayout, QComboBox, QCheckBox
+          QDialog, QLineEdit,QLabel,QDialogButtonBox, QVBoxLayout, QHBoxLayout, QComboBox, QCheckBox,\
+          QPushButton, QMessageBox
 
 from datalayer.access_layer import *
 from util.record_functions import norm2String,dict2row, row2dict
@@ -24,18 +25,40 @@ from  sqlalchemy import create_engine,inspect,MetaData, types
 from  sqlalchemy.exc import CompileError, OperationalError
 from  sqlalchemy.sql import text
 
-def getConfigFileName():
-            # Configuration file
-    name = '.danabrowse.json'
-    if os.name == "nt":
-        appdir = os.path.expanduser('~/Application Data/Dana')
-        if not os.path.isdir(appdir):
-            os.mkdir(appdir)
-        configFilename = appdir + "/"+name
-    else:
-        configFilename = os.path.expanduser('~/'+name)
-    return configFilename
 
+class SelectConnectionDlg(QDialog):
+    def __init__(self,configDict,parent=None):
+        super(SelectConnectionDlg,self).__init__(parent)
+        if 'Conexiones' in configDict:
+            ambito = configDict['Conexiones']
+        else:
+            ambito = configDict
+        self.listConnections = [ name for name in ambito]
+        self.conexion = None
+        
+        self.etiqueta = QLabel("Eliga una conexion")
+        self.lista = QComboBox()
+        self.lista.addItems(self.listConnections)
+        
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel,
+                                     Qt.Horizontal)       
+        meatLayout = QVBoxLayout()
+        buttonLayout = QHBoxLayout()
+        meatLayout.addWidget(self.etiqueta)
+        meatLayout.addWidget(self.lista)
+        buttonLayout.addWidget(buttonBox)
+        meatLayout.addLayout(buttonLayout)
+ 
+        self.setLayout(meatLayout)
+        
+        buttonBox.accepted.connect(self.accept)
+        buttonBox.rejected.connect(self.reject)
+
+    def accept(self):
+        self.conexion = self.lista.currentText()
+        QDialog.accept(self)
+        
+        
 class ConnectionSheetDlg(QDialog):
     """
        Genera (mas o menos) una hoja de propiedades
@@ -51,11 +74,18 @@ class ConnectionSheetDlg(QDialog):
         InicioLabel = QLabel(title)
         #
         self.sheet=WPropertySheet(context,data)
+       
+        actionButton = QPushButton('Test')
+        actionButton.setDefault(True)
+        
+        
 
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel,
                                      Qt.Horizontal)
+        buttonBox.addButton(actionButton,QDialogButtonBox.ActionRole)
 
-
+        self.msgLine = QLabel('')
+        self.msgLine.setWordWrap(True)
         #formLayout = QHBoxLayout()
         meatLayout = QVBoxLayout()
         buttonLayout = QHBoxLayout()
@@ -63,7 +93,7 @@ class ConnectionSheetDlg(QDialog):
        
         meatLayout.addWidget(InicioLabel)
         meatLayout.addWidget(self.sheet)
-        
+        meatLayout.addWidget(self.msgLine)
         #formLayout.addLayout(meatLayout)        
         buttonLayout.addWidget(buttonBox)
         meatLayout.addLayout(buttonLayout)
@@ -73,18 +103,50 @@ class ConnectionSheetDlg(QDialog):
         
         buttonBox.accepted.connect(self.accept)
         buttonBox.rejected.connect(self.reject)
-
-        self.setWindowTitle("Connection editor")
+        actionButton.clicked.connect(self.test)
         
-
-    def accept(self):
+        self.setWindowTitle("Connection editor")
+      
+    def validate(self):
         datos = self.sheet.values()
         if datos[0] == '':
             self.sheet.cellWidget(0,0).setFocus()
-            return
+            self.msgLine.setText('Nombre es Obligatorio')
+            return None
         if datos[2] == '':
             self.sheet.cellWidget(2,0).setFocus()
+            self.msgLine.setText('Base de datos es Obligatorio')
+            return None
+        self.msgLine.clear()
+        return datos
+    
+    def test(self):       
+        self.msgLine.clear()
+        attr_list =  ('driver','dbname','dbhost','dbuser','dbpass','dbport','debug')
+        datos = self.validate()
+        if datos is None:
             return
+        datos[1]=DRIVERS[datos[1]]
+        conf = row2dict(datos[1:],attr_list)
+        try:
+            if conf['driver'] == 'sqlite':
+                if not os.path.isfile(datos[2]):
+                    self.msgLine.setText('Fichero {} no existe'.format(datos[2]))
+                    return
+            else:
+                conn = dbConnectAlch(conf)
+                conn.close()
+        except OperationalError as e:
+            showConnectionError(datos[0],norm2String(e.orig.args))
+            self.msgLine.setText('Error en la conexión')
+            return
+        self.msgLine.setText('Conexión validada correctamente')
+        
+    def accept(self):
+        datos = self.validate()
+        if datos is None:
+            return
+        self.msgLine.clear()
         for k,valor in enumerate(datos):
             if valor == '' and self.context[k][1] is None:
                continue
@@ -96,8 +158,37 @@ class BaseTreeItem(QStandardItem):
         QStandardItem.__init__(self, name)
         self.setEditable(False)
         self.setColumnCount(1)
-        self.setData(self)
+        #self.setData(self)
         
+    def deleteChildren(self):
+        if self.hasChildren():
+            while self.rowCount() > 0:
+                self.removeRow(self.rowCount() -1)
+                
+    def lastChild(self):
+        if self.hasChildren():
+            return self.child(self.rowCount() -1)
+        else:
+            return None
+        
+    def listChildren(self):
+        if self.hasChildren():
+            lista = []
+            for k in range(self.rowCount()):
+                lista.append(self.child(k))
+        else:
+            lista = None
+        return lista
+     
+    def takeChildren(self):
+        if self.hasChildren():
+            lista = []
+            for k in range(self.rowCount()):
+                lista.append(self.takeItem(k))
+        else:
+            lista = None
+        return lista
+    
     def getTypeName(self):
         return self.__class__.__name__ 
     
@@ -107,25 +198,25 @@ class BaseTreeItem(QStandardItem):
     def getModel(self):
         item = self
         while item is not None and type(item) is not TreeModel:
-            item = item.parent
+            item = item.parent()
         return item
 
     def getConnection(self):
         item = self
         while item is not None and type(item) is not ConnectionTreeItem:
-            item = item.parent
+            item = item.parent()
         return item
 
     def getSchema(self):
         item = self
         while item is not None and type(item) is not SchemaTreeItem:
-            item = item.parent
+            item = item.parent()
         return item
 
     def getTable(self):
         item = self
         while item is not None and type(item) is not TableTreeItem:
-            item = item.parent
+            item = item.parent()
         return item
 
     def setContextMenu(self,menu):
@@ -145,66 +236,243 @@ class BaseTreeItem(QStandardItem):
 
     
 class ConnectionTreeItem(BaseTreeItem):
-    def __init__(self, name):
+    def __init__(self, name,connection=None):
         BaseTreeItem.__init__(self, name)
         self.setIcon(QIcon("icons/16/database_server"))
+        if connection is not None:
+            self.setData(connection)
+        #else:
+            #self.setData(None)
 
+    def findElement(self,schema,table):
+        ischema = None
+        for item in self.model().findItems(schema,Qt.MatchExactly|Qt.MatchRecursive,0):
+            if type(item) != SchemaTreeItem:
+                continue
+            if item.parent() != self :
+                continue
+            ischema = item
+            break
+        
+        if ischema is None:
+            print ('Esquema {} no encontrado'.format(schema))
+            return None
+        
+        kitem = None
+        for item in self.model().findItems(table,Qt.MatchExactly|Qt.MatchRecursive,0):
+            if type(item) != TableTreeItem :
+                continue
+            if item.parent() != ischema:
+                continue
+            if item.parent().parent() != self :
+                continue
+            kitem = item
+            break
+        
+        if kitem is None:
+            print ('Tabla {}.{} no encontrado'.format(schema,table))
+            return None
+        
+        return kitem
+    
+    def FK_hierarchy(self,inspector,schemata):
+        for schema in schemata:
+            for table_name in inspector.get_table_names(schema):
+                try:
+                    for fk in inspector.get_foreign_keys(table_name,schema):
+                        ref_schema = fk.get('referred_schema',inspector.default_schema_name)
+                        ref_table  = fk['referred_table']
+                        if schema is not None:
+                            table = BaseTreeItem(schema +'.'+ table_name)
+                        else:
+                            table = BaseTreeItem(table_name)
+                        if fk['name'] is None:
+                            name = BaseTreeItem(table_name+'2'+fk['referred_table']+'*')
+                        else:
+                            name = BaseTreeItem(fk['name'])
+                            
+                        constrained = BaseTreeItem(norm2String(fk['constrained_columns']))
+                        referred    = BaseTreeItem(norm2String(fk['referred_columns']))
+                        
+                        kschema = fk.get('referred_schema','')
+                        
+                        kitem = self.findElement(fk.get('referred_schema',''),ref_table)
+                        if kitem is not None:
+                            referencer = kitem.child(2)
+                            referencer.appendRow((name,table,referred,constrained))
+                        
+                except OperationalError:
+                    print('error operativo en ',schema,table_name)
+                    continue
+                except AttributeError:
+                    print(schema,table_name,fk['referred_table'],'casca')
+                    continue
+                
+    def refresh(self):
+        #TODO cambiar la columna 0
+        #TODO de desconectada a conectada
+        self.deleteChildren()
+        if self.isOpen():
+            engine = self.getConnection().data().engine
+            inspector = inspect(engine)
+            
+            if len(inspector.get_schema_names()) is 0:
+                schemata =[None,]
+            else:
+                schemata=inspector.get_schema_names()  #behaviour with default
+            
+            for schema in schemata:
+                self.appendRow(SchemaTreeItem(schema))
+                curSchema = self.lastChild()
+                curSchema.refresh()
+                
+            self.FK_hierarchy(inspector,schemata)
+            
+        else:
+            # error mesg
+            self.setIcon(QIcon('icons/16/database_lightning.png'))
+            self.setData(None)
+
+
+    def isOpen(self):
+        if type(self.data()) is ConnectionTreeItem:
+            return False
+        if self.data() is None or self.data().closed:
+            return False
+        else:
+            #TODO deberia verificar que de verdad lo esta
+            return True
+        
     def setContextMenu(self,menu):
         self.menuActions = []
+        self.menuActions.append(menu.addAction("Refresh"))
         self.menuActions.append(menu.addAction("Edit ..."))
-        self.menuActions.append(menu.addAction("Delete ..."))
-        self.menuActions.append(menu.addAction("Disconnect"))
-        self.menuActions.append(menu.addAction("Connect"))
-       
-
-    def getContextMenu(self,action):
+        self.menuActions.append(menu.addAction("Delete"))
+        if self.isOpen():
+            self.menuActions.append(menu.addAction("Disconnect"))
+        else:
+            self.menuActions.append(menu.addAction("Connect"))
+        
+    def getContextMenu(self,action,exec_object=None):
         if action is not None:
             ind = self.menuActions.index(action)
-
-            if ind == 0 :
+                       
+            if ind == 0:
+                self.model().beginResetModel()
+                self.refresh()
+                self.model().endResetModel()
+            if ind == 1 :
+                exec_object.editConnection(self.text())
                 pass  # edit item, save config, refresh tree
-            elif ind == 1:
-                pass  # close connection, delete tree, delete config
             elif ind == 2:
-                pass  # disconnect, delete tree
+                exec_object.delConnection(self.text())
+                pass  # close connection, delete tree, delete config
             elif ind == 3:
-                pass  # connect, recreate tree
-            elif ind == 5:
-                pass
+                if isOpen():
+                    self.data().close()
+                    self.model().beginResetModel()
+                    self.deleteChildren()
+                    self.setData(None)
+                    self.model().endResetModel()
+                else:
+                    pass  # disconnect, delete tree
+          
 
 class SchemaTreeItem(BaseTreeItem):
     def __init__(self, name):
         BaseTreeItem.__init__(self, name)
         self.setIcon(QIcon("icons/16/database"))
+        
+    def refresh(self):
+        self.deleteChildren()
+        engine = self.getConnection().data().engine
+        inspector = inspect(engine)
+        schema = self.text() if self.text() != '' else None
+        if schema == inspector.default_schema_name:
+            schema = None
+        for table_name in inspector.get_table_names(schema):
+            self.appendRow(TableTreeItem(table_name))
+            curTable = self.lastChild()
+            curTable.refresh()
+        # fk reference
     def setContextMenu(self,menu):
         self.menuActions = []
         self.menuActions.append(menu.addAction("Refresh"))
 
-    def getContextMenu(self,action):
+    def getContextMenu(self,action,exec_object=None):
         if action is not None:
             ind = self.menuActions.index(action)
 
             if ind == 0 :
-                pass  # edit item, save config, refresh tree
+                self.model().beginResetModel()
+                self.refresh()
+                self.model().endResetModel()
+
        
 
 class TableTreeItem(BaseTreeItem):
     def __init__(self, name):
         BaseTreeItem.__init__(self, name)
         self.setIcon(QIcon("icons/16/database_table"))
+        
+    def refresh(self):
+        self.deleteChildren()
+        self.appendRow(BaseTreeItem('FIELDS'))
+        curTableFields = self.lastChild()
+        self.appendRow(BaseTreeItem('FK'))
+        curTableFK = self.lastChild()
+        self.appendRow(BaseTreeItem('FK_REFERENCE'))
+        #faltan las FK de vuelta
+        engine = self.getConnection().data().engine
+        inspector = inspect(engine)
+        table_name = self.text()
+        schema = self.getSchema().text()
+        if schema == '':
+            schema = None
+        try:
+            #print('\t',schema,table_name)
+            for column in inspector.get_columns(table_name,schema):
+                try:
+                    name = BaseTreeItem(column['name'])
+                    tipo = BaseTreeItem(typeHandler(column.get('type','TEXT')))
+                    curTableFields.appendRow((name,tipo))
+                except CompileError: 
+                #except CompileError:
+                    print('Columna sin tipo')
+            for fk in inspector.get_foreign_keys(table_name,schema):
+                if fk['name'] is None:
+                    name = BaseTreeItem(table_name+'2'+fk['referred_table']+'*')
+                else:
+                    name = BaseTreeItem(fk['name'])
+                if fk['referred_schema'] is not None:
+                    table = BaseTreeItem(fk['referred_schema']+'.'+fk['referred_table'])
+                else:
+                    table = BaseTreeItem(fk['referred_table'])
+                constrained = BaseTreeItem(norm2String(fk['constrained_columns']))
+                referred    = BaseTreeItem(norm2String(fk['referred_columns']))
+                curTableFK.appendRow((name,table,constrained,referred))                         
+        except OperationalError as e:
+            showConnectionError('Error en {}.{}'.format(schema,table_name),norm2String(e.orig.args))
+        
+
+        
     def setContextMenu(self,menu):
         self.menuActions = []
+        self.menuActions.append(menu.addAction("Refresh"))
         self.menuActions.append(menu.addAction("Properties ..."))
         self.menuActions.append(menu.addAction("Browse Data"))
         self.menuActions.append(menu.addAction("Browse Data with Foreign Key"))
         self.menuActions.append(menu.addAction("Browse Data with Foreign Key Recursive"))
         self.menuActions.append(menu.addAction("Generate Cube"))
 
-    def getContextMenu(self,action):
+    def getContextMenu(self,action,exec_object=None):
         if action is not None:
             ind = self.menuActions.index(action)
             if ind == 0 :
-                pass   # show properties sheet
+                self.model().beginResetModel()
+                self.refresh()
+                self.model().endResetModel()
+            # show properties sheet
             elif ind == 1:
                 pass  #  query 
             elif ind == 2:
@@ -213,6 +481,8 @@ class TableTreeItem(BaseTreeItem):
                 pass # get fk tree, query
             elif ind == 5:
                 pass # generate cube
+            elif ind == 6:
+                pass
 
 
     #def getConnectionItem(self):
@@ -251,71 +521,37 @@ def typeHandler(type):
     else:
           # print('Tipo {} no contemplado'.format(type))
           return '{}'.format(type)
+    return None
 
-def crea_defecto():
-    definition = dict()
-    definition['Conexiones']= dict()
-    definition['Conexiones']['elecciones 2015'] = {'driver':'sqlite','dbname': '/home/werner/projects/dana-cube.git/ejemplo_dana.db',
-                'dbhost':None,'dbuser':None,'dbpass':None,'debug':False }
-    definition['Conexiones']['mysql local'] = {'driver':'mysql','dbname': 'fiction',
-                'dbhost':'localhost','dbuser':'root','dbpass':'toor','debug':False }
-    definition['Conexiones']['pagila pg'] = {'driver':'postgresql','dbname': 'pagila',
-                'dbhost':'localhost','dbuser':'werner','dbpass':None,'debug':False } 
-    return definition
+def showConnectionError(context,detailed_error):
+    msg = QMessageBox()
+    msg.setIcon(QMessageBox.Warning)
+
+    msg.setText("Error en la conexion con {}".format(context))
+    #msg.setInformativeText(detailed_error)
+    msg.setWindowTitle("Error de Conexion")
+    msg.setDetailedText(detailed_error)
+    msg.setStandardButtons(QMessageBox.Ok)                
+    retval = msg.exec_()
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         #Leeo la configuracion
-        #self.configData = None
-        self.configData = load_cubo(getConfigFileName())
-        
-        if self.configData is None or self.configData.get('Conexiones') is None:
-            print('se va al vacio')
-            self.configData = dict()
-            self.configData['Conexiones']=dict()
-            self.editConnection(None)
-            if self.configData['Conexiones']:
-                dump_structure(self.configData,getConfigFileName())
-            else:
-                #TODO mensaje informativo
-                print('se va de najas')
-                self.close()
-            #self.configData['Conexiones']=crea_defecto()
-            #dump_structure(self.configData,getConfigFileName())
- 
+
+        self.setupModel()
+        self.readConfigData()
+        self.multischema(self.model)
+        self.setupView()
         #CHANGE here
+        
         self.fileMenu = self.menuBar().addMenu("&Conexiones")
-        self.fileMenu.addAction("&New ...", self.newCube, "Ctrl+N")
-        self.fileMenu.addAction("&Modify ...", self.newCube, "Ctrl+M")
-        self.fileMenu.addAction("&Delete ...", self.newCube, "Ctrl+D")
-        self.fileMenu.addAction("&Save ...", self.saveCube, "Ctrl+S")
+        self.fileMenu.addAction("&New ...", self.newConnection, "Ctrl+N")
+        self.fileMenu.addAction("&Modify ...", self.modConnection, "Ctrl+M")
+        self.fileMenu.addAction("&Delete ...", self.delConnection, "Ctrl+D")
+        self.fileMenu.addAction("&Save Config File", self.saveConfigFile, "Ctrl+S")
         self.fileMenu.addAction("E&xit", self.close, "Ctrl+Q")
         #self.fileMenu = self.menuBar().addMenu("&Opciones")
-        #TODO skipped has to be retougth with the new interface
-        #self.fileMenu.addAction("&Zoom View ...", self.zoomData, "Ctrl+Z")
-        #self.fileMenu.addAction("&Trasponer datos",traspose,"CtrlT")
-        #self.fileMenu.addAction("&Presentacion ...",self.setNumberFormat,"Ctrl+F")
-        #
-
-        self.vista = None
-        self.model = None
-        self.cubo =  None
-        self.view = QTreeView(self)
-        self.view.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.view.customContextMenuRequested.connect(self.openMenu)
-        self.view.doubleClicked.connect(self.test)
-        self.view.setModel(self.model)
-        self.defineModel()
-
-        #self.view.setSortingEnabled(True)
-        #self.view.setRootIsDecorated(False)
-        #self.view.setAlternatingRowColors(True)
-        #self.view.sortByColumn(0, Qt.AscendingOrder)
-
-        #ALERT
-        #self.initCube()
-        #self.defineModel()
 
         
         self.definitionSplitter = QSplitter(Qt.Vertical)
@@ -332,13 +568,108 @@ class MainWindow(QMainWindow):
         self.definitionSplitter.setStretchFactor(1, 2)
 
 #        self.setCentralWidget(self.view)
-        
-        
+               
         self.setWindowTitle("Visualizador de base de datos")
-   
+        
+    def setupView(self):
+        self.view = QTreeView(self)
+        self.view.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.view.customContextMenuRequested.connect(self.openMenu)
+        self.view.doubleClicked.connect(self.test)
+        self.view.setModel(self.model)
+        self.view.setModel(self.model)
+        self.view.resizeColumnToContents(0)
+        self.view.setEditTriggers(QAbstractItemView.NoEditTriggers)
+
+
+        self.view.expandAll()
+        #for m in range(self.model.columnCount(None)):
+            #self.view.resizeColumnToContents(m)
+        #self.view.collapseAll()
+
+
+        #self.view.setSortingEnabled(True)
+        #self.view.setRootIsDecorated(False)
+        self.view.setAlternatingRowColors(True)
+        #self.view.sortByColumn(0, Qt.AscendingOrder)
+
+    def setupModel(self):
+        """
+        definimos el modelo. Tengo que ejecutarlo cada vez que cambie la vista. TODO no he conseguido hacerlo dinamicamente
+        """
+        newModel = QStandardItemModel()
+        newModel.setColumnCount(4)
+        
+        
+        self.hiddenRoot = newModel.invisibleRootItem()
+        #self.multischema(newModel)        
+        #self.view.setModel(newModel)
+        #self.modelo=self.view.model
+        #proxyModel = QSortFilterProxyModel()
+        #proxyModel.setSourceModel(newModel)
+        #proxyModel.setSortRole(33)
+        self.model = newModel #proxyModel
+
+    def readConfigData(self):
+        self.configData = load_cubo(getConfigFileName())
+        self.conn = dict()        
+        if self.configData is None or self.configData.get('Conexiones') is None:
+            self.configData = dict()
+            self.configData['Conexiones']=dict()
+            self.editConnection(None)
+            if self.configData['Conexiones']:
+                self.saveConfigFile()
+            else:
+                #TODO mensaje informativo
+                self.close()
+            #self.configData['Conexiones']=crea_defecto()
+            #dump_structure(self.configData,getConfigFileName())
+            
+    def saveConfigFile(self):
+        dump_structure(self.configData,getConfigFileName())
+    
+    def closeEvent(self, event):
+        self.close()
+        
     def close(self):
+        for conid in self.conn:
+            if conid is not None and not self.conn[conid].closed :
+                self.conn[conid].close()
+        self.saveConfigFile()
         sys.exit()
-    def editConnection(self,nombre):
+        
+    #TODO actualizar el arbol tras hacer la edicion   
+    def newConnection(self):
+        self.editConnection(None)
+    def modConnection(self,nombre=None):
+        if nombre is None:
+            selDialog = SelectConnectionDlg(self.configData['Conexiones'])
+            if selDialog.exec_():
+                confName = selDialog.conexion
+            else:
+                return
+        else:
+            confName = nombre
+        self.editConnection(confName)   
+        
+    def delConnection(self,nombre=None):
+        if nombre is None:
+            selDialog = SelectConnectionDlg(self.configData['Conexiones'])
+            if selDialog.exec_():
+                confName = selDialog.conexion
+            else:
+                return 
+        else:
+            confName = nombre
+            
+        self.model.beginResetModel()   
+        for item in self.model.findItems(confName,Qt.MatchExactly,0):
+            if type(item) == ConnectionTreeItem:
+                self.model.removeRow(item.row())
+                break
+        self.model.endResetModel()
+
+    def editConnection(self,nombre=None):
         attr_list =  ('driver','dbname','dbhost','dbuser','dbpass','dbport','debug')
         if nombre is None:
             datos = [None for k in range(len(attr_list) +1) ]
@@ -396,7 +727,71 @@ class MainWindow(QMainWindow):
             datos[1]=DRIVERS[datos[1]]
             self.configData['Conexiones'][datos[0]] = row2dict(datos[1:],attr_list)
             #TODO modificar el arbol, al menos desde ahí
+            self.updateModel(datos[0])
+            #dump_structure(self.configData,getConfigFileName())
+     
+    def appendConnection(self,pos,confName,conf):
+        try:
+            self.conn[confName] = dbConnectAlch(conf)
+            conexion = self.conn[confName]
+            engine=conexion.engine 
+            self.hiddenRoot.insertRow(pos,(ConnectionTreeItem(confName,conexion),QStandardItem(str(engine))))
+            curConnection = self.hiddenRoot.child(pos)
+
+        except OperationalError as e:
+            #TODO deberia ampliar la informacion de no conexion
+            self.conn[confName] = None
+            showConnectionError(confName,norm2String(e.orig.args))             
+            self.hiddenRoot.insertRow(pos,(ConnectionTreeItem(confName,None),QStandardItem('Disconnected')))
+            curConnection = self.hiddenRoot.child(pos)
+        curConnection.refresh()
+        
+    def updateModel(self,confName=None):
+        # es un poco bestia pero para trabajar vale
+        self.model.beginResetModel()       
+        if confName is None:
+            self.model.clear()
+            self.hiddenRoot = self.model.invisibleRootItem()
+#            self.multischema(self.model)
+        else:
+            # limpio la tabla de conexiones
+            conexion = self.conn.get(confName)
+            if conexion is not None:  #conexion nueva
+                self.conn[confName].close()
+            self.conn[confName] = None
+            # limpio el arbol (podia usar findItem, pero no se, no se ...)
+            pos = self.hiddenRoot.rowCount()
+            for k in range(self.hiddenRoot.rowCount()):
+                item = self.hiddenRoot.child(k)
+                if item.text() != confName:
+                    continue
+                if item != ConnectionTreeItem:
+                    continue
+                self.hiddenRoot.removeRow(k)
+                pos = k
+                break
+                    # es un elemento que no estaba en el modelo
             
+            conf =self.configData['Conexiones'][confName]
+            self.appendConnection(pos,confName,conf)
+            #try:
+                #self.conn[confName] = dbConnectAlch(conf)
+                #conexion = self.conn[confName]
+                #engine=conexion.engine 
+                #self.hiddenRoot.insertRow(pos,(ConnectionTreeItem(confName,conexion),QStandardItem(str(engine))))
+                #curConnection = self.hiddenRoot.child(pos)
+    
+            #except OperationalError as e:
+                ##TODO deberia ampliar la informacion de no conexion
+                #self.conn[confName] = None
+                #showConnectionError(confName,norm2String(e.orig.args))             
+                #self.hiddenRoot.insertRow(pos,(ConnectionTreeItem(confName,None),QStandardItem('Disconnected')))
+                #curConnection = self.hiddenRoot.child(pos)
+            #curConnection.refresh()
+
+        self.model.endResetModel()
+        
+
     def openMenu(self,position):
         print('llame al menu de contexto')
         
@@ -407,7 +802,7 @@ class MainWindow(QMainWindow):
         menu = QMenu()
         item.setContextMenu(menu)        
         action = menu.exec_(self.view.viewport().mapToGlobal(position))
-        item.getContextMenu(action)
+        item.getContextMenu(action,self)
         
     def test(self,index):
         print(index.row(),index.column())
@@ -417,223 +812,37 @@ class MainWindow(QMainWindow):
             
                 
     def getLastChild(self,parent):
-        return parent.child(parent.rowCount() -1)
+        if parent == self.hiddenRoot:
+            return parent.child(parent.rowCount() -1)
+        else:
+            return parent.lastChild()
     
+        
     def multischema(self,model):
-
         definition = self.configData.get('Conexiones')
-        conn = dict()
-        for confName in definition:
+        self.conn = dict()
+        for confName in sorted(definition):
+            print('intentando',confName)
             conf =definition[confName]
-            try:
-                conn[confName] = dbConnectAlch(conf)
-            except OperationalError as e:
-                #TODO deberia ampliar la informacion de no conexion
-                print(e.orig.args)
-                self.hiddenRoot.appendRow((ConnectionTreeItem(confName),QStandardItem('Disconnected')))
-                continue
-            conexion = conn[confName]
-            engine=conexion.engine 
-            self.hiddenRoot.appendRow((ConnectionTreeItem(confName),QStandardItem(str(engine))))
-            curConnection = self.getLastChild(self.hiddenRoot)
-            #curConnection.appendColumn((QStandardItem(str(engine)),))
-            inspector = inspect(engine)
-            if len(inspector.get_schema_names()) is 0:
-                schemata =[None,]
-            else:
-                schemata=inspector.get_schema_names()  #behaviour with default
-            print(engine,inspector.default_schema_name,schemata)
-            
-            for schema in schemata:
-                curConnection.appendRow(SchemaTreeItem(schema))
-                curSchema = self.getLastChild(curConnection)
-                if schema == inspector.default_schema_name:
-                    schema = None
-                for table_name in inspector.get_table_names(schema):
-                    curSchema.appendRow(TableTreeItem(table_name))
-                    curTable = self.getLastChild(curSchema)
-                    curTable.appendRow(BaseTreeItem('FIELDS'))
-                    curTableFields = self.getLastChild(curTable)
-                    curTable.appendRow(BaseTreeItem('FK'))
-                    curTableFK = self.getLastChild(curTable)
-                    curTable.appendRow(BaseTreeItem('FK_REFERENCE'))
-                    try:
-                        #print('\t',schema,table_name)
-                        for column in inspector.get_columns(table_name,schema):
-                            try:
-                                name = BaseTreeItem(column['name'])
-                                tipo = BaseTreeItem(typeHandler(column.get('type','TEXT')))
-                                curTableFields.appendRow((name,tipo))
-                            except CompileError: 
-                            #except CompileError:
-                                print('Columna sin tipo')
-                        for fk in inspector.get_foreign_keys(table_name,schema):
-                            if fk['name'] is None:
-                                name = BaseTreeItem(table_name+'2'+fk['referred_table']+'*')
-                            else:
-                                name = BaseTreeItem(fk['name'])
-                            if fk['referred_schema'] is not None:
-                                table = BaseTreeItem(fk['referred_schema']+'.'+fk['referred_table'])
-                            else:
-                                table = BaseTreeItem(fk['referred_table'])
-                            constrained = BaseTreeItem(norm2String(fk['constrained_columns']))
-                            referred    = BaseTreeItem(norm2String(fk['referred_columns']))
-                            curTableFK.appendRow((name,table,constrained,referred))                         
-                    except OperationalError:
-                        print('error operativo en ',schema,table_name)
-                        continue
-
-            for schema in schemata:
-                for table_name in inspector.get_table_names(schema):
-                     try:
-                        for fk in inspector.get_foreign_keys(table_name,schema):
-                            ref_schema = fk.get('referred_schema',inspector.default_schema_name)
-                            ref_table  = fk['referred_table']
-                            if schema is not None:
-                                table = BaseTreeItem(schema +'.'+ table_name)
-                            else:
-                                table = BaseTreeItem(table_name)
-                            if fk['name'] is None:
-                                name = BaseTreeItem(table_name+'2'+fk['referred_table']+'*')
-                            else:
-                                name = BaseTreeItem(fk['name'])
-                                
-                            constrained = BaseTreeItem(norm2String(fk['constrained_columns']))
-                            referred    = BaseTreeItem(norm2String(fk['referred_columns']))
-                            
-                            kschema = fk.get('referred_schema','')
-                            for item in model.findItems(confName,Qt.MatchExactly,0):
-                                iengine = item
-                            for item in model.findItems(kschema,Qt.MatchExactly|Qt.MatchRecursive,0):
-                                if item.parent() != iengine :
-                                    continue
-                                ischema = item
-                                break
-                            kitem = None
-                            for item in model.findItems(fk['referred_table'],Qt.MatchExactly|Qt.MatchRecursive,0):
-                                if item.parent() != ischema:
-                                    continue
-                                if item.parent().parent() != iengine :
-                                    continue
-                                kitem = item
-                                break
-                              
-                            referencer = kitem.child(2)
-                            referencer.appendRow((name,table,referred,constrained))
-                            
-                     except OperationalError:
-                        print('error operativo en ',schema,table_name)
-                        continue
-                     except AttributeError:
-                        print(schema,table_name,fk['referred_table'],'casca')
-                        continue
-            conexion.close()
-
-    def defineModel(self):
-        """
-        definimos el modelo. Tengo que ejecutarlo cada vez que cambie la vista. TODO no he conseguido hacerlo dinamicamente
-        """
-        newModel = QStandardItemModel()
-        newModel.setColumnCount(4)
-        
-        
-        self.hiddenRoot = newModel.invisibleRootItem()
-        self.multischema(newModel)        
-        #self.view.setModel(newModel)
-        #self.modelo=self.view.model
-        #proxyModel = QSortFilterProxyModel()
-        #proxyModel.setSourceModel(newModel)
-        #proxyModel.setSortRole(33)
-        self.model = newModel #proxyModel
-        self.view.setModel(newModel)
-        self.view.resizeColumnToContents(0)
-        self.view.setEditTriggers(QAbstractItemView.NoEditTriggers)
-
-
-        #self.view.expandAll()
-        #for m in range(self.model.columnCount(None)):
-            #self.view.resizeColumnToContents(m)
-        #self.view.collapseAll()
-        # estas vueltas para permitir ordenacion
-        # para que aparezcan colapsados los indices jerarquicos
-        #self.max_row_level = self.vista.dim_row
-        #self.max_col_level  = self.vista.dim_col
-        #self.row_range = [0, self.vista.row_hdr_idx.count() -1]
-        #self.col_range = [0, self.vista.col_hdr_idx.count() -1]
+            self.appendConnection(self.hiddenRoot.rowCount(),confName,conf)
+            #try:
+                #self.conn[confName] = dbConnectAlch(conf)
+                #conexion = self.conn[confName]
+                #engine=conexion.engine 
+                #self.hiddenRoot.appendRow((ConnectionTreeItem(confName,conexion),QStandardItem(str(engine))))
+                #curConnection = self.getLastChild(self.hiddenRoot)
+     
+            #except OperationalError as e:
+                ##TODO deberia ampliar la informacion de no conexion
+                #self.conn[confName] = None
+                #showConnectionError(confName,norm2String(e.orig.args))             
+                #self.hiddenRoot.appendRow((ConnectionTreeItem(confName,None),QStandardItem('Disconnected')))
+                #curConnection = self.getLastChild(self.hiddenRoot)
+            #if self.conn[confName] is not None:
+                #curConnection.refresh()
 
 
 
-    #def initCube(self):
-        ##FIXME casi funciona ... vuelve a leer el fichero cada vez
-        #my_cubos = load_cubo()
-        ##if 'default' in my_cubos:
-            ##if self.cubo is None:
-                ##self.autoCarga(my_cubos)
-                ##return
-            ##del my_cubos['default']
-
-        ##realiza la seleccion del cubo
-
-        #dialog = CuboDlg(my_cubos, self)
-        #if dialog.exec_():
-            #seleccion = sdialog.cuboCB.currentText())
-            #self.cubo = Cubo(my_cubos[seleccion])
-
-            #self.vista = None
-
-        #self.setWindowTitle("Cubo "+ seleccion)
-        #self.requestVista()
-    def initCube(self):
-        return
-    def newCube(self):
-        return 
-    def saveCube(self):
-        return
-
-    #def requestVista(self):
-
-        #vistaDlg = VistaDlg(self.cubo, self)
-
-        ##TODO  falta el filtro
-        #if self.vista is  None:
-            #pass
-        #else:
-            #vistaDlg.rowCB.setCurrentIndex(self.vista.row_id)
-            #vistaDlg.colCB.setCurrentIndex(self.vista.col_id)
-            #vistaDlg.agrCB.setCurrentIndex(self.cubo.getFunctions().index(self.vista.agregado))
-            #vistaDlg.fldCB.setCurrentIndex(self.cubo.getFields().index(self.vista.campo))
-
-        #if vistaDlg.exec_():
-            #row =vistaDlg.rowCB.currentIndex()
-            #col = vistaDlg.colCB.currentIndex()
-            #agregado = vistaDlg.agrCB.currentText()
-            #campo = vistaDlg.fldCB.currentText()
-
-            #app.setOverrideCursor(QCursor(Qt.WaitCursor))
-            #if self.vista is None:
-                #self.vista = Vista(self.cubo, row, col, agregado, campo)
-                #self.defineModel()
-            ##else:
-                ##self.model.beginResetModel()
-                ##self.vista.setNewView(row, col, agregado, campo)
-                ##self.vista.toTree2D()
-                ##self.model.datos=self.vista
-                ##self.model.getHeaders()
-                ##self.model.rootItem = self.vista.row_hdr_idx.rootItem
-                ##self.model.endResetModel()
-                ##self.refreshTable()
-
-
-
-
-            #app.restoreOverrideCursor()
-
-            ## TODO hay que configurar algun tipo de evento para abrirlos y un parametro de configuracion
-
-            ###@waiting_effects
-            ##app.setOverrideCursor(QCursor(Qt.WaitCursor))
-            ##self.refreshTable()
-            ##app.restoreOverrideCursor()
 
 
     def refreshTable(self):
