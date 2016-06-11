@@ -14,7 +14,8 @@ from PyQt5.QtCore import Qt,QSortFilterProxyModel, QCoreApplication, QSize
 from PyQt5.QtGui import QCursor, QStandardItemModel, QStandardItem, QIcon
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QSplitter, QAbstractItemView, QMenu,\
           QDialog, QLineEdit,QLabel,QDialogButtonBox, QVBoxLayout, QHBoxLayout, QComboBox, QCheckBox,\
-          QPushButton, QMessageBox
+          QPushButton, QMessageBox, \
+          QTableView
 
 from datalayer.access_layer import *
 from util.record_functions import norm2String,dict2row, row2dict
@@ -362,20 +363,21 @@ class ConnectionTreeItem(BaseTreeItem):
                 self.refresh()
                 self.model().endResetModel()
             if ind == 1 :
-                exec_object.editConnection(self.text())
+                exec_object.modConnection(self.text())
                 pass  # edit item, save config, refresh tree
             elif ind == 2:
                 exec_object.delConnection(self.text())
                 pass  # close connection, delete tree, delete config
             elif ind == 3:
-                if isOpen():
+                if self.isOpen():
                     self.data().close()
                     self.model().beginResetModel()
                     self.deleteChildren()
+                    self.setIcon(QIcon('icons/16/database_lightning.png'))
                     self.setData(None)
                     self.model().endResetModel()
                 else:
-                    pass  # disconnect, delete tree
+                    exec_object.updateModel(self.text())
           
 
 class SchemaTreeItem(BaseTreeItem):
@@ -541,9 +543,11 @@ class MainWindow(QMainWindow):
 
         self.setupModel()
         self.readConfigData()
-        self.multischema(self.model)
+        self.cargaModelo(self.model)
         self.setupView()
         #CHANGE here
+        
+        self.queryView = QTableView()
         
         self.fileMenu = self.menuBar().addMenu("&Conexiones")
         self.fileMenu.addAction("&New ...", self.newConnection, "Ctrl+N")
@@ -554,18 +558,19 @@ class MainWindow(QMainWindow):
         #self.fileMenu = self.menuBar().addMenu("&Opciones")
 
         
-        self.definitionSplitter = QSplitter(Qt.Vertical)
-        self.definitionSplitter.addWidget(self.view)
-#        self.definitionSplitter.addWidget(self.messageView)
+        #self.definitionSplitter = QSplitter(Qt.Vertical)
+        #self.definitionSplitter.addWidget(self.view)
+##        self.definitionSplitter.addWidget(self.messageView)
         self.querySplitter = QSplitter(Qt.Horizontal)
-#        self.querySplitter.addWidget(self.groupsList)
-#        self.querySplitter.addWidget(self.definitionSplitter)
-        self.setCentralWidget(self.definitionSplitter)
+        #self.querySplitter.addWidget(self.definitionSplitter)
+        self.querySplitter.addWidget(self.view)
+        self.querySplitter.addWidget(self.queryView)
+        self.setCentralWidget(self.querySplitter)
 
-        self.querySplitter.setStretchFactor(0, 1)
-        self.querySplitter.setStretchFactor(1, 3)
-        self.definitionSplitter.setStretchFactor(0, 1)
-        self.definitionSplitter.setStretchFactor(1, 2)
+        #self.querySplitter.setStretchFactor(0, 1)
+        #self.querySplitter.setStretchFactor(1, 3)
+        #self.definitionSplitter.setStretchFactor(0, 1)
+        #self.definitionSplitter.setStretchFactor(1, 2)
 
 #        self.setCentralWidget(self.view)
                
@@ -574,18 +579,17 @@ class MainWindow(QMainWindow):
     def setupView(self):
         self.view = QTreeView(self)
         self.view.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.view.customContextMenuRequested.connect(self.openMenu)
+        self.view.customContextMenuRequested.connect(self.openContextMenu)
         self.view.doubleClicked.connect(self.test)
-        self.view.setModel(self.model)
         self.view.setModel(self.model)
         self.view.resizeColumnToContents(0)
         self.view.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
 
         self.view.expandAll()
-        #for m in range(self.model.columnCount(None)):
-            #self.view.resizeColumnToContents(m)
-        #self.view.collapseAll()
+        for m in range(self.model.columnCount()):
+            self.view.resizeColumnToContents(m)
+        self.view.collapseAll()
 
 
         #self.view.setSortingEnabled(True)
@@ -598,7 +602,7 @@ class MainWindow(QMainWindow):
         definimos el modelo. Tengo que ejecutarlo cada vez que cambie la vista. TODO no he conseguido hacerlo dinamicamente
         """
         newModel = QStandardItemModel()
-        newModel.setColumnCount(4)
+        newModel.setColumnCount(2)
         
         
         self.hiddenRoot = newModel.invisibleRootItem()
@@ -633,14 +637,18 @@ class MainWindow(QMainWindow):
         
     def close(self):
         for conid in self.conn:
-            if conid is not None and not self.conn[conid].closed :
+            if self.conn[conid] is None:
+                continue
+            if self.conn[conid].closed :
                 self.conn[conid].close()
         self.saveConfigFile()
         sys.exit()
         
     #TODO actualizar el arbol tras hacer la edicion   
     def newConnection(self):
-        self.editConnection(None)
+        confName=self.editConnection(None)
+        self.appendConnection(confName)
+        
     def modConnection(self,nombre=None):
         if nombre is None:
             selDialog = SelectConnectionDlg(self.configData['Conexiones'])
@@ -651,6 +659,7 @@ class MainWindow(QMainWindow):
         else:
             confName = nombre
         self.editConnection(confName)   
+        self.updateModel(confName)
         
     def delConnection(self,nombre=None):
         if nombre is None:
@@ -668,6 +677,8 @@ class MainWindow(QMainWindow):
                 self.model.removeRow(item.row())
                 break
         self.model.endResetModel()
+        del self.conn[nombre]
+        del self.configData['Conexiones'][nombre]
 
     def editConnection(self,nombre=None):
         attr_list =  ('driver','dbname','dbhost','dbuser','dbpass','dbport','debug')
@@ -726,8 +737,9 @@ class MainWindow(QMainWindow):
             #TODO deberia verificar que se han cambiado los datos
             datos[1]=DRIVERS[datos[1]]
             self.configData['Conexiones'][datos[0]] = row2dict(datos[1:],attr_list)
+            return datos[0]
             #TODO modificar el arbol, al menos desde ahí
-            self.updateModel(datos[0])
+            #self.updateModel(datos[0])
             #dump_structure(self.configData,getConfigFileName())
      
     def appendConnection(self,pos,confName,conf):
@@ -747,12 +759,13 @@ class MainWindow(QMainWindow):
         curConnection.refresh()
         
     def updateModel(self,confName=None):
-        # es un poco bestia pero para trabajar vale
+        """
+        """
         self.model.beginResetModel()       
         if confName is None:
             self.model.clear()
             self.hiddenRoot = self.model.invisibleRootItem()
-#            self.multischema(self.model)
+            #self.cargaModelo(self.model)
         else:
             # limpio la tabla de conexiones
             conexion = self.conn.get(confName)
@@ -765,7 +778,7 @@ class MainWindow(QMainWindow):
                 item = self.hiddenRoot.child(k)
                 if item.text() != confName:
                     continue
-                if item != ConnectionTreeItem:
+                if type(item) != ConnectionTreeItem:
                     continue
                 self.hiddenRoot.removeRow(k)
                 pos = k
@@ -774,27 +787,13 @@ class MainWindow(QMainWindow):
             
             conf =self.configData['Conexiones'][confName]
             self.appendConnection(pos,confName,conf)
-            #try:
-                #self.conn[confName] = dbConnectAlch(conf)
-                #conexion = self.conn[confName]
-                #engine=conexion.engine 
-                #self.hiddenRoot.insertRow(pos,(ConnectionTreeItem(confName,conexion),QStandardItem(str(engine))))
-                #curConnection = self.hiddenRoot.child(pos)
-    
-            #except OperationalError as e:
-                ##TODO deberia ampliar la informacion de no conexion
-                #self.conn[confName] = None
-                #showConnectionError(confName,norm2String(e.orig.args))             
-                #self.hiddenRoot.insertRow(pos,(ConnectionTreeItem(confName,None),QStandardItem('Disconnected')))
-                #curConnection = self.hiddenRoot.child(pos)
-            #curConnection.refresh()
 
         self.model.endResetModel()
         
 
-    def openMenu(self,position):
-        print('llame al menu de contexto')
-        
+    def openContextMenu(self,position):
+        """
+        """
         indexes = self.view.selectedIndexes()
         if len(indexes) > 0:
             index = indexes[0]
@@ -809,41 +808,13 @@ class MainWindow(QMainWindow):
         item = self.model.itemFromIndex(index)
         print(item.text(),item.model())
 
-            
-                
-    def getLastChild(self,parent):
-        if parent == self.hiddenRoot:
-            return parent.child(parent.rowCount() -1)
-        else:
-            return parent.lastChild()
-    
-        
-    def multischema(self,model):
+    def cargaModelo(self,model):
         definition = self.configData.get('Conexiones')
         self.conn = dict()
         for confName in sorted(definition):
             print('intentando',confName)
             conf =definition[confName]
             self.appendConnection(self.hiddenRoot.rowCount(),confName,conf)
-            #try:
-                #self.conn[confName] = dbConnectAlch(conf)
-                #conexion = self.conn[confName]
-                #engine=conexion.engine 
-                #self.hiddenRoot.appendRow((ConnectionTreeItem(confName,conexion),QStandardItem(str(engine))))
-                #curConnection = self.getLastChild(self.hiddenRoot)
-     
-            #except OperationalError as e:
-                ##TODO deberia ampliar la informacion de no conexion
-                #self.conn[confName] = None
-                #showConnectionError(confName,norm2String(e.orig.args))             
-                #self.hiddenRoot.appendRow((ConnectionTreeItem(confName,None),QStandardItem('Disconnected')))
-                #curConnection = self.getLastChild(self.hiddenRoot)
-            #if self.conn[confName] is not None:
-                #curConnection.refresh()
-
-
-
-
 
     def refreshTable(self):
         self.model.emitModelReset()
