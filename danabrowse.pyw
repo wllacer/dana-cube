@@ -17,14 +17,113 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QSplitter, QAb
           QPushButton, QMessageBox, \
           QTableView
 
+from  sqlalchemy import create_engine,inspect,MetaData, types
+from  sqlalchemy.exc import CompileError, OperationalError
+from  sqlalchemy.sql import text
+
 from datalayer.access_layer import *
 from util.record_functions import norm2String,dict2row, row2dict
 from util.jsonmgr import *
 from widgets import WPropertySheet
 
-from  sqlalchemy import create_engine,inspect,MetaData, types
-from  sqlalchemy.exc import CompileError, OperationalError
-from  sqlalchemy.sql import text
+from dictTree import *
+
+def setContextMenu(obj,menu):
+    if type(obj) == ConnectionTreeItem:
+        obj.menuActions = []
+        obj.menuActions.append(menu.addAction("Refresh"))
+        obj.menuActions.append(menu.addAction("Edit ..."))
+        obj.menuActions.append(menu.addAction("Delete"))
+        if obj.isOpen():
+            obj.menuActions.append(menu.addAction("Disconnect"))
+        else:
+            obj.menuActions.append(menu.addAction("Connect"))
+
+
+    elif type(obj) == SchemaTreeItem :
+        obj.menuActions = []
+        obj.menuActions.append(menu.addAction("Refresh"))
+
+
+    elif type(obj) == TableTreeItem :
+        obj.menuActions = []
+        obj.menuActions.append(menu.addAction("Refresh"))
+        obj.menuActions.append(menu.addAction("Properties ..."))
+        obj.menuActions.append(menu.addAction("Browse Data"))
+        obj.menuActions.append(menu.addAction("Browse Data with Foreign Key"))
+        obj.menuActions.append(menu.addAction("Browse Data with Foreign Key Recursive"))
+        obj.menuActions.append(menu.addAction("Generate Cube"))
+
+    elif type(obj) == BaseTreeItem :
+        if obj.text() in ('FK','FK_REFERENCE'):
+            obj.menuActions = []
+            obj.menuActions.append(menu.addAction("Go to reverse FK"))
+            obj.menuActions.append(menu.addAction("Set descriptive fields"))
+
+
+def getContextMenu(obj,action,exec_object=None):
+    if action is None:
+        return
+    if type(obj) == ConnectionTreeItem:
+ 
+        ind = obj.menuActions.index(action)
+                    
+        if ind == 0:
+            obj.model().beginResetModel()
+            obj.refresh()
+            obj.model().endResetModel()
+        if ind == 1 :
+            exec_object.modConnection(obj.text())
+            pass  # edit item, save config, refresh tree
+        elif ind == 2:
+            exec_object.delConnection(obj.text())
+            pass  # close connection, delete tree, delete config
+        elif ind == 3:
+            if obj.isOpen():
+                obj.data().close()
+                obj.model().beginResetModel()
+                obj.deleteChildren()
+                #FIXME no podemos poner el icono de momento
+                obj.setIcon(QIcon('icons/16/database_lightning.png'))
+                obj.setData(None)
+                obj.model().endResetModel()
+            else:
+                exec_object.updateModel(obj.text())
+
+    elif type(obj) == SchemaTreeItem :
+ 
+        ind = obj.menuActions.index(action)
+
+        if ind == 0 :
+            obj.model().beginResetModel()
+            obj.refresh()
+            obj.model().endResetModel()
+
+    elif type(obj) == TableTreeItem :
+ 
+        ind = obj.menuActions.index(action)
+        if ind == 0 :
+            obj.model().beginResetModel()
+            obj.refresh()
+            obj.model().endResetModel()
+        # show properties sheet
+        elif ind == 1:
+            pass  #  query 
+        elif ind in (2,3,4):
+            pprint(obj.getFields(simple=False))
+            if ind in (3,4):
+                pprint(obj.getFK(simple=False))
+        elif ind == 5:
+            pass # generate cube
+
+    elif type(obj) == BaseTreeItem :
+ 
+        ind = obj.menuActions.index(action)
+        if obj.text() in ('FK','FK_REFERENCE'):
+            if ind == 0 :
+                pass # get element with same name, selecte that item
+            elif ind == 1:
+                pass # select field from referred table
 
 
 class SelectConnectionDlg(QDialog):
@@ -153,403 +252,6 @@ class ConnectionSheetDlg(QDialog):
                continue
             self.data[k] = valor
         QDialog.accept(self)
-
-class BaseTreeItem(QStandardItem):
-    def __init__(self, name):
-        QStandardItem.__init__(self, name)
-        self.setEditable(False)
-        self.setColumnCount(1)
-        #self.setData(self)
-        
-    def deleteChildren(self):
-        if self.hasChildren():
-            while self.rowCount() > 0:
-                self.removeRow(self.rowCount() -1)
-                
-    def lastChild(self):
-        if self.hasChildren():
-            return self.child(self.rowCount() -1)
-        else:
-            return None
-        
-    def listChildren(self):
-        if self.hasChildren():
-            lista = []
-            for k in range(self.rowCount()):
-                lista.append(self.child(k))
-        else:
-            lista = None
-        return lista
-     
-    def getRow(self,role=None):
-        """
-          falta el rol
-        """
-        lista=[]
-        indice = self.index() #self.model().indexFromItem(field)
-        k = 0
-        colind = indice.sibling(indice.row(),k)
-        while colind.isValid():
-            if role is None:
-                lista.append(colind.data()) #print(colind.data())
-            else:
-                lista.append(colind.data(role))
-            k +=1
-            colind = indice.sibling(indice.row(),k)
-        return lista
-        
-    def takeChildren(self):
-        if self.hasChildren():
-            lista = []
-            for k in range(self.rowCount()):
-                lista.append(self.takeItem(k))
-        else:
-            lista = None
-        return lista
-    
-    def getTypeName(self):
-        return self.__class__.__name__ 
-    
-    def type(self):
-        return self.__class__
-     
-    def getModel(self):
-        """
-        probablemente innecesario
-        """
-        item = self
-        while item is not None and type(item) is not TreeModel:
-            item = item.parent()
-        return item
-
-    def getConnection(self):
-        item = self
-        while item is not None and type(item) is not ConnectionTreeItem:
-            item = item.parent()
-        return item
-
-    def getSchema(self):
-        item = self
-        while item is not None and type(item) is not SchemaTreeItem:
-            item = item.parent()
-        return item
-
-    def getTable(self):
-        item = self
-        while item is not None and type(item) is not TableTreeItem:
-            item = item.parent()
-        return item
-
-    def setContextMenu(self,menu):
-        if self.text() in ('FK','FK_REFERENCE'):
-            self.menuActions = []
-            self.menuActions.append(menu.addAction("Go to reverse FK"))
-            self.menuActions.append(menu.addAction("Set descriptive fields"))
-
-    def getContextMenu(self,action):
-        if action is not None:
-            ind = self.menuActions.index(action)
-            if self.text() in ('FK','FK_REFERENCE'):
-                if ind == 0 :
-                    pass # get element with same name, selecte that item
-                elif ind == 1:
-                    pass # select field from referred table
-
-    
-class ConnectionTreeItem(BaseTreeItem):
-    def __init__(self, name,connection=None):
-        BaseTreeItem.__init__(self, name)
-        self.setIcon(QIcon("icons/16/database_server"))
-        if connection is not None:
-            self.setData(connection)
-        #else:
-            #self.setData(None)
-
-    def findElement(self,schema,table):
-        ischema = None
-        for item in self.model().findItems(schema,Qt.MatchExactly|Qt.MatchRecursive,0):
-            if type(item) != SchemaTreeItem:
-                continue
-            if item.parent() != self :
-                continue
-            ischema = item
-            break
-        
-        if ischema is None:
-            print ('Esquema {} no encontrado'.format(schema))
-            return None
-        
-        kitem = None
-        for item in self.model().findItems(table,Qt.MatchExactly|Qt.MatchRecursive,0):
-            if type(item) != TableTreeItem :
-                continue
-            if item.parent() != ischema:
-                continue
-            if item.parent().parent() != self :
-                continue
-            kitem = item
-            break
-        
-        if kitem is None:
-            print ('Tabla {}.{} no encontrado'.format(schema,table))
-            return None
-        
-        return kitem
-    
-    def FK_hierarchy(self,inspector,schemata):
-        for schema in schemata:
-            for table_name in inspector.get_table_names(schema):
-                try:
-                    for fk in inspector.get_foreign_keys(table_name,schema):
-                        ref_schema = fk.get('referred_schema',inspector.default_schema_name)
-                        ref_table  = fk['referred_table']
-                        if schema is not None:
-                            table = BaseTreeItem(schema +'.'+ table_name)
-                        else:
-                            table = BaseTreeItem(table_name)
-                        if fk['name'] is None:
-                            name = BaseTreeItem(table_name+'2'+fk['referred_table']+'*')
-                        else:
-                            name = BaseTreeItem(fk['name'])
-                            
-                        constrained = BaseTreeItem(norm2String(fk['constrained_columns']))
-                        referred    = BaseTreeItem(norm2String(fk['referred_columns']))
-                        
-                        kschema = fk.get('referred_schema','')
-                        
-                        kitem = self.findElement(fk.get('referred_schema',''),ref_table)
-                        if kitem is not None:
-                            referencer = kitem.child(2)
-                            referencer.appendRow((name,table,referred,constrained))
-                        
-                except OperationalError:
-                    print('error operativo en ',schema,table_name)
-                    continue
-                except AttributeError:
-                    print(schema,table_name,fk['referred_table'],'casca')
-                    continue
-                
-    def refresh(self):
-        #TODO cambiar la columna 0
-        #TODO de desconectada a conectada
-        self.deleteChildren()
-        if self.isOpen():
-            engine = self.getConnection().data().engine
-            inspector = inspect(engine)
-            
-            if len(inspector.get_schema_names()) is 0:
-                schemata =[None,]
-            else:
-                schemata=inspector.get_schema_names()  #behaviour with default
-            
-            for schema in schemata:
-                self.appendRow(SchemaTreeItem(schema))
-                curSchema = self.lastChild()
-                curSchema.refresh()
-                
-            self.FK_hierarchy(inspector,schemata)
-            
-        else:
-            # error mesg
-            self.setIcon(QIcon('icons/16/database_lightning.png'))
-            self.setData(None)
-
-
-    def isOpen(self):
-        if type(self.data()) is ConnectionTreeItem:
-            return False
-        if self.data() is None or self.data().closed:
-            return False
-        else:
-            #TODO deberia verificar que de verdad lo esta
-            return True
-        
-    def setContextMenu(self,menu):
-        self.menuActions = []
-        self.menuActions.append(menu.addAction("Refresh"))
-        self.menuActions.append(menu.addAction("Edit ..."))
-        self.menuActions.append(menu.addAction("Delete"))
-        if self.isOpen():
-            self.menuActions.append(menu.addAction("Disconnect"))
-        else:
-            self.menuActions.append(menu.addAction("Connect"))
-        
-    def getContextMenu(self,action,exec_object=None):
-        if action is not None:
-            ind = self.menuActions.index(action)
-                       
-            if ind == 0:
-                self.model().beginResetModel()
-                self.refresh()
-                self.model().endResetModel()
-            if ind == 1 :
-                exec_object.modConnection(self.text())
-                pass  # edit item, save config, refresh tree
-            elif ind == 2:
-                exec_object.delConnection(self.text())
-                pass  # close connection, delete tree, delete config
-            elif ind == 3:
-                if self.isOpen():
-                    self.data().close()
-                    self.model().beginResetModel()
-                    self.deleteChildren()
-                    self.setIcon(QIcon('icons/16/database_lightning.png'))
-                    self.setData(None)
-                    self.model().endResetModel()
-                else:
-                    exec_object.updateModel(self.text())
-          
-
-class SchemaTreeItem(BaseTreeItem):
-    def __init__(self, name):
-        BaseTreeItem.__init__(self, name)
-        self.setIcon(QIcon("icons/16/database"))
-        
-    def refresh(self):
-        self.deleteChildren()
-        engine = self.getConnection().data().engine
-        inspector = inspect(engine)
-        schema = self.text() if self.text() != '' else None
-        if schema == inspector.default_schema_name:
-            schema = None
-        for table_name in inspector.get_table_names(schema):
-            self.appendRow(TableTreeItem(table_name))
-            curTable = self.lastChild()
-            curTable.refresh()
-        # fk reference
-    def setContextMenu(self,menu):
-        self.menuActions = []
-        self.menuActions.append(menu.addAction("Refresh"))
-
-    def getContextMenu(self,action,exec_object=None):
-        if action is not None:
-            ind = self.menuActions.index(action)
-
-            if ind == 0 :
-                self.model().beginResetModel()
-                self.refresh()
-                self.model().endResetModel()
-
-       
-
-class TableTreeItem(BaseTreeItem):
-    def __init__(self, name):
-        BaseTreeItem.__init__(self, name)
-        self.setIcon(QIcon("icons/16/database_table"))
-        
-    def refresh(self):
-        self.deleteChildren()
-        self.appendRow(BaseTreeItem('FIELDS'))
-        curTableFields = self.lastChild()
-        self.appendRow(BaseTreeItem('FK'))
-        curTableFK = self.lastChild()
-        self.appendRow(BaseTreeItem('FK_REFERENCE'))
-        #faltan las FK de vuelta
-        engine = self.getConnection().data().engine
-        inspector = inspect(engine)
-        table_name = self.text()
-        schema = self.getSchema().text()
-        if schema == '':
-            schema = None
-        try:
-            #print('\t',schema,table_name)
-            for column in inspector.get_columns(table_name,schema):
-                try:
-                    name = BaseTreeItem(column['name'])
-                    tipo = BaseTreeItem(typeHandler(column.get('type','TEXT')))
-                    curTableFields.appendRow((name,tipo))
-                except CompileError: 
-                #except CompileError:
-                    print('Columna sin tipo')
-            for fk in inspector.get_foreign_keys(table_name,schema):
-                if fk['name'] is None:
-                    name = BaseTreeItem(table_name+'2'+fk['referred_table']+'*')
-                else:
-                    name = BaseTreeItem(fk['name'])
-                if fk['referred_schema'] is not None:
-                    table = BaseTreeItem(fk['referred_schema']+'.'+fk['referred_table'])
-                else:
-                    table = BaseTreeItem(fk['referred_table'])
-                constrained = BaseTreeItem(norm2String(fk['constrained_columns']))
-                referred    = BaseTreeItem(norm2String(fk['referred_columns']))
-                curTableFK.appendRow((name,table,constrained,referred))                         
-        except OperationalError as e:
-            showConnectionError('Error en {}.{}'.format(schema,table_name),norm2String(e.orig.args))
-        
-    def getFields(self,simple=False):
-        lista = []
-        for item in self.listChildren():
-            if item.text() != 'FIELDS':
-                continue
-            else:
-                for field in item.listChildren():
-                    if simple:
-                        lista.append(field.text())
-                    else:
-                        lista.append(field.getRow())
-                break
-        return lista
-
-    def getFK(self,simple=False):
-        lista = []
-        for item in self.listChildren():
-            if item.text() != 'FK':
-                continue
-            else:
-                for field in item.listChildren():
-                    if simple:
-                        lista.append(field.text())
-                    else:
-                        lista.append(field.getRow())
-                break
-        return lista
-        
-    def setContextMenu(self,menu):
-        self.menuActions = []
-        self.menuActions.append(menu.addAction("Refresh"))
-        self.menuActions.append(menu.addAction("Properties ..."))
-        self.menuActions.append(menu.addAction("Browse Data"))
-        self.menuActions.append(menu.addAction("Browse Data with Foreign Key"))
-        self.menuActions.append(menu.addAction("Browse Data with Foreign Key Recursive"))
-        self.menuActions.append(menu.addAction("Generate Cube"))
-
-    def getContextMenu(self,action,exec_object=None):
-        if action is not None:
-            ind = self.menuActions.index(action)
-            if ind == 0 :
-                self.model().beginResetModel()
-                self.refresh()
-                self.model().endResetModel()
-            # show properties sheet
-            elif ind == 1:
-                pass  #  query 
-            elif ind in (2,3,4):
-                pprint(self.getFields(simple=False))
-                if ind in (3,4):
-                    pprint(self.getFK(simple=False))
-            elif ind == 5:
-                pass # generate cube
-
-
-    #def getConnectionItem(self):
-        #item = self
-        #while item is not None and type(item) is not ConnectionTreeItem:
-            #item = item.parent()
-        #return item
-
-    #def getConnection(self):
-        #item = self.getConnectionItem()
-        #return item.connection if type(item) is ConnectionTreeItem else None
-
-    #def open(self):
-        #self.refresh()
-
-    #def refresh(self):
-        #self.setRowCount(0)
-
-    def __repr__(self):
-        return "<" + self.__class__.__name__ + " " + self.getName() + ">"
-
 
 
 def showConnectionError(context,detailed_error):
@@ -827,9 +529,9 @@ class MainWindow(QMainWindow):
             index = indexes[0]
             item = self.model.itemFromIndex(index)
         menu = QMenu()
-        item.setContextMenu(menu)        
+        setContextMenu(item,menu)        
         action = menu.exec_(self.view.viewport().mapToGlobal(position))
-        item.getContextMenu(action,self)
+        getContextMenu(item,action,self)
         
     def test(self,index):
         print(index.row(),index.column())
