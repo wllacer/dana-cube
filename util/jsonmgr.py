@@ -29,9 +29,13 @@ def dump_structure(data, fichero="cubo.json"):
         json.dump(data,outfile, sort_keys=False,indent=4,ensure_ascii=False)
     
 
-def getConfigFileName():
+def getConfigFileName(pName=None):
             # Configuration file
-    name = '.danabrowse.json'
+    if not pName:
+        name = '.danabrowse.json'
+    else:
+        name = pName
+        
     if os.name == "nt":
         appdir = os.path.expanduser('~/Application Data/Dana')
         if not os.path.isdir(appdir):

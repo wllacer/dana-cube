@@ -12,65 +12,9 @@ Documentation, License etc.
 @package estimaciones
 # 0.3
 '''
-from core import Cubo,Vista
-from datalayer.query_constructor import *
-from operator import attrgetter,methodcaller
 
 from pprint import pprint
 
-
-(_ROOT, _DEPTH, _BREADTH) = range(3)
-
-def presentaIndice(cubo,num):
-    guia=cubo.lista_guias[num]['dir_row']
-    ind = 0
-    for key in traverse(guia,mode=1):
-        elem = guia[key]
-        print (ind,key,elem.ord,elem.desc,elem.parentItem.key)
-        ind += 1
-
-def experimental():
-    from util.jsonmgr import load_cubo
-    vista = None
-    mis_cubos = load_cubo()
-    cubo = Cubo(mis_cubos['experimento'])
-    for ind,guia in enumerate(cubo.lista_guias):
-        print(ind,guia['name'])
-
-    ind=4
-    pprint(cubo.lista_guias[4])
-    #cubo.fillGuia(ind)
-    #guia=cubo.lista_guias[ind]['dir_row']
-    #vista=Vista(cubo,1,5,'avg','votes_percent')
-    #resultado=vista.toCsv(col_sparse=True)
-    #for entrada in resultado:
-        #print(entrada)
-    #for elem in (sorted(guia.content,key=methodcaller('childCount'),reverse=True)):
-        #print(elem,sorted(guia[elem].childItems,key=attrgetter('desc')))
-        #print(elem,sorted(guia[elem].childItems,key=methodcaller('childCount'),reverse=True))
-        #print(elem)
-def traverse(tree, key=None, mode=1):
-    # Obtenido de
-    # Brett Kromkamp (brett@perfectlearn.com)
-    # You Programming (http://www.youprogramming.com)
-    # May 03, 2014, que afirma
-    # Python generator. Loosly based on an algorithm from 
-    # 'Essential LISP' by John R. Anderson, Albert T. Corbett, 
-    # and Brian J. Reiser, page 239-241
-    if key is not None:
-        yield key
-        queue = tree.content[key].childItems
-    else:
-        queue = tree.rootItem.childItems
-        print(queue)
-        print('')
-    while queue:
-        yield queue[0].key
-        expansion = queue[0].childItems
-        if mode == _DEPTH:
-            queue = expansion + queue[1:]  # depth-first
-        elif mode == _BREADTH:
-            queue = queue[1:] + expansion  # width-first
    
 def sql():
   pepe=dict()
@@ -116,131 +60,150 @@ def sql():
 
   print(queryConstructor(**pepe))
 
+
+from dictTree import *
+
+#from PyQt5.QtCore import Qt,QSortFilterProxyModel, QCoreApplication, QSize
+
+#from PyQt5.QtGui import QCursor, QStandardItemModel, QStandardItem, QIcon
+from PyQt5.QtGui import QStandardItemModel, QStandardItem
+from PyQt5.QtWidgets import QApplication
+#from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QSplitter, QAbstractItemView, QMenu,\
+          #QDialog, QLineEdit,QLabel,QDialogButtonBox, QVBoxLayout, QHBoxLayout, QComboBox, QCheckBox,\
+          #QPushButton, QMessageBox, \
+          #QTableView
+
 from datalayer.access_layer import *
-from datalayer.directory import *
-from util.tree import *
+#from util.record_functions import norm2String,dict2row, row2dict
+from util.jsonmgr import *
+#from widgets import WPropertySheet
 
-def getSchemas(inspector,catalogo):
-    if len(inspector.get_schema_names()) is 0:
-        print('No schema available')
-        schemata =[None,]
-    else:
-        default_schema = inspector.default_schema_name
-        print(default_schema,inspector.get_schema_names())
-        for schema in inspector.get_schema_names():  #behaviour with default
-           catalogo.append(TreeItem(schema,data=[schema,True if schema == default_schema else False]))
-           for table_name in inspector.get_table_names(schema):
-               pass
-           
-               
-    #return schemata
+#from  sqlalchemy import create_engine,inspect,MetaData, types
+from  sqlalchemy.exc import CompileError, OperationalError
+#from  sqlalchemy.sql import text
 
-def dir2tree():
 
-    definition={'driver':'sqlite','dbname': '/home/werner/projects/dana-cube.git/ejemplo_dana.db',
-                'dbhost':None,'dbuser':None,'dbpass':None,'debug':False } 
-    definition={'driver':'postgresql','dbname': 'pagila',
-                'dbhost':'localhost','dbuser':'werner','dbpass':None,'debug':False } 
-    
-    catalogo = TreeDict()
-    inspector = getInspector(definition)    
-    getSchemas(inspector,catalogo)
-    for k in catalogo.traverse(mode=1):
-        print(k)
-
-def mysqlSchema():
-    definition={'driver':'mysql','dbname': 'fiction',
-                'dbhost':'localhost','dbuser':'root','dbpass':'toor','debug':False } 
-    definition={'driver':'mysql','dbname': 'fiction',
-                'dbhost':'localhost','dbuser':'root','dbpass':'toor','debug':False } 
-    #dirQt(definition)
-    definition={'driver':'postgresql','dbname': 'pagila',
-                'dbhost':'localhost','dbuser':'werner','dbpass':None,'debug':False } 
-    dirAlchI(definition)
-    #dirAlchM(definition)
-    #conn = dbConnectAlch(definition)
-    #getTableFields(conn,'votos_locales')
-    #getTableFields(conn,'votos_locales','default') #TODO deberia contemplarse
-    #getTableFields(conn,'mio.tuyo')
-    #getTableFields(conn,'votos_v')
-    #pprint(getTableFields(conn,'votos_locales'))
-    #print(filter(lambda item: item[1] == 'fecha',getTableFields(conn,'votos_locales')))
-    #print(camposDeTipo('numerico',conn,'votos_locales'))
-
-def multischema():
-    definition = []
-    definition.append({'driver':'sqlite','dbname': '/home/werner/projects/dana-cube.git/ejemplo_dana.db',
-                'dbhost':None,'dbuser':None,'dbpass':None,'debug':False })
-    definition.append({'driver':'mysql','dbname': None,
-                'dbhost':'localhost','dbuser':'root','dbpass':'toor','debug':False })
-    definition.append({'driver':'postgresql','dbname': 'pagila',
-                'dbhost':'localhost','dbuser':'werner','dbpass':None,'debug':False } )
-
-    definition.append({'driver':'mysql','dbname': 'fiction',\
-                'dbhost':'localhost','dbuser':'demo','dbpass':'demo123','debug':False }) 
-    conn = []
-    
-    for conf in definition:
-        if conf['driver'] == 'mysql' and conf['dbname'] is None:
-            pass
-        else:
-            conn.append(dbConnectAlch(conf))
-      
-    for conexion in conn:
-        engine=conexion.engine #incredible
-        inspector = inspect(engine)
-        if len(inspector.get_schema_names()) is 0:
-            schemata =[None,]
-        else:
-            schemata=inspector.get_schema_names()  #behaviour with default
-        print(engine,inspector.default_schema_name,schemata)
+class DataDict():
+    def __init__(self,defFile=None):
+        self.model = None
+        self.hiddenRoot  = None  #self.hiddenRoot
+        self.configData = None
+        self.conn = dict()
         
-        for schema in schemata:
-            if schema == inspector.default_schema_name:
-                schema = None
-            for entry in inspector.get_sorted_table_and_fkc_names(schema):
+        self.setupModel()
+        if self.readConfigData(defFile):
+            self.cargaModelo()
+        else:
+            print('No hay fichero de configuración o no tiene conexiones definidas')
+            exit()
+        
+        
+    def setupModel(self):
+        """
+        definimos el modelo. Tengo que ejecutarlo cada vez que cambie la vista. TODO no he conseguido hacerlo dinamicamente
+        """
+        newModel = QStandardItemModel()
+        newModel.setColumnCount(5)
+        self.hiddenRoot = newModel.invisibleRootItem()
+        #self.multischema(newModel)        
+        #proxyModel = QSortFilterProxyModel()
+        #proxyModel.setSourceModel(newModel)
+        #proxyModel.setSortRole(33)
+        self.model = newModel #proxyModel
+        
+    def readConfigData(self,fileName=None):
+        self.configData = load_cubo(getConfigFileName(fileName))
+        if self.configData is None or self.configData.get('Conexiones') is None:
+            return False
+        else:
+            return True
+        
+    def cargaModelo(self):
+        definition = self.configData.get('Conexiones')
+        for confName in sorted(definition):
+            print('intentando',confName)
+            conf =definition[confName]
+            self.appendConnection(self.hiddenRoot,confName,conf)
 
-            #for table_name in inspector.get_table_names(schema):
-                try:
-                    print(entry[0])
-                    if entry[1] is not None or len(entry[1][0]) == 0:
-                        pprint(entry[1])
-                    #print('\t',schema,table_name)
-                    #for column in inspector.get_columns(table_name,schema):
-                        #try:
-                            #name = column['name']
-                            #tipo = column.get('type','TEXT')
-                            #print("\t\t",fullName(schema,table_name,name),tipo,typeHandler(tipo))
-                        #except CompileError: 
-                        ##except CompileError:
-                            #print('Columna sin tipo')
 
-                except OperationalError:
-                    print('error operativo en ',schema,table_name)
-                    continue
+    def appendConnection(self,padre,confName,conf):
+        pos = padre.rowCount()
+        try:
+            self.conn[confName] = dbConnectAlch(conf)
+            conexion = self.conn[confName]
+            engine=conexion.engine 
+            padre.insertRow(pos,(ConnectionTreeItem(confName,conexion),QStandardItem(str(engine))))
+            curConnection = padre.child(pos)
 
+        except OperationalError as e:
+            #TODO deberia ampliar la informacion de no conexion
+            self.conn[confName] = None
+            showConnectionError(confName,norm2String(e.orig.args))             
+            padre.insertRow(pos,(ConnectionTreeItem(confName,None),QStandardItem('Disconnected')))
+            curConnection = padre.child(pos)
 
-        conexion.close()
-def recrea_config():
-    from util.jsonmgr import dump_structure,getConfigFileName
-    definition = {'Conexiones':dict()}
-    definition['Conexiones']['Elecciones 2105']={'driver':'sqlite','dbname': '/home/werner/projects/dana-cube.git/ejemplo_dana.db',
-                'dbhost':None,'dbuser':None,'dbpass':None,'debug':False }
-    definition['Conexiones']['Pagila']={'driver':'postgresql','dbname': 'pagila',
-                'dbhost':'localhost','dbuser':'werner','dbpass':None,'debug':False } 
+        curConnection.refresh()
+    
 
-    definition['Conexiones']['MariaBD Local']={'driver':'mysql','dbname': 'fiction',\
-                'dbhost':'localhost','dbuser':'demo','dbpass':'demo123','debug':False }
-    dump_structure(definition,getConfigFileName())
+#def traverse(tree, key=None, mode=1):
+    #if key is not None:
+        #yield key
+        #queue = tree.content[key].childItems
+    #else:
+        #queue = tree.rootItem.childItems
+        #print(queue)
+        #print('')
+    #while queue:
+        #yield queue[0].key
+        #expansion = queue[0].childItems
+        #if mode == _DEPTH:
+            #queue = expansion + queue[1:]  # depth-first
+        #elif mode == _BREADTH:
+            #queue = queue[1:] + expansion  # width-first
+
+def traverse(root,base=None):
+    if base is not None:
+       yield base
+       queue = [ base.child(i) for i in range(0,base.rowCount()) ]
+    else:
+        queue = [ root.child(i) for i in range(0,root.rowCount()) ]
+        #print(queue)
+        #print('')
+    while queue :
+        yield queue[0]
+        expansion = [ queue[0].child(i) for i in range(0,queue[0].rowCount()) ]
+        queue = expansion + queue[1:]             
+    
+def browse(base):
+    numConn = base.rowCount()
+    for i in range(0,numConn):
+        conn = base.child(i)
+        print(conn.text(),conn.getRow())
+        numSch = conn.rowCount()
+        if numSch == 0:
+            continue
+        for j in range(0,numSch):
+            schema = conn.child(j)
+            print('\t',schema.text())
+            numTab = schema.rowCount()
+            if numTab == 0:
+                continue
+            for k in range(0,numTab):
+                table = schema.child(k)
+                print('\t\t',table.text(),table.getRow())
+                
     
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
     import sys
     reload(sys)
     sys.setdefaultencoding('utf-8')
+    app = QApplication(sys.argv)
+    #dict=DataDict('JeNeQuitePas')
+    dataDict=DataDict()
+    #browse(dataDict.hiddenRoot)
+    for entry in traverse(dataDict.hiddenRoot):
+        tabs = '\t'*entry.depth()
+        print(tabs,entry.text(),'\t',entry.getRow())
+
     
-    #experimental()
-    #dir2tree()
-    #mysqlSchema()
-    #multischema()
-    recrea_config()

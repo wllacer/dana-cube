@@ -13,7 +13,7 @@ Documentation, License etc.
 '''
 #from PyQt4.QtSql import *
 #transitional
-from  sqlalchemy import create_engine
+from  sqlalchemy import create_engine,types
 from  sqlalchemy.sql import text
 from PyQt5.QtSql import *    
 
@@ -25,6 +25,23 @@ from PyQt5.QtSql import *
     
 from pprint import pprint
 
+def typeHandler(type):
+    if  isinstance(type,(types.Numeric,types.Integer,types.BigInteger)):
+          return 'numerico'
+    elif isinstance(type,types.String):
+          return 'texto'
+    elif isinstance(type,(types._Binary,types.LargeBinary)):
+          return 'binario'
+    elif isinstance(type,types.Boolean):
+          return 'booleano'
+    elif isinstance(type,(types.Date,types.DateTime)):
+          return 'fecha'
+    elif isinstance(type,types.Time):
+          return 'hora'
+    else:
+          # print('Tipo {} no contemplado'.format(type))
+          return '{}'.format(type)
+    return None
 
 def driver2if(driver):
     if   BACKEND == 'Alchemy':
@@ -113,6 +130,7 @@ def dbConnectAlch(constring):
         context = '{}://{}:{}@{}/{}'.format(driver,user,password,host,dbname)
     else:
         context = '{}:///{}'.format(driver,dbname)
+    #TODO debería controlar los errores de conexion
     engine = create_engine(context,echo=debug)
     return engine.connect()
 

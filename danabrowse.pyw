@@ -181,6 +181,23 @@ class BaseTreeItem(QStandardItem):
             lista = None
         return lista
      
+    def getRow(self,role=None):
+        """
+          falta el rol
+        """
+        lista=[]
+        indice = self.index() #self.model().indexFromItem(field)
+        k = 0
+        colind = indice.sibling(indice.row(),k)
+        while colind.isValid():
+            if role is None:
+                lista.append(colind.data()) #print(colind.data())
+            else:
+                lista.append(colind.data(role))
+            k +=1
+            colind = indice.sibling(indice.row(),k)
+        return lista
+        
     def takeChildren(self):
         if self.hasChildren():
             lista = []
@@ -197,6 +214,9 @@ class BaseTreeItem(QStandardItem):
         return self.__class__
      
     def getModel(self):
+        """
+        probablemente innecesario
+        """
         item = self
         while item is not None and type(item) is not TreeModel:
             item = item.parent()
@@ -456,7 +476,33 @@ class TableTreeItem(BaseTreeItem):
         except OperationalError as e:
             showConnectionError('Error en {}.{}'.format(schema,table_name),norm2String(e.orig.args))
         
+    def getFields(self,simple=False):
+        lista = []
+        for item in self.listChildren():
+            if item.text() != 'FIELDS':
+                continue
+            else:
+                for field in item.listChildren():
+                    if simple:
+                        lista.append(field.text())
+                    else:
+                        lista.append(field.getRow())
+                break
+        return lista
 
+    def getFK(self,simple=False):
+        lista = []
+        for item in self.listChildren():
+            if item.text() != 'FK':
+                continue
+            else:
+                for field in item.listChildren():
+                    if simple:
+                        lista.append(field.text())
+                    else:
+                        lista.append(field.getRow())
+                break
+        return lista
         
     def setContextMenu(self,menu):
         self.menuActions = []
@@ -477,14 +523,12 @@ class TableTreeItem(BaseTreeItem):
             # show properties sheet
             elif ind == 1:
                 pass  #  query 
-            elif ind == 2:
-                pass  # get fk, query
-            elif ind == 3:
-                pass # get fk tree, query
+            elif ind in (2,3,4):
+                pprint(self.getFields(simple=False))
+                if ind in (3,4):
+                    pprint(self.getFK(simple=False))
             elif ind == 5:
                 pass # generate cube
-            elif ind == 6:
-                pass
 
 
     #def getConnectionItem(self):
@@ -507,23 +551,6 @@ class TableTreeItem(BaseTreeItem):
         return "<" + self.__class__.__name__ + " " + self.getName() + ">"
 
 
-def typeHandler(type):
-    if  isinstance(type,(types.Numeric,types.Integer,types.BigInteger)):
-          return 'numerico'
-    elif isinstance(type,types.String):
-          return 'texto'
-    elif isinstance(type,(types._Binary,types.LargeBinary)):
-          return 'binario'
-    elif isinstance(type,types.Boolean):
-          return 'booleano'
-    elif isinstance(type,(types.Date,types.DateTime)):
-          return 'fecha'
-    elif isinstance(type,types.Time):
-          return 'hora'
-    else:
-          # print('Tipo {} no contemplado'.format(type))
-          return '{}'.format(type)
-    return None
 
 def showConnectionError(context,detailed_error):
     msg = QMessageBox()
@@ -545,6 +572,7 @@ class MainWindow(QMainWindow):
         self.readConfigData()
         self.cargaModelo(self.model)
         self.setupView()
+        print('inicializacion completa')
         #CHANGE here
         
         self.queryView = QTableView()
@@ -602,7 +630,7 @@ class MainWindow(QMainWindow):
         definimos el modelo. Tengo que ejecutarlo cada vez que cambie la vista. TODO no he conseguido hacerlo dinamicamente
         """
         newModel = QStandardItemModel()
-        newModel.setColumnCount(2)
+        newModel.setColumnCount(5)
         
         
         self.hiddenRoot = newModel.invisibleRootItem()

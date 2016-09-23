@@ -95,6 +95,39 @@ def porcentaje(row):
     suma=sum(filter(None,row))
     return list(map(lambda item: item*100/suma if item is not None else None,row))
 
+def ordinal(item):
+    tmp = item.getPayload()
+    ordtmp = [ None for k in range(item.lenPayload())]
+    round = 1
+    while round <= item.lenPayload():
+        maximo = max(tmp)
+        if maximo is None:
+            break
+        else:
+            donde = tmp.index(maximo)
+            ordtmp[donde]=round
+            tmp[donde] = None
+            round += 1
+    item.setPayload(ordtmp)
+
+def senado(item):
+    prov = item['key'].split(':')[-1]
+    tmp = item.getPayload()
+    ordtmp = [ None for k in range(item.lenPayload())]
+    maximo = max(tmp)
+    donde = tmp.index(maximo)
+    if prov in ('51','52'):
+        ordtmp[donde]=1
+    else:
+        ordtmp[donde]=3
+        tmp[donde] = None
+        maximo = max(tmp)
+        donde = tmp.index(maximo)
+        ordtmp[donde]=1
+        tmp[donde] = None
+
+    item.setPayload(ordtmp)
+            
 def asigna(item):
     prov = item['key'].split(':')[-1]
     puestos = escanos(prov)
@@ -190,7 +223,9 @@ def simula(item,colparm):
     asigna(item)
             
 USER_FUNCTION_LIST=( ('Porcentajes calculados en la fila',((porcentaje,'row',),)),
+                     ('Ordinales',((ordinal,'item'),)),
                      ('Asignacion de escaños',((asigna,'item','leaf'),)),
+                     ('Senado',((senado,'item','leaf'),)),
                      ('Integra IU en Podemos',((borraIU,'colkey',),)),
                      ('Integra Mès en Podemos',((borraMes,'colkey',),)),
                      ('Solo presenta una columna de Podemos',((unPodemos,'colkey',),)),
@@ -198,7 +233,6 @@ USER_FUNCTION_LIST=( ('Porcentajes calculados en la fila',((porcentaje,'row',),)
                                            (borraIU,'colkey',),
                                            (borraMes,'colkey'),
                                            (unPodemos,'colkey',),
-                                           (asigna,'item',)
                                          )),
                      ('Simulacion resultados Podemos Agregado',(
                                            (borraIU,'colkey',),
@@ -207,7 +241,14 @@ USER_FUNCTION_LIST=( ('Porcentajes calculados en la fila',((porcentaje,'row',),)
                                            (factorizaAgregado,'colparm',),
                                            (asigna,'item','leaf'),
                                            )),
-                    
+
+                     ('Simulacion sin escaños Podemos Agregado',(
+                                           (borraIU,'colkey',),
+                                           (borraMes,'colkey',),
+                                           (unPodemos,'colkey',),
+                                           (factorizaAgregado,'colparm',),
+                                           )),
+                                        
                      ('Simulacion resultados Podemos separados',(
                                            (borraIU,'colkey',),
                                            (borraMes,'colkey',),
@@ -219,3 +260,14 @@ KWARGS_LIST = { simula:(None,)}
     
 row=[15,26,74,66,None,24]
 print(USER_FUNCTION_LIST[0][1][0][0](row))
+
+data = [33.03,
+22.66,
+21.1,
+13.05,
+#2.63,
+#2.01,
+#1.2,
+]
+escanos = 350
+print(dhont(escanos,data))
