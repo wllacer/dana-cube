@@ -63,6 +63,7 @@ class DataDict():
             return item
             break
         return None
+    
     def getConnNr(self,name):
         for k in range(self.hiddenRoot.rowCount()):
             item = self.hiddenRoot.child(k)
@@ -97,13 +98,16 @@ class DataDict():
     def _cargaModelo(self):
         definition = self.configData.get('Conexiones')
         for confName in sorted(definition):
-            print('intentando',confName)
-            conf =definition[confName]
-            self.appendConnection(self.hiddenRoot,confName,conf)
+            self.appendConnection(confName)
 
     #TODO probablemente padre sea un parametro inncecesario
-    def appendConnection(self,padre,confName,conf):
-        pos = padre.rowCount()
+    def appendConnection(self,confName,pos=None):
+
+        padre = self.hiddenRoot
+        conf = self.configData['Conexiones'].get(confName)
+        if pos is None:
+            pos = padre.rowCount()
+        
         try:
             self.conn[confName] = dbConnectAlch(conf)
             conexion = self.conn[confName]
@@ -144,7 +148,7 @@ class DataDict():
         if confName is None:
             self.model.clear()
             self.hiddenRoot = self.model.invisibleRootItem()
-            #self.cargaModelo(self.model)
+            self._cargaModelo(self.model)
         else:
             # codigo nuevo. no funciona por alguna razon misteriosa en los datos
             #conexion = self.getConnByName(confName)
@@ -179,9 +183,9 @@ class DataDict():
                 break
                     # es un elemento que no estaba en el modelo
             
-            conf =self.configData['Conexiones'][confName]
-            #TODO aqui la broam era mantener la posicion del elemento y no mandarlo el último
-            self.appendConnection(self.hiddenRoot,confName,conf)
+            #conf =self.configData['Conexiones'][confName]
+            #aqui la broam era mantener la posicion del elemento y no mandarlo el último
+            self.appendConnection(confName,pos=k)
 
         self.model.endResetModel()
 

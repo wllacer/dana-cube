@@ -18,14 +18,17 @@
         * Asociaciones virtuales
         * Filtros, tanto en tabla como en asociacion
         
-    * Menu -> Connexion -> New
-        * En el caso de SQLite deberia llamarse a un buscador de ficheros
-        * appendConnection 4 argumentos es excesivo. Revisar
-        * Revisar la vida de las conexiones en datadict.conn[]
-        * en modificar; ver por que falla updateModel con refresh. Restaurar en appendConnection el posicionado
-        * _BUG_ refresh de conexion en mysqld (parada en bg) casca en connection.refresh (no detecta que la base de datos esta down
-        * El cancel en (connection)->Edit provoca un refresco, pese a todo
-        * __DONE__ (connection)->Connect. abenda exec_objct(updateModel). La reorganizacion no le ha ido bien
+
+    * En el caso de SQLite deberia llamarse a un buscador de ficheros
+    * __DONE__ appendConnection 4 argumentos es excesivo. Revisar. Mantener la posicion del elemento inicial
+    * Revisar la vida de las conexiones en datadict.conn[]
+    * en modificar; ver por que falla updateModel con refresh. Restaurar en appendConnection el posicionado
+    * _BUG_ refresh de conexion en mysqld (parada en bg) casca en connection.refresh (no detecta que la base de datos esta down
+    * _BUG_ El cancel en (connection)->Edit provoca un refresco, pese a todo
+    * __DONE__ (connection)->Connect. abenda exec_objct(updateModel). La reorganizacion no le ha ido bien
+    * __DONE__ en campos sin tipò (sqlite) no ignorar como hasta ahora. Default type es TEXT
+    * Funcion cambiar nombre de la conexión 
+    * Caso de relaciones por mas de un campo. Desde definición a explotacion
     
 * _WIP_ Code refactoring for clarity
   *__DONE__ data access layer isolation (2/4/16)

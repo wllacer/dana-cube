@@ -63,7 +63,9 @@ def sql():
 
 
 from datadict import *    
+#from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtWidgets import QApplication
+from datalayer.query_constructor import *
 
 def traverse(root,base=None):
     if base is not None:
@@ -121,6 +123,80 @@ def browseTables(base):
                 FK = info.get('FK')
                 if FK :
                     pprint(info)
+
+def browse0(base):                    
+    numConn = base.rowCount()
+    for i in range(0,numConn):
+        conn = base.child(i)
+        print(conn.text())
+
+def getTable(dd,confName,schemaName,tableName):
+    con = dd.getConnByName(confName)
+    if con is None:
+        print('Conexion {} no definida'.format(confName))
+        return
+    sch = con.getChildrenByName(schemaName)
+    if sch is None:
+        print('Esquema {} no definido'.format(schemaName))
+        return
+    tab = sch.getChildrenByName(tableName)
+    if sch is None:
+        print('Tabla {} no definid'.format(tableName))
+        return
+    print(tab.getFullDesc())
+    return tab.getFullInfo()
+
+def SQLsimple(conn,info):
+    pepe=dict()
+    if info.get('schemaName','') != '':
+        pepe['tables']= info['schemaName'] + '.' + info['tableName']
+    else:
+        pepe['tables'] = info['tablename']
+    pepe['fields'] = [ item[0] for item in info['Fields'] ]
+    
+    sqls = queryConstructor(**pepe)
+    pprint(getCursor(conn,sqls))
+    return
+def SQLwFK(conn,info):
+    """
+    TODO relaciones con mas de un campo como enlace
+    TODO comprobar que nombres de tablas no colisionan
+    TODO informacion de formatos para la tabla de visualizacion
+    TODO generalizar :
+        * sin FKs
+        * con FKs recursivas
+    """
+    pepe=dict()
+    if info.get('schemaName','') != '':
+        pepe['tables']= info['schemaName'] + '.' + info['tableName']
+        pepe['fields'] = [ pepe['tables']+'.'+item[0] for item in info['Fields'] ]
+    else:
+        pepe['tables'] = info['tablename']
+        pepe['fields'] = [ item[0] for item in info['Fields'] ]
+    if info['FK']:
+        pepe['join'] = []
+        for relation in info['FK']:
+            entry = dict()
+            entry['table'] = relation['ParentTable']
+            entry['join_clause'] = ((pepe['tables']+'.'+relation['Field'],'=',relation['ParentTable']+'.'+relation['ParentField']),)
+            pepe['join'].append(entry)
+            campos = [entry['table']+'.'+elem[0] for elem in relation['CamposReferencia'] ]
+            # con esto insertamos a partir del elemento de enlace
+            idx = pepe['fields'].index(entry['join_clause'][0][0])
+            pepe['fields'][idx+1:idx+1] = campos
+    #pepe['join']={'table':'geo_rel',
+                #'join_filter':"geo_rel.tipo_padre = 'P'",
+                #'join_clause':(('padre','=','votos_locales.municipio'),),
+                #}
+    pprint(pepe)
+    sqls = queryConstructor(**pepe)
+    pprint(sqls)
+    #pprint(getCursor(conn,sqls))
+    return
+    pepe['fields']=['geo_rel.padre','partido',('votes_presential','sum')]
+    pepe['group']=['partido',]
+
+
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
     import sys
@@ -129,11 +205,14 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     #dict=DataDict('JeNeQuitePas')
     dataDict=DataDict()
-    #browse(dataDict.hiddenRoot)
-    browseTables(dataDict.hiddenRoot)
     #for entry in traverse(dataDict.hiddenRoot):
         #tabs = '\t'*entry.depth()
         #if not entry.isAuxiliar():
             #print(entry.getFullDesc(), entry.getRow(),entry.gpi()) #(tabs,entry) #entry.text(),'\t',entry.getRow())
-            
-    
+    #browse(dataDict.hiddenRoot)
+    #browseTables(dataDict.hiddenRoot)
+    #browse0(dataDict.hiddenRoot)
+    info = getTable(dataDict,'MariaBD Local','sakila','customer')            
+
+    SQLwFK(dataDict.conn['MariaBD Local'],info)
+    #getTable(dataDict,'Elecciones 2105','','partidos')            

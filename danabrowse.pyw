@@ -84,7 +84,6 @@ def getContextMenu(obj,action,exec_object=None):
                 obj.data().close()
                 obj.model().beginResetModel()
                 obj.deleteChildren()
-                #FIXME no podemos poner el icono de momento
                 obj.setIcon(QIcon('icons/16/database_lightning.png'))
                 obj.setData(None)
                 obj.model().endResetModel()
@@ -111,7 +110,8 @@ def getContextMenu(obj,action,exec_object=None):
         elif ind == 1:
             pass  #  query 
         elif ind in (2,3,4):
-            pprint(obj.getFields(simple=False))
+            #pprint(obj.getFields(simple=False))
+            pprint(obj.getFullInfo())
             if ind in (3,4):
                 pprint(obj.getFK(simple=False))
         elif ind == 5:
@@ -352,7 +352,7 @@ class MainWindow(QMainWindow):
     def newConnection(self):
         confName=self.editConnection(None)
         # esta claro que sobran parametros
-        self.dictionary.appendConnection(self.dictionary.hiddenRoot,confName,self.configData['Conexiones'][confName])
+        self.dictionary.appendConnection(confName)
         
     def modConnection(self,nombre=None):
         if nombre is None:

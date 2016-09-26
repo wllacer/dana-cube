@@ -355,7 +355,10 @@ class TableTreeItem(BaseTreeItem):
                     curTableFields.appendRow((name,tipo))
                 except CompileError: 
                 #except CompileError:
-                    print('Columna sin tipo')
+                    print('Columna sin tipo',schema,' ',table_name,' ',name)
+                    if name and name != '':
+                        tipo = BaseTreeItem(typeHandler('TEXT'))
+                        curTableFields.appendRow((name,tipo))
             for fk in inspector.get_foreign_keys(table_name,schema):
                 if fk['name'] is None:
                     name = BaseTreeItem(table_name+'2'+fk['referred_table']+'*')
