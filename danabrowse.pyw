@@ -27,6 +27,7 @@ from util.jsonmgr import *
 from widgets import WPropertySheet
 
 from dictTree import *
+from datadict import *
 
 def setContextMenu(obj,menu):
     if type(obj) == ConnectionTreeItem:
@@ -89,7 +90,7 @@ def getContextMenu(obj,action,exec_object=None):
                 obj.model().endResetModel()
             else:
                 exec_object.updateModel(obj.text())
-
+                #obj.model().updateModel(obj.text())
     elif type(obj) == SchemaTreeItem :
  
         ind = obj.menuActions.index(action)
@@ -270,9 +271,14 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
         #Leeo la configuracion
 
-        self.setupModel()
-        self.readConfigData()
-        self.cargaModelo(self.model)
+        self.dictionary = DataDict()
+        #TODO variables asociadas del diccionario. Reevaluar al limpiar
+        self.model = self.dictionary.model
+        self.configData = self.dictionary.configData
+        self.conn = self.dictionary.conn
+        if self.dictionary.isEmpty:
+            self.newConfigData()
+            self.dictionary._cargaModelo(self.dictionary.model)
         self.setupView()
         print('inicializacion completa')
         #CHANGE here
@@ -285,24 +291,12 @@ class MainWindow(QMainWindow):
         self.fileMenu.addAction("&Delete ...", self.delConnection, "Ctrl+D")
         self.fileMenu.addAction("&Save Config File", self.saveConfigFile, "Ctrl+S")
         self.fileMenu.addAction("E&xit", self.close, "Ctrl+Q")
-        #self.fileMenu = self.menuBar().addMenu("&Opciones")
 
-        
-        #self.definitionSplitter = QSplitter(Qt.Vertical)
-        #self.definitionSplitter.addWidget(self.view)
-##        self.definitionSplitter.addWidget(self.messageView)
+
         self.querySplitter = QSplitter(Qt.Horizontal)
-        #self.querySplitter.addWidget(self.definitionSplitter)
         self.querySplitter.addWidget(self.view)
         self.querySplitter.addWidget(self.queryView)
         self.setCentralWidget(self.querySplitter)
-
-        #self.querySplitter.setStretchFactor(0, 1)
-        #self.querySplitter.setStretchFactor(1, 3)
-        #self.definitionSplitter.setStretchFactor(0, 1)
-        #self.definitionSplitter.setStretchFactor(1, 2)
-
-#        self.setCentralWidget(self.view)
                
         self.setWindowTitle("Visualizador de base de datos")
         
@@ -321,43 +315,22 @@ class MainWindow(QMainWindow):
             self.view.resizeColumnToContents(m)
         self.view.collapseAll()
 
-
         #self.view.setSortingEnabled(True)
         #self.view.setRootIsDecorated(False)
         self.view.setAlternatingRowColors(True)
         #self.view.sortByColumn(0, Qt.AscendingOrder)
 
-    def setupModel(self):
-        """
-        definimos el modelo. Tengo que ejecutarlo cada vez que cambie la vista. TODO no he conseguido hacerlo dinamicamente
-        """
-        newModel = QStandardItemModel()
-        newModel.setColumnCount(5)
-        
-        
-        self.hiddenRoot = newModel.invisibleRootItem()
-        #self.multischema(newModel)        
-        #self.view.setModel(newModel)
-        #self.modelo=self.view.model
-        #proxyModel = QSortFilterProxyModel()
-        #proxyModel.setSourceModel(newModel)
-        #proxyModel.setSortRole(33)
-        self.model = newModel #proxyModel
 
-    def readConfigData(self):
-        self.configData = load_cubo(getConfigFileName())
-        self.conn = dict()        
-        if self.configData is None or self.configData.get('Conexiones') is None:
-            self.configData = dict()
-            self.configData['Conexiones']=dict()
-            self.editConnection(None)
-            if self.configData['Conexiones']:
-                self.saveConfigFile()
-            else:
-                #TODO mensaje informativo
-                self.close()
-            #self.configData['Conexiones']=crea_defecto()
-            #dump_structure(self.configData,getConfigFileName())
+    def newConfigData(self):
+        self.configData = dict()
+        self.configData['Conexiones']=dict()
+        self.editConnection(None)
+        if self.configData['Conexiones']:
+            self.saveConfigFile()
+            self.dictionary._cargaModelo(self.dictionary.model)
+        else:
+            #TODO mensaje informativo
+            self.close()
             
     def saveConfigFile(self):
         dump_structure(self.configData,getConfigFileName())
@@ -372,12 +345,14 @@ class MainWindow(QMainWindow):
             if self.conn[conid].closed :
                 self.conn[conid].close()
         self.saveConfigFile()
+
         sys.exit()
         
     #TODO actualizar el arbol tras hacer la edicion   
     def newConnection(self):
         confName=self.editConnection(None)
-        self.appendConnection(confName)
+        # esta claro que sobran parametros
+        self.dictionary.appendConnection(self.dictionary.hiddenRoot,confName,self.configData['Conexiones'][confName])
         
     def modConnection(self,nombre=None):
         if nombre is None:
@@ -389,7 +364,10 @@ class MainWindow(QMainWindow):
         else:
             confName = nombre
         self.editConnection(confName)   
-        self.updateModel(confName)
+        self.dictionary.updateModel(confName)
+    
+    def updateModel(self,nombre=None):
+        self.dictionary.updateModel(nombre)
         
     def delConnection(self,nombre=None):
         if nombre is None:
@@ -401,16 +379,18 @@ class MainWindow(QMainWindow):
         else:
             confName = nombre
             
-        self.model.beginResetModel()   
-        for item in self.model.findItems(confName,Qt.MatchExactly,0):
-            if type(item) == ConnectionTreeItem:
-                self.model.removeRow(item.row())
-                break
-        self.model.endResetModel()
-        del self.conn[nombre]
-        del self.configData['Conexiones'][nombre]
+        #self.model.beginResetModel()   
+        self.dictionary.dropConnection(confName)
+        #for item in self.model.findItems(confName,Qt.MatchExactly,0):
+            #if type(item) == ConnectionTreeItem:
+                #self.model.removeRow(item.row())
+                #break
+        #self.model.endResetModel()
+        #del self.conn[confName]
+        #del self.configData['Conexiones'][nombre]
 
     def editConnection(self,nombre=None):
+        
         attr_list =  ('driver','dbname','dbhost','dbuser','dbpass','dbport','debug')
         if nombre is None:
             datos = [None for k in range(len(attr_list) +1) ]
@@ -469,56 +449,7 @@ class MainWindow(QMainWindow):
             self.configData['Conexiones'][datos[0]] = row2dict(datos[1:],attr_list)
             return datos[0]
             #TODO modificar el arbol, al menos desde ahí
-            #self.updateModel(datos[0])
-            #dump_structure(self.configData,getConfigFileName())
      
-    def appendConnection(self,pos,confName,conf):
-        try:
-            self.conn[confName] = dbConnectAlch(conf)
-            conexion = self.conn[confName]
-            engine=conexion.engine 
-            self.hiddenRoot.insertRow(pos,(ConnectionTreeItem(confName,conexion),QStandardItem(str(engine))))
-            curConnection = self.hiddenRoot.child(pos)
-
-        except OperationalError as e:
-            #TODO deberia ampliar la informacion de no conexion
-            self.conn[confName] = None
-            showConnectionError(confName,norm2String(e.orig.args))             
-            self.hiddenRoot.insertRow(pos,(ConnectionTreeItem(confName,None),QStandardItem('Disconnected')))
-            curConnection = self.hiddenRoot.child(pos)
-        curConnection.refresh()
-        
-    def updateModel(self,confName=None):
-        """
-        """
-        self.model.beginResetModel()       
-        if confName is None:
-            self.model.clear()
-            self.hiddenRoot = self.model.invisibleRootItem()
-            #self.cargaModelo(self.model)
-        else:
-            # limpio la tabla de conexiones
-            conexion = self.conn.get(confName)
-            if conexion is not None:  #conexion nueva
-                self.conn[confName].close()
-            self.conn[confName] = None
-            # limpio el arbol (podia usar findItem, pero no se, no se ...)
-            pos = self.hiddenRoot.rowCount()
-            for k in range(self.hiddenRoot.rowCount()):
-                item = self.hiddenRoot.child(k)
-                if item.text() != confName:
-                    continue
-                if type(item) != ConnectionTreeItem:
-                    continue
-                self.hiddenRoot.removeRow(k)
-                pos = k
-                break
-                    # es un elemento que no estaba en el modelo
-            
-            conf =self.configData['Conexiones'][confName]
-            self.appendConnection(pos,confName,conf)
-
-        self.model.endResetModel()
         
 
     def openContextMenu(self,position):
@@ -537,14 +468,6 @@ class MainWindow(QMainWindow):
         print(index.row(),index.column())
         item = self.model.itemFromIndex(index)
         print(item.text(),item.model())
-
-    def cargaModelo(self,model):
-        definition = self.configData.get('Conexiones')
-        self.conn = dict()
-        for confName in sorted(definition):
-            print('intentando',confName)
-            conf =definition[confName]
-            self.appendConnection(self.hiddenRoot.rowCount(),confName,conf)
 
     def refreshTable(self):
         self.model.emitModelReset()

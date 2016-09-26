@@ -7,6 +7,26 @@
 * __DONE__. New test database.  (Sqlite) (2/4/16)
    * __DONE__ Date Handling codepaths tested (2/4/16)
 
+* SQLA Browser
+    * Falta casi todo
+    * ¿Como representa SQLAlchemy las FK a otro esquema?. Mejor dicho se referred_schema tiene valor o no cuando ser trata
+       del esquema de defecto? Asumiré que siempre tiene valor y si no hay nombre de esquema es que se trata del mismo esquema
+    * Asociaciones con mas de un campo de enlace ¿Como las representa SQLA
+    * ¿Como definir cosas no SQL? Por ejemplo
+        * Claves, donde no existen
+        * Campos descripcion
+        * Asociaciones virtuales
+        * Filtros, tanto en tabla como en asociacion
+        
+    * Menu -> Connexion -> New
+        * En el caso de SQLite deberia llamarse a un buscador de ficheros
+        * appendConnection 4 argumentos es excesivo. Revisar
+        * Revisar la vida de las conexiones en datadict.conn[]
+        * en modificar; ver por que falla updateModel con refresh. Restaurar en appendConnection el posicionado
+        * _BUG_ refresh de conexion en mysqld (parada en bg) casca en connection.refresh (no detecta que la base de datos esta down
+        * El cancel en (connection)->Edit provoca un refresco, pese a todo
+        * __DONE__ (connection)->Connect. abenda exec_objct(updateModel). La reorganizacion no le ha ido bien
+    
 * _WIP_ Code refactoring for clarity
   *__DONE__ data access layer isolation (2/4/16)
   *__DONE__ heavy simplification of core codepaths, and several internal structures.(6/4/16)
@@ -82,8 +102,7 @@
   * __DONE__ in guides allow blank filter
  
 * Performance
-  * __DONE__ municipio as guide performance is a horror. _WIP_ I used lists for guide definition and retrieval. I've discovered
-    that using dictionaries enhances performance over 10000 % (read __100 TIMES__ ), but i have to rewrite almost everything again
+  * __DONE__ municipio as guide performance is a horror. _WIP_ I used lists for guide definition and retrieval. I've discovered that using dictionaries enhances performance over 10000 % (read __100 TIMES__ ), but i have to rewrite almost everything again
     used trees of dict, which also simplifies gui programming
   * A decision has to be made to load guides with the cube or specifically for each view
   

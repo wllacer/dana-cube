@@ -61,118 +61,25 @@ def sql():
   print(queryConstructor(**pepe))
 
 
-from dictTree import *
 
-#from PyQt5.QtCore import Qt,QSortFilterProxyModel, QCoreApplication, QSize
-
-#from PyQt5.QtGui import QCursor, QStandardItemModel, QStandardItem, QIcon
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
+from datadict import *    
 from PyQt5.QtWidgets import QApplication
-#from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QSplitter, QAbstractItemView, QMenu,\
-          #QDialog, QLineEdit,QLabel,QDialogButtonBox, QVBoxLayout, QHBoxLayout, QComboBox, QCheckBox,\
-          #QPushButton, QMessageBox, \
-          #QTableView
-
-from datalayer.access_layer import *
-#from util.record_functions import norm2String,dict2row, row2dict
-from util.jsonmgr import *
-#from widgets import WPropertySheet
-
-#from  sqlalchemy import create_engine,inspect,MetaData, types
-from  sqlalchemy.exc import CompileError, OperationalError
-#from  sqlalchemy.sql import text
-
-
-class DataDict():
-    def __init__(self,defFile=None):
-        self.model = None
-        self.hiddenRoot  = None  #self.hiddenRoot
-        self.configData = None
-        self.conn = dict()
-        
-        self.setupModel()
-        if self.readConfigData(defFile):
-            self.cargaModelo()
-        else:
-            print('No hay fichero de configuración o no tiene conexiones definidas')
-            exit()
-        
-        
-    def setupModel(self):
-        """
-        definimos el modelo. Tengo que ejecutarlo cada vez que cambie la vista. TODO no he conseguido hacerlo dinamicamente
-        """
-        newModel = QStandardItemModel()
-        newModel.setColumnCount(5)
-        self.hiddenRoot = newModel.invisibleRootItem()
-        #self.multischema(newModel)        
-        #proxyModel = QSortFilterProxyModel()
-        #proxyModel.setSourceModel(newModel)
-        #proxyModel.setSortRole(33)
-        self.model = newModel #proxyModel
-        
-    def readConfigData(self,fileName=None):
-        self.configData = load_cubo(getConfigFileName(fileName))
-        if self.configData is None or self.configData.get('Conexiones') is None:
-            return False
-        else:
-            return True
-        
-    def cargaModelo(self):
-        definition = self.configData.get('Conexiones')
-        for confName in sorted(definition):
-            print('intentando',confName)
-            conf =definition[confName]
-            self.appendConnection(self.hiddenRoot,confName,conf)
-
-
-    def appendConnection(self,padre,confName,conf):
-        pos = padre.rowCount()
-        try:
-            self.conn[confName] = dbConnectAlch(conf)
-            conexion = self.conn[confName]
-            engine=conexion.engine 
-            padre.insertRow(pos,(ConnectionTreeItem(confName,conexion),QStandardItem(str(engine))))
-            curConnection = padre.child(pos)
-
-        except OperationalError as e:
-            #TODO deberia ampliar la informacion de no conexion
-            self.conn[confName] = None
-            showConnectionError(confName,norm2String(e.orig.args))             
-            padre.insertRow(pos,(ConnectionTreeItem(confName,None),QStandardItem('Disconnected')))
-            curConnection = padre.child(pos)
-
-        curConnection.refresh()
-    
-
-#def traverse(tree, key=None, mode=1):
-    #if key is not None:
-        #yield key
-        #queue = tree.content[key].childItems
-    #else:
-        #queue = tree.rootItem.childItems
-        #print(queue)
-        #print('')
-    #while queue:
-        #yield queue[0].key
-        #expansion = queue[0].childItems
-        #if mode == _DEPTH:
-            #queue = expansion + queue[1:]  # depth-first
-        #elif mode == _BREADTH:
-            #queue = queue[1:] + expansion  # width-first
 
 def traverse(root,base=None):
     if base is not None:
        yield base
-       queue = [ base.child(i) for i in range(0,base.rowCount()) ]
+       queue = base.listChildren() 
     else:
         queue = [ root.child(i) for i in range(0,root.rowCount()) ]
         #print(queue)
         #print('')
     while queue :
         yield queue[0]
-        expansion = [ queue[0].child(i) for i in range(0,queue[0].rowCount()) ]
-        queue = expansion + queue[1:]             
+        expansion = queue[0].listChildren() 
+        if expansion is None:
+            del queue[0]
+        else:
+            queue = expansion  + queue[1:]             
     
 def browse(base):
     numConn = base.rowCount()
@@ -192,7 +99,28 @@ def browse(base):
                 table = schema.child(k)
                 print('\t\t',table.text(),table.getRow())
                 
-    
+def browseTables(base):
+    numConn = base.rowCount()
+    for i in range(0,numConn):
+        conn = base.child(i)
+        #print(conn.text(),conn.getRow())
+        numSch = conn.rowCount()
+        if numSch == 0:
+            continue
+        for j in range(0,numSch):
+            schema = conn.child(j)
+            #print('\t',schema.text())
+            numTab = schema.rowCount()
+            if numTab == 0:
+                continue
+            for k in range(0,numTab):
+                table = schema.child(k)
+                #print(table.text())
+                print(table.getFullDesc())
+                info = table.getFullInfo()
+                FK = info.get('FK')
+                if FK :
+                    pprint(info)
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
     import sys
@@ -202,8 +130,10 @@ if __name__ == '__main__':
     #dict=DataDict('JeNeQuitePas')
     dataDict=DataDict()
     #browse(dataDict.hiddenRoot)
-    for entry in traverse(dataDict.hiddenRoot):
-        tabs = '\t'*entry.depth()
-        print(tabs,entry.text(),'\t',entry.getRow())
-
+    browseTables(dataDict.hiddenRoot)
+    #for entry in traverse(dataDict.hiddenRoot):
+        #tabs = '\t'*entry.depth()
+        #if not entry.isAuxiliar():
+            #print(entry.getFullDesc(), entry.getRow(),entry.gpi()) #(tabs,entry) #entry.text(),'\t',entry.getRow())
+            
     

@@ -49,12 +49,49 @@ class BaseTreeItem(QStandardItem):
         self.setEditable(False)
         self.setColumnCount(1)
         #self.setData(self)
+        self.gpi = self.getRow        
         
     def deleteChildren(self):
         if self.hasChildren():
             while self.rowCount() > 0:
                 self.removeRow(self.rowCount() -1)
-                
+ 
+    def isAuxiliar(self):
+        if self.text() in ('FIELDS','FK','FK_REFERENCE') and self.depth() == 3:
+            return True
+        else:
+            return False
+   
+    def getBrotherByName(self,name): 
+        # getSibling esta cogido para los elementos de la fila, asi que tengo que inventar esto para obtener
+        # un 'hermano' por nomnbre
+        padre = self.parent()
+        for item in padre.listChildren():
+            if item.text() != name:
+                continue
+            else:
+                return item
+        return None
+
+    def getChildrenByName(self,name): 
+        for item in self.listChildren():
+            if item.text() != name:
+                continue
+            else:
+                return item
+        return None
+
+    def getFullDesc(self):
+        fullDesc = [] #let the format be done outside
+        if not self.isAuxiliar():
+            fullDesc.append(self.text())
+        papi = self.parent()
+        while papi is not None:
+            if not papi.isAuxiliar():
+                fullDesc.insert(0,papi.text()) #Ojo insert, o sea al principio
+            papi = papi.parent()
+        return '.'.join(fullDesc)
+ 
     def depth(self):
         item = self
         depth = -1 #hay que recordar que todo cuelga de un hiddenRoot
@@ -70,12 +107,10 @@ class BaseTreeItem(QStandardItem):
             return None
         
     def listChildren(self):
+        lista = []
         if self.hasChildren():
-            lista = []
             for k in range(self.rowCount()):
                 lista.append(self.child(k))
-        else:
-            lista = None
         return lista
      
     def getRow(self,role=None):
@@ -94,7 +129,9 @@ class BaseTreeItem(QStandardItem):
             k +=1
             colind = indice.sibling(indice.row(),k)
         return lista
-        
+     
+    
+    
     def takeChildren(self):
         if self.hasChildren():
             lista = []
@@ -106,6 +143,17 @@ class BaseTreeItem(QStandardItem):
     
     def getTypeName(self):
         return self.__class__.__name__ 
+
+    def getTypeText(self):
+        if type(self) == ConnectionTreeItem :
+            return 'Conn'
+        elif type(self) == SchemaTreeItem:
+            return 'Schema'
+        elif type(self) == TableTreeItem :
+            return 'Table'
+        else:
+            return ''
+        
     
     def type(self):
         return self.__class__
@@ -141,6 +189,9 @@ class BaseTreeItem(QStandardItem):
         #setContextMenu(self,menu)
     #def getContextMenu(self,action,exec_obj=None):
         #getContextMenu(self,action,exec_obj)
+
+    def __repr__(self):
+        return "<" + self.getTypeText() + " " + self.text() + ">"
 
     
 class ConnectionTreeItem(BaseTreeItem):
@@ -218,7 +269,7 @@ class ConnectionTreeItem(BaseTreeItem):
                     continue
                 
     def refresh(self):
-        #TODO cambiar la columna 0
+        ##TODO cambiar la columna 
         #TODO de desconectada a conectada
         self.deleteChildren()
         if self.isOpen():
@@ -347,8 +398,90 @@ class TableTreeItem(BaseTreeItem):
                         lista.append(field.getRow())
                 break
         return lista
-        
 
+    def getFKref(self,simple=False):
+        lista = []
+        for item in self.listChildren():
+            if item.text() != 'FK_REFERENCE':
+                continue
+            else:
+                for field in item.listChildren():
+                    if simple:
+                        lista.append(field.text())
+                    else:
+                        lista.append(field.getRow())
+                break
+        return lista
+       
+    def getFullInfo(self):
+        """
+           De momento no incluyo FKr -- no tengo claro necesitarla
+        """
+        TableInfo = dict()
+        esquema = self.getSchema()
+        TableInfo['schemaName'] = nomEsquema = esquema.text()
+        TableInfo['tableName'] = self.text()
+        TableInfo['Fields']= self.getFields()
+        FKs = self.getFK(False)
+        if len(FKs) > 0:
+            TableInfo['FK']= []
+            for idx,asociacion in enumerate(FKs):
+                RefInfo = dict()
+                RefInfo['ParentTable']=asociacion[1]
+                RefInfo['Field'] = asociacion[2] # campo en la tabla que nos ocupa
+                RefInfo['ParentField'] = asociacion[3]
+                esqReferred = esquema
+                qualName = asociacion[1].split('.')
+                if len(qualName) == 1 :
+                    padre = self.getBrotherByName(qualName[0])
+                elif qualName[0] == nomEsquema:
+                    padre = self.getBrotherByName(qualName[1])
+                else:
+                    esqReferred = esquema.getBrotherByName(qualName[0])
+                    if esqReferred is not None:
+                        padre = esqReferred.getChildByName(qualName[1])
+                    else:
+                        print('Error horroroso en ',self.text(),asociacion)
+                        exit()
+                camposPadre = padre.getFields()
+                for i in range(0,len(camposPadre)):
+                    if camposPadre[i][0] == asociacion[3]:
+                        del camposPadre[i]
+                        break
+                RefInfo['CamposReferencia'] = camposPadre
+                TableInfo['FK'].append(RefInfo)   
+                
+        FKRs = self.getFKref(False)
+        if len(FKRs) > 0:
+            TableInfo['FKR']= []
+            for idx,asociacion in enumerate(FKRs):
+                RefInfo = dict()
+                RefInfo['ChildTable']=asociacion[1]
+                RefInfo['Field'] = asociacion[2] # campo en la tabla que nos ocupa
+                RefInfo['ChildField'] = asociacion[3]
+                esqReferred = esquema
+                qualName = asociacion[1].split('.')
+                if len(qualName) == 1 :
+                    padre = self.getBrotherByName(qualName[0])
+                elif qualName[0] == nomEsquema:
+                    padre = self.getBrotherByName(qualName[1])
+                else:
+                    esqReferred = esquema.getBrotherByName(qualName[0])
+                    if esqReferred is not None:
+                        padre = esqReferred.getChildByName(qualName[1])
+                    else:
+                        print('Error horroroso en ',self.text(),asociacion)
+                        exit()
+                camposPadre = padre.getFields()
+                for i in range(0,len(camposPadre)):
+                    if camposPadre[i][0] == asociacion[3]:
+                        del camposPadre[i]
+                        break
+                RefInfo['CamposReferencia'] = camposPadre
+                TableInfo['FKR'].append(RefInfo)
+
+        return TableInfo
+                
 
     #def getConnectionItem(self):
         #item = self
@@ -366,6 +499,6 @@ class TableTreeItem(BaseTreeItem):
     #def refresh(self):
         #self.setRowCount(0)
 
-    def __repr__(self):
-        return "<" + self.__class__.__name__ + " " + self.getName() + ">"
+    #def __repr__(self):
+        #return "<" + self.__class__.__name__ + " " + self.getName() + ">"
 
