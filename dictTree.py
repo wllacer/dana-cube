@@ -430,6 +430,7 @@ class TableTreeItem(BaseTreeItem):
             TableInfo['FK']= []
             for idx,asociacion in enumerate(FKs):
                 RefInfo = dict()
+                RefInfo['Name'] = asociacion[0]
                 RefInfo['ParentTable']=asociacion[1]
                 RefInfo['Field'] = asociacion[2] # campo en la tabla que nos ocupa
                 RefInfo['ParentField'] = asociacion[3]

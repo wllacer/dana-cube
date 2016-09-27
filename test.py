@@ -157,44 +157,101 @@ def SQLsimple(conn,info):
     sqls = queryConstructor(**pepe)
     pprint(getCursor(conn,sqls))
     return
+
 def SQLwFK(conn,info):
     """
     TODO relaciones con mas de un campo como enlace
-    TODO comprobar que nombres de tablas no colisionan
-    TODO informacion de formatos para la tabla de visualizacion
+    __DONE__ comprobar que nombres de tablas no colisionan
+    __DONE__ informacion de formatos para la tabla de visualizacion
+        Mejorar el rendimiento de la solucion
     TODO generalizar :
         * sin FKs
         * con FKs recursivas
     """
-    pepe=dict()
+    def name_collisions(namespace):
+        for key in namespace.keys():
+            if len(namespace[key])>=3:
+                continue  #ya ha sido evaluada y es un duplicado.
+            else:
+                #TODO seguro que puede pitonizarse
+                matches=[]
+                for clave in namespace:
+                    valor = namespace[clave][0]
+                    if valor == namespace[key][0]:
+                        matches.append(clave)
+                if len(matches) > 1:
+                    for idx,nombre in enumerate(matches):
+                        if len(namespace[nombre]) == 2:
+                            namespace[nombre].append('{}_{}'.format(namespace[nombre][1],str(idx)))
+                        else:  #no deberia ir por este path
+                            namespace[nombre][2] = '{}_{}'.format(namespace[nombre][1],str(idx))
+    
+    def normRef(entry):
+        if len(namespace[entry]) == 2:
+            reference= prefix = namespace[entry][0]
+        else:
+            prefix = namespace[entry][2]
+            reference='{} AS {}'.format(namespace[entry][0],prefix)
+        return reference,prefix
+    
+    sqlContext=dict()
+    namespace = dict()    
+
+
     if info.get('schemaName','') != '':
-        pepe['tables']= info['schemaName'] + '.' + info['tableName']
-        pepe['fields'] = [ pepe['tables']+'.'+item[0] for item in info['Fields'] ]
+        basetable= info['schemaName'] + '.' + info['tableName']
     else:
-        pepe['tables'] = info['tablename']
-        pepe['fields'] = [ item[0] for item in info['Fields'] ]
+        basetable = info['tablename']
+
+    namespace['base'] = [basetable,info['tableName'],]
+    for relation in info['FK']:
+        namespace[relation['Name']] = [relation['ParentTable'],relation['ParentTable'].split('.')[-1],]        
+    name_collisions(namespace)
+    
+    sqlContext['tables'],prefix = normRef('base')
+    
+    dataspace = info['Fields'][:]
+    for entry in dataspace:
+        entry[0]='{}.{}'.format(prefix,entry[0])
+    
+    #sqlContext['fields'] = [ prefix+'.'+item[0] for item in info['Fields'] ]
+
     if info['FK']:
-        pepe['join'] = []
+        sqlContext['join'] = []
         for relation in info['FK']:
+            
             entry = dict()
-            entry['table'] = relation['ParentTable']
-            entry['join_clause'] = ((pepe['tables']+'.'+relation['Field'],'=',relation['ParentTable']+'.'+relation['ParentField']),)
-            pepe['join'].append(entry)
-            campos = [entry['table']+'.'+elem[0] for elem in relation['CamposReferencia'] ]
-            # con esto insertamos a partir del elemento de enlace
-            idx = pepe['fields'].index(entry['join_clause'][0][0])
-            pepe['fields'][idx+1:idx+1] = campos
+            fkname = relation['Name']
+            entry['table'],fk_prefix = normRef(fkname) #relation['ParentTable']
+            print(fkname,entry['table'],fk_prefix)
+            
+            entry['join_clause'] = ((prefix+'.'+relation['Field'],'=',fk_prefix +'.'+relation['ParentField']),)
+            entry['join_modifier']='LEFT OUTER'
+            sqlContext['join'].append(entry)
+
+            campos = relation['CamposReferencia'][:]
+            for item in campos:
+                item[0]='{}.{}'.format(fk_prefix,item[0])
+            #FIXME horrible la sentencia de abajo y consume demasiados recursos. Debo buscar una alternativa
+            idx = [ k[0] for k in dataspace].index(entry['join_clause'][0][0])
+            dataspace[idx+1:idx+1] = campos
+                
+            #campos = [fk_prefix+'.'+elem[0] for elem in relation['CamposReferencia'] ]
+            ## con esto insertamos a partir del elemento de enlace
+            #idx = sqlContext['fields'].index(entry['join_clause'][0][0])
+            #sqlContext['fields'][idx+1:idx+1] = campos
     #pepe['join']={'table':'geo_rel',
                 #'join_filter':"geo_rel.tipo_padre = 'P'",
                 #'join_clause':(('padre','=','votos_locales.municipio'),),
                 #}
-    pprint(pepe)
-    sqls = queryConstructor(**pepe)
+    sqlContext['fields'] = [ item[0] for item in dataspace ]
+    pprint(sqlContext)
+    sqls = queryConstructor(**sqlContext)
     pprint(sqls)
-    #pprint(getCursor(conn,sqls))
+    pprint(getCursor(conn,sqls))
     return
-    pepe['fields']=['geo_rel.padre','partido',('votes_presential','sum')]
-    pepe['group']=['partido',]
+    sqlContext['fields']=['geo_rel.padre','partido',('votes_presential','sum')]
+    sqlContext['group']=['partido',]
 
 
 if __name__ == '__main__':
@@ -212,7 +269,8 @@ if __name__ == '__main__':
     #browse(dataDict.hiddenRoot)
     #browseTables(dataDict.hiddenRoot)
     #browse0(dataDict.hiddenRoot)
-    info = getTable(dataDict,'MariaBD Local','sakila','customer')            
-
+    #info = getTable(dataDict,'MariaBD Local','sakila','customer')            
+    info = getTable(dataDict,'MariaBD Local','sakila','film')            
+    #pprint(info)
     SQLwFK(dataDict.conn['MariaBD Local'],info)
     #getTable(dataDict,'Elecciones 2105','','partidos')            
