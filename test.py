@@ -158,42 +158,58 @@ def SQLsimple(conn,info):
     pprint(getCursor(conn,sqls))
     return
 
-def SQLwFK(conn,info):
+def name_collisions(namespace):
+    for key in namespace.keys():
+        if len(namespace[key])>=3:
+            continue  #ya ha sido evaluada y es un duplicado.
+        else:
+            #TODO seguro que puede pitonizarse
+            matches=[]
+            for clave in namespace:
+                valor = namespace[clave][0]
+                if valor == namespace[key][0]:
+                    matches.append(clave)
+            if len(matches) > 1:
+                for idx,nombre in enumerate(matches):
+                    if len(namespace[nombre]) == 2:
+                        namespace[nombre].append('{}_{}'.format(namespace[nombre][1],str(idx)))
+                    else:  #no deberia ir por este path
+                        namespace[nombre][2] = '{}_{}'.format(namespace[nombre][1],str(idx))
+
+def normRef(namespace,entry):
+    if len(namespace[entry]) == 2:
+        reference= prefix = namespace[entry][0]
+    else:
+        prefix = namespace[entry][2]
+        reference='{} AS {}'.format(namespace[entry][0],prefix)
+    return reference,prefix
+
+def queryPrint(sqlstring):
+    STATEMENT=('SELECT ','FROM ','WHERE ','LEFT OUTER JOIN ','GROUP BY ','ORDER BY ','WHERE ')
+    cadena = sqlstring
+    for entry in STATEMENT:
+        salida = '\n{}\n\t'.format(entry)
+        cadena = cadena.replace(entry,salida)
+    cadena = cadena.replace(',',',\n\t')
+    print(cadena)
+    
+
+def SQLwFKR(conn,info,iters=None):
     """
+    TODO limit generico
     TODO relaciones con mas de un campo como enlace
     __DONE__ comprobar que nombres de tablas no colisionan
     __DONE__ informacion de formatos para la tabla de visualizacion
         Mejorar el rendimiento de la solucion
     TODO generalizar :
-        * sin FKs
+        * __DONE__ sin FKs
         * con FKs recursivas
     """
-    def name_collisions(namespace):
-        for key in namespace.keys():
-            if len(namespace[key])>=3:
-                continue  #ya ha sido evaluada y es un duplicado.
-            else:
-                #TODO seguro que puede pitonizarse
-                matches=[]
-                for clave in namespace:
-                    valor = namespace[clave][0]
-                    if valor == namespace[key][0]:
-                        matches.append(clave)
-                if len(matches) > 1:
-                    for idx,nombre in enumerate(matches):
-                        if len(namespace[nombre]) == 2:
-                            namespace[nombre].append('{}_{}'.format(namespace[nombre][1],str(idx)))
-                        else:  #no deberia ir por este path
-                            namespace[nombre][2] = '{}_{}'.format(namespace[nombre][1],str(idx))
-    
-    def normRef(entry):
-        if len(namespace[entry]) == 2:
-            reference= prefix = namespace[entry][0]
-        else:
-            prefix = namespace[entry][2]
-            reference='{} AS {}'.format(namespace[entry][0],prefix)
-        return reference,prefix
-    
+    if not iters:
+        iteraciones = 0
+    else:
+        iteraciones = iters
+        
     sqlContext=dict()
     namespace = dict()    
 
@@ -208,21 +224,21 @@ def SQLwFK(conn,info):
         namespace[relation['Name']] = [relation['ParentTable'],relation['ParentTable'].split('.')[-1],]        
     name_collisions(namespace)
     
-    sqlContext['tables'],prefix = normRef('base')
+    sqlContext['tables'],prefix = normRef(namespace,'base')
     
     dataspace = info['Fields'][:]
     for entry in dataspace:
         entry[0]='{}.{}'.format(prefix,entry[0])
     
-    #sqlContext['fields'] = [ prefix+'.'+item[0] for item in info['Fields'] ]
 
-    if info['FK']:
+
+    if info['FK'] and iteraciones > 0:
         sqlContext['join'] = []
         for relation in info['FK']:
             
             entry = dict()
             fkname = relation['Name']
-            entry['table'],fk_prefix = normRef(fkname) #relation['ParentTable']
+            entry['table'],fk_prefix = normRef(namespace,fkname) #relation['ParentTable']
             print(fkname,entry['table'],fk_prefix)
             
             entry['join_clause'] = ((prefix+'.'+relation['Field'],'=',fk_prefix +'.'+relation['ParentField']),)
@@ -236,23 +252,13 @@ def SQLwFK(conn,info):
             idx = [ k[0] for k in dataspace].index(entry['join_clause'][0][0])
             dataspace[idx+1:idx+1] = campos
                 
-            #campos = [fk_prefix+'.'+elem[0] for elem in relation['CamposReferencia'] ]
-            ## con esto insertamos a partir del elemento de enlace
-            #idx = sqlContext['fields'].index(entry['join_clause'][0][0])
-            #sqlContext['fields'][idx+1:idx+1] = campos
-    #pepe['join']={'table':'geo_rel',
-                #'join_filter':"geo_rel.tipo_padre = 'P'",
-                #'join_clause':(('padre','=','votos_locales.municipio'),),
-                #}
     sqlContext['fields'] = [ item[0] for item in dataspace ]
-    pprint(sqlContext)
-    sqls = queryConstructor(**sqlContext)
-    pprint(sqls)
-    pprint(getCursor(conn,sqls))
-    return
-    sqlContext['fields']=['geo_rel.padre','partido',('votes_presential','sum')]
-    sqlContext['group']=['partido',]
 
+    sqls = queryConstructor(**sqlContext)
+
+    queryPrint(sqls)
+    #pprint(getCursor(conn,sqls))
+    return
 
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
@@ -272,5 +278,5 @@ if __name__ == '__main__':
     #info = getTable(dataDict,'MariaBD Local','sakila','customer')            
     info = getTable(dataDict,'MariaBD Local','sakila','film')            
     #pprint(info)
-    SQLwFK(dataDict.conn['MariaBD Local'],info)
+    SQLwFKR(dataDict.conn['MariaBD Local'],info,1)
     #getTable(dataDict,'Elecciones 2105','','partidos')            
