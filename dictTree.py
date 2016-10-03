@@ -268,7 +268,7 @@ class ConnectionTreeItem(BaseTreeItem):
                     print(schema,table_name,fk['referred_table'],'casca')
                     continue
                 
-    def refresh(self):
+    def refresh(self,pSchema=None):
         ##TODO cambiar la columna 
         #TODO de desconectada a conectada
         self.deleteChildren()
@@ -278,6 +278,8 @@ class ConnectionTreeItem(BaseTreeItem):
             
             if len(inspector.get_schema_names()) is 0:
                 schemata =[None,]
+            elif pSchema is not None:
+                schemata = [pSchema,]
             else:
                 schemata=inspector.get_schema_names()  #behaviour with default
             
@@ -454,7 +456,7 @@ class TableTreeItem(BaseTreeItem):
                         break
                 RefInfo['CamposReferencia'] = camposPadre
                 TableInfo['FK'].append(RefInfo)   
-                
+    
         FKRs = self.getFKref(False)
         if len(FKRs) > 0:
             TableInfo['FKR']= []
@@ -486,6 +488,50 @@ class TableTreeItem(BaseTreeItem):
 
         return TableInfo
                 
+    def getFullInfoRecursive(self,level=5):
+        """
+           De momento no incluyo FKr -- no tengo claro necesitarla
+        """
+        TableInfo = dict()
+        esquema = self.getSchema()
+        TableInfo['schemaName'] = nomEsquema = esquema.text()
+        TableInfo['tableName'] = self.text()
+        TableInfo['Fields']= self.getFields()
+        if level > 0:
+            FKs = self.getFK(False)
+        else:
+            FKs = None
+            
+        if len(FKs) > 0:
+            TableInfo['FK']= []
+            for idx,asociacion in enumerate(FKs):
+                RefInfo = dict()
+                RefInfo['Name'] = asociacion[0]
+                RefInfo['ParentTable']=asociacion[1]
+                RefInfo['Field'] = asociacion[2] # campo en la tabla que nos ocupa
+                RefInfo['ParentField'] = asociacion[3]
+                esqReferred = esquema
+                qualName = asociacion[1].split('.')
+                if len(qualName) == 1 :
+                    padre = self.getBrotherByName(qualName[0])
+                elif qualName[0] == nomEsquema:
+                    padre = self.getBrotherByName(qualName[1])
+                else:
+                    esqReferred = esquema.getBrotherByName(qualName[0])
+                    if esqReferred is not None:
+                        padre = esqReferred.getChildByName(qualName[1])
+                    else:
+                        print('Error horroroso en ',self.text(),asociacion)
+                        exit()
+                camposPadre = padre.getFields()
+                for i in range(0,len(camposPadre)):
+                    if camposPadre[i][0] == asociacion[3]:
+                        del camposPadre[i]
+                        break
+                RefInfo['CamposReferencia'] = camposPadre
+                TableInfo['FK'].append(RefInfo)   
+    
+        return TableInfo
 
     #def getConnectionItem(self):
         #item = self

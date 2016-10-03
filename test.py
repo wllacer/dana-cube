@@ -64,7 +64,9 @@ def sql():
 
 from datadict import *    
 #from PyQt5.QtGui import QGuiApplication
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtGui import QStandardItemModel, QStandardItem
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTableView, QSplitter
+
 from datalayer.query_constructor import *
 
 def traverse(root,base=None):
@@ -146,17 +148,17 @@ def getTable(dd,confName,schemaName,tableName):
     print(tab.getFullDesc())
     return tab.getFullInfo()
 
-def SQLsimple(conn,info):
-    pepe=dict()
-    if info.get('schemaName','') != '':
-        pepe['tables']= info['schemaName'] + '.' + info['tableName']
-    else:
-        pepe['tables'] = info['tablename']
-    pepe['fields'] = [ item[0] for item in info['Fields'] ]
+#def SQLsimple(conn,info):
+    #pepe=dict()
+    #if info.get('schemaName','') != '':
+        #pepe['tables']= info['schemaName'] + '.' + info['tableName']
+    #else:
+        #pepe['tables'] = info['tablename']
+    #pepe['fields'] = [ item[0] for item in info['Fields'] ]
     
-    sqls = queryConstructor(**pepe)
-    pprint(getCursor(conn,sqls))
-    return
+    #sqls = queryConstructor(**pepe)
+    #pprint(getCursor(conn,sqls))
+    #return
 
 def name_collisions(namespace):
     for key in namespace.keys():
@@ -194,7 +196,7 @@ def queryPrint(sqlstring):
     print(cadena)
     
 
-def SQLwFKR(conn,info,iters=None):
+def setLocalQuery(conn,info,iters=None):
     """
     TODO limit generico
     TODO relaciones con mas de un campo como enlace
@@ -253,21 +255,81 @@ def SQLwFKR(conn,info,iters=None):
             dataspace[idx+1:idx+1] = campos
                 
     sqlContext['fields'] = [ item[0] for item in dataspace ]
-
+    pprint(sqlContext)
     sqls = queryConstructor(**sqlContext)
-
     queryPrint(sqls)
-    #pprint(getCursor(conn,sqls))
-    return
+    return sqlContext,sqls
 
+    
+  
+def localQuery(conn,info,iters=None):
+    sqlContext,sqls = setLocalQuery(conn,info,iters=None)
+    return getCursor(conn,sqls)
+
+class Ventana(QMainWindow):
+    def __init__(self,confName,schema,table):
+        super(Ventana, self).__init__()
+        #Leeo la configuracion
+        #TODO variables asociadas del diccionario. Reevaluar al limpiar
+
+        self.setupModel(confName,schema,table)
+        self.setupView()
+        print('inicializacion completa')
+        ##CHANGE here
+    
+        self.querySplitter = QSplitter(Qt.Horizontal)
+        self.querySplitter.addWidget(self.view)
+        self.querySplitter.addWidget(self.view)
+        self.setCentralWidget(self.querySplitter)
+               
+        self.setWindowTitle("Visualizador de base de datos")
+     
+    def setupModel(self,confName,schema,table): 
+        self.model = QStandardItemModel()
+        confName = 'MariaBD Local'
+        schema = 'sakila'
+        table = 'film'
+        dataDict=DataDict(conn=confName,schema=schema)
+        info = getTable(dataDict,confName,schema,table)
+        sqlContext,sqls = setLocalQuery(dataDict.conn[confName],info,1)
+        
+        cabeceras = [ fld for fld in sqlContext['fields']]
+        self.model.setHorizontalHeaderLabels(cabeceras)
+        
+        cursor = getCursor(dataDict.conn[confName],sqls)
+        for row in cursor:
+            modelRow = [ QStandardItem(str(fld)) for fld in row ]
+            self.model.appendRow(modelRow)
+            
+    def setupView(self):
+        self.view = QTableView(self)
+        self.view.setContextMenuPolicy(Qt.CustomContextMenu)
+        #self.view.customContextMenuRequested.connect(self.openContextMenu)
+        self.view.doubleClicked.connect(self.test)
+        self.view.setModel(self.model)
+        for m in range(self.model.columnCount()):
+            self.view.resizeColumnToContents(m)
+        self.view.verticalHeader().hide()
+        #self.view.setSortingEnabled(True)
+        self.view.setAlternatingRowColors(True)
+        #self.view.sortByColumn(0, Qt.AscendingOrder)
+        
+    def test(self):
+        return
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
     import sys
     reload(sys)
     sys.setdefaultencoding('utf-8')
     app = QApplication(sys.argv)
+    window = Ventana('MariaBD Local','sakila','film')
+    #window.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
+    window.show()
+    sys.exit(app.exec_())
+
     #dict=DataDict('JeNeQuitePas')
-    dataDict=DataDict()
+    #dataDict=DataDict()
+    #dataDict=DataDict(conn='MariaBD Local',schema='sakila')
     #for entry in traverse(dataDict.hiddenRoot):
         #tabs = '\t'*entry.depth()
         #if not entry.isAuxiliar():
@@ -276,7 +338,16 @@ if __name__ == '__main__':
     #browseTables(dataDict.hiddenRoot)
     #browse0(dataDict.hiddenRoot)
     #info = getTable(dataDict,'MariaBD Local','sakila','customer')            
-    info = getTable(dataDict,'MariaBD Local','sakila','film')            
+    #info = getTable(dataDict,'MariaBD Local','sakila','film')            
     #pprint(info)
-    SQLwFKR(dataDict.conn['MariaBD Local'],info,1)
-    #getTable(dataDict,'Elecciones 2105','','partidos')            
+    #cursor = localQuery(dataDict.conn['MariaBD Local'],info,1)
+    #modelo = QStandardItemModel()
+    #for row in cursor:
+        #modelRow = [ QStandardItem(str(fld)) for fld in row ]
+        #modelo.appendRow(modelRow)
+    #print(modelo.rowCount(),modelo.columnCount())
+    #for k in range(modelo.rowCount()):
+        #datos = [ modelo.item(k,j).data(Qt.DisplayRole) for j in range(modelo.columnCount()) ]
+        ##datos = [ itm.data(Qt.DisplayRole) for itm in deRow ]
+        #print(datos)
+    ##getTable(dataDict,'Elecciones 2105','','partidos')            

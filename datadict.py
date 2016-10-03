@@ -40,7 +40,10 @@ from util.jsonmgr import *
 
 
 class DataDict():
-    def __init__(self,defFile=None):
+    def __init__(self,**kwargs):
+        #FIXME eliminar parametros espureos
+        defFile= kwargs.get('defFile')
+        print('Def File is',defFile)
         self.model = None
         self.hiddenRoot  = None  #self.hiddenRoot
         self.configData = None
@@ -49,7 +52,7 @@ class DataDict():
         
         self._setupModel()
         if self._readConfigData(defFile):
-            self._cargaModelo()
+            self._cargaModelo(**kwargs)
         else:
             self.isEmpty = True
         
@@ -95,19 +98,25 @@ class DataDict():
         else:
             return True
         
-    def _cargaModelo(self):
+    def _cargaModelo(self,**kwargs):
         definition = self.configData.get('Conexiones')
+        if 'conn' in kwargs:
+            self.appendConnection(kwargs.get('conn'),**kwargs)
+            return
         for confName in sorted(definition):
-            self.appendConnection(confName)
+            self.appendConnection(confName)  # aqui no tiene sentido filtrar
 
     #TODO probablemente padre sea un parametro inncecesario
-    def appendConnection(self,confName,pos=None):
-
+    #def appendConnection(self,confName,pos=None):
+    def appendConnection(self,confName,**kwargs):
         padre = self.hiddenRoot
         conf = self.configData['Conexiones'].get(confName)
-        if pos is None:
+        if kwargs.get('pos') is None:
+#        if pos is None:
             pos = padre.rowCount()
-        
+        else:
+            pos = kwargs.get('pos')
+            
         try:
             self.conn[confName] = dbConnectAlch(conf)
             conexion = self.conn[confName]
@@ -121,8 +130,11 @@ class DataDict():
             showConnectionError(confName,norm2String(e.orig.args))             
             padre.insertRow(pos,(ConnectionTreeItem(confName,None),QStandardItem('Disconnected')))
             curConnection = padre.child(pos)
-
-        curConnection.refresh()
+        
+        #if kwargs.get('schema') is not None:
+        curConnection.refresh(kwargs.get('schema'))
+        #else: #probablemente innecesario
+            #curConnection.refresh()
     
     def dropConnection(self,confName):
     
