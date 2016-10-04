@@ -102,12 +102,13 @@ def setLocalQuery(conn,info,iters=None):
     if info.get('schemaName','') != '':
         basetable= info['schemaName'] + '.' + info['tableName']
     else:
-        basetable = info['tablename']
+        basetable = info['tableName']
 
     namespace['base'] = [basetable,info['tableName'],]
-    for relation in info['FK']:
-        namespace[relation['Name']] = [relation['ParentTable'],relation['ParentTable'].split('.')[-1],]        
-    name_collisions(namespace)
+    if 'FK' in info:
+        for relation in info['FK']:
+            namespace[relation['Name']] = [relation['ParentTable'],relation['ParentTable'].split('.')[-1],]        
+        name_collisions(namespace)
     
     sqlContext['tables'],prefix = normRef(namespace,'base')
     
@@ -117,7 +118,7 @@ def setLocalQuery(conn,info,iters=None):
     
 
 
-    if info['FK'] and iteraciones > 0:
+    if info.get('FK') and iteraciones > 0:
         sqlContext['join'] = []
         for relation in info['FK']:
             
@@ -150,9 +151,9 @@ def localQuery(conn,info,iters=None):
     sqls = sqlContext['sqls'] #solo por compatibilidad
     return getCursor(conn,sqls)
 
-class TableBrowser(QMainWindow):
+class TableBrowserWin(QMainWindow):
     def __init__(self,confName,schema,table,pdataDict=None):
-        super(TableBrowser, self).__init__()
+        super(TableBrowserWin, self).__init__()
         #Leeo la configuracion
         #TODO variables asociadas del diccionario. Reevaluar al limpiar
 
@@ -163,7 +164,7 @@ class TableBrowser(QMainWindow):
     
         self.querySplitter = QSplitter(Qt.Horizontal)
         self.querySplitter.addWidget(self.view)
-        self.querySplitter.addWidget(self.view)
+        #self.querySplitter.addWidget(self.view)
         self.setCentralWidget(self.querySplitter)
                
         self.setWindowTitle("Visualizador de base de datos")
@@ -209,7 +210,7 @@ if __name__ == '__main__':
     reload(sys)
     sys.setdefaultencoding('utf-8')
     app = QApplication(sys.argv)
-    window = TableBrowser('MariaBD Local','sakila','film')
+    window = TableBrowserWin('MariaBD Local','sakila','film')
     #window.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
     window.show()
     sys.exit(app.exec_())

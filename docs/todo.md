@@ -8,7 +8,7 @@
    * __DONE__ Date Handling codepaths tested (2/4/16)
 
 * SQLA Browser
-    * Falta casi todo
+    * Proceso básico construido
     * ¿Como representa SQLAlchemy las FK a otro esquema?. Mejor dicho se referred_schema tiene valor o no cuando ser trata
        del esquema de defecto? Asumiré que siempre tiene valor y si no hay nombre de esquema es que se trata del mismo esquema
     * Asociaciones con mas de un campo de enlace ¿Como las representa SQLA
@@ -22,13 +22,20 @@
     * En el caso de SQLite deberia llamarse a un buscador de ficheros
     * __DONE__ appendConnection 4 argumentos es excesivo. Revisar. Mantener la posicion del elemento inicial
     * Revisar la vida de las conexiones en datadict.conn[]
-    * en modificar; ver por que falla updateModel con refresh. Restaurar en appendConnection el posicionado
+    * __DONE__ en modificar; ver por que falla updateModel con refresh. Restaurar en appendConnection el posicionado
     * _BUG_ refresh de conexion en mysqld (parada en bg) casca en connection.refresh (no detecta que la base de datos esta down
     * _BUG_ El cancel en (connection)->Edit provoca un refresco, pese a todo
     * __DONE__ (connection)->Connect. abenda exec_objct(updateModel). La reorganizacion no le ha ido bien
     * __DONE__ en campos sin tipò (sqlite) no ignorar como hasta ahora. Default type es TEXT
     * Funcion cambiar nombre de la conexión 
     * Caso de relaciones por mas de un campo. Desde definición a explotacion
+    * Consulta recursiva de FKs
+    * Consulta inversa por FK
+    * Sustituir pantalla partida por pestañas
+    * Cada pestaña thread distinto
+    * Limit en las queries neutral
+    * hide columnas
+    
     
 * _WIP_ Code refactoring for clarity
   *__DONE__ data access layer isolation (2/4/16)

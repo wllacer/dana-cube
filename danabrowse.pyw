@@ -28,6 +28,26 @@ from widgets import WPropertySheet
 
 from dictTree import *
 from datadict import *
+from tablebrowse import *
+
+def waiting_effects(function):
+    """
+      decorator from http://stackoverflow.com/questions/8218900/how-can-i-change-the-cursor-shape-with-pyqt
+      para poner el cursor en busy/libre al ejectuar una funcion que va a tardar
+      
+      TODO unificar en un solo sitio
+      
+    """
+    def new_function(*args, **kwargs):
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+        try:
+            return function(*args, **kwargs)
+        except Exception as e:
+            raise e
+            print("Error {}".format(e.args[0]))
+        finally:
+            QApplication.restoreOverrideCursor()
+    return new_function
 
 def setContextMenu(obj,menu):
     if type(obj) == ConnectionTreeItem:
@@ -108,12 +128,21 @@ def getContextMenu(obj,action,exec_object=None):
             obj.model().endResetModel()
         # show properties sheet
         elif ind == 1:
-            pass  #  query 
+            obj.queryModel().beginResetModel()
+            obj.refresh()
+            obj.queryModel().endResetModel()
+
         elif ind in (2,3,4):
-            #pprint(obj.getFields(simple=False))
-            pprint(obj.getFullInfo())
-            if ind in (3,4):
-                pprint(obj.getFK(simple=False))
+            if ind == 2:
+                niters = 0
+            elif ind == 3:
+                niters = 1
+            elif ind == 4:
+                #TODO consulta FK recursivas
+                niters = 1 #de momento NO
+            
+            conn,schema,table=obj.getFullDesc().split('.')
+            exec_object.databrowse(conn,schema,table,iters=niters)
         elif ind == 5:
             pass # generate cube
 
@@ -283,7 +312,7 @@ class MainWindow(QMainWindow):
         print('inicializacion completa')
         #CHANGE here
         
-        self.queryView = QTableView()
+        #self.queryView = QTableView()
         
         self.fileMenu = self.menuBar().addMenu("&Conexiones")
         self.fileMenu.addAction("&New ...", self.newConnection, "Ctrl+N")
@@ -293,9 +322,11 @@ class MainWindow(QMainWindow):
         self.fileMenu.addAction("E&xit", self.close, "Ctrl+Q")
 
 
+        #self.queryView = QTableView(self)
+        
         self.querySplitter = QSplitter(Qt.Horizontal)
         self.querySplitter.addWidget(self.view)
-        self.querySplitter.addWidget(self.queryView)
+        #self.querySplitter.addWidget(self.queryView)
         self.setCentralWidget(self.querySplitter)
                
         self.setWindowTitle("Visualizador de base de datos")
@@ -364,8 +395,9 @@ class MainWindow(QMainWindow):
         else:
             confName = nombre
         self.editConnection(confName)   
-        self.dictionary.updateModel(confName)
+        self.updateModel(confName)
     
+    @waiting_effects
     def updateModel(self,nombre=None):
         self.dictionary.updateModel(nombre)
         
@@ -463,6 +495,38 @@ class MainWindow(QMainWindow):
         setContextMenu(item,menu)        
         action = menu.exec_(self.view.viewport().mapToGlobal(position))
         getContextMenu(item,action,self)
+  
+    @waiting_effects
+    def databrowse(self,confName,schema,table,iters=0):
+        self.queryModel = QStandardItemModel()
+        info = getTable(self.dictionary,confName,schema,table)
+        sqlContext= setLocalQuery(self.dictionary.conn[confName],info,iters)
+        sqls = sqlContext['sqls'] 
+        cabeceras = [ fld for fld in sqlContext['fields']]
+        self.queryModel.setHorizontalHeaderLabels(cabeceras)
+        #cursor = getCursor(self.dictionary.conn[confName],sqls,LIMIT=100)
+        cursor = getCursor(self.dictionary.conn[confName],sqls)
+        for row in cursor:
+            modelRow = [ QStandardItem(str(fld)) for fld in row ]
+            self.queryModel.appendRow(modelRow)
+        self.queryModel.endResetModel()
+ 
+        self.queryView = QTableView(self)
+        
+        self.queryView.setContextMenuPolicy(Qt.CustomContextMenu)
+        #self.queryView.customContextMenuRequested.connect(self.openContextMenu)
+        self.queryView.doubleClicked.connect(self.test)
+        self.queryView.setModel(self.queryModel)
+        for m in range(self.queryModel.columnCount()):
+            self.queryView.resizeColumnToContents(m)
+        self.queryView.verticalHeader().hide()
+        #self.queryView.setSortingEnabled(True)
+        self.queryView.setAlternatingRowColors(True)
+        #self.queryView.sortByColumn(0, Qt.AscendingOrder)
+
+        if self.querySplitter.count() == 1:  #de momento parece un modo sencillo de no multiplicar en exceso
+            self.querySplitter.addWidget(self.queryView)
+            
         
     def test(self,index):
         print(index.row(),index.column())

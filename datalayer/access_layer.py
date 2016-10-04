@@ -161,12 +161,21 @@ def getCursorAlch(db, sql_string,funcion=None,**kwargs):
     sqlString=text(sql_string)
     cursor= []
     #TODO ¿sera posible que Alch me devuelva directamente una lista?
+    #TODO buscar una alternativa mas potable para el limite
+    lim = kwargs.get('LIMIT')
+    if lim:
+        cont = 0
     for row in db.execute(sqlString):
         trow = list(row) #viene en tupla y no me conviene
         if callable(funcion):
             funcion(trow,**kwargs)
         if trow != []:
             cursor.append(trow)
+        if lim:
+            if cont < lim:
+                cont += 1
+            else:
+                break
     return cursor
 
 def getCursorQt(db, sql_string,funcion=None,**kwargs):
