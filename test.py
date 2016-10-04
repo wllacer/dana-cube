@@ -63,11 +63,14 @@ def sql():
 
 
 from datadict import *    
+from tablebrowse import *
+
 #from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTableView, QSplitter
 
 from datalayer.query_constructor import *
+
 
 def traverse(root,base=None):
     if base is not None:
@@ -132,197 +135,15 @@ def browse0(base):
         conn = base.child(i)
         print(conn.text())
 
-def getTable(dd,confName,schemaName,tableName):
-    con = dd.getConnByName(confName)
-    if con is None:
-        print('Conexion {} no definida'.format(confName))
-        return
-    sch = con.getChildrenByName(schemaName)
-    if sch is None:
-        print('Esquema {} no definido'.format(schemaName))
-        return
-    tab = sch.getChildrenByName(tableName)
-    if sch is None:
-        print('Tabla {} no definid'.format(tableName))
-        return
-    print(tab.getFullDesc())
-    return tab.getFullInfo()
-
-#def SQLsimple(conn,info):
-    #pepe=dict()
-    #if info.get('schemaName','') != '':
-        #pepe['tables']= info['schemaName'] + '.' + info['tableName']
-    #else:
-        #pepe['tables'] = info['tablename']
-    #pepe['fields'] = [ item[0] for item in info['Fields'] ]
-    
-    #sqls = queryConstructor(**pepe)
-    #pprint(getCursor(conn,sqls))
-    #return
-
-def name_collisions(namespace):
-    for key in namespace.keys():
-        if len(namespace[key])>=3:
-            continue  #ya ha sido evaluada y es un duplicado.
-        else:
-            #TODO seguro que puede pitonizarse
-            matches=[]
-            for clave in namespace:
-                valor = namespace[clave][0]
-                if valor == namespace[key][0]:
-                    matches.append(clave)
-            if len(matches) > 1:
-                for idx,nombre in enumerate(matches):
-                    if len(namespace[nombre]) == 2:
-                        namespace[nombre].append('{}_{}'.format(namespace[nombre][1],str(idx)))
-                    else:  #no deberia ir por este path
-                        namespace[nombre][2] = '{}_{}'.format(namespace[nombre][1],str(idx))
-
-def normRef(namespace,entry):
-    if len(namespace[entry]) == 2:
-        reference= prefix = namespace[entry][0]
-    else:
-        prefix = namespace[entry][2]
-        reference='{} AS {}'.format(namespace[entry][0],prefix)
-    return reference,prefix
-
-def queryPrint(sqlstring):
-    STATEMENT=('SELECT ','FROM ','WHERE ','LEFT OUTER JOIN ','GROUP BY ','ORDER BY ','WHERE ')
-    cadena = sqlstring
-    for entry in STATEMENT:
-        salida = '\n{}\n\t'.format(entry)
-        cadena = cadena.replace(entry,salida)
-    cadena = cadena.replace(',',',\n\t')
-    print(cadena)
-    
-
-def setLocalQuery(conn,info,iters=None):
-    """
-    TODO limit generico
-    TODO relaciones con mas de un campo como enlace
-    __DONE__ comprobar que nombres de tablas no colisionan
-    __DONE__ informacion de formatos para la tabla de visualizacion
-        Mejorar el rendimiento de la solucion
-    TODO generalizar :
-        * __DONE__ sin FKs
-        * con FKs recursivas
-    """
-    if not iters:
-        iteraciones = 0
-    else:
-        iteraciones = iters
-        
-    sqlContext=dict()
-    namespace = dict()    
-
-
-    if info.get('schemaName','') != '':
-        basetable= info['schemaName'] + '.' + info['tableName']
-    else:
-        basetable = info['tablename']
-
-    namespace['base'] = [basetable,info['tableName'],]
-    for relation in info['FK']:
-        namespace[relation['Name']] = [relation['ParentTable'],relation['ParentTable'].split('.')[-1],]        
-    name_collisions(namespace)
-    
-    sqlContext['tables'],prefix = normRef(namespace,'base')
-    
-    dataspace = info['Fields'][:]
-    for entry in dataspace:
-        entry[0]='{}.{}'.format(prefix,entry[0])
-    
-
-
-    if info['FK'] and iteraciones > 0:
-        sqlContext['join'] = []
-        for relation in info['FK']:
-            
-            entry = dict()
-            fkname = relation['Name']
-            entry['table'],fk_prefix = normRef(namespace,fkname) #relation['ParentTable']
-            print(fkname,entry['table'],fk_prefix)
-            
-            entry['join_clause'] = ((prefix+'.'+relation['Field'],'=',fk_prefix +'.'+relation['ParentField']),)
-            entry['join_modifier']='LEFT OUTER'
-            sqlContext['join'].append(entry)
-
-            campos = relation['CamposReferencia'][:]
-            for item in campos:
-                item[0]='{}.{}'.format(fk_prefix,item[0])
-            #FIXME horrible la sentencia de abajo y consume demasiados recursos. Debo buscar una alternativa
-            idx = [ k[0] for k in dataspace].index(entry['join_clause'][0][0])
-            dataspace[idx+1:idx+1] = campos
-                
-    sqlContext['fields'] = [ item[0] for item in dataspace ]
-    pprint(sqlContext)
-    sqls = queryConstructor(**sqlContext)
-    queryPrint(sqls)
-    return sqlContext,sqls
-
-    
-  
-def localQuery(conn,info,iters=None):
-    sqlContext,sqls = setLocalQuery(conn,info,iters=None)
-    return getCursor(conn,sqls)
-
-class Ventana(QMainWindow):
-    def __init__(self,confName,schema,table):
-        super(Ventana, self).__init__()
-        #Leeo la configuracion
-        #TODO variables asociadas del diccionario. Reevaluar al limpiar
-
-        self.setupModel(confName,schema,table)
-        self.setupView()
-        print('inicializacion completa')
-        ##CHANGE here
-    
-        self.querySplitter = QSplitter(Qt.Horizontal)
-        self.querySplitter.addWidget(self.view)
-        self.querySplitter.addWidget(self.view)
-        self.setCentralWidget(self.querySplitter)
-               
-        self.setWindowTitle("Visualizador de base de datos")
-     
-    def setupModel(self,confName,schema,table): 
-        self.model = QStandardItemModel()
-        confName = 'MariaBD Local'
-        schema = 'sakila'
-        table = 'film'
-        dataDict=DataDict(conn=confName,schema=schema)
-        info = getTable(dataDict,confName,schema,table)
-        sqlContext,sqls = setLocalQuery(dataDict.conn[confName],info,1)
-        
-        cabeceras = [ fld for fld in sqlContext['fields']]
-        self.model.setHorizontalHeaderLabels(cabeceras)
-        
-        cursor = getCursor(dataDict.conn[confName],sqls)
-        for row in cursor:
-            modelRow = [ QStandardItem(str(fld)) for fld in row ]
-            self.model.appendRow(modelRow)
-            
-    def setupView(self):
-        self.view = QTableView(self)
-        self.view.setContextMenuPolicy(Qt.CustomContextMenu)
-        #self.view.customContextMenuRequested.connect(self.openContextMenu)
-        self.view.doubleClicked.connect(self.test)
-        self.view.setModel(self.model)
-        for m in range(self.model.columnCount()):
-            self.view.resizeColumnToContents(m)
-        self.view.verticalHeader().hide()
-        #self.view.setSortingEnabled(True)
-        self.view.setAlternatingRowColors(True)
-        #self.view.sortByColumn(0, Qt.AscendingOrder)
-        
-    def test(self):
-        return
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
     import sys
     reload(sys)
     sys.setdefaultencoding('utf-8')
     app = QApplication(sys.argv)
-    window = Ventana('MariaBD Local','sakila','film')
+    window = TableBrowser('MariaBD Local','sakila','film',pdataDict=None)
+    dataDict=DataDict()
+    window = TableBrowser('MariaBD Local','sakila','film',pdataDict=dataDict)
     #window.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
     window.show()
     sys.exit(app.exec_())
