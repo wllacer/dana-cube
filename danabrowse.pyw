@@ -322,9 +322,12 @@ class MainWindow(QMainWindow):
         self.fileMenu.addAction("E&xit", self.close, "Ctrl+Q")
 
 
-        #self.queryView = QTableView(self)
+        self.queryView = QTableView(self)
+        self.queryModel = QStandardItemModel()
+        self.queryView.setModel(self.queryModel)        
+
         
-        self.querySplitter = QSplitter(Qt.Horizontal)
+        self.querySplitter = QSplitter(Qt.Vertical)
         self.querySplitter.addWidget(self.view)
         #self.querySplitter.addWidget(self.queryView)
         self.setCentralWidget(self.querySplitter)
@@ -498,7 +501,14 @@ class MainWindow(QMainWindow):
   
     @waiting_effects
     def databrowse(self,confName,schema,table,iters=0):
-        self.queryModel = QStandardItemModel()
+        
+        #self.queryView = QTableView(self)
+        #self.queryModel = QStandardItemModel()
+        #self.queryView.setModel(self.queryModel)        
+        
+        self.queryModel.beginResetModel()
+        self.queryModel.clear()
+        
         info = getTable(self.dictionary,confName,schema,table)
         sqlContext= setLocalQuery(self.dictionary.conn[confName],info,iters)
         sqls = sqlContext['sqls'] 
@@ -509,14 +519,14 @@ class MainWindow(QMainWindow):
         for row in cursor:
             modelRow = [ QStandardItem(str(fld)) for fld in row ]
             self.queryModel.appendRow(modelRow)
+            
         self.queryModel.endResetModel()
  
-        self.queryView = QTableView(self)
         
         self.queryView.setContextMenuPolicy(Qt.CustomContextMenu)
         #self.queryView.customContextMenuRequested.connect(self.openContextMenu)
-        self.queryView.doubleClicked.connect(self.test)
-        self.queryView.setModel(self.queryModel)
+        #self.queryView.doubleClicked.connect(self.test)
+        
         for m in range(self.queryModel.columnCount()):
             self.queryView.resizeColumnToContents(m)
         self.queryView.verticalHeader().hide()
@@ -526,9 +536,11 @@ class MainWindow(QMainWindow):
 
         if self.querySplitter.count() == 1:  #de momento parece un modo sencillo de no multiplicar en exceso
             self.querySplitter.addWidget(self.queryView)
+        
             
         
     def test(self,index):
+        return
         print(index.row(),index.column())
         item = self.model.itemFromIndex(index)
         print(item.text(),item.model())
