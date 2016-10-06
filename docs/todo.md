@@ -44,6 +44,8 @@
   *__DONE__ Adapt GUI to new internal structures
   * name of elements in hierarchy YML
 
+* BUG errror en sql acaba en cualquier sitio (tiene que ver con waiting_functions)
+* Simplificar la sintaxis para los casos mas sencillos
 * Now In Progres
   * __DONE__ Row functions. _WIP_ lack some further testing
         * Special cases await (election simulator)

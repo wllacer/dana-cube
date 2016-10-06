@@ -135,22 +135,86 @@ def browse0(base):
         conn = base.child(i)
         print(conn.text())
 
+def info2cube(dataDict,confName,schema,table):
+    #TODO strftime no vale para todos los gestores de base de datos
+    pprint(dataDict)
+    info = getTable(dataDict,confName,schema,table)                
+    pprint(info)
+    
+    cubo = dict()
+    cubo[table]=dict()
+    entrada = cubo[table]
+    entrada['base filter']=""
+    entrada['table'] = '{}.{}'.format(schema,table) if schema != "" else table
+    
+    entrada['connect']=dict()
+    conn = dataDict.getConnByName(confName).data().engine
+    
+    print('Conexion ',conn.url,conn.driver)
+    entrada['connect']["dbuser"] = None 
+    entrada['connect']["dbhost"] =  None
+    entrada['connect']["driver"] =  conn.driver
+    entrada['connect']["dbname"] =  str(conn.url) #"/home/werner/projects/dana-cube.git/ejemplo_dana.db"
+    entrada['connect']["dbpass"] =  None
+    
+    entrada['guides']=[]
+    entrada['fields']=[]
+    for fld in info['Fields']:
+        if fld[1] in ('numerico'):
+            entrada['fields'].append(fld[0])
+        elif fld[1] in ('fecha'):
+            entrada['guides'].append({'name':fld[0],
+                                      'class':'d',
+                                      'type':'Ymd',
+                                      'prod':[{'fmt':'date','elem':fld[0]},]
+                                      })  #no es completo
+            #TODO cambiar strftime por la funcion correspondiente en otro gestor 
+            #entrada['guides'].append(            {
+                #"name": fld[0]+"_trimestre",
+                #"class":"h",
+                #"prod": [
+                    #{
+                        #"elem": "strftime('%Y',{})".format(fld[0]),
+                        #"name": "año",
+                        #"class":"o"
+                    #},
+                    #{
+                        #"elem": fld[0],
+                        #"case_sql":["case",
+                            #"when strftime('%m',$$1) in ('01','02','03')  then strftime('%Y',$$1)||'\\:1'",
+                            #"when strftime('%m',$$1) in ('04','05','06')  then strftime('%Y',$$1)||'\\:2'" ,
+                            #"when strftime('%m',$$1) in ('07','08','09') then strftime('%Y',$$1)||'\\:3'" ,
+                            #"when strftime('%m',$$1) in ('10','11','12') then strftime('%Y',$$1)||'\\:4'",
+                            #"end as $$2"],
+                        #"name": "trimestre",
+                        #"class":"c"
+                    #}
+                    #]
+            #} )
+
+        else:
+            entrada['guides'].append({'name':fld[0],
+                                      'class':'o',
+                                      'prod':[{'elem':fld[0],},]})  #no es completo
+
+    pprint(cubo)
+    dump_structure(cubo, fichero="cubo.json")
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
     import sys
     reload(sys)
     sys.setdefaultencoding('utf-8')
     app = QApplication(sys.argv)
-    window = TableBrowserWin('MariaBD Local','sakila','film',pdataDict=None)
-    dataDict=DataDict()
-    window = TableBrowserWin('MariaBD Local','sakila','film',pdataDict=dataDict)
-    #window.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
-    window.show()
-    sys.exit(app.exec_())
+    #window = TableBrowserWin('MariaBD Local','sakila','film',pdataDict=None)
+    #dataDict=DataDict()
+    #window = TableBrowserWin('MariaBD Local','sakila','film',pdataDict=dataDict)
+    ##window.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
+    #window.show()
+    #sys.exit(app.exec_())
 
     #dict=DataDict('JeNeQuitePas')
     #dataDict=DataDict()
-    #dataDict=DataDict(conn='MariaBD Local',schema='sakila')
+    dataDict=DataDict(conn='MariaBD Local',schema='sakila')
     #for entry in traverse(dataDict.hiddenRoot):
         #tabs = '\t'*entry.depth()
         #if not entry.isAuxiliar():
@@ -160,6 +224,7 @@ if __name__ == '__main__':
     #browse0(dataDict.hiddenRoot)
     #info = getTable(dataDict,'MariaBD Local','sakila','customer')            
     #info = getTable(dataDict,'MariaBD Local','sakila','film')            
+    info2cube(dataDict,'MariaBD Local','sakila','film')            
     #pprint(info)
     #cursor = localQuery(dataDict.conn['MariaBD Local'],info,1)
     #modelo = QStandardItemModel()

@@ -248,7 +248,8 @@ class Cubo:
         for entrada in self.definition['guides']:
             guia = {'name':entrada['name'],'class':entrada['class'],'rules':[],'elem':[]}
             self.lista_guias.append(guia)
-            produccion = entrada['prod']    
+            #FIXME produccion = entrada['prod']   GENERADOR  
+            produccion = entrada.get('prod',dict())
             for componente in produccion:
                 if 'name' in componente:
                     nombre = componente['name']
@@ -346,6 +347,7 @@ class Cubo:
 
         entrada = self.lista_guias[guiaId]
         cursor = []
+        idx = 0 #para evitar los casos en que rules esta vacio GENERADOR
         for idx,componente in enumerate(entrada['rules']):
             sqlString=''
             lista_compra={'nkeys':componente['ncode'],'ndesc':componente['ndesc']}

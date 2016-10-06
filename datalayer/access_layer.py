@@ -56,7 +56,7 @@ def driver2Qt(pdriver):
     driver = pdriver.lower()
     if driver in ('sqlite','qsqlite'): #solo compatibilidad codigo actural
         return 'QSQLITE'
-    elif driver in ('mysql','mariadb'):
+    elif driver in ('mysql','mariadb','mysqldb'):
         return 'QMYSQL'
     elif driver ('postgresql','postgres','pg'):
         return 'QPSQL'
@@ -69,7 +69,7 @@ def driver2Alch(pdriver):
     driver = pdriver.lower()
     if driver in ('sqlite','qsqlite'):
         return 'sqlite'
-    elif driver in ('mysql','mariadb'):
+    elif driver in ('mysql','mysqldb','mariadb'):
         return 'mysql+mysqldb'
     elif driver in ('postgresql','postgres','pg'):
         return 'postgresql+psycopg2'
@@ -123,13 +123,18 @@ def dbConnectAlch(constring):
     else:
         debug=False
     dbname = constring['dbname']
-    if constring['driver'] not in ('QSQLITE','sqlite'):
-        host = constring['dbhost']
-        user = constring['dbuser']
-        password = constring['dbpass']
-        context = '{}://{}:{}@{}/{}'.format(driver,user,password,host,dbname)
+    #GENERADOR
+    if driver == dbname[0:len(driver)]:
+        print('Ya viene definida la base de datos')
+        context = dbname
     else:
-        context = '{}:///{}'.format(driver,dbname)
+        if constring['driver'] not in ('QSQLITE','sqlite'):
+            host = constring['dbhost']
+            user = constring['dbuser']
+            password = constring['dbpass']
+            context = '{}://{}:{}@{}/{}'.format(driver,user,password,host,dbname)
+        else:
+            context = '{}:///{}'.format(driver,dbname)
     #TODO debería controlar los errores de conexion
     engine = create_engine(context,echo=debug)
     return engine.connect()

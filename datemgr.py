@@ -116,7 +116,7 @@ def getDateEntry(psource, fmt, driver='QSQLITE'):
         marker["d"] = '%d'
         marker["w"] = '%w'
         marker["J"] = '%J'
-    elif driver in ('mysql','mariadb'):
+    elif driver in ('mysql','mariadb','mysqldb'):  #GENERADOR
         function = 'DATE_FORMAT' 
         marker["Y"] = '%Y'
         marker["m"]= '%c'
