@@ -149,7 +149,7 @@ def setLocalQuery(conn,info,iters=None):
 def localQuery(conn,info,iters=None):
     sqlContext = setLocalQuery(conn,info,iters=None)
     sqls = sqlContext['sqls'] #solo por compatibilidad
-    return getCursor(conn,sqls)
+    return getCursor(conn,sqls,LIMIT=1000)
 
 class TableBrowserWin(QMainWindow):
     def __init__(self,confName,schema,table,pdataDict=None):

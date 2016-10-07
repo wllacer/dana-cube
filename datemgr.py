@@ -46,9 +46,15 @@ def getDateIndexElement(max_date, min_date, char):
         max_rg = 12+1
         format = '%02d'
     elif char == 'Y':
-        # ????
-        min_rg=int(Decimal(str(min_date[0:4])))
-        max_rg=int(Decimal(str(max_date[0:4])))+1
+        # GENERADOR
+        if type(min_date) is datetime:
+            min_rg = min_date.year
+        else:
+            min_rg=int(Decimal(str(min_date[0:4])))
+        if type(max_date) is datetime:
+            max_rg = max_date.year + 1
+        else:
+            max_rg=int(Decimal(str(max_date[0:4])))+1
         format = '%04d'
         
 

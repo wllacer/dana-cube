@@ -1,7 +1,7 @@
 {
-    "film": {
+    "rental": {
         "base filter": "", 
-        "table": "public.film", 
+        "table": "public.rental", 
         "connect": {
             "dbuser": null, 
             "dbhost": null, 
@@ -10,15 +10,59 @@
             "dbpass": null
         }, 
         "fields": [
-            "film_id", 
-            "release_year", 
-            "language_id", 
-            "original_language_id", 
-            "rental_duration", 
-            "rental_rate", 
-            "length", 
-            "replacement_cost"
+            "rental_id", 
+            "inventory_id", 
+            "customer_id", 
+            "staff_id"
         ], 
+        "guides": [
+            {
+                "prod": [
+                    {
+                        "elem": "staff_id"
+                    }
+                ], 
+                "name": "staff_id", 
+                "class": "o"
+            }, 
+            {
+                "prod": [
+                    {
+                        "fmt": "date", 
+                        "elem": "rental_date"
+                    }
+                ], 
+                "type": "Ymd", 
+                "name": "rental_date", 
+                "class": "d"
+            }, 
+            {
+                "prod": [
+                    {
+                        "fmt": "date", 
+                        "elem": "return_date"
+                    }
+                ], 
+                "type": "Ymd", 
+                "name": "return_date", 
+                "class": "d"
+            }, 
+            {
+                "prod": [
+                    {
+                        "fmt": "date", 
+                        "elem": "last_update"
+                    }
+                ], 
+                "type": "Ymd", 
+                "name": "last_update", 
+                "class": "d"
+            }
+        ]
+    }, 
+    "film": {
+        "base filter": "", 
+        "table": "public.film", 
         "guides": [
             {
                 "prod": [
@@ -32,22 +76,21 @@
             {
                 "prod": [
                     {
-                        "elem": "language_id"
+                        "elem": "release_year"
                     }
                 ], 
-                "name": "language", 
+                "name": "release year", 
                 "class": "o"
             }, 
             {
                 "prod": [
                     {
-                        "elem": "release_year"
+                        "elem": "language_id"
                     }
                 ], 
-                "name": "release_year", 
+                "name": "language id", 
                 "class": "o"
-            }, 
-            {
+            },            {
                 "prod": [
                     {
                         "fmt": "date", 
@@ -76,6 +119,23 @@
                 "name": "fulltext", 
                 "class": "o"
             }
+        ], 
+        "connect": {
+            "dbuser": null, 
+            "dbhost": null, 
+            "driver": "psycopg2", 
+            "dbname": "postgresql+psycopg2://werner:None@localhost/pagila", 
+            "dbpass": null
+        }, 
+        "fields": [
+            "film_id", 
+            "release_year", 
+            "language_id", 
+            "original_language_id", 
+            "rental_duration", 
+            "rental_rate", 
+            "length", 
+            "replacement_cost"
         ]
     }
 }

@@ -3,6 +3,10 @@
 
 ## Adaptacion a un servidor concreto
 * Funciones de fecha y hora (se supone que en datemgr)
+   strftime(fmt,var) --> MYSQL DATE_FORMAT(var,fmt)
+                         PG    to_char(var,fmt)| extract(fmt from var)
+                         Ora   to_char
+                         SyS   datepart (!!!)
 * Nombre de driver (buscar #DRIVERNAME)
 
 ## short term TODO list (2016)
@@ -52,7 +56,13 @@
 * BUG errror en sql acaba en cualquier sitio (tiene que ver con waiting_functions)
 * Simplificar la sintaxis del cubo para los casos mas sencillos
 * Cubo como parametro de arranque
-* BUG error en globales
+* BUG error en gran total. Si numerico no acaba en la posicion que corresponde
+    * BUG el problema es que existen ENUMS u los datos son recuperados por orden de ENUM. No orden natural
+* __DONE__ fechas con datetime como objeto
+* Time como objetos
+* Procesar vistas
+* BUG Cursor se desmanda
+
 * Now In Progres
   * __DONE__ Row functions. _WIP_ lack some further testing
         * Special cases await (election simulator)

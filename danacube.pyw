@@ -45,13 +45,13 @@ def waiting_effects(function):
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
         #FIXME problemas para capturar errores con el try GENERADOR
         return function(*args, **kwargs)
-        #try:
-            #return function(*args, **kwargs)
-        #except Exception as e:
-            #raise e
-            #print("Error {}".format(e.args[0]))
-        #finally:
-            #QApplication.restoreOverrideCursor()
+        try:
+            return function(*args, **kwargs)
+        except Exception as e:
+            raise e
+            print("Error {}".format(e.args[0]))
+        finally:
+            QApplication.restoreOverrideCursor()
     
     return new_function
 

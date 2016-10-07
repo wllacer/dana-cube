@@ -136,13 +136,16 @@ def browse0(base):
         print(conn.text())
 
 def info2cube(dataDict,confName,schema,table):
+    """
+       de monento solo sustituyo
+    """
     #TODO strftime no vale para todos los gestores de base de datos
     pprint(dataDict)
     info = getTable(dataDict,confName,schema,table)                
     pprint(info)
     
-    cubo = dict()
-    cubo[table]=dict()
+    cubo = load_cubo()
+    cubo[table]=dict() # si hubiera algo ... requiescat in pace
     entrada = cubo[table]
     entrada['base filter']=""
     entrada['table'] = '{}.{}'.format(schema,table) if schema != "" else table
@@ -197,7 +200,7 @@ def info2cube(dataDict,confName,schema,table):
                                       'class':'o',
                                       'prod':[{'elem':fld[0],},]})  #no es completo
 
-    pprint(cubo)
+    pprint(entrada)
     dump_structure(cubo, fichero="cubo.json")
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
@@ -226,7 +229,7 @@ if __name__ == '__main__':
     #info = getTable(dataDict,'MariaBD Local','sakila','customer')            
     #info = getTable(dataDict,'MariaBD Local','sakila','film')            
     #info2cube(dataDict,'MariaBD Local','sakila','film')            
-    info2cube(dataDict,'Pagila','public','film')            
+    info2cube(dataDict,'Pagila','public','rental')            
     #pprint(info)
     #cursor = localQuery(dataDict.conn['MariaBD Local'],info,1)
     #modelo = QStandardItemModel()
