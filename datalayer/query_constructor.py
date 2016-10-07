@@ -373,7 +373,16 @@ def groupConstructor(kwargs):
     num_elem = len(entrada)
     texto = []
     for elemento in entrada:
-      texto.append(elemento.strip())
+      # en el caso de las categorias se pasa el AS al group y eso no funciona y hay que quitarlo GENERADOR
+      #FIXME no entiendo porque necesito renormalizar la cadena
+      nelemento = norm2String(elemento)  
+      pos = nelemento.find(' AS ')
+      if pos > 0:
+          kelemento = nelemento[0:pos]
+      else:
+        kelemento = nelemento
+      print(kelemento)
+      texto.append(kelemento.strip())
     
     statement += ', '.join(texto)
     

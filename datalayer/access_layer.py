@@ -52,13 +52,14 @@ def driver2if(driver):
         print('Not implemented')
         exit(-1)
 
+#DRIVERNAME
 def driver2Qt(pdriver):
     driver = pdriver.lower()
     if driver in ('sqlite','qsqlite'): #solo compatibilidad codigo actural
         return 'QSQLITE'
     elif driver in ('mysql','mariadb','mysqldb'):
         return 'QMYSQL'
-    elif driver ('postgresql','postgres','pg'):
+    elif driver ('postgresql','postgres','pg','psycopg2'):
         return 'QPSQL'
     elif driver == 'oracle':
         return 'QOCI'
@@ -71,7 +72,7 @@ def driver2Alch(pdriver):
         return 'sqlite'
     elif driver in ('mysql','mysqldb','mariadb'):
         return 'mysql+mysqldb'
-    elif driver in ('postgresql','postgres','pg'):
+    elif driver in ('postgresql','postgres','pg','psycopg2'):
         return 'postgresql+psycopg2'
     elif driver == 'oracle':
         return 'oracle+cx_oracle'
@@ -124,7 +125,10 @@ def dbConnectAlch(constring):
         debug=False
     dbname = constring['dbname']
     #GENERADOR
-    if driver == dbname[0:len(driver)]:
+    pos = dbname.find('://')
+    if pos > 0:
+    #if driver == dbname[0:len(driver)]:
+        #driver = dbname[0:pos]    
         print('Ya viene definida la base de datos')
         context = dbname
     else:

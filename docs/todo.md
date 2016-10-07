@@ -1,5 +1,10 @@
 # ToDo list
 
+
+## Adaptacion a un servidor concreto
+* Funciones de fecha y hora (se supone que en datemgr)
+* Nombre de driver (buscar #DRIVERNAME)
+
 ## short term TODO list (2016)
 
 * __DONE__ Python 3 compatible. (29/3/16)
@@ -45,7 +50,9 @@
   * name of elements in hierarchy YML
 
 * BUG errror en sql acaba en cualquier sitio (tiene que ver con waiting_functions)
-* Simplificar la sintaxis para los casos mas sencillos
+* Simplificar la sintaxis del cubo para los casos mas sencillos
+* Cubo como parametro de arranque
+* BUG error en globales
 * Now In Progres
   * __DONE__ Row functions. _WIP_ lack some further testing
         * Special cases await (election simulator)

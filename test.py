@@ -214,7 +214,8 @@ if __name__ == '__main__':
 
     #dict=DataDict('JeNeQuitePas')
     #dataDict=DataDict()
-    dataDict=DataDict(conn='MariaBD Local',schema='sakila')
+    #dataDict=DataDict(conn='MariaBD Local',schema='sakila')
+    dataDict=DataDict(conn='Pagila',schema='public')
     #for entry in traverse(dataDict.hiddenRoot):
         #tabs = '\t'*entry.depth()
         #if not entry.isAuxiliar():
@@ -224,7 +225,8 @@ if __name__ == '__main__':
     #browse0(dataDict.hiddenRoot)
     #info = getTable(dataDict,'MariaBD Local','sakila','customer')            
     #info = getTable(dataDict,'MariaBD Local','sakila','film')            
-    info2cube(dataDict,'MariaBD Local','sakila','film')            
+    #info2cube(dataDict,'MariaBD Local','sakila','film')            
+    info2cube(dataDict,'Pagila','public','film')            
     #pprint(info)
     #cursor = localQuery(dataDict.conn['MariaBD Local'],info,1)
     #modelo = QStandardItemModel()

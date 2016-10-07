@@ -116,8 +116,15 @@ def regHasher(record,**kwargs):
         num_components = len(record) -kwargs['ndesc']
     else:
         num_components = len(record) -1
-        
-    indice = DELIMITER.join(record[0:num_components])
+    try:
+        #GENERADOR. Vaya Chapu
+        trecord = list(map(str,record[0:num_components]))
+        indice = DELIMITER.join(trecord)
+        #indice = DELIMITER.join(record[0:num_components])
+    except TypeError:
+        print('type error')
+        print(num_components)
+        pprint(record)
     record.insert(0,indice)
 
 def regHasher2D(record,**kwargs):
@@ -133,7 +140,9 @@ def regHasher2D(record,**kwargs):
             pos_ini = dimension['init']
         else:
             pos_ini = 0
-        indice[k] = DELIMITER.join(record[pos_ini:pos_ini+num_components])
+        trecord = list(map(str,record[pos_ini:pos_ini+num_components]))
+        indice[k] = DELIMITER.join(trecord)
+        #indice[k] = DELIMITER.join(record[pos_ini:pos_ini+num_components])
         
     for k in ('row','col'):
         if k == 'row':

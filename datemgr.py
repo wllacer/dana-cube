@@ -106,7 +106,7 @@ def getDateIndex(max_date,  min_date, fmt, **opciones):
 def getDateEntry(psource, fmt, driver='QSQLITE'):
     
     source=norm2List(psource)[-1]  #no esta normalizado el uso de lista o parametros indivudales
-    
+    #DRIVERNAME
     marker = {}
     if driver in ('QSQLITE','sqlite'):
         function = 'strftime'
@@ -124,7 +124,7 @@ def getDateEntry(psource, fmt, driver='QSQLITE'):
         marker["d"] = '%d'
         marker["w"] = '%w'
         marker["J"] = '%j'
-    elif driver in ('postgresql','postgres','pg','oracle'):
+    elif driver in ('postgresql','postgres','pg','psycopg2','oracle'):
         function = 'to_char'   
         marker["Y"] =  'YYYY'
         marker["m"]= 'MM'

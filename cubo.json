@@ -1,16 +1,17 @@
 {
     "film": {
         "base filter": "", 
-        "table": "sakila.film", 
+        "table": "public.film", 
         "connect": {
             "dbuser": null, 
             "dbhost": null, 
-            "driver": "mysqldb", 
-            "dbname": "mysql+mysqldb://demo:demo123@localhost/fiction", 
+            "driver": "psycopg2", 
+            "dbname": "postgresql+psycopg2://werner:None@localhost/pagila", 
             "dbpass": null
         }, 
         "fields": [
             "film_id", 
+            "release_year", 
             "language_id", 
             "original_language_id", 
             "rental_duration", 
@@ -22,19 +23,19 @@
             {
                 "prod": [
                     {
-                        "elem": "title"
+                        "elem": "rating"
                     }
                 ], 
-                "name": "title", 
+                "name": "rating", 
                 "class": "o"
             }, 
             {
                 "prod": [
                     {
-                        "elem": "description"
+                        "elem": "language_id"
                     }
                 ], 
-                "name": "description", 
+                "name": "language", 
                 "class": "o"
             }, 
             {
@@ -49,11 +50,13 @@
             {
                 "prod": [
                     {
-                        "elem": "rating"
+                        "fmt": "date", 
+                        "elem": "last_update"
                     }
                 ], 
-                "name": "rating", 
-                "class": "o"
+                "type": "Ymd", 
+                "name": "last_update", 
+                "class": "d"
             }, 
             {
                 "prod": [
@@ -67,13 +70,11 @@
             {
                 "prod": [
                     {
-                        "fmt": "date", 
-                        "elem": "last_update"
+                        "elem": "fulltext"
                     }
                 ], 
-                "type": "Ymd", 
-                "name": "last_update", 
-                "class": "d"
+                "name": "fulltext", 
+                "class": "o"
             }
         ]
     }
