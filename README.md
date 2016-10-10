@@ -63,6 +63,10 @@ Why a text file for definition? Getting the table definitions from the DB Catalo
 
 The tool is programmed in python2 + PyQt5?, but we test it also under python3.
 
+## Sample Data
+Since September 2016, we are using the Sakila/Pagila database as sample target (first in MySQL, the latter in PostGreSQL)
+in Master
+
 ## Dependencies
 
 Besides PyQt, we use  [SqlAlchemy](http://www.sqlalchemy.org/) as a data backend (only core functionality). If you don't 
@@ -80,7 +84,9 @@ PyQt licensing might impose other restrictions, please keep an eye on it (AFAIK 
 ## Actual Status
 
 __MASTER works__ but some pieces are lacking (Above all documentation). The latest __release__ has still not converted
-to the new code
+to the new code. 
+
+_Update Feast of St. Francis of Borja 2016_ We have merged today the development tree at _Github_  The core code is more or less in an alfa release state, but the ancilliary tools aren't still there
 
 _Update Feast of St. Peter Canisius 2016_ I've integrated SqlAlchemy as (selectable but default) backend. Couple of reasons why:
     * Better licensing terms 
