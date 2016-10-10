@@ -171,9 +171,9 @@ class TableBrowserWin(QMainWindow):
      
     def setupModel(self,confName,schema,table,pdataDict): 
         self.model = QStandardItemModel()
-        confName = 'MariaBD Local'
-        schema = 'sakila'
-        table = 'film'
+        #confName = 'MariaBD Local'
+        #schema = 'sakila'
+        #table = 'film'
         if type(pdataDict) is DataDict:
             dataDict = pdataDict
         else:
@@ -210,7 +210,7 @@ if __name__ == '__main__':
     reload(sys)
     sys.setdefaultencoding('utf-8')
     app = QApplication(sys.argv)
-    window = TableBrowserWin('MariaBD Local','sakila','film')
+    window = TableBrowserWin('MariaBD Local','sakila','rental')
     #window.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
     window.show()
     sys.exit(app.exec_())
