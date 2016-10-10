@@ -1,5 +1,138 @@
 {
-    "rental": {
+    "rental_sakila": {
+        "base filter": "", 
+        "table": "sakila.rental", 
+        "guides": [
+            {
+                "prod": [
+                    {
+                        "elem": "staff_id"
+                    }
+                ], 
+                "name": "empleado", 
+                "class": "o"
+            }, 
+            {
+                "prod": [
+                    {
+                        "fmt": "date", 
+                        "elem": "rental_date"
+                    }
+                ], 
+                "type": "Ymd", 
+                "name": "rental_date", 
+                "class": "d"
+            }, 
+            {
+                "prod": [
+                    {
+                        "class": "o", 
+                        "name": "año", 
+                        "elem": "DATE_FORMAT(rental_date,'%Y')"
+                    }, 
+                    {
+                        "case_sql": [
+                            "case", 
+                            "when DATE_FORMAT($$1,'%m') in ('01','02','03') then concat(DATE_FORMAT($$1,'%Y'),'\\:1')", 
+                            "when DATE_FORMAT($$1,'%m') in ('04','05','06') then concat(DATE_FORMAT($$1,'%Y'),'\\:2')", 
+                            "when DATE_FORMAT($$1,'%m') in ('07','08','09') then concat(DATE_FORMAT($$1,'%Y'),'\\:3')", 
+                            "when DATE_FORMAT($$1,'%m') in ('10','11','12') then concat(DATE_FORMAT($$1,'%Y'),'\\:4')", 
+                            "end as $$2"
+                        ], 
+                        "class": "c", 
+                        "name": "trimestre", 
+                        "elem": "rental_date"
+                    }
+                ], 
+                "name": "rental_date_trimestre", 
+                "class": "h"
+            }, 
+            {
+                "prod": [
+                    {
+                        "fmt": "date", 
+                        "elem": "return_date"
+                    }
+                ], 
+                "type": "Ymd", 
+                "name": "return_date", 
+                "class": "d"
+            }, 
+            {
+                "prod": [
+                    {
+                        "class": "o", 
+                        "name": "año", 
+                        "elem": "DATE_FORMAT(return_date,'%Y')"
+                    }, 
+                    {
+                        "case_sql": [
+                            "case", 
+                            "when DATE_FORMAT($$1,'%m') in ('01','02','03') then concat(DATE_FORMAT($$1,'%Y'),'\\:1')", 
+                            "when DATE_FORMAT($$1,'%m') in ('04','05','06') then concat(DATE_FORMAT($$1,'%Y'),'\\:2')", 
+                            "when DATE_FORMAT($$1,'%m') in ('07','08','09') then concat(DATE_FORMAT($$1,'%Y'),'\\:3')", 
+                            "when DATE_FORMAT($$1,'%m') in ('10','11','12') then concat(DATE_FORMAT($$1,'%Y'),'\\:4')", 
+                            "end as $$2"
+                        ], 
+                        "class": "c", 
+                        "name": "trimestre", 
+                        "elem": "return_date"
+                    }
+                ], 
+                "name": "return_date_trimestre", 
+                "class": "h"
+            }, 
+            {
+                "prod": [
+                    {
+                        "fmt": "date", 
+                        "elem": "last_update"
+                    }
+                ], 
+                "type": "Ymd", 
+                "name": "last_update", 
+                "class": "d"
+            }, 
+            {
+                "prod": [
+                    {
+                        "class": "o", 
+                        "name": "año", 
+                        "elem": "DATE_FORMAT(last_update,'%Y')"
+                    }, 
+                    {
+                        "case_sql": [
+                            "case", 
+                            "when DATE_FORMAT($$1,'%m') in ('01','02','03') then concat(DATE_FORMAT($$1,'%Y'),'\\:1')", 
+                            "when DATE_FORMAT($$1,'%m') in ('04','05','06') then concat(DATE_FORMAT($$1,'%Y'),'\\:2')", 
+                            "when DATE_FORMAT($$1,'%m') in ('07','08','09') then concat(DATE_FORMAT($$1,'%Y'),'\\:3')", 
+                            "when DATE_FORMAT($$1,'%m') in ('10','11','12') then concat(DATE_FORMAT($$1,'%Y'),'\\:4')", 
+                            "end as $$2"
+                        ], 
+                        "class": "c", 
+                        "name": "trimestre", 
+                        "elem": "last_update"
+                    }
+                ], 
+                "name": "last_update_trimestre", 
+                "class": "h"
+            }
+        ], 
+        "connect": {
+            "dbuser": null, 
+            "dbhost": null, 
+            "driver": "mysqldb", 
+            "dbname": "mysql+mysqldb://demo:demo123@localhost/mysql", 
+            "dbpass": null
+        }, 
+        "fields": [
+            "rental_id", 
+            "inventory_id", 
+            "customer_id", 
+            "staff_id"
+        ]
+    }, 
+    "rental_pagila": {
         "base filter": "", 
         "table": "public.rental", 
         "connect": {
@@ -22,7 +155,7 @@
                         "elem": "staff_id"
                     }
                 ], 
-                "name": "staff_id", 
+                "name": "empleado", 
                 "class": "o"
             }, 
             {
@@ -39,6 +172,30 @@
             {
                 "prod": [
                     {
+                        "class": "o", 
+                        "elem": "TO_CHAR(rental_date,'YYYY')", 
+                        "name": "año"
+                    }, 
+                    {
+                        "case_sql": [
+                            "case", 
+                            "when TO_CHAR($$1,'MM') in ('01','02','03') then TO_CHAR($$1,'YYYY') || '\\:1' ", 
+                            "when TO_CHAR($$1,'MM') in ('04','05','06') then TO_CHAR($$1,'YYYY') || '\\:2' ", 
+                            "when TO_CHAR($$1,'MM') in ('07','08','09') then TO_CHAR($$1,'YYYY') || '\\:3' ", 
+                            "when TO_CHAR($$1,'MM') in ('10','11','12') then TO_CHAR($$1,'YYYY') || '\\:4' ", 
+                            "end as $$2"
+                        ], 
+                        "class": "c", 
+                        "elem": "rental_date", 
+                        "name": "trimestre"
+                    }
+                ], 
+                "name": "rental_date_trimestre", 
+                "class": "h"
+            }, 
+            {
+                "prod": [
+                    {
                         "fmt": "date", 
                         "elem": "return_date"
                     }
@@ -50,47 +207,28 @@
             {
                 "prod": [
                     {
-                        "fmt": "date", 
-                        "elem": "last_update"
-                    }
-                ], 
-                "type": "Ymd", 
-                "name": "last_update", 
-                "class": "d"
-            }
-        ]
-    }, 
-    "film": {
-        "base filter": "", 
-        "table": "public.film", 
-        "guides": [
-            {
-                "prod": [
+                        "class": "o", 
+                        "elem": "TO_CHAR(return_date,'YYYY')", 
+                        "name": "año"
+                    }, 
                     {
-                        "elem": "rating"
+                        "case_sql": [
+                            "case", 
+                            "when TO_CHAR($$1,'MM') in ('01','02','03') then TO_CHAR($$1,'YYYY') || '\\:1' ", 
+                            "when TO_CHAR($$1,'MM') in ('04','05','06') then TO_CHAR($$1,'YYYY') || '\\:2' ", 
+                            "when TO_CHAR($$1,'MM') in ('07','08','09') then TO_CHAR($$1,'YYYY') || '\\:3' ", 
+                            "when TO_CHAR($$1,'MM') in ('10','11','12') then TO_CHAR($$1,'YYYY') || '\\:4' ", 
+                            "end as $$2"
+                        ], 
+                        "class": "c", 
+                        "elem": "return_date", 
+                        "name": "trimestre"
                     }
                 ], 
-                "name": "rating", 
-                "class": "o"
+                "name": "return_date_trimestre", 
+                "class": "h"
             }, 
             {
-                "prod": [
-                    {
-                        "elem": "release_year"
-                    }
-                ], 
-                "name": "release year", 
-                "class": "o"
-            }, 
-            {
-                "prod": [
-                    {
-                        "elem": "language_id"
-                    }
-                ], 
-                "name": "language id", 
-                "class": "o"
-            },            {
                 "prod": [
                     {
                         "fmt": "date", 
@@ -104,38 +242,27 @@
             {
                 "prod": [
                     {
-                        "elem": "special_features"
-                    }
-                ], 
-                "name": "special_features", 
-                "class": "o"
-            }, 
-            {
-                "prod": [
+                        "class": "o", 
+                        "elem": "TO_CHAR(last_update,'YYYY')", 
+                        "name": "año"
+                    }, 
                     {
-                        "elem": "fulltext"
+                        "case_sql": [
+                            "case", 
+                            "when TO_CHAR($$1,'MM') in ('01','02','03') then TO_CHAR($$1,'YYYY') || '\\:1' ", 
+                            "when TO_CHAR($$1,'MM') in ('04','05','06') then TO_CHAR($$1,'YYYY') || '\\:2' ", 
+                            "when TO_CHAR($$1,'MM') in ('07','08','09') then TO_CHAR($$1,'YYYY') || '\\:3' ", 
+                            "when TO_CHAR($$1,'MM') in ('10','11','12') then TO_CHAR($$1,'YYYY') || '\\:4' ", 
+                            "end as $$2"
+                        ], 
+                        "class": "c", 
+                        "elem": "last_update", 
+                        "name": "trimestre"
                     }
                 ], 
-                "name": "fulltext", 
-                "class": "o"
+                "name": "last_update_trimestre", 
+                "class": "h"
             }
-        ], 
-        "connect": {
-            "dbuser": null, 
-            "dbhost": null, 
-            "driver": "psycopg2", 
-            "dbname": "postgresql+psycopg2://werner:None@localhost/pagila", 
-            "dbpass": null
-        }, 
-        "fields": [
-            "film_id", 
-            "release_year", 
-            "language_id", 
-            "original_language_id", 
-            "rental_duration", 
-            "rental_rate", 
-            "length", 
-            "replacement_cost"
         ]
     }
 }

@@ -42,7 +42,7 @@
     * Consulta inversa por FK
     * Sustituir pantalla partida por pestañas
     * Cada pestaña thread distinto
-    * Limit en las queries neutral
+    * __DONE__ Limit en las queries neutral (1000 como defecto)
     * hide columnas
     
     
@@ -56,13 +56,17 @@
 * BUG errror en sql acaba en cualquier sitio (tiene que ver con waiting_functions)
 * Simplificar la sintaxis del cubo para los casos mas sencillos
 * Cubo como parametro de arranque
-* BUG error en gran total. Si numerico no acaba en la posicion que corresponde
-    * BUG el problema es que existen ENUMS u los datos son recuperados por orden de ENUM. No orden natural
+* BUG En gran total: el problema es que existen ENUMS u los datos son recuperados por orden de ENUM. No orden natural
 * __DONE__ fechas con datetime como objeto
 * Time como objetos
 * Procesar vistas
 * BUG Cursor se desmanda
-
+* __DONE__ Categorizacion de trimestres / cuatrimestres independiente del gestor
+* __DONE__ Generalizacion codigo de trimestralización hasta lo mas posible
+* __DONE_ o lo parece. Proceso de fechas en pagila,sakila
+    * __DONE__ En PG correcto. En MySQL no carga en detalle, solo en gran total. Un error de codificacion
+* BUG faltan como cabecera los trimestres sin datos
+* Cabecera de danacube con mas información
 * Now In Progres
   * __DONE__ Row functions. _WIP_ lack some further testing
         * Special cases await (election simulator)

@@ -125,7 +125,7 @@ def getDateEntry(psource, fmt, driver='QSQLITE'):
     elif driver in ('mysql','mariadb','mysqldb'):  #GENERADOR
         function = 'DATE_FORMAT' 
         marker["Y"] = '%Y'
-        marker["m"]= '%c'
+        marker["m"]= '%m'
         marker["W"]= '%U'
         marker["d"] = '%d'
         marker["w"] = '%w'
@@ -193,3 +193,73 @@ def getDateSlots(fieldname, driver='QSQLITE', zoom='n'):
         #pprint(tuplas)
     return base_collection,zoom_collection
 
+def genTrimestreCode(fieldname,driver='QSQLITE'):
+    """
+       TODO ver si se puede simplificar utilizando esta sintaxis
+            cadena_a = '{1}({2},{3})'
+            cadena = cadena_a
+            print(cadena.format('SQL1','FUNC','%x','var'))
+
+    """
+    trimarray = (
+            ("('01','02','03')",'\\:1'),
+            ("('04','05','06')",'\\:2'),
+            ("('07','08','09')",'\\:3'),
+            ("('10','11','12')",'\\:4'),
+            )
+    placeholder = '$$1'
+    
+    if driver in ('QSQLITE','sqlite'):
+        function = 'strftime'
+        function_mask ="{0}('{2}',{1})"
+        year_marker='%Y'
+        month_marker = '%m'
+        cat_stmt = "{} || '{}' "
+    elif driver in ('mysql','mariadb','mysqldb'):  #GENERADOR
+        function = 'DATE_FORMAT'
+        function_mask ="{0}({1},'{2}')"
+        year_marker='%Y'
+        month_marker = '%m'
+        cat_stmt = "concat({},'{}')"
+    elif driver in ('postgresql','postgres','pg','psycopg2','oracle'):
+        function = 'TO_CHAR'
+        function_mask ="{0}({1},'{2}')"
+        year_marker='YYYY'
+        month_marker = 'MM'
+        cat_stmt = "{} || '{}' "
+    else:
+        print('Date conversions for driver %s still not implemented'%driver)
+        return None
+
+    year_stmt = function_mask.format(function,fieldname,year_marker)
+    pyear_stmt = function_mask.format(function,placeholder,year_marker)
+    selector = function_mask.format(function,placeholder,month_marker)
+    print(year_stmt,selector)
+    case_array = []
+    case_array.append("case")
+    for entry in trimarray:
+        sel_stmt ='{} in {}'.format(selector,entry[0])
+        concatenation = cat_stmt.format(pyear_stmt,entry[1])
+        
+        cadena="when {} then {}".format(sel_stmt,concatenation)
+        case_array.append(cadena)
+    case_array.append("end as $$2")
+
+    trimestre = {
+            "name": fieldname+"_trimestre",
+            "class":"h",
+            "prod": [
+                {
+                    "elem": year_stmt,
+                    "name": "año",
+                    "class":"o"
+                },
+                {
+                    "elem": fieldname,
+                    "case_sql":case_array,
+                    "name": "trimestre",
+                    "class":"c"
+                    }
+                ]
+            }
+    return trimestre
