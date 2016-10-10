@@ -67,6 +67,8 @@
     * __DONE__ En PG correcto. En MySQL no carga en detalle, solo en gran total. Un error de codificacion
 * BUG faltan como cabecera los trimestres sin datos
 * Cabecera de danacube con mas información
+* Arbol cerrado siempre para fechas, por favor
+
 * Now In Progres
   * __DONE__ Row functions. _WIP_ lack some further testing
         * Special cases await (election simulator)

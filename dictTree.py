@@ -61,7 +61,16 @@ class BaseTreeItem(QStandardItem):
             return True
         else:
             return False
-   
+        
+    def setDescriptive(self):
+        if self.isAuxiliar():
+            return
+        else:
+            indice = self.index() 
+            colind = indice.sibling(indice.row(),2)
+            if colind:
+                colind.setData(True)
+                
     def getBrotherByName(self,name): 
         # getSibling esta cogido para los elementos de la fila, asi que tengo que inventar esto para obtener
         # un 'hermano' por nomnbre

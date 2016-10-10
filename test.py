@@ -179,8 +179,39 @@ def info2cube(dataDict,confName,schema,table):
             entrada['guides'].append({'name':fld[0],
                                       'class':'o',
                                       'prod':[{'elem':fld[0],},]})  #no es completo
+        """
+                "prod": [
+                    {   "source": {
+                            "filter": "code in (select distinct partido from votos_provincia where votes_percent >= 3)", 
+                            "table": "partidos", 
+                            "code": "code", 
+                            "desc": "acronym"
+                        }, 
 
-    pprint(entrada)
+                        "elem": "partido"
+                    }
+        """
+    for fk in info.get('FK',list()):
+        desc_fld = []
+        for fld in fk['CamposReferencia']:
+            if fld[1] == 'texto':
+                desc_fld.append(fld[0])
+        if len(desc_fld) == 0:
+            print('No proceso por falta de texto',fk)
+            continue
+            
+        entrada['guides'].append({'name':fk['Name'],
+                                    'class':'o',
+                                    'prod':[{'source': {
+                                            "filter":"",
+                                            "table":fk['ParentTable'],
+                                            "code":fk['ParentField'],
+                                            "desc":desc_fld
+                                        },
+                                        'elem':fk['Field']},]
+                                    })  #no es completo
+    
+    #pprint(entrada)
     dump_structure(cubo, fichero="cubo.json")
 
 
@@ -202,9 +233,9 @@ if __name__ == '__main__':
     #sys.exit(app.exec_())
 
     #dict=DataDict('JeNeQuitePas')
-    dataDict=DataDict()
+    #dataDict=DataDict()
     #dataDict=DataDict(conn='MariaBD Local',schema='sakila')
-    #dataDict=DataDict(conn='Pagila',schema='public')
+    dataDict=DataDict(conn='Pagila',schema='public')
     #for entry in traverse(dataDict.hiddenRoot):
         #tabs = '\t'*entry.depth()
         #if not entry.isAuxiliar():

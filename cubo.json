@@ -1,138 +1,5 @@
 {
-    "rental_sakila": {
-        "base filter": "", 
-        "table": "sakila.rental", 
-        "guides": [
-            {
-                "prod": [
-                    {
-                        "elem": "staff_id"
-                    }
-                ], 
-                "name": "empleado", 
-                "class": "o"
-            }, 
-            {
-                "prod": [
-                    {
-                        "fmt": "date", 
-                        "elem": "rental_date"
-                    }
-                ], 
-                "type": "Ymd", 
-                "name": "rental_date", 
-                "class": "d"
-            }, 
-            {
-                "prod": [
-                    {
-                        "class": "o", 
-                        "name": "año", 
-                        "elem": "DATE_FORMAT(rental_date,'%Y')"
-                    }, 
-                    {
-                        "case_sql": [
-                            "case", 
-                            "when DATE_FORMAT($$1,'%m') in ('01','02','03') then concat(DATE_FORMAT($$1,'%Y'),'\\:1')", 
-                            "when DATE_FORMAT($$1,'%m') in ('04','05','06') then concat(DATE_FORMAT($$1,'%Y'),'\\:2')", 
-                            "when DATE_FORMAT($$1,'%m') in ('07','08','09') then concat(DATE_FORMAT($$1,'%Y'),'\\:3')", 
-                            "when DATE_FORMAT($$1,'%m') in ('10','11','12') then concat(DATE_FORMAT($$1,'%Y'),'\\:4')", 
-                            "end as $$2"
-                        ], 
-                        "class": "c", 
-                        "name": "trimestre", 
-                        "elem": "rental_date"
-                    }
-                ], 
-                "name": "rental_date_trimestre", 
-                "class": "h"
-            }, 
-            {
-                "prod": [
-                    {
-                        "fmt": "date", 
-                        "elem": "return_date"
-                    }
-                ], 
-                "type": "Ymd", 
-                "name": "return_date", 
-                "class": "d"
-            }, 
-            {
-                "prod": [
-                    {
-                        "class": "o", 
-                        "name": "año", 
-                        "elem": "DATE_FORMAT(return_date,'%Y')"
-                    }, 
-                    {
-                        "case_sql": [
-                            "case", 
-                            "when DATE_FORMAT($$1,'%m') in ('01','02','03') then concat(DATE_FORMAT($$1,'%Y'),'\\:1')", 
-                            "when DATE_FORMAT($$1,'%m') in ('04','05','06') then concat(DATE_FORMAT($$1,'%Y'),'\\:2')", 
-                            "when DATE_FORMAT($$1,'%m') in ('07','08','09') then concat(DATE_FORMAT($$1,'%Y'),'\\:3')", 
-                            "when DATE_FORMAT($$1,'%m') in ('10','11','12') then concat(DATE_FORMAT($$1,'%Y'),'\\:4')", 
-                            "end as $$2"
-                        ], 
-                        "class": "c", 
-                        "name": "trimestre", 
-                        "elem": "return_date"
-                    }
-                ], 
-                "name": "return_date_trimestre", 
-                "class": "h"
-            }, 
-            {
-                "prod": [
-                    {
-                        "fmt": "date", 
-                        "elem": "last_update"
-                    }
-                ], 
-                "type": "Ymd", 
-                "name": "last_update", 
-                "class": "d"
-            }, 
-            {
-                "prod": [
-                    {
-                        "class": "o", 
-                        "name": "año", 
-                        "elem": "DATE_FORMAT(last_update,'%Y')"
-                    }, 
-                    {
-                        "case_sql": [
-                            "case", 
-                            "when DATE_FORMAT($$1,'%m') in ('01','02','03') then concat(DATE_FORMAT($$1,'%Y'),'\\:1')", 
-                            "when DATE_FORMAT($$1,'%m') in ('04','05','06') then concat(DATE_FORMAT($$1,'%Y'),'\\:2')", 
-                            "when DATE_FORMAT($$1,'%m') in ('07','08','09') then concat(DATE_FORMAT($$1,'%Y'),'\\:3')", 
-                            "when DATE_FORMAT($$1,'%m') in ('10','11','12') then concat(DATE_FORMAT($$1,'%Y'),'\\:4')", 
-                            "end as $$2"
-                        ], 
-                        "class": "c", 
-                        "name": "trimestre", 
-                        "elem": "last_update"
-                    }
-                ], 
-                "name": "last_update_trimestre", 
-                "class": "h"
-            }
-        ], 
-        "connect": {
-            "dbuser": null, 
-            "dbhost": null, 
-            "driver": "mysqldb", 
-            "dbname": "mysql+mysqldb://demo:demo123@localhost/mysql", 
-            "dbpass": null
-        }, 
-        "fields": [
-            "rental_id", 
-            "inventory_id", 
-            "customer_id", 
-            "staff_id"
-        ]
-    }, 
-    "rental_pagila": {
+    "rental": {
         "base filter": "", 
         "table": "public.rental", 
         "connect": {
@@ -149,15 +16,6 @@
             "staff_id"
         ], 
         "guides": [
-            {
-                "prod": [
-                    {
-                        "elem": "staff_id"
-                    }
-                ], 
-                "name": "empleado", 
-                "class": "o"
-            }, 
             {
                 "prod": [
                     {
@@ -262,6 +120,46 @@
                 ], 
                 "name": "last_update_trimestre", 
                 "class": "h"
+            }, 
+            {
+                "prod": [
+                    {
+                        "source": {
+                            "filter": "", 
+                            "table": "public.customer", 
+                            "code": "customer_id", 
+                            "desc": [
+                                "first_name", 
+                                "last_name", 
+                                "email"
+                            ]
+                        }, 
+                        "elem": "customer_id"
+                    }
+                ], 
+                "name": "rental_customer_id_fkey", 
+                "class": "o"
+            }, 
+            {
+                "prod": [
+                    {
+                        "source": {
+                            "filter": "", 
+                            "table": "public.staff", 
+                            "code": "staff_id", 
+                            "desc": [
+                                "first_name", 
+                                "last_name", 
+                                "email", 
+                                "username", 
+                                "password"
+                            ]
+                        }, 
+                        "elem": "staff_id"
+                    }
+                ], 
+                "name": "rental_staff_id_fkey", 
+                "class": "o"
             }
         ]
     }

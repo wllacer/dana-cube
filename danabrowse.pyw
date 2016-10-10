@@ -80,7 +80,9 @@ def setContextMenu(obj,menu):
             obj.menuActions = []
             obj.menuActions.append(menu.addAction("Go to reverse FK"))
             obj.menuActions.append(menu.addAction("Set descriptive fields"))
-
+        else:
+            obj.menuActions = []
+            obj.menuActions.append(menu.addAction("Set as descriptive field"))
 
 def getContextMenu(obj,action,exec_object=None):
     if action is None:
@@ -154,7 +156,8 @@ def getContextMenu(obj,action,exec_object=None):
                 pass # get element with same name, selecte that item
             elif ind == 1:
                 pass # select field from referred table
-
+        else:
+            obj.setDescriptive()
 
 class SelectConnectionDlg(QDialog):
     def __init__(self,configDict,parent=None):
