@@ -26,6 +26,68 @@ from tablebrowse import *
 from datemgr import genTrimestreCode
 from util.jsonmgr import *
 
+(_ROOT, _DEPTH, _BREADTH) = range(3)
+
+ITEM_TYPE = set([
+     u'agregado',
+     u'base',
+     u'base filter',
+     u'base_elem',
+     u'case_sql',
+     u'categories',
+     u'class',
+     u'clause',
+     u'code',
+     u'col',
+     u'condition',
+     u'connect',
+     u'cubo',
+     u'dbhost',
+     u'dbname',
+     u'dbpass',
+     u'dbuser',
+     u'default',
+     u'desc',
+     u'driver',
+     u'elem',
+     u'elemento',
+     u'enum_fmt',
+     u'fields',
+     u'filter',
+     u'fmt',
+     u'grouped by',
+     u'guides',
+     u'name',
+     u'pos',
+     u'prod',
+     u'rel_elem',
+     u'related via',
+     u'result',
+     u'row',
+     u'source',
+     u'table',
+     u'type',
+     u'values',
+     u'vista'])
+
+TYPE_DICT = set([u'base',
+     'connect',
+     u'default_start',
+     'source',
+     'vista'])
+
+TYPE_LIST = set(['case_sql',
+     'fields',
+     'values'])
+
+TYPE_LIST_DICT = set([
+     'categories',
+     'clause',
+     'guides',
+     'prod',
+     'related via'])
+
+
 class CubeItem(QStandardItem):
     """
     TODO unificar con BaseTreeItem en dictTree
@@ -125,7 +187,13 @@ class CubeItem(QStandardItem):
             colind = indice.sibling(indice.row(),k)
         return lista
      
-    
+    def getColumn(self,column,role=None):
+        indice = self.index() #self.model().indexFromItem(field)
+        colind = indice.sibling(indice.row(),column)
+        if colind.isValid():
+            return colind.data(role) if role else colind.data()
+        else:
+            return None
     
     def takeChildren(self):
         if self.hasChildren():
@@ -139,19 +207,28 @@ class CubeItem(QStandardItem):
     def getTypeName(self):
         return self.__class__.__name__ 
 
-    def getTypeText(self):
-        if type(self) == ConnectionTreeItem :
-            return 'Conn'
-        elif type(self) == SchemaTreeItem:
-            return 'Schema'
-        elif type(self) == TableTreeItem :
-            return 'Table'
-        else:
-            return ''
-        
-    
     def type(self):
-        return self.__class__
+        return self.getColumn(2)
+    
+    def extendedType(self):
+        if self.type():
+            return self.type()
+        else:
+            padre = self.parent()
+            while padre:
+                if padre.type():
+                    return padre.type()
+                else:
+                    padre = padre.parent()
+
+    def typeHierarchy(self):
+        tipos = []
+        tipos.append(self.type())
+        padre = self.parent()
+        while padre:
+            tipos.append(padre.type())
+            padre = padre.parent()
+        return tipos  #.reverse() #no se si sera esto lo que quiero        
      
     def getModel(self):
         """
@@ -164,7 +241,7 @@ class CubeItem(QStandardItem):
 
 
     def __repr__(self):
-        return "<" + self.getTypeText() + " " + self.text() + ">"
+        return "<" + self.text() + ">"
     
 def lastChild(item):
     if item.hasChildren():
@@ -250,8 +327,46 @@ def info2cube(dataDict,confName,schema,table):
     
     return entrada
 
-def recTreeLoader(parent,key,data):
-    parent.appendRow((QStandardItem(str(key)),QStandardItem(str(data)),))
+def recTreeLoader(parent,key,data,tipo=None):
+    """
+        Los valores de elementos atomicos son atributos del nodo en arbol
+    """
+    #parent.appendRow((QStandardItem(str(key)),QStandardItem(str(data)),))
+    if not tipo:
+        tipo=str(key)
+    if not isinstance(data,(list,tuple,set,dict)): #
+        parent.appendRow((CubeItem(str(key)),CubeItem(str(data)),CubeItem(tipo),))
+    else:
+        parent.appendRow((CubeItem(str(key)),None,CubeItem(tipo),))
+    newparent = lastChild(parent)
+    if isinstance(data,dict):
+        for elem in data:
+            recTreeLoader(newparent,elem,data[elem])
+    elif isinstance(data,(list,tuple)):
+        for idx,elem in enumerate(data):
+            if not isinstance(elem,(list,tuple,dict)):
+                #continue
+                newparent.appendRow((CubeItem(None),CubeItem(str(elem)),))
+            elif isinstance(elem,dict) and elem.get('name'):
+                clave = elem.get('name')
+                datos = elem
+                #datos['pos'] = idx
+                recTreeLoader(newparent,clave,datos,tipo)
+            else:                
+                clave = str(idx)
+                datos = elem
+                recTreeLoader(newparent,clave,datos,tipo)
+    #else:
+        #newparent.appendRow(CubeItem(str(data)))
+        
+def recTreeLoaderAtomic(parent,key,data,tipo=None):
+    """
+    version con los valores de elementos atomicos son nodos en el arbol
+    """
+    #parent.appendRow((QStandardItem(str(key)),QStandardItem(str(data)),))
+    if not tipo:
+        tipo=str(key)
+    parent.appendRow((CubeItem(str(key)),CubeItem(tipo),))
     newparent = lastChild(parent)
     if isinstance(data,dict):
         for elem in data:
@@ -260,18 +375,75 @@ def recTreeLoader(parent,key,data):
         for idx,elem in enumerate(data):
             if not isinstance(elem,(list,tuple,dict)):
                 clave = elem
-                datos = idx
+                newparent.appendRow((CubeItem(str(clave)),))
             elif isinstance(elem,dict) and elem.get('name'):
                 clave = elem.get('name')
                 datos = elem
-                datos['pos'] = idx
+                #datos['pos'] = idx
+                recTreeLoader(newparent,clave,datos,tipo)
             else:                
                 clave = str(idx)
                 datos = elem
-            recTreeLoader(newparent,clave,datos)
-    #else:
-        #newparent.appendRow(QStandardItem(str(data)))
+                recTreeLoader(newparent,clave,datos,tipo)
+    else:
+        newparent.appendRow(CubeItem(str(data)))
 
+def traverseTree(key,mode=_DEPTH):
+    if key is not None:
+        yield key
+        queue = childItems(key)
+        
+    while queue:
+        yield queue[0]
+        expansion = childItems(queue[0])
+        if not expansion:
+            expansion = []
+            
+        if mode == _DEPTH:
+            queue = expansion + queue[1:]  # depth-first
+        elif mode == _BREADTH:
+            queue = queue[1:] + expansion  # width-first
+    
+def childItems(treeItem):
+    if not treeItem:
+        return None
+    datos = []
+    if isinstance(treeItem,CubeItem):
+        datos = treeItem.listChildren()
+    else:
+        for ind in range(treeItem.rowCount()):
+            datos.append(treeItem.child(ind))
+    return datos
+ 
+def rowData(treeItem):
+    datos = []
+    if not treeItem:
+        return None
+    
+    if isinstance(treeItem,CubeItem):
+        datos = treeItem.getRow()
+    else:
+        indice = treeItem.index()
+        datos = []
+        k=0
+        while True:
+            columna = indice.sibling(indice.row(),k)
+            if columna.isValid():
+                datos.append(columna.data())
+                k += 1
+            else:
+                break
+    return datos
+
+
+def navigateTree(parent):
+    for node in traverseTree(parent):
+        if isinstance(node,CubeItem):
+            print(node,node.getColumn(1),'<-',node.typeHierarchy())
+        else:
+            print(node)
+
+    
 class CubeBrowserWin(QMainWindow):
     def __init__(self,confName,schema,table,pdataDict=None):
         super(CubeBrowserWin, self).__init__()
@@ -294,9 +466,6 @@ class CubeBrowserWin(QMainWindow):
     def setupModel(self,confName,schema,table,pdataDict): 
         self.model = QStandardItemModel()
         self.hiddenRoot = self.model.invisibleRootItem()
-        #confName = 'MariaBD Local'
-        #schema = 'sakila'
-        #table = 'film'
         if type(pdataDict) is DataDict:
             dataDict = pdataDict
         else:
@@ -307,16 +476,12 @@ class CubeBrowserWin(QMainWindow):
         #
         parent = self.hiddenRoot
         for entrada in info:
-            recTreeLoader(parent,entrada,info[entrada])
-        #sqlContext= setLocalQuery(dataDict.conn[confName],info,1)
-        #sqls = sqlContext['sqls'] 
-        #cabeceras = [ fld for fld in sqlContext['fields']]
-        #self.model.setHorizontalHeaderLabels(cabeceras)
-        
-        #cursor = getCursor(dataDict.conn[confName],sqls)
-        #for row in cursor:
-            #modelRow = [ QStandardItem(str(fld)) for fld in row ]
-            #self.model.appendRow(modelRow)
+            if entrada == 'default':
+                tipo = 'default_start'
+            else:
+                tipo = 'base'
+            recTreeLoader(parent,entrada,info[entrada],tipo)
+        navigateTree(self.hiddenRoot)
             
     def setupView(self):
         self.view = QTreeView(self)
