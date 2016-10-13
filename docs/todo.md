@@ -44,6 +44,7 @@
     * Cada pestaña thread distinto
     * __DONE__ Limit en las queries neutral (1000 como defecto)
     * hide columnas
+    * En cubebrowse, edicion se chequea el tipo 2 veces
     
     
 * _WIP_ Code refactoring for clarity

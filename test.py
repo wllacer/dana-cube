@@ -143,37 +143,8 @@ if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
     import sys
     reload(sys)
-    sys.setdefaultencoding('utf-8')
-    url="mysql+mysqldb://demo:demo123@localhost/fiction"
-    print(dbUrlSplit(url))
-    url = "postgresql+psycopg2://werner:None@localhost/pagila"
-    print(dbUrlSplit(url))
-    # backward compatible
-    url="/home/werner/projects/dana-cube.git/ejemplo_dana.db"
-    print(dbUrlSplit(url))
-    url="mysql+mysqldb://demo:demo123@localhost/fiction/escocesa/omax"
-    print(dbUrlSplit(url))
-    url="mysql+mysqldb://localhost/fiction"
-    print(dbUrlSplit(url))
-    url='oracle://scott:tiger@127.0.0.1:1521/sidname'
-    print(dbUrlSplit(url))
-    url="mssql+pyodbc://scott:tiger@mydsn"
-    print(dbUrlSplit(url))
-    url='sqlite:///foo.db'
-    print(dbUrlSplit(url))
-    url='sqlite://'
-    print(dbUrlSplit(url))
-    url='sqlite:////absolute/path/to/foo.db'
-    print(dbUrlSplit(url))
-    url='sqlite:///C:\\path\\to\\foo.db'
-    print(dbUrlSplit(url))
-    url=r'sqlite:///C:\path\to\foo.db'
-    print(dbUrlSplit(url))
-    #print(genTrimestreCode('campo','sqlite'))
-    #print(genTrimestreCode('campo','mysql'))
-    #print(genTrimestreCode('campo','pg'))
-    #exit()
-    #app = QApplication(sys.argv)
+    sys.setdefaultencoding('utf-8')    
+    app = QApplication(sys.argv)
     #window = TableBrowserWin('MariaBD Local','sakila','film',pdataDict=None)
     #dataDict=DataDict()
     #window = TableBrowserWin('MariaBD Local','sakila','film',pdataDict=dataDict)
@@ -182,7 +153,7 @@ if __name__ == '__main__':
     #sys.exit(app.exec_())
 
     #dict=DataDict('JeNeQuitePas')
-    #dataDict=DataDict()
+    dataDict=DataDict()
     #dataDict=DataDict(conn='MariaBD Local',schema='sakila')
     #dataDict=DataDict(conn='Pagila',schema='public')
     #for entry in traverse(dataDict.hiddenRoot):
@@ -192,11 +163,12 @@ if __name__ == '__main__':
     #browse(dataDict.hiddenRoot)
     #browseTables(dataDict.hiddenRoot)
     #browse0(dataDict.hiddenRoot)
-    #info = getTable(dataDict,'MariaBD Local','sakila','customer')            
+    #info = getTable(dataDict,'MariaBD Local','sakila','rental')            
     #info = getTable(dataDict,'MariaBD Local','sakila','film')            
-    #info2cube(dataDict,'MariaBD Local','sakila','rental')            
-    #info2cube(dataDict,'Pagila','public','rental')            
+    #cubo = info2cube(dataDict,'MariaBD Local','sakila','rental')            
+    info2cube(dataDict,'Pagila','public','rental')            
     #pprint(info)
+    #pprint(cubo)
     #cursor = localQuery(dataDict.conn['MariaBD Local'],info,1)
     #modelo = QStandardItemModel()
     #for row in cursor:
@@ -208,3 +180,22 @@ if __name__ == '__main__':
         ##datos = [ itm.data(Qt.DisplayRole) for itm in deRow ]
         #print(datos)
     ##getTable(dataDict,'Elecciones 2105','','partidos')            
+"""
+SELECT  geo_rel.padre, partido, sum(votes_presential)  
+FROM votos_locales  
+     JOIN geo_rel ON geo_rel.hijo = votos_locales.municipio AND geo_rel.tipo_padre = 'P'  
+     GROUP BY geo_rel.padre, partido  
+     
+"related via":[{
+    "table": "geo_rel",
+    "clause": [
+        {
+            "rel_elem":"hijo",
+            "base_elem":"votos_locales.municipio"
+        }
+        ],
+    "filter": "geo_rel.tipo_padre = 'P'"
+                        }
+                        ],
+
+"""

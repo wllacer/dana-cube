@@ -141,7 +141,7 @@ def getContextMenu(obj,action,exec_object=None):
                 niters = 1
             elif ind == 4:
                 #TODO consulta FK recursivas
-                niters = 1 #de momento NO
+                niters = 3 #de momento NO
             
             conn,schema,table=obj.getFullDesc().split('.')
             exec_object.databrowse(conn,schema,table,iters=niters)

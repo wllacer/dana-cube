@@ -26,7 +26,7 @@ from datalayer.query_constructor import *
                 
 
 
-def getTable(dd,confName,schemaName,tableName):
+def getTable(dd,confName,schemaName,tableName,maxlevel=1):
     con = dd.getConnByName(confName)
     if con is None:
         print('Conexion {} no definida'.format(confName))
@@ -40,8 +40,9 @@ def getTable(dd,confName,schemaName,tableName):
         print('Tabla {} no definida'.format(tableName))
         return
     print(tab.getFullDesc())
-    return tab.getFullInfo()
-
+    #return tab.getFullInfo()
+    #pprint(tab.getBackRefInfo())
+    return tab.getFullInfoRecursive(maxlevel)
 
 def name_collisions(namespace):
     for key in namespace.keys():

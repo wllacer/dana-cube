@@ -870,6 +870,7 @@ class Vista:
             cab_col[idx+1]= texto if not sparse else desc[-1]
         return cab_col
 
+
 def experimental():
     from util.jsonmgr import load_cubo
     def presenta(vista):

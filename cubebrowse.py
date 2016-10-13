@@ -163,6 +163,7 @@ DYNAMIC_COMBO_ITEMS = set([
      u'desc',       #             field of FK table (values)
      u'elem',      #              field of table, or derived value 
      u'elemento',  # FIELD of cube
+     u'fields',
      u'grouped by',#              field of FK table or derived value ??
      u'rel_elem',  #              field of FK table
      u'row',       # uno de los cubos del fichero
@@ -311,6 +312,8 @@ class CubeItem(QStandardItem):
         return self.__class__.__name__ 
 
     def type(self):
+        if not self.getColumnData(2) :
+            return self.parent().type()
         return self.getColumnData(2)
     
     def extendedType(self):
@@ -362,9 +365,10 @@ def info2cube(dataDict,confName,schema,table):
     #pprint(info)
     
     #cubo = load_cubo()
-    #cubo[table]=dict() # si hubiera algo ... requiescat in pace
-    #entrada = cubo[table]
-    entrada = dict()
+    cubo = dict()
+    cubo[table]=dict() # si hubiera algo ... requiescat in pace
+    entrada = cubo[table]
+    #entrada = dict()
     entrada['base filter']=""
     entrada['table'] = '{}.{}'.format(schema,table) if schema != "" else table
     
@@ -414,8 +418,9 @@ def info2cube(dataDict,confName,schema,table):
             if fld[1] == 'texto':
                 desc_fld.append(fld[0])
         if len(desc_fld) == 0:
-            print('No proceso por falta de texto',fk)
-            continue
+            print('No proceso correctamente por falta de texto',fk)
+            desc_fld = fk['ParentField']
+#            continue
             
         entrada['guides'].append({'name':fk['Name'],
                                     'class':'o',
@@ -428,7 +433,7 @@ def info2cube(dataDict,confName,schema,table):
                                         'elem':fk['Field']},]
                                     })  #no es completo
     
-    return entrada
+    return cubo
 
 
 def recTreeLoader(parent,key,data,tipo=None):
@@ -760,6 +765,31 @@ def connMatch(dataDict,pUrl):
         return None
     
 
+def editTableElem(exec_object,obj,valor,refTable=None):
+    #TODO determinar que es lo que necesito hacer cuando no esta disponible
+    #TODO  Unificar con la de abajo
+    #TODO base elem probablemente trasciende esta definicion
+    #TODO calcular dos veces FQ ... es un exceso. simplificar
+    FQtablaArray,connURL = getCubeTarget(obj)
+    if refTable:
+        FQtablaArray = FQName2array(refTable.getColumnData(1))
+    #print(FQtablaArray,connURL)
+    actConn = connMatch(exec_object.dataDict,connURL)
+    if actConn:
+        #FIXME es un chapu brutal
+        if actConn.data().engine.driver == 'pysqlite':
+            tableItem = actConn.findElement('main',FQtablaArray[2])
+        else:
+            tableItem = actConn.findElement(FQtablaArray[1],FQtablaArray[2])
+        if tableItem:
+            fieldIdx = childByName(tableItem,'FIELDS')
+            array = getDataList(fieldIdx,0)
+            editaCombo(obj,array,valor)
+        else:
+            print(connURL,'ESTA DISPONIBLE y el fichero NOOOOOR')
+    else:
+        print(connURL,'NO ESTA A MANO')
+
 def setContextMenu(obj,menu):
     tipo = obj.type()
     jerarquia = obj.typeHierarchy()
@@ -769,7 +799,9 @@ def setContextMenu(obj,menu):
     obj.menuActions.append(menu.addAction("Edit ..."))
     if tipo not in   ( FREE_FORM_ITEMS | DYNAMIC_COMBO_ITEMS ) and tipo not in STATIC_COMBO_ITEMS  :
         obj.menuActions[-1].setEnabled(False)
-
+    if tipo in ('fields','case_sql') and obj.text() == tipo and obj.hasChildren():
+        obj.menuActions[-1].setEnabled(False)
+        
     obj.menuActions.append(menu.addAction("Delete"))
     obj.menuActions.append(menu.addAction("Copy ..."))
     obj.menuActions.append(menu.addAction("Rename"))
@@ -794,6 +826,18 @@ def getContextMenu(obj,action,exec_object=None):
     modelo.beginResetModel()
     if ind == 0:
         print('Add by',obj)
+        if tipo in ('fields','elem','code','desc','base_elem','grouped_by','case_sql','values'):
+            if not obj.text():
+                #ya es un array; solo hay que añadir elementos
+                pass
+            elif not obj.getColumnData(1):
+                #hablamos del padre. Solo hay que añadir un hijo
+                pass
+            else: # <code> : <valor>
+                #creo un elemento array hijo copiado del actual
+                #borro el contenido del original
+                #creo un nuevo registro
+                pass
         pass
     elif ind == 1 :
         valor = obj.getColumnData(1)
@@ -815,8 +859,6 @@ def getContextMenu(obj,action,exec_object=None):
                 if pai.type() == 'vista':
                     cubeItem = pai.getBrotherByName('cubo')
                     print (pai.text(),cubeItem.text(),cubeItem.getColumnData(1))
-                    #listaCubos = childItems(exec_object.hiddenRoot)
-                    #cuboidx = listaCubos.index(cubeItem.getColumnData(1))
                     cubo = childByName(exec_object.hiddenRoot,cubeItem.getColumnData(1))
                     guidemaster = childByName(cubo,'guides')
                     nombres = getItemList(guidemaster,'guides')
@@ -828,47 +870,58 @@ def getContextMenu(obj,action,exec_object=None):
                 if pai.type() == 'vista':
                     cubeItem = pai.getBrotherByName('cubo')
                     print (pai.text(),cubeItem.text(),cubeItem.getColumnData(1))
-                    #listaCubos = childItems(exec_object.hiddenRoot)
-                    #cuboidx = listaCubos.index(cubeItem.getColumnData(1))
                     cubo = childByName(exec_object.hiddenRoot,cubeItem.getColumnData(1))
                     guidemaster = childByName(cubo,'fields')
                     array = getDataList(guidemaster,1) 
                     editaCombo(obj,array,valor)
-            elif tipo in ('elem'):
-                #TODO determinar que es lo que necesito hacer cuando no esta disponible
+            elif tipo in ('table',):
+                #TODO modificar esto lo destroza todo en teoría.
+                #Acepto cualquier tabla en la conexion actual, no necesariamente el esquema
                 FQtablaArray,connURL = getCubeTarget(obj)
-                print(FQtablaArray,connURL)
                 actConn = connMatch(exec_object.dataDict,connURL)
-                if actConn:
-                    #FIXME es un chapu brutal
-                    if actConn.data().engine.driver == 'pysqlite':
-                        tableItem = actConn.findElement('main',FQtablaArray[2])
-                    else:
-                        tableItem = actConn.findElement(FQtablaArray[1],FQtablaArray[2])
-                    if tableItem:
-                        fieldIdx = childByName(tableItem,'FIELDS')
-                        array = getDataList(fieldIdx,0)
-                        editaCombo(obj,array,valor)
-                    else:
-                        print(connURL,'ESTA DISPONIBLE y el fichero NOOOOOR')
+                if actConn.data().engine.driver == 'pysqlite':
+                    templateTxt = '{1}'
                 else:
-                   print(connURL,'NO ESTA A MANO')
-                #TODO el else deberia dar un error y no ignorarse
-                pass
+                    templateTxt = '{0}.{1}'
+                if actConn:
+                    array = []
+                    for sch in childItems(actConn):
+                        schema = sch.text()
+                        for tab in childItems(sch):
+                            array.append(templateTxt.format(schema,tab.text()))
+                            
+                    editaCombo(obj,array,valor)        
+                else:
+                    print(connURL,'NO ESTA A MANO')
+                    
+            elif tipo in ('elem','base_elem','fields'):
+                editTableElem(exec_object,obj,valor,None)
+
+            elif tipo in ('code','desc','grouped_by'):
+                refTable = obj.getBrotherByName('table')
+                editTableElem(exec_object,obj,valor,refTable)
+
+            elif tipo in ('rel_elem'):
+                pai = obj.parent()
+                while pai.type() and pai.type() != 'related via':
+                    pai = pai.parent()
+                refTable  = childByName(pai,'table')
+                editTableElem(exec_object,obj,valor,refTable)
+
             else:
                 print('Edit',obj,tipo,valor)
             """
-     u'base_elem', #             field of  Reference  table
-     u'code',      #             field of FK table (key)
+     u'base_elem', #<>             field of  Reference  table
+     u'code',      #<>             field of FK table (key)
      u'col',       #<> number (a guide of base)
      u'cubo',      #<>uno de los cubos del fichero
-     u'desc',       #             field of FK table (values)
-     u'elem',      #              field of table, or derived value 
+     u'desc',      #<>             field of FK table (values)
+     u'elem',      #<>              field of table, or derived value 
      u'elemento',  #<> FIELD of cube
-     u'grouped by',#              field of FK table or derived value ??
-     u'rel_elem',  #              field of FK table
+     u'grouped by',#<>              field of FK table or derived value ??
+     u'rel_elem',  #<>              field of FK table
      u'row',       #<> uno de los cubos del fichero
-     u'table',
+     u'table'      #<>,
         a) Lista de cubos activos
         b) Lista de guias en un cubo
         c) Lista de tablas en una B.D.
@@ -926,10 +979,12 @@ class CubeBrowserWin(QMainWindow):
         if type(pdataDict) is DataDict:
             self.dataDict = pself.dataDict
         else:
-            self.dataDict=DataDict() #conn=confName,schema=schema)
-        info = info2cube(self.dataDict,confName,schema,table)
+            self.dataDict=DataDict(conn=confName,schema=schema)
+        infox = info2cube(self.dataDict,confName,schema,table)
         #TODO convertir eso en una variable
-        info = load_cubo('cuboSqlite.json')
+        info = load_cubo('cubo.json')
+        for nuevo in infox:
+            info[nuevo] = infox[nuevo]
         #pprint(info)
         #
         parent = self.hiddenRoot
@@ -955,7 +1010,7 @@ class CubeBrowserWin(QMainWindow):
         self.view.expandAll() # es necesario para el resize
         for m in range(self.model.columnCount()):
             self.view.resizeColumnToContents(m)
-        self.view.collapseAll()
+        #self.view.collapseAll()
         #self.view.verticalHeader().hide()
         #self.view.setSortingEnabled(True)
         self.view.setAlternatingRowColors(True)
@@ -978,9 +1033,12 @@ class CubeBrowserWin(QMainWindow):
         return
     
     def saveConfigFile(self):
+        baseCubo=load_cubo('cubo.json')
         newcubeStruct = tree2dict(self.hiddenRoot)
+        for entrada in newcubeStruct:
+            baseCubo[entrada] = newcubeStruct[entrada]
         #TODO salvar la version anterior
-        dump_structure(newcubeStruct,'cuboSqlite.json')
+        dump_structure(baseCubo,'cubo.json')
     
     def closeEvent(self, event):
         self.close()

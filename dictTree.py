@@ -455,48 +455,17 @@ class TableTreeItem(BaseTreeItem):
                 break
         return lista
        
-    def getFullInfo(self):
+    def getBackRefInfo(self):
         """
            De momento no incluyo FKr -- no tengo claro necesitarla
+           Convertir esta rutina solo en backref
         """
-        TableInfo = dict()
-        esquema = self.getSchema()
-        TableInfo['schemaName'] = nomEsquema = esquema.text()
-        TableInfo['tableName'] = self.text()
-        TableInfo['Fields']= self.getFields()
-        FKs = self.getFK(False)
-        if len(FKs) > 0:
-            TableInfo['FK']= []
-            for idx,asociacion in enumerate(FKs):
-                RefInfo = dict()
-                RefInfo['Name'] = asociacion[0]
-                RefInfo['ParentTable']=asociacion[1]
-                RefInfo['Field'] = asociacion[2] # campo en la tabla que nos ocupa
-                RefInfo['ParentField'] = asociacion[3]
-                esqReferred = esquema
-                qualName = asociacion[1].split('.')
-                if len(qualName) == 1 :
-                    padre = self.getBrotherByName(qualName[0])
-                elif qualName[0] == nomEsquema:
-                    padre = self.getBrotherByName(qualName[1])
-                else:
-                    esqReferred = esquema.getBrotherByName(qualName[0])
-                    if esqReferred is not None:
-                        padre = esqReferred.getChildByName(qualName[1])
-                    else:
-                        print('Error horroroso en ',self.text(),asociacion)
-                        exit()
-                camposPadre = padre.getFields()
-                for i in range(0,len(camposPadre)):
-                    if camposPadre[i][0] == asociacion[3]:
-                        del camposPadre[i]
-                        break
-                RefInfo['CamposReferencia'] = camposPadre
-                TableInfo['FK'].append(RefInfo)   
-    
+        esquema = self.getSchema() 
+        nomEsquema = esquema.text()
+        InfoFKR = []
         FKRs = self.getFKref(False)
-        if len(FKRs) > 0:
-            TableInfo['FKR']= []
+        if FKRs and len(FKRs) > 0:
+            #TableInfo['FKR']= []
             for idx,asociacion in enumerate(FKRs):
                 RefInfo = dict()
                 RefInfo['ChildTable']=asociacion[1]
@@ -521,11 +490,55 @@ class TableTreeItem(BaseTreeItem):
                         del camposPadre[i]
                         break
                 RefInfo['CamposReferencia'] = camposPadre
-                TableInfo['FKR'].append(RefInfo)
+                InfoFKR.append(RefInfo)
+        
+        return InfoFKR
 
-        return TableInfo
+    def _getFkInfo(self,asociacion,esquema,nomEsquema,maxlevel,iter=0):
+        kiter = iter + 1
+        RefInfo = dict()
+        RefInfo['Name'] = asociacion[0]
+        RefInfo['ParentTable']=asociacion[1]
+        RefInfo['Field'] = asociacion[2] # campo en la tabla que nos ocupa
+        RefInfo['ParentField'] = asociacion[3]
+        esqReferred = esquema
+        qualName = asociacion[1].split('.')
+        if len(qualName) == 1 :
+            padre = self.getBrotherByName(qualName[0])
+        elif qualName[0] == nomEsquema:
+            padre = self.getBrotherByName(qualName[1])
+        else:
+            esqReferred = esquema.getBrotherByName(qualName[0])
+            if esqReferred is not None:
+                padre = esqReferred.getChildByName(qualName[1])
+            else:
+                print('Error horroroso en ',self.text(),asociacion)
+                exit()
                 
-    def getFullInfoRecursive(self,level=5):
+        camposPadre = padre.getFields()
+        for i in range(0,len(camposPadre)):
+            if camposPadre[i][0] == asociacion[3]:
+                del camposPadre[i]
+                break
+        RefInfo['CamposReferencia'] = camposPadre
+        
+        if maxlevel > kiter :
+            FKs = padre.getFK(False)
+        else:
+            FKs = None
+        if  FKs and len(FKs) > 0:
+            RefInfo['FK']= []
+            for idx,asoc_2 in enumerate(FKs):
+                print('Hay tela',asoc_2[0])
+                refInfo = padre._getFkInfo(asoc_2,esquema,nomEsquema,maxlevel,kiter)
+                RefInfo['FK'].append(refInfo)   
+
+        return RefInfo
+    
+    def getFullInfo(self):
+        return self.getFullInfoRecursive(maxlevel=1)
+    
+    def getFullInfoRecursive(self,maxlevel=3):
         """
            De momento no incluyo FKr -- no tengo claro necesitarla
         """
@@ -534,39 +547,16 @@ class TableTreeItem(BaseTreeItem):
         TableInfo['schemaName'] = nomEsquema = esquema.text()
         TableInfo['tableName'] = self.text()
         TableInfo['Fields']= self.getFields()
-        if level > 0:
+        if maxlevel > 0:
             FKs = self.getFK(False)
         else:
             FKs = None
             
-        if len(FKs) > 0:
+        if FKs and len(FKs) > 0:
             TableInfo['FK']= []
             for idx,asociacion in enumerate(FKs):
-                RefInfo = dict()
-                RefInfo['Name'] = asociacion[0]
-                RefInfo['ParentTable']=asociacion[1]
-                RefInfo['Field'] = asociacion[2] # campo en la tabla que nos ocupa
-                RefInfo['ParentField'] = asociacion[3]
-                esqReferred = esquema
-                qualName = asociacion[1].split('.')
-                if len(qualName) == 1 :
-                    padre = self.getBrotherByName(qualName[0])
-                elif qualName[0] == nomEsquema:
-                    padre = self.getBrotherByName(qualName[1])
-                else:
-                    esqReferred = esquema.getBrotherByName(qualName[0])
-                    if esqReferred is not None:
-                        padre = esqReferred.getChildByName(qualName[1])
-                    else:
-                        print('Error horroroso en ',self.text(),asociacion)
-                        exit()
-                camposPadre = padre.getFields()
-                for i in range(0,len(camposPadre)):
-                    if camposPadre[i][0] == asociacion[3]:
-                        del camposPadre[i]
-                        break
-                RefInfo['CamposReferencia'] = camposPadre
-                TableInfo['FK'].append(RefInfo)   
+                refInfo = self._getFkInfo(asociacion,esquema,nomEsquema,maxlevel)
+                TableInfo['FK'].append(refInfo)   
     
         return TableInfo
 
