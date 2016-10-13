@@ -7,7 +7,7 @@
                          PG    to_char(var,fmt)| extract(fmt from var)
                          Ora   to_char
                          SyS   datepart (!!!)
-* Nombre de driver (buscar #DRIVERNAME)
+* Nombre de driver (buscar #DRIVERNAME) y (acceslayer.driver2alch)
 
 ## short term TODO list (2016)
 
@@ -69,6 +69,8 @@
 * Cabecera de danacube con mas información
 * Arbol cerrado siempre para fechas, por favor
 * BUG (o no) numeros como cadenas en generador de cubo
+* Normalizar el uso de driver o dialecto 
+* Reducir en cube browse la consulta del contexto (conexion,tabla, ...) a lo minimo posible (probablemente al select item)
 
 * Now In Progres
   * __DONE__ Row functions. _WIP_ lack some further testing

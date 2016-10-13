@@ -176,6 +176,24 @@ class BaseTreeItem(QStandardItem):
             item = item.parent()
         return item
 
+    def getColumnData(self,column,role=None):
+        indice = self.index() #self.model().indexFromItem(field)
+        colind = indice.sibling(indice.row(),column)
+        if colind.isValid():
+            return colind.data(role) if role else colind.data()
+        else:
+            return None
+    
+    def setColumnData(self,column,data,role=None):
+        indice = self.index() #self.model().indexFromItem(field)
+        colind = indice.sibling(indice.row(),column)
+        if colind.isValid():
+            colitem = self.model().itemFromIndex(colind)
+            if role:
+                colitem.setData(data,role)
+            else:
+                colitem.setData(data)
+
     def getConnection(self):
         item = self
         while item is not None and type(item) is not ConnectionTreeItem:
@@ -213,36 +231,46 @@ class ConnectionTreeItem(BaseTreeItem):
         #else:
             #self.setData(None)
 
-    def findElement(self,schema,table):
-        ischema = None
-        for item in self.model().findItems(schema,Qt.MatchExactly|Qt.MatchRecursive,0):
-            if type(item) != SchemaTreeItem:
-                continue
-            if item.parent() != self :
-                continue
-            ischema = item
-            break
+    def findElement(self,schemaName,tableName):
+        sch = self.getChildrenByName(schemaName)
+        if sch is None:
+            print('Esquema >{}< no definido'.format(schemaName))
+            return
+        tab = sch.getChildrenByName(tableName)
+        if tab is None:
+            print('Tabla {} no definida'.format(tableName))
+            return
+        return tab
+
+        #ischema = None
+        #for item in self.model().findItems(schema,Qt.MatchExactly|Qt.MatchRecursive,0):
+            #if type(item) != SchemaTreeItem:
+                #continue
+            #if item.parent() != self :
+                #continue
+            #ischema = item
+            #break
         
-        if ischema is None:
-            print ('Esquema {} no encontrado'.format(schema))
-            return None
+        #if ischema is None:
+            #print ('Esquema {} no encontrado'.format(schema))
+            #return None
         
-        kitem = None
-        for item in self.model().findItems(table,Qt.MatchExactly|Qt.MatchRecursive,0):
-            if type(item) != TableTreeItem :
-                continue
-            if item.parent() != ischema:
-                continue
-            if item.parent().parent() != self :
-                continue
-            kitem = item
-            break
+        #kitem = None
+        #for item in self.model().findItems(table,Qt.MatchExactly|Qt.MatchRecursive,0):
+            #if type(item) != TableTreeItem :
+                #continue
+            #if item.parent() != ischema:
+                #continue
+            #if item.parent().parent() != self :
+                #continue
+            #kitem = item
+            #break
         
-        if kitem is None:
-            print ('Tabla {}.{} no encontrado'.format(schema,table))
-            return None
+        #if kitem is None:
+            #print ('Tabla {}.{} no encontrado'.format(schema,table))
+            #return None
         
-        return kitem
+        #return kitem
     
     def FK_hierarchy(self,inspector,schemata):
         for schema in schemata:

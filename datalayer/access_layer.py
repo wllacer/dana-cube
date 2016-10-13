@@ -117,14 +117,13 @@ def getCursor(db, sql_string,funcion=None,**kwargs):
         print('Not implemented')
         exit(-1)
     
-def dbConnectAlch(constring):
-
-    driver = driver2Alch(constring['driver'])
-    if 'debug' in constring:
-        debug=constring['debug']
+def dbDict2Url(conDict):
+    driver = driver2Alch(conDict['driver'])
+    if 'debug' in conDict:
+        debug=conDict['debug']
     else:
         debug=False
-    dbname = constring['dbname']
+    dbname = conDict['dbname']
     #GENERADOR
     pos = dbname.find('://')
     if pos > 0:
@@ -133,26 +132,57 @@ def dbConnectAlch(constring):
         print('Ya viene definida la base de datos')
         context = dbname
     else:
-        if constring['driver'] not in ('QSQLITE','sqlite'):
-            host = constring['dbhost']
-            user = constring['dbuser']
-            password = constring['dbpass']
+        if conDict['driver'] not in ('QSQLITE','sqlite'):
+            host = conDict['dbhost']
+            user = conDict['dbuser']
+            password = conDict['dbpass']
             context = '{}://{}:{}@{}/{}'.format(driver,user,password,host,dbname)
         else:
             context = '{}:///{}'.format(driver,dbname)
-    #TODO debería controlar los errores de conexion
+    return context
+
+def dbConnectAlch(conDict):
+
+    context = dbDict2Url(conDict)
+    if 'debug' in conDict:
+        debug=conDict['debug']
+    else:
+        debug=False
+
+    #driver = driver2Alch(conDict['driver'])
+    #if 'debug' in conDict:
+        #debug=conDict['debug']
+    #else:
+        #debug=False
+    #dbname = conDict['dbname']
+    ##GENERADOR
+    #pos = dbname.find('://')
+    #if pos > 0:
+    ##if driver == dbname[0:len(driver)]:
+        ##driver = dbname[0:pos]    
+        #print('Ya viene definida la base de datos')
+        #context = dbname
+    #else:
+        #if conDict['driver'] not in ('QSQLITE','sqlite'):
+            #host = conDict['dbhost']
+            #user = conDict['dbuser']
+            #password = conDict['dbpass']
+            #context = '{}://{}:{}@{}/{}'.format(driver,user,password,host,dbname)
+        #else:
+            #context = '{}:///{}'.format(driver,dbname)
+    ##TODO debería controlar los errores de conexion
     engine = create_engine(context,echo=debug)
     return engine.connect()
 
-def dbConnectQt(constring):
-    db = QSqlDatabase.addDatabase(driver2Qt(constring['driver']));
+def dbConnectQt(conDict):
+    db = QSqlDatabase.addDatabase(driver2Qt(conDict['driver']));
     
-    db.setDatabaseName(constring['dbname'])
+    db.setDatabaseName(conDict['dbname'])
     
-    if constring['driver'] not in ('QSQLITE','sqlite'):
-        db.setHostName(constring['dbhost'])
-        db.setUserName(constring['dbuser'])
-        db.setPassword(constring['dbpass'])
+    if conDict['driver'] not in ('QSQLITE','sqlite'):
+        db.setHostName(conDict['dbhost'])
+        db.setUserName(conDict['dbuser'])
+        db.setPassword(conDict['dbpass'])
     
     ok = db.open()
     # True if connected

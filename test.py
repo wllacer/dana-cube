@@ -135,84 +135,8 @@ def browse0(base):
         conn = base.child(i)
         print(conn.text())
 
-from datemgr import genTrimestreCode
-def info2cube(dataDict,confName,schema,table):
-    """
-       de monento solo sustituyo
-    """
-    #TODO strftime no vale para todos los gestores de base de datos
-    pprint(dataDict)
-    info = getTable(dataDict,confName,schema,table)                
-    pprint(info)
-    
-    cubo = load_cubo()
-    cubo[table]=dict() # si hubiera algo ... requiescat in pace
-    entrada = cubo[table]
-    entrada['base filter']=""
-    entrada['table'] = '{}.{}'.format(schema,table) if schema != "" else table
-    
-    entrada['connect']=dict()
-    conn = dataDict.getConnByName(confName).data().engine
-    
-    print('Conexion ',conn.url,conn.driver)
-    entrada['connect']["dbuser"] = None 
-    entrada['connect']["dbhost"] =  None
-    entrada['connect']["driver"] =  conn.driver
-    entrada['connect']["dbname"] =  str(conn.url) #"/home/werner/projects/dana-cube.git/ejemplo_dana.db"
-    entrada['connect']["dbpass"] =  None
-    
-    entrada['guides']=[]
-    entrada['fields']=[]
-    for fld in info['Fields']:
-        if fld[1] in ('numerico'):
-            entrada['fields'].append(fld[0])
-        elif fld[1] in ('fecha'):
-            entrada['guides'].append({'name':fld[0],
-                                      'class':'d',
-                                      'type':'Ymd',
-                                      'prod':[{'fmt':'date','elem':fld[0]},]
-                                      })  #no es completo
-            #TODO cambiar strftime por la funcion correspondiente en otro gestor 
-            entrada['guides'].append( genTrimestreCode(fld[0],conn.driver))
+from cubebrowse import *
 
-        else:
-            entrada['guides'].append({'name':fld[0],
-                                      'class':'o',
-                                      'prod':[{'elem':fld[0],},]})  #no es completo
-        """
-                "prod": [
-                    {   "source": {
-                            "filter": "code in (select distinct partido from votos_provincia where votes_percent >= 3)", 
-                            "table": "partidos", 
-                            "code": "code", 
-                            "desc": "acronym"
-                        }, 
-
-                        "elem": "partido"
-                    }
-        """
-    for fk in info.get('FK',list()):
-        desc_fld = []
-        for fld in fk['CamposReferencia']:
-            if fld[1] == 'texto':
-                desc_fld.append(fld[0])
-        if len(desc_fld) == 0:
-            print('No proceso por falta de texto',fk)
-            continue
-            
-        entrada['guides'].append({'name':fk['Name'],
-                                    'class':'o',
-                                    'prod':[{'source': {
-                                            "filter":"",
-                                            "table":fk['ParentTable'],
-                                            "code":fk['ParentField'],
-                                            "desc":desc_fld
-                                        },
-                                        'elem':fk['Field']},]
-                                    })  #no es completo
-    
-    #pprint(entrada)
-    dump_structure(cubo, fichero="cubo.json")
 
 
 if __name__ == '__main__':
@@ -220,11 +144,36 @@ if __name__ == '__main__':
     import sys
     reload(sys)
     sys.setdefaultencoding('utf-8')
+    url="mysql+mysqldb://demo:demo123@localhost/fiction"
+    print(dbUrlSplit(url))
+    url = "postgresql+psycopg2://werner:None@localhost/pagila"
+    print(dbUrlSplit(url))
+    # backward compatible
+    url="/home/werner/projects/dana-cube.git/ejemplo_dana.db"
+    print(dbUrlSplit(url))
+    url="mysql+mysqldb://demo:demo123@localhost/fiction/escocesa/omax"
+    print(dbUrlSplit(url))
+    url="mysql+mysqldb://localhost/fiction"
+    print(dbUrlSplit(url))
+    url='oracle://scott:tiger@127.0.0.1:1521/sidname'
+    print(dbUrlSplit(url))
+    url="mssql+pyodbc://scott:tiger@mydsn"
+    print(dbUrlSplit(url))
+    url='sqlite:///foo.db'
+    print(dbUrlSplit(url))
+    url='sqlite://'
+    print(dbUrlSplit(url))
+    url='sqlite:////absolute/path/to/foo.db'
+    print(dbUrlSplit(url))
+    url='sqlite:///C:\\path\\to\\foo.db'
+    print(dbUrlSplit(url))
+    url=r'sqlite:///C:\path\to\foo.db'
+    print(dbUrlSplit(url))
     #print(genTrimestreCode('campo','sqlite'))
     #print(genTrimestreCode('campo','mysql'))
     #print(genTrimestreCode('campo','pg'))
     #exit()
-    app = QApplication(sys.argv)
+    #app = QApplication(sys.argv)
     #window = TableBrowserWin('MariaBD Local','sakila','film',pdataDict=None)
     #dataDict=DataDict()
     #window = TableBrowserWin('MariaBD Local','sakila','film',pdataDict=dataDict)
@@ -235,7 +184,7 @@ if __name__ == '__main__':
     #dict=DataDict('JeNeQuitePas')
     #dataDict=DataDict()
     #dataDict=DataDict(conn='MariaBD Local',schema='sakila')
-    dataDict=DataDict(conn='Pagila',schema='public')
+    #dataDict=DataDict(conn='Pagila',schema='public')
     #for entry in traverse(dataDict.hiddenRoot):
         #tabs = '\t'*entry.depth()
         #if not entry.isAuxiliar():
@@ -246,7 +195,7 @@ if __name__ == '__main__':
     #info = getTable(dataDict,'MariaBD Local','sakila','customer')            
     #info = getTable(dataDict,'MariaBD Local','sakila','film')            
     #info2cube(dataDict,'MariaBD Local','sakila','rental')            
-    info2cube(dataDict,'Pagila','public','rental')            
+    #info2cube(dataDict,'Pagila','public','rental')            
     #pprint(info)
     #cursor = localQuery(dataDict.conn['MariaBD Local'],info,1)
     #modelo = QStandardItemModel()

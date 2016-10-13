@@ -36,8 +36,8 @@ def getTable(dd,confName,schemaName,tableName):
         print('Esquema {} no definido'.format(schemaName))
         return
     tab = sch.getChildrenByName(tableName)
-    if sch is None:
-        print('Tabla {} no definid'.format(tableName))
+    if tab is None:
+        print('Tabla {} no definida'.format(tableName))
         return
     print(tab.getFullDesc())
     return tab.getFullInfo()

@@ -24,7 +24,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QSplitter, QMe
 
 from datadict import *    
 from datalayer.query_constructor import *
-from datalayer.access_layer import DRIVERS, AGR_LIST
+from datalayer.access_layer import DRIVERS, AGR_LIST, dbDict2Url
 from tablebrowse import *
 from datemgr import genTrimestreCode
 from util.jsonmgr import *
@@ -625,15 +625,15 @@ def getDataList(rootElem,column,tipo = None):
 
 def FQName2array(fqname):
     dbmanager = '' #no deberia existir pero por si acaso
-    schema = ''
+    schema = ' '
     filename = ''
     splitdata = fqname.split('.')
     if len(splitdata) == 3:
         dbmanager,schema,filename = splitdata
     elif len(splitdata) == 2:
         schema,filename = splitdata
-    else:
-       filename = splitdata
+    elif len(splitdata) == 1:
+       filename = fqname
     return dbmanager,schema,filename
 
         
@@ -690,7 +690,75 @@ def getCubeTarget(obj):
         FQtablaArray = FQName2array(tablaItem.getColumnData(1))
         connItem = childByName(pai,'connect')
         conn_data = tree2dict(connItem)
-    return FQtablaArray,conn_data
+    return FQtablaArray,dbDict2Url(conn_data)
+
+def dbUrlSplit(url):
+    agay= url.split('://')
+    if len(agay) == 2:
+        fullinterface = agay[0]
+        resto  = agay[1]
+    elif len(agay) == 1:
+        fullinterface = None
+        resto = agay[0]
+
+    if fullinterface is not None:
+        agay = fullinterface.split('+')
+        dialect = agay[0]
+        if len(agay) == 2:
+            driver = agay[1]
+        else:
+            driver = None
+    else:
+        dialect = None
+        driver  = None
+            
+
+    agay = resto.split('@')
+    if len(agay) == 2:
+        login = agay[0]
+        reference  = agay[1]
+    elif len(agay) == 1:
+        login = None
+        reference = agay[0]
+    
+    if not reference:
+        host= None
+        dbref = None
+    elif reference[0] == '/':
+        host = None
+        dbref = reference
+    else:
+        agay = reference.split('/',1)
+        if len(agay) >2:
+            host = agay[0]
+            dbref = '/'.join(agay[1:])
+        elif len(agay) == 2:
+            host = agay[0]
+            dbref = agay[1]
+        else:
+            host= None
+            dbref = reference
+    #print('{:20}{:20} {:20} {:20} {}'.format(dialect,driver,login,host,dbref)
+    return dialect,driver,login,host,dbref
+
+def getOpenConnections(dataDict):
+    conns = childItems(dataDict.hiddenRoot)
+    for conn in conns:
+        print(conn.getConnection().data().engine.url)
+    return
+
+def connMatch(dataDict,pUrl):
+    conns = childItems(dataDict.hiddenRoot)
+    available = False
+    for conn in conns:
+        if str(conn.getConnection().data().engine.url) == pUrl:  #¿? el str
+            available = True
+            break
+    if available:
+        return conn  #ConnectionTreeObject
+    else:
+        return None
+    
 
 def setContextMenu(obj,menu):
     tipo = obj.type()
@@ -767,7 +835,24 @@ def getContextMenu(obj,action,exec_object=None):
                     array = getDataList(guidemaster,1) 
                     editaCombo(obj,array,valor)
             elif tipo in ('elem'):
-                FQtablaArray,conn_data = getCubeTarget(obj)
+                #TODO determinar que es lo que necesito hacer cuando no esta disponible
+                FQtablaArray,connURL = getCubeTarget(obj)
+                print(FQtablaArray,connURL)
+                actConn = connMatch(exec_object.dataDict,connURL)
+                if actConn:
+                    #FIXME es un chapu brutal
+                    if actConn.data().engine.driver == 'pysqlite':
+                        tableItem = actConn.findElement('main',FQtablaArray[2])
+                    else:
+                        tableItem = actConn.findElement(FQtablaArray[1],FQtablaArray[2])
+                    if tableItem:
+                        fieldIdx = childByName(tableItem,'FIELDS')
+                        array = getDataList(fieldIdx,0)
+                        editaCombo(obj,array,valor)
+                    else:
+                        print(connURL,'ESTA DISPONIBLE y el fichero NOOOOOR')
+                else:
+                   print(connURL,'NO ESTA A MANO')
                 #TODO el else deberia dar un error y no ignorarse
                 pass
             else:
@@ -839,13 +924,13 @@ class CubeBrowserWin(QMainWindow):
         self.model = QStandardItemModel()
         self.hiddenRoot = self.model.invisibleRootItem()
         if type(pdataDict) is DataDict:
-            dataDict = pdataDict
+            self.dataDict = pself.dataDict
         else:
-            dataDict=DataDict(conn=confName,schema=schema)
-        info = info2cube(dataDict,confName,schema,table)
+            self.dataDict=DataDict() #conn=confName,schema=schema)
+        info = info2cube(self.dataDict,confName,schema,table)
         #TODO convertir eso en una variable
         info = load_cubo('cuboSqlite.json')
-        pprint(info)
+        #pprint(info)
         #
         parent = self.hiddenRoot
         for entrada in info:
@@ -858,6 +943,7 @@ class CubeBrowserWin(QMainWindow):
             recTreeLoader(parent,entrada,info[entrada],tipo)
         #navigateTree(self.hiddenRoot)
         #pprint(tree2dict(self.hiddenRoot))
+        getOpenConnections(self.dataDict)
         
     def setupView(self):
         self.view = QTreeView(self)
