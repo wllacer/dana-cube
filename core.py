@@ -445,7 +445,7 @@ class Vista:
         
         # validaciones. Necesarias porque puede ser invocado desde fuera
         if row >= dim_max or col >= dim_max:
-            print( 'Limite dimensional excedido. Ignoramos')
+            print( 'Limite dimensional excedido. Ignoramos',row,dim_max,col,dim_max)
             return 
         elif  agregado is not None and agregado not in  self.cubo.lista_funciones:
             print('Funcion de agregacion >{}< no disponible'.format(agregado))

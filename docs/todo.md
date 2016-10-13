@@ -36,7 +36,7 @@
     * _BUG_ El cancel en (connection)->Edit provoca un refresco, pese a todo
     * __DONE__ (connection)->Connect. abenda exec_objct(updateModel). La reorganizacion no le ha ido bien
     * __DONE__ en campos sin tipò (sqlite) no ignorar como hasta ahora. Default type es TEXT
-    * Funcion cambiar nombre de la conexión 
+    * __DONE__ Funcion cambiar nombre de la conexión 
     * Caso de relaciones por mas de un campo. Desde definición a explotacion
     * Consulta recursiva de FKs
     * Consulta inversa por FK
@@ -68,6 +68,7 @@
 * BUG faltan como cabecera los trimestres sin datos
 * Cabecera de danacube con mas información
 * Arbol cerrado siempre para fechas, por favor
+* BUG (o no) numeros como cadenas en generador de cubo
 
 * Now In Progres
   * __DONE__ Row functions. _WIP_ lack some further testing
@@ -90,8 +91,8 @@
 
  
  
-* Definition generation by application
-  * __HOLD__ SQL pregeneration (only partially makes sense)
+* __WIP__Definition generation by application
+  * __WIP__ SQL pregeneration (only partially makes sense)
   
 * New use cases
   * __HOLD__  _WIP_ diferent types of guides  (on hold till definition settles

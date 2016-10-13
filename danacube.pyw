@@ -138,9 +138,12 @@ class MainWindow(QMainWindow):
         
     @waiting_effects
     def autoCarga(self,my_cubos):
+        #FIXME horror con los numeros
         base = my_cubos['default']
+        print(base)
         self.cubo=Cubo(my_cubos[base['cubo']])
-        self.vista = Vista(self.cubo, base['vista']['row'], base['vista']['col'],base['vista']['agregado'],base['vista']['elemento'])
+        #self.vista = Vista(self.cubo, base['vista']['row'], base['vista']['col'],base['vista']['agregado'],base['vista']['elemento'])
+        self.vista = Vista(self.cubo, int(base['vista']['row']), int(base['vista']['col']),base['vista']['agregado'],base['vista']['elemento'])
         self.vista.format = self.format
         self.defineModel()
         

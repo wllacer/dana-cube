@@ -1,166 +1,236 @@
 {
-    "rental": {
+    "default": {
+        "cubo": "experimento", 
+        "vista": {
+            "row": "3", 
+            "agregado": "avg", 
+            "col": "2", 
+            "elemento": "votes_presential"
+        }
+    }, 
+    "experimento": {
         "base filter": "", 
-        "table": "public.rental", 
+        "table": "votos_locales", 
         "connect": {
             "dbuser": null, 
             "dbhost": null, 
-            "driver": "psycopg2", 
-            "dbname": "postgresql+psycopg2://werner:None@localhost/pagila", 
+            "driver": "QSQLITE", 
+            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db", 
             "dbpass": null
         }, 
-        "fields": [
-            "rental_id", 
-            "inventory_id", 
-            "customer_id", 
-            "staff_id"
-        ], 
         "guides": [
             {
                 "prod": [
                     {
-                        "fmt": "date", 
-                        "elem": "rental_date"
-                    }
-                ], 
-                "type": "Ymd", 
-                "name": "rental_date", 
-                "class": "d"
-            }, 
-            {
-                "prod": [
-                    {
-                        "class": "o", 
-                        "elem": "TO_CHAR(rental_date,'YYYY')", 
-                        "name": "año"
-                    }, 
-                    {
-                        "case_sql": [
-                            "case", 
-                            "when TO_CHAR($$1,'MM') in ('01','02','03') then TO_CHAR($$1,'YYYY') || '\\:1' ", 
-                            "when TO_CHAR($$1,'MM') in ('04','05','06') then TO_CHAR($$1,'YYYY') || '\\:2' ", 
-                            "when TO_CHAR($$1,'MM') in ('07','08','09') then TO_CHAR($$1,'YYYY') || '\\:3' ", 
-                            "when TO_CHAR($$1,'MM') in ('10','11','12') then TO_CHAR($$1,'YYYY') || '\\:4' ", 
-                            "end as $$2"
-                        ], 
-                        "class": "c", 
-                        "elem": "rental_date", 
-                        "name": "trimestre"
-                    }
-                ], 
-                "name": "rental_date_trimestre", 
-                "class": "h"
-            }, 
-            {
-                "prod": [
-                    {
-                        "fmt": "date", 
-                        "elem": "return_date"
-                    }
-                ], 
-                "type": "Ymd", 
-                "name": "return_date", 
-                "class": "d"
-            }, 
-            {
-                "prod": [
-                    {
-                        "class": "o", 
-                        "elem": "TO_CHAR(return_date,'YYYY')", 
-                        "name": "año"
-                    }, 
-                    {
-                        "case_sql": [
-                            "case", 
-                            "when TO_CHAR($$1,'MM') in ('01','02','03') then TO_CHAR($$1,'YYYY') || '\\:1' ", 
-                            "when TO_CHAR($$1,'MM') in ('04','05','06') then TO_CHAR($$1,'YYYY') || '\\:2' ", 
-                            "when TO_CHAR($$1,'MM') in ('07','08','09') then TO_CHAR($$1,'YYYY') || '\\:3' ", 
-                            "when TO_CHAR($$1,'MM') in ('10','11','12') then TO_CHAR($$1,'YYYY') || '\\:4' ", 
-                            "end as $$2"
-                        ], 
-                        "class": "c", 
-                        "elem": "return_date", 
-                        "name": "trimestre"
-                    }
-                ], 
-                "name": "return_date_trimestre", 
-                "class": "h"
-            }, 
-            {
-                "prod": [
-                    {
-                        "fmt": "date", 
-                        "elem": "last_update"
-                    }
-                ], 
-                "type": "Ymd", 
-                "name": "last_update", 
-                "class": "d"
-            }, 
-            {
-                "prod": [
-                    {
-                        "class": "o", 
-                        "elem": "TO_CHAR(last_update,'YYYY')", 
-                        "name": "año"
-                    }, 
-                    {
-                        "case_sql": [
-                            "case", 
-                            "when TO_CHAR($$1,'MM') in ('01','02','03') then TO_CHAR($$1,'YYYY') || '\\:1' ", 
-                            "when TO_CHAR($$1,'MM') in ('04','05','06') then TO_CHAR($$1,'YYYY') || '\\:2' ", 
-                            "when TO_CHAR($$1,'MM') in ('07','08','09') then TO_CHAR($$1,'YYYY') || '\\:3' ", 
-                            "when TO_CHAR($$1,'MM') in ('10','11','12') then TO_CHAR($$1,'YYYY') || '\\:4' ", 
-                            "end as $$2"
-                        ], 
-                        "class": "c", 
-                        "elem": "last_update", 
-                        "name": "trimestre"
-                    }
-                ], 
-                "name": "last_update_trimestre", 
-                "class": "h"
-            }, 
-            {
-                "prod": [
-                    {
                         "source": {
-                            "filter": "", 
-                            "table": "public.customer", 
-                            "code": "customer_id", 
-                            "desc": [
-                                "first_name", 
-                                "last_name", 
-                                "email"
-                            ]
+                            "filter": "code in (select distinct partido from votos_provincia where votes_percent >= 3)", 
+                            "table": "partidos", 
+                            "code": "code", 
+                            "desc": "acronym"
                         }, 
-                        "elem": "customer_id"
+                        "elem": "partido"
                     }
                 ], 
-                "name": "rental_customer_id_fkey", 
+                "name": "partido", 
                 "class": "o"
             }, 
             {
                 "prod": [
                     {
                         "source": {
-                            "filter": "", 
-                            "table": "public.staff", 
-                            "code": "staff_id", 
-                            "desc": [
-                                "first_name", 
-                                "last_name", 
-                                "email", 
-                                "username", 
-                                "password"
-                            ]
+                            "filter": "provincia <> '' and municipio = '' and isla = ''", 
+                            "table": "localidades", 
+                            "code": "provincia", 
+                            "desc": "nombre"
                         }, 
-                        "elem": "staff_id"
+                        "elem": "provincia"
                     }
                 ], 
-                "name": "rental_staff_id_fkey", 
+                "name": "provincia", 
                 "class": "o"
+            }, 
+            {
+                "prod": [
+                    {
+                        "fmt": "t", 
+                        "enum_fmt": "n", 
+                        "elem": "partido", 
+                        "categories": [
+                            {
+                                "default": "otros"
+                            }, 
+                            {
+                                "values": [
+                                    "3316", 
+                                    "4688"
+                                ], 
+                                "result": "Derecha", 
+                                "condition": "in"
+                            }, 
+                            {
+                                "values": [
+                                    "1079", 
+                                    "4475"
+                                ], 
+                                "result": "Centro", 
+                                "condition": "in"
+                            }, 
+                            {
+                                "values": [
+                                    "3484"
+                                ], 
+                                "result": "Izquierda", 
+                                "condition": "in"
+                            }, 
+                            {
+                                "values": [
+                                    "3736", 
+                                    "5033", 
+                                    "4850", 
+                                    "5008", 
+                                    "5041", 
+                                    "2744", 
+                                    "5026"
+                                ], 
+                                "result": "Extrema Izquierda", 
+                                "condition": "in"
+                            }, 
+                            {
+                                "values": [
+                                    "5063", 
+                                    "4991", 
+                                    "1528"
+                                ], 
+                                "result": "Separatistas", 
+                                "condition": "in"
+                            }, 
+                            {
+                                "values": [
+                                    "1533", 
+                                    "4744", 
+                                    "4223"
+                                ], 
+                                "result": "Nacionalistas", 
+                                "condition": "in"
+                            }
+                        ]
+                    }
+                ], 
+                "name": "ideologia", 
+                "class": "c"
+            }, 
+            {
+                "prod": [
+                    {
+                        "source": {
+                            "filter": "provincia = ''", 
+                            "table": "localidades", 
+                            "code": "region", 
+                            "desc": "nombre"
+                        }, 
+                        "elem": "region", 
+                        "name": "region"
+                    }, 
+                    {
+                        "source": {
+                            "filter": "provincia <> '' and municipio = '' and isla = ''", 
+                            "table": "localidades", 
+                            "desc": "nombre", 
+                            "code": "provincia", 
+                            "grouped by": "region"
+                        }, 
+                        "elem": "provincia", 
+                        "name": "provincia"
+                    }
+                ], 
+                "name": "geo", 
+                "class": "h"
+            }, 
+            {
+                "prod": [
+                    {
+                        "source": {
+                            "filter": "provincia <> '' and municipio = '' and isla = ''", 
+                            "table": "localidades", 
+                            "code": "provincia", 
+                            "desc": "nombre"
+                        }, 
+                        "elem": "substr(municipio,1,2)", 
+                        "name": "provincia"
+                    }
+                ], 
+                "name": "provincial", 
+                "class": "o"
+            }, 
+            {
+                "prod": [
+                    {
+                        "source": {
+                            "filter": "tipo = 'P'", 
+                            "table": "geo", 
+                            "code": "codigo", 
+                            "desc": "nombre"
+                        }, 
+                        "name": "localidad", 
+                        "related via": [
+                            {
+                                "filter": "geo_rel.tipo_padre = 'P'", 
+                                "table": "geo_rel", 
+                                "clause": [
+                                    {
+                                        "rel_elem": "hijo", 
+                                        "base_elem": "votos_locales.municipio"
+                                    }
+                                ]
+                            }
+                        ], 
+                        "elem": "geo_rel.padre"
+                    }
+                ], 
+                "name": "prov indirecto", 
+                "class": "o"
+            }, 
+            {
+                "prod": [
+                    {
+                        "fmt": "date", 
+                        "elem": "fakedate"
+                    }
+                ], 
+                "type": "Ymd", 
+                "name": "fecha", 
+                "class": "d"
+            }, 
+            {
+                "prod": [
+                    {
+                        "class": "o", 
+                        "name": "año", 
+                        "elem": "strftime('%Y',fakedate)"
+                    }, 
+                    {
+                        "case_sql": [
+                            "case", 
+                            "when strftime('%m',$$1) in ('01','02','03')  then strftime('%Y',$$1)||'\\:1'", 
+                            "when strftime('%m',$$1) in ('04','05','06')  then strftime('%Y',$$1)||'\\:2'", 
+                            "when strftime('%m',$$1) in ('07','08','09') then strftime('%Y',$$1)||'\\:3'", 
+                            "when strftime('%m',$$1) in ('10','11','12') then strftime('%Y',$$1)||'\\:4'", 
+                            "end as $$2"
+                        ], 
+                        "class": "c", 
+                        "name": "trimestre", 
+                        "elem": "fakedate"
+                    }
+                ], 
+                "name": "cuatrimestre", 
+                "class": "h"
             }
+        ], 
+        "fields": [
+            "votes_presential", 
+            "votes_percent", 
+            "seats", 
+            "ord"
         ]
     }
 }

@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 
 BACKEND = 'Alchemy' #'Alchemy' #or 'QtSql'
 DRIVERS = ('sqlite','mysql','postgresql','oracle') #('db2','odbc') todavia no implementadas
+AGR_LIST = ('count', 'max', 'min', 'avg', 'sum')
 '''
 Documentation, License etc.
 
@@ -212,7 +213,7 @@ def getAgrFunctions(db,plista = None):
       Devuelve la lista de funciones agregadas que soporta la base de datos
     '''
     if plista is None or len(plista ) == 0:
-        lista_funciones = ['count', 'max', 'min', 'avg', 'sum']
+        lista_funciones = list(AGR_LIST)
     else:
         lista_funciones = plista[ : ]
     #TODO include functions which depend on DB driver

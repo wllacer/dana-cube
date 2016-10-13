@@ -15,16 +15,20 @@ Documentation, License etc.
 
 from pprint import pprint
 
+from decimal import *
 
-from datadict import *    
 #from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QSplitter
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QSplitter, QMenu, \
+     QDialog, QInputDialog, QLineEdit
 
+from datadict import *    
 from datalayer.query_constructor import *
+from datalayer.access_layer import DRIVERS, AGR_LIST
 from tablebrowse import *
 from datemgr import genTrimestreCode
 from util.jsonmgr import *
+from util.fivenumbers import is_number
 
 (_ROOT, _DEPTH, _BREADTH) = range(3)
 
@@ -87,7 +91,87 @@ TYPE_LIST_DICT = set([
      'prod',
      'related via'])
 
+COMPLEX_TYPES = TYPE_DICT | TYPE_LIST | TYPE_LIST_DICT
 
+GUIDE_CLASS = ( 
+    ('o','normal',),
+    ('c','categorias',),
+    ('h','jerarquia',),
+    ('d','fecha',),
+    );
+LOGICAL_OPERATOR = ('in','not in','between','not between','=','!=','<','>','>=','<=')
+ENUM_FORMAT = ( ('t','texto'),('n','numerico'),('d','fecha'))
+TIPO_FECHA = ('Ymd', 'Ym','Ymw','YWw') 
+
+EDITED_ITEMS = set([
+     u'agregado',  # AGR_LIST
+     u'base_elem', #             field of  Reference  table
+     u'base filter', # free text
+     u'class',     # GUIDE_CLASS *
+     u'code',      #             field of FK table (key)
+     u'col',       # number (a guide of base)
+     u'condition', # LOGICAL_OPERATOR
+     u'cubo',      # uno de los cubos del fichero
+     u'dbhost',    # free text
+     u'dbname',    # free text 
+     u'dbpass',    # free text (ver como ocultar)
+     u'dbuser',    # free text
+     u'default',   # free text
+     u'desc',       #             field of FK table (values)
+     u'driver',   # DRIVERS
+     u'elem',      #              field of table, or derived value 
+     u'elemento',  # FIELD of cube
+     u'enum_fmt',  # ENUM_FORMAT
+     u'filter',    # free text
+     u'fmt',       # en prod = FORMATO, en categories ENUM_FORMAT
+     u'grouped by',#              field of FK table or derived value ??
+     u'name',      # free text
+     u'rel_elem',  #              field of FK table
+     u'result',    # free text
+     u'row',       # number (a guide of base)
+     u'table',     # table ...
+     u'type'])     # TIPO_FECHA
+
+FREE_FORM_ITEMS = set([
+     u'base filter',
+     u'case_sql',
+     u'dbhost',    # free text
+     u'dbname',    # free text 
+     u'dbpass',    # free text (ver como ocultar)
+     u'dbuser',    # free text
+     u'default',   # free text
+     u'filter',    # free text
+     #u'name',      # free text
+     u'result',    # free text
+     u'values',
+    ])
+STATIC_COMBO_ITEMS = dict({
+     u'agregado': AGR_LIST,
+     u'class': GUIDE_CLASS ,
+     u'condition': LOGICAL_OPERATOR,
+     u'driver': DRIVERS,
+     u'enum_fmt': ENUM_FORMAT,
+     u'fmt': ENUM_FORMAT,
+     u'type': TIPO_FECHA,
+    })
+
+DYNAMIC_COMBO_ITEMS = set([
+     u'base_elem', #             field of  Reference  table
+     u'code',      #             field of FK table (key)
+     u'col',       # number (a guide of base)
+     u'cubo',      # uno de los cubos del fichero
+     u'desc',       #             field of FK table (values)
+     u'elem',      #              field of table, or derived value 
+     u'elemento',  # FIELD of cube
+     u'grouped by',#              field of FK table or derived value ??
+     u'rel_elem',  #              field of FK table
+     u'row',       # uno de los cubos del fichero
+     u'table',
+    ])
+"""
+   cubo --> lista de cubos
+   col,row
+"""
 class CubeItem(QStandardItem):
     """
     TODO unificar con BaseTreeItem en dictTree
@@ -98,6 +182,14 @@ class CubeItem(QStandardItem):
         self.setColumnCount(1)
         #self.setData(self)
         self.gpi = self.getRow        
+        
+    def suicide(self):
+        """
+           Mas bien suicida
+        """
+        indice = self.index()
+        padre=self.parent()
+        padre.removeRow(indice.row())
         
     def deleteChildren(self):
         if self.hasChildren():
@@ -187,13 +279,24 @@ class CubeItem(QStandardItem):
             colind = indice.sibling(indice.row(),k)
         return lista
      
-    def getColumn(self,column,role=None):
+    def getColumnData(self,column,role=None):
         indice = self.index() #self.model().indexFromItem(field)
         colind = indice.sibling(indice.row(),column)
         if colind.isValid():
             return colind.data(role) if role else colind.data()
         else:
             return None
+    
+    def setColumnData(self,column,data,role=None):
+        indice = self.index() #self.model().indexFromItem(field)
+        colind = indice.sibling(indice.row(),column)
+        if colind.isValid():
+            colitem = self.model().itemFromIndex(colind)
+            if role:
+                colitem.setData(data,role)
+            else:
+                colitem.setData(data)
+
     
     def takeChildren(self):
         if self.hasChildren():
@@ -208,7 +311,7 @@ class CubeItem(QStandardItem):
         return self.__class__.__name__ 
 
     def type(self):
-        return self.getColumn(2)
+        return self.getColumnData(2)
     
     def extendedType(self):
         if self.type():
@@ -327,6 +430,7 @@ def info2cube(dataDict,confName,schema,table):
     
     return entrada
 
+
 def recTreeLoader(parent,key,data,tipo=None):
     """
         Los valores de elementos atomicos son atributos del nodo en arbol
@@ -415,6 +519,14 @@ def childItems(treeItem):
             datos.append(treeItem.child(ind))
     return datos
  
+def childByName(treeItem,name):
+    if isinstance(treeItem,CubeItem):
+        return treeItem.getChildrenByName(name)
+    else:
+        for k in range(treeItem.rowCount()):
+            if treeItem.child(k).text() == name:
+                return treeItem.child(k)
+    return None        
 def rowData(treeItem):
     datos = []
     if not treeItem:
@@ -437,13 +549,273 @@ def rowData(treeItem):
 
 
 def navigateTree(parent):
+    editor = set()
     for node in traverseTree(parent):
         if isinstance(node,CubeItem):
-            print(node,node.getColumn(1),'<-',node.typeHierarchy())
-        else:
-            print(node)
+            #print(node,node.getColumnData(1),'<-',node.typeHierarchy())
+            if node.getColumnData(1):
+                editor.add(node.text())
+        #else:
+            #print(node)
+    print('EDITED_ITEMS =')
+    pprint(editor)
 
+def editaCombo(obj,valueTable,valorActual):
+    # primero determino el indice del valor actual
+    act_valor_idx = 0
+    for k,value in enumerate(valueTable):
+        if isinstance(value,(list,tuple,set)):
+            kval =value[0]
+        else:
+            kval = value
+        if str(kval) == str(valorActual):  #FIXME sto es un poco asi así
+            act_valor_idx = k
+            break
+    print(valueTable,valorActual,act_valor_idx)
+    #normalizo la tabla de valores para que presente solo las descripciones (si las hay)
+    hasDescriptions = False
+    if isinstance(valueTable[0],(list,tuple,set)) and len(valueTable[0]) > 1:
+        hasDescriptions = True
+        combo = [ item[1] for item in valueTable]
+    else:
+        combo = list(valueTable)
+        
+    result,controlvar = QInputDialog.getItem(None,"Editar:"+obj.text(),obj.text(),combo,current=act_valor_idx) 
     
+    # si tiene descripciones tengo que averiguar a que elemento pertenecen
+    if hasDescriptions:
+        idx = None
+        for k,value in enumerate(combo):
+            if value == result:
+                #idx = k
+                result = valueTable[k][0]
+                break
+    #    obj.setColumnData(1,valueTable[idx][0],Qt.EditRole) 
+    #else:
+        #obj.setColumnData(1,result,Qt.EditRole) 
+    if result != valorActual:
+        obj.setColumnData(1,result,Qt.EditRole) 
+    #if  isinstance(array[idx],(list,tuple,set)) and len(array[idx]) > 2 and array[idx][2]:
+        #obj.suicide() # un poco fuerte
+    #elif  isinstance(array[idx],(list,tuple,set)):
+        #obj.setColumnData(1,array[idx][0],Qt.EditRole)
+    #else:
+        #obj.setColumnData(1,array[idx],Qt.EditRole)
+    
+def getCubeList(rootElem):
+    entradas_especiales = ('default',)
+    lista = [ item.text() for item in childItems(rootElem) if item.text() not in entradas_especiales ]
+    return lista
+
+def getItemList(rootElem,tipo = None):
+    if tipo:
+        lista = [ item.text() for item in childItems(rootElem) if item.type() == tipo ]
+    else:
+        lista = [ item.text() for item in childItems(rootElem) ]
+    print(lista)
+    return lista
+
+def getDataList(rootElem,column,tipo = None):
+    if tipo:
+        lista = [ item.getColumnData(column) for item in childItems(rootElem) if item.type() == tipo ]
+    else:
+        lista = [ item.getColumnData(column) for item in childItems(rootElem) ]
+    print(lista)
+    return lista
+
+def FQName2array(fqname):
+    dbmanager = '' #no deberia existir pero por si acaso
+    schema = ''
+    filename = ''
+    splitdata = fqname.split('.')
+    if len(splitdata) == 3:
+        dbmanager,schema,filename = splitdata
+    elif len(splitdata) == 2:
+        schema,filename = splitdata
+    else:
+       filename = splitdata
+    return dbmanager,schema,filename
+
+        
+def tree2dict(rootItem): #FIXIT como manejar los numeros un poco raros
+                         #Compactar el codigo
+    elementos=childItems(rootItem)
+    #una de las variables es innecesaria de momento
+    toList = False
+    toDict = False
+    #if rootItem.type() in TYPE_LIST or (rootItem.type() in TYPE_LIST_DICT and rootItem.text() == rootItem.type()):
+    if (( not isinstance(rootItem,CubeItem) ) or   #la raiz siempre genera directorio
+         rootItem.type() in TYPE_DICT or          # es obvio
+       ( rootItem.type() in TYPE_LIST_DICT and rootItem.text() != rootItem.type() )):
+       toDictionary = True
+    else:
+       toList = True
+       
+    if toList:
+        result_l = list()
+        for item in elementos:
+            if item.hasChildren():
+                result_l.append(tree2dict(item))
+            else:
+                dato = item.getColumnData(1)
+                if dato == 'None':
+                   result_l.append(None)
+                #elif is_number(dato):
+                   #result_l.append(Decimal(dato))
+                else:
+                    result_l.append(dato)
+        return result_l
+    else:
+        result_d = dict()
+        for item in elementos:
+            if item.hasChildren():
+                result_d[item.text()] = tree2dict(item)
+            else:
+                dato = item.getColumnData(1)
+                if dato == 'None':
+                   result_d[item.text()]=None
+                #elif is_number(dato):
+                   #result_d[item.text()] = Decimal(dato)
+                else:
+                    result_d[item.text()]= dato
+
+        return result_d
+ 
+def getCubeTarget(obj):
+    pai = obj.parent()
+    while pai and pai.type() != 'base' :
+        pai = pai.parent()
+    if pai: #o sea hay padre
+        tablaItem = childByName(pai,'table')
+        FQtablaArray = FQName2array(tablaItem.getColumnData(1))
+        connItem = childByName(pai,'connect')
+        conn_data = tree2dict(connItem)
+    return FQtablaArray,conn_data
+
+def setContextMenu(obj,menu):
+    tipo = obj.type()
+    jerarquia = obj.typeHierarchy()
+
+    obj.menuActions = []
+    obj.menuActions.append(menu.addAction("Add ..."))
+    obj.menuActions.append(menu.addAction("Edit ..."))
+    if tipo not in   ( FREE_FORM_ITEMS | DYNAMIC_COMBO_ITEMS ) and tipo not in STATIC_COMBO_ITEMS  :
+        obj.menuActions[-1].setEnabled(False)
+
+    obj.menuActions.append(menu.addAction("Delete"))
+    obj.menuActions.append(menu.addAction("Copy ..."))
+    obj.menuActions.append(menu.addAction("Rename"))
+    if obj.text() in ITEM_TYPE or obj.text() == "":
+        obj.menuActions[-1].setEnabled(False)
+    obj.menuActions.append(menu.addAction("Refresh"))    
+    
+    if tipo in COMPLEX_TYPES :
+        obj.menuActions[-1].setEnabled(True)
+    else:
+        obj.menuActions[-1].setEnabled(False)
+        
+def getContextMenu(obj,action,exec_object=None):
+    if action is None:
+        return
+    
+    modelo = obj.model() # es necesario para que el delete no pierda la localizacion
+    tipo = obj.type()
+    jerarquia = obj.typeHierarchy()
+    
+    ind = obj.menuActions.index(action)
+    modelo.beginResetModel()
+    if ind == 0:
+        print('Add by',obj)
+        pass
+    elif ind == 1 :
+        valor = obj.getColumnData(1)
+        if tipo in FREE_FORM_ITEMS:
+            text = QInputDialog.getText(None, "Editar:"+obj.text(),obj.text(), QLineEdit.Normal,obj.getColumnData(1))
+            obj.setColumnData(1,text[0],Qt.EditRole)
+        elif tipo in STATIC_COMBO_ITEMS:
+            array = STATIC_COMBO_ITEMS[tipo]
+
+            editaCombo(obj,array,valor)
+        elif tipo in DYNAMIC_COMBO_ITEMS:
+            print('Edit dynamic',obj,tipo,valor)
+            array = []
+            if tipo == 'cubo':
+                array = getCubeList(exec_object.hiddenRoot)
+                editaCombo(obj,array,valor)
+            elif tipo in ('row','col'):
+                pai = obj.parent()
+                if pai.type() == 'vista':
+                    cubeItem = pai.getBrotherByName('cubo')
+                    print (pai.text(),cubeItem.text(),cubeItem.getColumnData(1))
+                    #listaCubos = childItems(exec_object.hiddenRoot)
+                    #cuboidx = listaCubos.index(cubeItem.getColumnData(1))
+                    cubo = childByName(exec_object.hiddenRoot,cubeItem.getColumnData(1))
+                    guidemaster = childByName(cubo,'guides')
+                    nombres = getItemList(guidemaster,'guides')
+                    array = [ (k,nombres[k]) for k in range(len(nombres)) ]
+                    editaCombo(obj,array,valor)
+                #TODO el else deberia dar un error y no ignorarse
+            elif tipo in ('elemento',):
+                pai = obj.parent()
+                if pai.type() == 'vista':
+                    cubeItem = pai.getBrotherByName('cubo')
+                    print (pai.text(),cubeItem.text(),cubeItem.getColumnData(1))
+                    #listaCubos = childItems(exec_object.hiddenRoot)
+                    #cuboidx = listaCubos.index(cubeItem.getColumnData(1))
+                    cubo = childByName(exec_object.hiddenRoot,cubeItem.getColumnData(1))
+                    guidemaster = childByName(cubo,'fields')
+                    array = getDataList(guidemaster,1) 
+                    editaCombo(obj,array,valor)
+            elif tipo in ('elem'):
+                FQtablaArray,conn_data = getCubeTarget(obj)
+                #TODO el else deberia dar un error y no ignorarse
+                pass
+            else:
+                print('Edit',obj,tipo,valor)
+            """
+     u'base_elem', #             field of  Reference  table
+     u'code',      #             field of FK table (key)
+     u'col',       #<> number (a guide of base)
+     u'cubo',      #<>uno de los cubos del fichero
+     u'desc',       #             field of FK table (values)
+     u'elem',      #              field of table, or derived value 
+     u'elemento',  #<> FIELD of cube
+     u'grouped by',#              field of FK table or derived value ??
+     u'rel_elem',  #              field of FK table
+     u'row',       #<> uno de los cubos del fichero
+     u'table',
+        a) Lista de cubos activos
+        b) Lista de guias en un cubo
+        c) Lista de tablas en una B.D.
+        d) Lista de campos en una tabla
+        a1) determinar que tabla me corresode
+        """
+        else:
+            print('Se escapa',obj,tipo,valor)
+        pass  # edit item, save config, refresh tree
+    elif ind == 2:
+        obj.suicide()
+        pass  # close connection, delete tree, delete config
+    elif ind == 3:
+        print('copy ',obj)
+        pass
+    elif ind == 4:
+        print('rename',obj)
+        text = QInputDialog.getText(None, "Renombrar el nodo :"+obj.text(),"Nodo", QLineEdit.Normal,obj.text())
+        obj.setData(text[0],Qt.EditRole)
+        for item in obj.listChildren():
+            if item.text() == 'name':
+                print('procedo')
+                item.setColumnData(1,text[0],Qt.EditRole)
+                break
+                
+    elif ind == 5:
+        print('refresh',obj)
+        pass
+    modelo.endResetModel()
+    
+ 
+
 class CubeBrowserWin(QMainWindow):
     def __init__(self,confName,schema,table,pdataDict=None):
         super(CubeBrowserWin, self).__init__()
@@ -471,33 +843,73 @@ class CubeBrowserWin(QMainWindow):
         else:
             dataDict=DataDict(conn=confName,schema=schema)
         info = info2cube(dataDict,confName,schema,table)
-        #
+        #TODO convertir eso en una variable
         info = load_cubo('cuboSqlite.json')
+        pprint(info)
         #
         parent = self.hiddenRoot
         for entrada in info:
             if entrada == 'default':
                 tipo = 'default_start'
+            elif entrada in ITEM_TYPE:
+                tipo = entrada
             else:
                 tipo = 'base'
             recTreeLoader(parent,entrada,info[entrada],tipo)
-        navigateTree(self.hiddenRoot)
-            
+        #navigateTree(self.hiddenRoot)
+        #pprint(tree2dict(self.hiddenRoot))
+        
     def setupView(self):
         self.view = QTreeView(self)
         self.view.setContextMenuPolicy(Qt.CustomContextMenu)
-        #self.view.customContextMenuRequested.connect(self.openContextMenu)
+        self.view.customContextMenuRequested.connect(self.openContextMenu)
         self.view.doubleClicked.connect(self.test)
         self.view.setModel(self.model)
+        #self.view.hideColumn(2) # eso no interesa al usuario final
+        self.view.expandAll() # es necesario para el resize
         for m in range(self.model.columnCount()):
             self.view.resizeColumnToContents(m)
+        self.view.collapseAll()
         #self.view.verticalHeader().hide()
         #self.view.setSortingEnabled(True)
         self.view.setAlternatingRowColors(True)
         #self.view.sortByColumn(0, Qt.AscendingOrder)
+    
+
+    def openContextMenu(self,position):
+        """
+        """
+        indexes = self.view.selectedIndexes()
+        if len(indexes) > 0:
+            index = indexes[0]
+            item = self.model.itemFromIndex(index)
+        menu = QMenu()
+        setContextMenu(item,menu)        
+        action = menu.exec_(self.view.viewport().mapToGlobal(position))
+        getContextMenu(item,action,self)
         
     def test(self):
         return
+    
+    def saveConfigFile(self):
+        newcubeStruct = tree2dict(self.hiddenRoot)
+        #TODO salvar la version anterior
+        dump_structure(newcubeStruct,'cuboSqlite.json')
+    
+    def closeEvent(self, event):
+        self.close()
+        
+    def close(self):
+        #TODO  deberia cerrar los recursos de base de datos
+        #for conid in self.conn:
+            #if self.conn[conid] is None:
+                #continue
+            #if self.conn[conid].closed :
+                #self.conn[conid].close()
+        self.saveConfigFile()
+
+        sys.exit()
+
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
     import sys
@@ -505,6 +917,6 @@ if __name__ == '__main__':
     sys.setdefaultencoding('utf-8')
     app = QApplication(sys.argv)
     window = CubeBrowserWin('MariaBD Local','sakila','rental')
-    #window.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
+    window.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
     window.show()
     sys.exit(app.exec_())
