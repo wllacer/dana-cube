@@ -355,13 +355,13 @@ def lastChild(item):
     else:
         return None
 
-def info2cube(dataDict,confName,schema,table):
+def info2cube(dataDict,confName,schema,table,maxlevel=1):
     """
        de monento solo sustituyo
     """
     #TODO strftime no vale para todos los gestores de base de datos
     #pprint(dataDict)
-    info = getTable(dataDict,confName,schema,table)                
+    info = getTable(dataDict,confName,schema,table,maxlevel)                
     #pprint(info)
     
     #cubo = load_cubo()
@@ -400,40 +400,74 @@ def info2cube(dataDict,confName,schema,table):
             entrada['guides'].append({'name':fld[0],
                                       'class':'o',
                                       'prod':[{'elem':fld[0],},]})  #no es completo
-        """
-                "prod": [
-                    {   "source": {
-                            "filter": "code in (select distinct partido from votos_provincia where votes_percent >= 3)", 
-                            "table": "partidos", 
-                            "code": "code", 
-                            "desc": "acronym"
-                        }, 
-
-                        "elem": "partido"
-                    }
-        """
-    for fk in info.get('FK',list()):
-        desc_fld = []
-        for fld in fk['CamposReferencia']:
-            if fld[1] == 'texto':
-                desc_fld.append(fld[0])
-        if len(desc_fld) == 0:
-            print('No proceso correctamente por falta de texto',fk)
-            desc_fld = fk['ParentField']
-#            continue
-            
-        entrada['guides'].append({'name':fk['Name'],
-                                    'class':'o',
-                                    'prod':[{'source': {
-                                            "filter":"",
-                                            "table":fk['ParentTable'],
-                                            "code":fk['ParentField'],
-                                            "desc":desc_fld
-                                        },
-                                        'elem':fk['Field']},]
-                                    })  #no es completo
-    
+    if maxlevel == 0:
+        pass
+    elif maxlevel == 1:
+        for fk in info.get('FK',list()):
+            desc_fld = getDescList(fk)
+                
+            entrada['guides'].append({'name':fk['Name'],
+                                        'class':'o',
+                                        'prod':[{'source': {
+                                                "filter":"",
+                                                "table":fk['ParentTable'],
+                                                "code":fk['ParentField'],
+                                                "desc":desc_fld
+                                            },
+                                            'elem':fk['Field']},]
+                                            })  #no es completo
+    else:
+        routier = []
+        #path = ''
+        path_array = []
+        for fk in info.get('FK',list()):
+            constructFKsheet(fk,path_array,routier)
+        
+        for elem in routier:
+            nombres = [ item['Name'] for item in elem]
+            nombres.reverse()
+            nombre = '@'.join(nombres)
+            activo = elem[-1]
+            base   = elem[0]
+            rule =   {'source': {
+                                    "filter":"",
+                                    "table":activo['ParentTable'],
+                                    "code":activo['ParentField'],
+                                    "desc":getDescList(activo)
+                                },
+                         'elem':activo['Field']}   #?no lo tengo claro
+            if len(elem) > 1:
+                rule['related via']=list()
+                for idx in range(len(elem)-1):
+                    actor = elem[idx]
+                    join_clause = { "table":actor['ParentTable'],
+                                    "clause":[{"rel_elem":actor["ParentField"],"base_elem":actor['Field']},],
+                                    "filter":"" }
+                    rule['related via'].append(join_clause)
+                
+            entrada['guides'].append({'name':nombre,
+                                        'class':'o',
+                                        'prod':[rule ,]
+                                            })  #no es completo
     return cubo
+
+#def constructFKsheet(elemento,path, path_array,routier):
+def constructFKsheet(elemento, path_array,routier):    
+    path_array_local = path_array[:]
+    path_array_local.append(elemento)
+    routier.append(path_array_local)
+    for fkr in elemento.get('FK',list()):
+        constructFKsheet(fkr,path_array_local,routier)
+
+def getDescList(fk):
+    desc_fld = []
+    for fld in fk['CamposReferencia']:
+        if fld[1] == 'texto':
+            desc_fld.append(fld[0])
+    if len(desc_fld) == 0:
+        print('No proceso correctamente por falta de texto',fk)
+        desc_fld = fk['ParentField']
+    return desc_fld
 
 
 def recTreeLoader(parent,key,data,tipo=None):
@@ -777,10 +811,11 @@ def editTableElem(exec_object,obj,valor,refTable=None):
     actConn = connMatch(exec_object.dataDict,connURL)
     if actConn:
         #FIXME es un chapu brutal
-        if actConn.data().engine.driver == 'pysqlite':
-            tableItem = actConn.findElement('main',FQtablaArray[2])
-        else:
-            tableItem = actConn.findElement(FQtablaArray[1],FQtablaArray[2])
+        #if actConn.data().engine.driver == 'pysqlite':
+            ##CHECK creo que el primer parche es inncesario
+            #tableItem = actConn.findElement('main',FQtablaArray[2])
+        #else:
+        tableItem = actConn.findElement(FQtablaArray[1],FQtablaArray[2])
         if tableItem:
             fieldIdx = childByName(tableItem,'FIELDS')
             array = getDataList(fieldIdx,0)
@@ -957,6 +992,7 @@ def getContextMenu(obj,action,exec_object=None):
 class CubeBrowserWin(QMainWindow):
     def __init__(self,confName,schema,table,pdataDict=None):
         super(CubeBrowserWin, self).__init__()
+        self.configFile = 'experimento.json'
         #Leeo la configuracion
         #TODO variables asociadas del diccionario. Reevaluar al limpiar
 
@@ -982,7 +1018,7 @@ class CubeBrowserWin(QMainWindow):
             self.dataDict=DataDict(conn=confName,schema=schema)
         infox = info2cube(self.dataDict,confName,schema,table)
         #TODO convertir eso en una variable
-        info = load_cubo('cubo.json')
+        info = load_cubo(self.configFile)
         for nuevo in infox:
             info[nuevo] = infox[nuevo]
         #pprint(info)
@@ -1033,12 +1069,12 @@ class CubeBrowserWin(QMainWindow):
         return
     
     def saveConfigFile(self):
-        baseCubo=load_cubo('cubo.json')
+        baseCubo=load_cubo(self.configFile)
         newcubeStruct = tree2dict(self.hiddenRoot)
         for entrada in newcubeStruct:
             baseCubo[entrada] = newcubeStruct[entrada]
         #TODO salvar la version anterior
-        dump_structure(baseCubo,'cubo.json')
+        dump_structure(baseCubo,self.configFile)
     
     def closeEvent(self, event):
         self.close()
@@ -1060,7 +1096,7 @@ if __name__ == '__main__':
     reload(sys)
     sys.setdefaultencoding('utf-8')
     app = QApplication(sys.argv)
-    window = CubeBrowserWin('MariaBD Local','sakila','rental')
+    window = CubeBrowserWin('MariaBD Local','sakila','film')
     window.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
     window.show()
     sys.exit(app.exec_())

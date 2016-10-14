@@ -64,7 +64,8 @@ def name_collisions(namespace):
 
 def normRef(namespace,entry):
     if len(namespace[entry]) == 2:
-        reference= prefix = namespace[entry][0]
+        reference = namespace[entry][0]
+        prefix = namespace[entry][1]
     else:
         prefix = namespace[entry][2]
         reference='{} AS {}'.format(namespace[entry][0],prefix)
@@ -100,24 +101,24 @@ def setLocalQuery(conn,info,iters=None):
     namespace = dict()    
 
 
-    if info.get('schemaName','') != '':
-        basetable= info['schemaName'] + '.' + info['tableName']
-    else:
-        basetable = info['tableName']
+    basetable = info['tableName']
 
-    namespace['base'] = [basetable,info['tableName'],]
+    namespace['base'] = [basetable,basetable.split('.')[-1],]
     if 'FK' in info:
         for relation in info['FK']:
             namespace[relation['Name']] = [relation['ParentTable'],relation['ParentTable'].split('.')[-1],]        
         name_collisions(namespace)
-    
     sqlContext['tables'],prefix = normRef(namespace,'base')
+    print('namespace')
+    pprint(namespace)
+    print('prefix ',prefix)
+    print('\n')
     
     dataspace = info['Fields'][:]
     for entry in dataspace:
-        entry[0]='{}.{}'.format(prefix,entry[0])
+        if prefix:
+            entry[0]='{}.{}'.format(prefix,entry[0].split('.')[-1])
     
-
 
     if info.get('FK') and iteraciones > 0:
         sqlContext['join'] = []
@@ -127,14 +128,23 @@ def setLocalQuery(conn,info,iters=None):
             fkname = relation['Name']
             entry['table'],fk_prefix = normRef(namespace,fkname) #relation['ParentTable']
             print(fkname,entry['table'],fk_prefix)
-            
-            entry['join_clause'] = ((prefix+'.'+relation['Field'],'=',fk_prefix +'.'+relation['ParentField']),)
+            if prefix:
+                leftclause = prefix+'.'+relation['Field'].split('.')[-1]
+            else:
+                leftclause = relation['Field']
+            if fk_prefix:
+                rightclause = fk_prefix +'.'+relation['ParentField'].split('.')[-1]
+            else:
+                rightclause = relation['ParentField']
+                
+            entry['join_clause'] = ((leftclause,'=',rightclause),)
             entry['join_modifier']='LEFT OUTER'
             sqlContext['join'].append(entry)
 
             campos = relation['CamposReferencia'][:]
             for item in campos:
-                item[0]='{}.{}'.format(fk_prefix,item[0])
+                if fk_prefix:
+                    item[0]='{}.{}'.format(fk_prefix,item[0].split('.')[-1])
             #FIXME horrible la sentencia de abajo y consume demasiados recursos. Debo buscar una alternativa
             idx = [ k[0] for k in dataspace].index(entry['join_clause'][0][0])
             dataspace[idx+1:idx+1] = campos
@@ -145,8 +155,6 @@ def setLocalQuery(conn,info,iters=None):
     queryPrint(sqls)
     return sqlContext
 
-    
-  
 def localQuery(conn,info,iters=None):
     sqlContext = setLocalQuery(conn,info,iters=None)
     sqls = sqlContext['sqls'] #solo por compatibilidad
@@ -211,7 +219,7 @@ if __name__ == '__main__':
     reload(sys)
     sys.setdefaultencoding('utf-8')
     app = QApplication(sys.argv)
-    window = TableBrowserWin('MariaBD Local','sakila','rental')
+    window = TableBrowserWin('MariaBD Local','sakila','film')
     #window.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
     window.show()
     sys.exit(app.exec_())

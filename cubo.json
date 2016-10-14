@@ -1,34 +1,65 @@
 {
-    "default": {
-        "cubo": "experimento", 
-        "vista": {
-            "elemento": "votes_presential", 
-            "agregado": "sum", 
-            "col": "2", 
-            "row": "3"
-        }
-    }, 
-    "rental": {
+    "customer": {
         "base filter": "", 
-        "table": "sakila.rental", 
+        "table": "sakila.customer", 
+        "connect": {
+            "dbuser": null, 
+            "dbhost": null, 
+            "driver": "mysqldb", 
+            "dbname": "mysql+mysqldb://demo:demo123@localhost/mysql", 
+            "dbpass": null
+        }, 
+        "fields": [
+            "customer_id", 
+            "store_id", 
+            "address_id", 
+            "active"
+        ], 
         "guides": [
             {
                 "prod": [
                     {
+                        "elem": "first_name"
+                    }
+                ], 
+                "name": "first_name", 
+                "class": "o"
+            }, 
+            {
+                "prod": [
+                    {
+                        "elem": "last_name"
+                    }
+                ], 
+                "name": "last_name", 
+                "class": "o"
+            }, 
+            {
+                "prod": [
+                    {
+                        "elem": "email"
+                    }
+                ], 
+                "name": "email", 
+                "class": "o"
+            }, 
+            {
+                "prod": [
+                    {
                         "fmt": "date", 
-                        "elem": "rental_date"
+                        "elem": "create_date"
                     }
                 ], 
                 "type": "Ymd", 
-                "name": "rental_date", 
+                "name": "create_date", 
                 "class": "d"
             }, 
             {
                 "prod": [
                     {
                         "class": "o", 
-                        "name": "año", 
-                        "elem": "DATE_FORMAT(rental_date,'%Y')"
+                        "elem": "DATE_FORMAT(create_date,'%Y')", 
+                        "name": "año"
                     }, 
                     {
                         "case_sql": [
@@ -40,46 +71,11 @@
                             "end as $$2"
                         ], 
                         "class": "c", 
-                        "name": "trimestre", 
-                        "elem": "rental_date"
+                        "elem": "create_date", 
+                        "name": "trimestre"
                     }
                 ], 
-                "name": "rental_date_trimestre", 
-                "class": "h"
-            }, 
-            {
-                "prod": [
-                    {
-                        "fmt": "date", 
-                        "elem": "return_date"
-                    }
-                ], 
-                "type": "Ymd", 
-                "name": "return_date", 
-                "class": "d"
-            }, 
-            {
-                "prod": [
-                    {
-                        "class": "o", 
-                        "name": "año", 
-                        "elem": "DATE_FORMAT(return_date,'%Y')"
-                    }, 
-                    {
-                        "case_sql": [
-                            "case", 
-                            "when DATE_FORMAT($$1,'%m') in ('01','02','03') then concat(DATE_FORMAT($$1,'%Y'),'\\:1')", 
-                            "when DATE_FORMAT($$1,'%m') in ('04','05','06') then concat(DATE_FORMAT($$1,'%Y'),'\\:2')", 
-                            "when DATE_FORMAT($$1,'%m') in ('07','08','09') then concat(DATE_FORMAT($$1,'%Y'),'\\:3')", 
-                            "when DATE_FORMAT($$1,'%m') in ('10','11','12') then concat(DATE_FORMAT($$1,'%Y'),'\\:4')", 
-                            "end as $$2"
-                        ], 
-                        "class": "c", 
-                        "name": "trimestre", 
-                        "elem": "return_date"
-                    }
-                ], 
-                "name": "return_date_trimestre", 
+                "name": "create_date_trimestre", 
                 "class": "h"
             }, 
             {
@@ -97,8 +93,8 @@
                 "prod": [
                     {
                         "class": "o", 
-                        "name": "año", 
-                        "elem": "DATE_FORMAT(last_update,'%Y')"
+                        "elem": "DATE_FORMAT(last_update,'%Y')", 
+                        "name": "año"
                     }, 
                     {
                         "case_sql": [
@@ -110,8 +106,8 @@
                             "end as $$2"
                         ], 
                         "class": "c", 
-                        "name": "trimestre", 
-                        "elem": "last_update"
+                        "elem": "last_update", 
+                        "name": "trimestre"
                     }
                 ], 
                 "name": "last_update_trimestre", 
@@ -122,18 +118,20 @@
                     {
                         "source": {
                             "filter": "", 
-                            "table": "sakila.customer", 
-                            "code": "customer_id", 
+                            "table": "sakila.address", 
+                            "code": "address_id", 
                             "desc": [
-                                "first_name", 
-                                "last_name", 
-                                "email"
+                                "address", 
+                                "address2", 
+                                "district", 
+                                "postal_code", 
+                                "phone"
                             ]
                         }, 
-                        "elem": "customer_id"
+                        "elem": "address_id"
                     }
                 ], 
-                "name": "fk_rental_customer", 
+                "name": "fk_customer_address", 
                 "class": "o"
             }, 
             {
@@ -141,274 +139,44 @@
                     {
                         "source": {
                             "filter": "", 
-                            "table": "sakila.inventory", 
-                            "code": "inventory_id", 
-                            "desc": "inventory_id"
-                        }, 
-                        "elem": "inventory_id"
-                    }
-                ], 
-                "name": "fk_rental_inventory", 
-                "class": "o"
-            }, 
-            {
-                "prod": [
-                    {
-                        "source": {
-                            "filter": "", 
-                            "table": "sakila.staff", 
-                            "code": "staff_id", 
+                            "table": "sakila.city", 
+                            "code": "city_id", 
                             "desc": [
-                                "first_name", 
-                                "last_name", 
-                                "email", 
-                                "username", 
-                                "password"
+                                "city"
                             ]
                         }, 
-                        "elem": "staff_id"
-                    }
-                ], 
-                "name": "fk_rental_staff", 
-                "class": "o"
-            }
-        ], 
-        "connect": {
-            "dbuser": null, 
-            "dbhost": null, 
-            "driver": "mysqldb", 
-            "dbname": "mysql+mysqldb://demo:demo123@localhost/mysql", 
-            "dbpass": null
-        }, 
-        "fields": [
-            "rental_id", 
-            "inventory_id", 
-            "customer_id", 
-            "staff_id"
-        ]
-    }, 
-    "experimento": {
-        "base filter": "", 
-        "table": "votos_locales", 
-        "connect": {
-            "dbuser": null, 
-            "dbhost": null, 
-            "driver": "QSQLITE", 
-            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db", 
-            "dbpass": null
-        }, 
-        "fields": [
-            "votes_presential", 
-            "votes_percent", 
-            "seats", 
-            "ord"
-        ], 
-        "guides": [
-            {
-                "prod": [
-                    {
-                        "source": {
-                            "filter": "code in (select distinct partido from votos_provincia where votes_percent >= 3)", 
-                            "table": "partidos", 
-                            "code": "code", 
-                            "desc": "acronym"
-                        }, 
-                        "elem": "partido"
-                    }
-                ], 
-                "name": "partido", 
-                "class": "o"
-            }, 
-            {
-                "prod": [
-                    {
-                        "source": {
-                            "filter": "provincia <> '' and municipio = '' and isla = ''", 
-                            "table": "localidades", 
-                            "code": "provincia", 
-                            "desc": "nombre"
-                        }, 
-                        "elem": "provincia"
-                    }
-                ], 
-                "name": "provincia", 
-                "class": "o"
-            }, 
-            {
-                "prod": [
-                    {
-                        "fmt": "t", 
-                        "enum_fmt": "n", 
-                        "elem": "partido", 
-                        "categories": [
-                            {
-                                "default": "otros"
-                            }, 
-                            {
-                                "values": [
-                                    "3316", 
-                                    "4688"
-                                ], 
-                                "result": "Derecha", 
-                                "condition": "in"
-                            }, 
-                            {
-                                "values": [
-                                    "1079", 
-                                    "4475"
-                                ], 
-                                "result": "Centro", 
-                                "condition": "in"
-                            }, 
-                            {
-                                "values": [
-                                    "3484"
-                                ], 
-                                "result": "Izquierda", 
-                                "condition": "in"
-                            }, 
-                            {
-                                "values": [
-                                    "3736", 
-                                    "5033", 
-                                    "4850", 
-                                    "5008", 
-                                    "5041", 
-                                    "2744", 
-                                    "5026"
-                                ], 
-                                "result": "Extrema Izquierda", 
-                                "condition": "in"
-                            }, 
-                            {
-                                "values": [
-                                    "5063", 
-                                    "4991", 
-                                    "1528"
-                                ], 
-                                "result": "Separatistas", 
-                                "condition": "in"
-                            }, 
-                            {
-                                "values": [
-                                    "1533", 
-                                    "4744", 
-                                    "4223"
-                                ], 
-                                "result": "Nacionalistas", 
-                                "condition": "in"
-                            }
-                        ]
-                    }
-                ], 
-                "name": "ideologia", 
-                "class": "c"
-            }, 
-            {
-                "prod": [
-                    {
-                        "source": {
-                            "filter": "provincia = ''", 
-                            "table": "localidades", 
-                            "code": "region", 
-                            "desc": "nombre"
-                        }, 
-                        "elem": "region", 
-                        "name": "region"
-                    }, 
-                    {
-                        "source": {
-                            "filter": "provincia <> '' and municipio = '' and isla = ''", 
-                            "table": "localidades", 
-                            "grouped by": "region", 
-                            "code": "provincia", 
-                            "desc": "nombre"
-                        }, 
-                        "elem": "provincia", 
-                        "name": "provincia"
-                    }
-                ], 
-                "name": "geo", 
-                "class": "h"
-            }, 
-            {
-                "prod": [
-                    {
-                        "source": {
-                            "filter": "provincia <> '' and municipio = '' and isla = ''", 
-                            "table": "localidades", 
-                            "code": "provincia", 
-                            "desc": "nombre"
-                        }, 
-                        "elem": "substr(municipio,1,2)", 
-                        "name": "provincia"
-                    }
-                ], 
-                "name": "provincial", 
-                "class": "o"
-            }, 
-            {
-                "prod": [
-                    {
-                        "source": {
-                            "filter": "tipo = 'P'", 
-                            "table": "geo", 
-                            "code": "codigo", 
-                            "desc": "nombre"
-                        }, 
-                        "name": "localidad", 
+                        "elem": "city_id", 
                         "related via": [
                             {
-                                "filter": "geo_rel.tipo_padre = 'P'", 
-                                "table": "geo_rel", 
+                                "filter": "", 
+                                "table": "sakila.address", 
                                 "clause": [
                                     {
-                                        "rel_elem": "hijo", 
-                                        "base_elem": "votos_locales.municipio"
+                                        "rel_elem": "sakila.city", 
+                                        "base_elem": "city_id"
                                     }
                                 ]
                             }
-                        ], 
-                        "elem": "geo_rel.padre"
-                    }
-                ], 
-                "name": "prov indirecto", 
-                "class": "o"
-            }, 
-            {
-                "prod": [
-                    {
-                        "fmt": "date", 
-                        "elem": "fakedate"
-                    }
-                ], 
-                "type": "Ymd", 
-                "name": "fecha", 
-                "class": "d"
-            }, 
-            {
-                "prod": [
-                    {
-                        "elem": "strftime('%Y',fakedate)", 
-                        "class": "o", 
-                        "name": "año"
+                        ]
                     }, 
                     {
-                        "case_sql": [
-                            "case", 
-                            "when strftime('%m',$$1) in ('01','02','03')  then strftime('%Y',$$1)||'\\:1'", 
-                            "when strftime('%m',$$1) in ('04','05','06')  then strftime('%Y',$$1)||'\\:2'", 
-                            "when strftime('%m',$$1) in ('07','08','09') then strftime('%Y',$$1)||'\\:3'", 
-                            "when strftime('%m',$$1) in ('10','11','12') then strftime('%Y',$$1)||'\\:4'", 
-                            "end as $$2"
-                        ], 
-                        "elem": "fakedate", 
-                        "class": "c", 
-                        "name": "trimestre"
+                        "source": {
+                            "filter": "", 
+                            "table": "sakila.address", 
+                            "code": "address_id", 
+                            "desc": [
+                                "address", 
+                                "address2", 
+                                "district", 
+                                "postal_code", 
+                                "phone"
+                            ]
+                        }, 
+                        "elem": "address_id"
                     }
                 ], 
-                "name": "cuatrimestre", 
-                "class": "h"
+                "name": "fk_customer_address->fk_address_city", 
+                "class": "o"
             }
         ]
     }

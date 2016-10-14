@@ -137,7 +137,217 @@ def browse0(base):
 
 from cubebrowse import *
 
+def info2cube(dataDict,confName,schema,table,maxlevel=1):
+    """
+       de monento solo sustituyo
+    """
+    #TODO strftime no vale para todos los gestores de base de datos
+    #pprint(dataDict)
+    info = getTable(dataDict,confName,schema,table,maxlevel)                
+    #pprint(info)
+    
+    #cubo = load_cubo()
+    cubo = dict()
+    cubo[table]=dict() # si hubiera algo ... requiescat in pace
+    entrada = cubo[table]
+    #entrada = dict()
+    entrada['base filter']=""
+    entrada['table'] = '{}.{}'.format(schema,table) if schema != "" else table
+    
+    entrada['connect']=dict()
+    conn = dataDict.getConnByName(confName).data().engine
+    
+    print('Conexion ',conn.url,conn.driver)
+    entrada['connect']["dbuser"] = None 
+    entrada['connect']["dbhost"] =  None
+    entrada['connect']["driver"] =  conn.driver
+    entrada['connect']["dbname"] =  str(conn.url) #"/home/werner/projects/dana-cube.git/ejemplo_dana.db"
+    entrada['connect']["dbpass"] =  None
+    
+    entrada['guides']=[]
+    entrada['fields']=[]
+    for fld in info['Fields']:
+        if fld[1] in ('numerico'):
+            entrada['fields'].append(fld[0])
+        elif fld[1] in ('fecha'):
+            entrada['guides'].append({'name':fld[0],
+                                      'class':'d',
+                                      'type':'Ymd',
+                                      'prod':[{'fmt':'date','elem':fld[0]},]
+                                      })  #no es completo
+            #TODO cambiar strftime por la funcion correspondiente en otro gestor 
+            entrada['guides'].append( genTrimestreCode(fld[0],conn.driver))
 
+        else:
+            entrada['guides'].append({'name':fld[0],
+                                      'class':'o',
+                                      'prod':[{'elem':fld[0],},]})  #no es completo
+        """
+                "prod": [
+                    {   "source": {
+                            "filter": "code in (select distinct partido from votos_provincia where votes_percent >= 3)", 
+                            "table": "partidos", 
+                            "code": "code", 
+                            "desc": "acronym"
+                        }, 
+
+                        "elem": "partido"
+                    }
+        """
+    if maxlevel == 0:
+        pass
+    elif maxlevel == 1:
+        for fk in info.get('FK',list()):
+            desc_fld = getDescList(fk)
+                
+            entrada['guides'].append({'name':fk['Name'],
+                                        'class':'o',
+                                        'prod':[{'source': {
+                                                "filter":"",
+                                                "table":fk['ParentTable'],
+                                                "code":fk['ParentField'],
+                                                "desc":desc_fld
+                                            },
+                                            'elem':fk['Field']},]
+                                            })  #no es completo
+    else:
+        routier = []
+        #path = ''
+        path_array = []
+        for fk in info.get('FK',list()):
+            constructFKsheet(fk,path_array,routier)
+            #constructFKsheet(fk,path,path_array,routier)
+        
+        for elem in routier:
+            nombres = [ item['Name'] for item in elem]
+            nombres.reverse()
+            nombre = '@'.join(nombres)
+            activo = elem[-1]
+            base   = elem[0]
+            rule =   {'source': {
+                                    "filter":"",
+                                    "table":activo['ParentTable'],
+                                    "code":activo['ParentField'],
+                                    "desc":getDescList(activo)
+                                },
+                         'elem':activo['Field']}   #?no lo tengo claro
+            if len(elem) > 1:
+                #aqui vienen los join
+                """select sum(film.film_id),category_id from film 
+                   join film_category on film.film_id = film_category.film_id
+                   group by category_id
+                   *
+                   "related via":[{
+                        "table": "geo_rel",
+                        "clause": [
+                            {
+                                "rel_elem":"hijo",
+                                "base_elem":"votos_locales.municipio"
+                            }
+                            ],
+                        "filter": "geo_rel.tipo_padre = 'P'"
+                        }
+                """
+                rule['related via']=list()
+                for idx in range(len(elem)-1):
+                    actor = elem[idx]
+                    join_clause = { "table":actor['ParentTable'],
+                                    "clause":[{"rel_elem":actor["ParentField"],"base_elem":actor['Field']},],
+                                    "filter":"" }
+                    rule['related via'].append(join_clause)
+                
+            entrada['guides'].append({'name':nombre,
+                                        'class':'o',
+                                        'prod':[rule ,]
+                                            })  #no es completo
+            #for idx,nivel in enumerate(elem):
+                #rule =  
+                #if idx != 0:
+                    #join = {"table": elem[idx -1]['ParentTable'],
+                            #"clause": [
+                                #{
+                                    #"rel_elem":nivel['ParentTable'],
+                                    #"base_elem":nivel['Field'],
+                                #}
+                                #],
+                            #"filter": "",
+                            #}
+                    #rule['related via']=[join,]
+                #prod_rules.insert(0,rule)
+            #activa['prod']=prod_rules
+            #if len(elem) > 1:
+                #break 
+    return cubo
+
+#def constructFKsheet(elemento,path, path_array,routier):
+def constructFKsheet(elemento, path_array,routier):    
+    #kpath = path+'.'+elemento['Name']
+    path_array_local = path_array[:]
+    path_array_local.append(elemento)
+    #if 'FK' not in elemento:
+    #print(kpath)
+    routier.append(path_array_local)
+    for fkr in elemento.get('FK',list()):
+        constructFKsheet(fkr,path_array_local,routier)
+        #constructFKsheet(fkr,kpath, path_array_local,routier)
+        
+def getDescList(fk):
+    desc_fld = []
+    for fld in fk['CamposReferencia']:
+        if fld[1] == 'texto':
+            desc_fld.append(fld[0])
+    if len(desc_fld) == 0:
+        #print('No proceso correctamente por falta de texto',fk)
+        desc_fld = fk['ParentField']
+#            continue
+    return desc_fld
+
+DEBUG = True
+TRACE=True
+DELIMITER=':'
+
+from util.record_functions import *
+from util.tree import *
+
+from datalayer.access_layer import *
+from datalayer.query_constructor import *
+
+from util.fivenumbers import stats
+
+from datemgr import getDateIndex,getDateEntry
+from pprint import *
+
+from core import Cubo
+from VistaSkel import VistaSkel
+
+import time
+
+def experimento():
+    from util.jsonmgr import load_cubo
+    def presenta(vista):
+        guia=vista.row_hdr_idx
+        ind = 0
+        for key in guia.traverse(mode=1):
+            elem = guia[key]
+            print (ind,key,elem.ord,elem.desc,elem.parentItem.key)
+            ind += 1
+    vista = None
+    mis_cubos = load_cubo('experimento.json')
+    cubo = Cubo(mis_cubos['customer'])
+    #pprint(cubo.definition)
+    #pprint(cubo.definition)
+    #pprint(cubo.lista_funciones)
+    #pprint(cubo.lista_campos)
+    #pprint(cubo.lista_guias[6])
+    for ind,guia in enumerate(cubo.lista_guias):
+        print(ind,guia['name'])
+    #cubo.fillGuias()
+    #ind= 5
+    #cubo.fillGuia(ind)
+    #cubo.lista_guias[ind]['dir_row'].display()
+    for k in range(len(cubo.lista_guias)):
+        vista=VistaSkel(cubo,k,0,'sum','customer_id')
+        print('\n\n\n')
 
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
@@ -145,6 +355,13 @@ if __name__ == '__main__':
     reload(sys)
     sys.setdefaultencoding('utf-8')    
     app = QApplication(sys.argv)
+    dataDict=DataDict(conn='MariaBD Local',schema='sakila')
+    cubo = info2cube(dataDict,'MariaBD Local','sakila','customer',3)   
+    pprint(cubo)
+    dump_structure(cubo,'experimento.json')
+    experimento()
+    exit()
+
     #window = TableBrowserWin('MariaBD Local','sakila','film',pdataDict=None)
     #dataDict=DataDict()
     #window = TableBrowserWin('MariaBD Local','sakila','film',pdataDict=dataDict)
@@ -156,17 +373,19 @@ if __name__ == '__main__':
     dataDict=DataDict()
     #dataDict=DataDict(conn='MariaBD Local',schema='sakila')
     #dataDict=DataDict(conn='Pagila',schema='public')
-    #for entry in traverse(dataDict.hiddenRoot):
-        #tabs = '\t'*entry.depth()
-        #if not entry.isAuxiliar():
-            #print(entry.getFullDesc(), entry.getRow(),entry.gpi()) #(tabs,entry) #entry.text(),'\t',entry.getRow())
+    for entry in traverse(dataDict.hiddenRoot):
+        tabs = '\t'*entry.depth()
+        if not entry.isAuxiliar():
+            print(entry.fqn(),entry.getFullDesc(), entry.getRow(),entry.gpi()) #(tabs,entry) #entry.text(),'\t',entry.getRow())
     #browse(dataDict.hiddenRoot)
     #browseTables(dataDict.hiddenRoot)
     #browse0(dataDict.hiddenRoot)
     #info = getTable(dataDict,'MariaBD Local','sakila','rental')            
     #info = getTable(dataDict,'MariaBD Local','sakila','film')            
-    #cubo = info2cube(dataDict,'MariaBD Local','sakila','rental')            
-    info2cube(dataDict,'Pagila','public','rental')            
+    #cubo = info2cube(dataDict,'MariaBD Local','sakila','customer',2)   
+    #pprint(cubo)
+    #dump_structure(cubo,'experimento.json')
+    #info2cube(dataDict,'Pagila','public','rental')            
     #pprint(info)
     #pprint(cubo)
     #cursor = localQuery(dataDict.conn['MariaBD Local'],info,1)

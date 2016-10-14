@@ -176,6 +176,21 @@ class BaseTreeItem(QStandardItem):
             item = item.parent()
         return item
 
+    def fqn(self):
+        if isinstance(self,TableTreeItem):
+            # aparentemente sqlite funciona con main como esquema o sin
+            schema = self.getSchema().text()
+            return '.'.join((schema,self.text(),))
+        elif isinstance(self,BaseTreeItem):
+            tabfqn = self.getTable()
+            if tabfqn:
+                return '.'.join((tabfqn.fqn(),self.text(),))
+            else:
+                return self.text()
+        else:
+            return self.text()
+
+            
     def getColumnData(self,column,role=None):
         indice = self.index() #self.model().indexFromItem(field)
         colind = indice.sibling(indice.row(),column)
@@ -370,7 +385,7 @@ class TableTreeItem(BaseTreeItem):
         BaseTreeItem.__init__(self, name)
         #FIXME no podemos poner el icono de momento
         self.setIcon(QIcon("icons/16/database_table"))
-        
+                
     def refresh(self):
         self.deleteChildren()
         self.appendRow(BaseTreeItem('FIELDS'))
@@ -421,9 +436,11 @@ class TableTreeItem(BaseTreeItem):
             else:
                 for field in item.listChildren():
                     if simple:
-                        lista.append(field.text())
+                        lista.append(field.fqn())
                     else:
-                        lista.append(field.getRow())
+                        struct = field.getRow()
+                        struct[0] = field.fqn()
+                        lista.append(struct)
                 break
         return lista
 
@@ -461,7 +478,7 @@ class TableTreeItem(BaseTreeItem):
            Convertir esta rutina solo en backref
         """
         esquema = self.getSchema() 
-        nomEsquema = esquema.text()
+        nomEsquema = esquema.fqn()
         InfoFKR = []
         FKRs = self.getFKref(False)
         if FKRs and len(FKRs) > 0:
@@ -497,10 +514,11 @@ class TableTreeItem(BaseTreeItem):
     def _getFkInfo(self,asociacion,esquema,nomEsquema,maxlevel,iter=0):
         kiter = iter + 1
         RefInfo = dict()
+        #FIXME ver si puede utilizarse nomenclatura fqn() aquí
         RefInfo['Name'] = asociacion[0]
         RefInfo['ParentTable']=asociacion[1]
-        RefInfo['Field'] = asociacion[2] # campo en la tabla que nos ocupa
-        RefInfo['ParentField'] = asociacion[3]
+        RefInfo['Field'] = '{}.{}'.format(self.fqn(),asociacion[2]) # campo en la tabla que nos ocupa
+        RefInfo['ParentField'] = '{}.{}'.format(asociacion[1],asociacion[3])
         esqReferred = esquema
         qualName = asociacion[1].split('.')
         if len(qualName) == 1 :
@@ -545,7 +563,7 @@ class TableTreeItem(BaseTreeItem):
         TableInfo = dict()
         esquema = self.getSchema()
         TableInfo['schemaName'] = nomEsquema = esquema.text()
-        TableInfo['tableName'] = self.text()
+        TableInfo['tableName'] = self.fqn()
         TableInfo['Fields']= self.getFields()
         if maxlevel > 0:
             FKs = self.getFK(False)
@@ -557,7 +575,7 @@ class TableTreeItem(BaseTreeItem):
             for idx,asociacion in enumerate(FKs):
                 refInfo = self._getFkInfo(asociacion,esquema,nomEsquema,maxlevel)
                 TableInfo['FK'].append(refInfo)   
-    
+        
         return TableInfo
 
     #def getConnectionItem(self):
