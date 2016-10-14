@@ -810,15 +810,11 @@ def editTableElem(exec_object,obj,valor,refTable=None):
     #print(FQtablaArray,connURL)
     actConn = connMatch(exec_object.dataDict,connURL)
     if actConn:
-        #FIXME es un chapu brutal
-        #if actConn.data().engine.driver == 'pysqlite':
-            ##CHECK creo que el primer parche es inncesario
-            #tableItem = actConn.findElement('main',FQtablaArray[2])
-        #else:
         tableItem = actConn.findElement(FQtablaArray[1],FQtablaArray[2])
         if tableItem:
             fieldIdx = childByName(tableItem,'FIELDS')
-            array = getDataList(fieldIdx,0)
+            #array = getDataList(fieldIdx,0)
+            array = [ (item.fqn(),item.text(),)  for item in fieldIdx.listChildren() ]
             editaCombo(obj,array,valor)
         else:
             print(connURL,'ESTA DISPONIBLE y el fichero NOOOOOR')
@@ -904,7 +900,6 @@ def getContextMenu(obj,action,exec_object=None):
                 pai = obj.parent()
                 if pai.type() == 'vista':
                     cubeItem = pai.getBrotherByName('cubo')
-                    print (pai.text(),cubeItem.text(),cubeItem.getColumnData(1))
                     cubo = childByName(exec_object.hiddenRoot,cubeItem.getColumnData(1))
                     guidemaster = childByName(cubo,'fields')
                     array = getDataList(guidemaster,1) 
@@ -914,16 +909,12 @@ def getContextMenu(obj,action,exec_object=None):
                 #Acepto cualquier tabla en la conexion actual, no necesariamente el esquema
                 FQtablaArray,connURL = getCubeTarget(obj)
                 actConn = connMatch(exec_object.dataDict,connURL)
-                if actConn.data().engine.driver == 'pysqlite':
-                    templateTxt = '{1}'
-                else:
-                    templateTxt = '{0}.{1}'
                 if actConn:
                     array = []
                     for sch in childItems(actConn):
                         schema = sch.text()
                         for tab in childItems(sch):
-                            array.append(templateTxt.format(schema,tab.text()))
+                            array.append(tab.fqn())
                             
                     editaCombo(obj,array,valor)        
                 else:
@@ -992,7 +983,7 @@ def getContextMenu(obj,action,exec_object=None):
 class CubeBrowserWin(QMainWindow):
     def __init__(self,confName,schema,table,pdataDict=None):
         super(CubeBrowserWin, self).__init__()
-        self.configFile = 'experimento.json'
+        self.configFile = 'cuboSqliteOrig.json'
         #Leeo la configuracion
         #TODO variables asociadas del diccionario. Reevaluar al limpiar
 
@@ -1015,7 +1006,8 @@ class CubeBrowserWin(QMainWindow):
         if type(pdataDict) is DataDict:
             self.dataDict = pself.dataDict
         else:
-            self.dataDict=DataDict(conn=confName,schema=schema)
+            self.dataDict = DataDict()
+            #self.dataDict=DataDict(conn=confName,schema=schema)
         infox = info2cube(self.dataDict,confName,schema,table)
         #TODO convertir eso en una variable
         info = load_cubo(self.configFile)
