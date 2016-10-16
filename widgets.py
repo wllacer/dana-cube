@@ -35,7 +35,6 @@ class WPowerTable(QTableWidget):
             listVals = colDef[2]
         else:
             listVals = None
-            
         editItem = None
         if type is None or type == QLineEdit:
             editItem = QLineEdit()
@@ -200,21 +199,17 @@ class WPropertySheet(WPowerTable):
         
         rows=len(context)
         cols=1
-
         super(WPropertySheet, self).__init__(rows,cols,parent)
         # cargando parametros de defecto
         self.context = context
-        
         cabeceras = [ k[0] for k in self.context ]
         for k in range(len(self.context)):
             self.addCell(k,0,context[k][1:],data[k])
-
         self.setVerticalHeaderLabels(cabeceras)
         
 
         self.resizeRowsToContents()
         self.horizontalHeader().setStretchLastSection(True)
-    
     def values(self,col=0):
         """
            devuelve los valores actuales para la columna

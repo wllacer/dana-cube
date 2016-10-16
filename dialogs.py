@@ -41,7 +41,6 @@ class propertySheetDlg(QDialog):
         InicioLabel = QLabel(title)
         #
         self.sheet=WPropertySheet(context,data)
-
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel,
                                      Qt.Horizontal)
 
@@ -77,7 +76,6 @@ class propertySheetDlg(QDialog):
 
 from util.fechas import *
 class dateFilterDlg(QDialog):
-
     def __init__(self,vista=None,datos=None,parent=None):   
         """
           This is exploratory parameters are at will
@@ -371,7 +369,6 @@ class ZoomDlg(QDialog):
         buttonBox.rejected.connect(self.reject)
 
 class NumberFormatDlg(QDialog):
-
     def __init__(self, format, callback, parent=None):
         super(NumberFormatDlg, self).__init__(parent)
 
@@ -379,7 +376,7 @@ class NumberFormatDlg(QDialog):
         
         self.context=[]
         """
-context[0] titulos de las filas
+           context[0] titulos de las filas
            context[1] widget a utilizar (defecto QLineEdit)
            context[2] llamadas de configuracion del widget
            context[3] signal,slots (me temo que a mano)

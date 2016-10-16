@@ -118,6 +118,7 @@ def getCursor(db, sql_string,funcion=None,**kwargs):
         exit(-1)
     
 def dbDict2Url(conDict):
+    pprint(conDict)
     driver = driver2Alch(conDict['driver'])
     if 'debug' in conDict:
         debug=conDict['debug']
