@@ -29,6 +29,7 @@ from widgets import WPropertySheet
 from dictTree import *
 from datadict import *
 from tablebrowse import *
+from cubebrowse import info2cube
 
 def waiting_effects(function):
     """
@@ -49,115 +50,6 @@ def waiting_effects(function):
             QApplication.restoreOverrideCursor()
     return new_function
 
-def setContextMenu(obj,menu):
-    if type(obj) == ConnectionTreeItem:
-        obj.menuActions = []
-        obj.menuActions.append(menu.addAction("Refresh"))
-        obj.menuActions.append(menu.addAction("Edit ..."))
-        obj.menuActions.append(menu.addAction("Delete"))
-        if obj.isOpen():
-            obj.menuActions.append(menu.addAction("Disconnect"))
-        else:
-            obj.menuActions.append(menu.addAction("Connect"))
-
-
-    elif type(obj) == SchemaTreeItem :
-        obj.menuActions = []
-        obj.menuActions.append(menu.addAction("Refresh"))
-
-
-    elif type(obj) == TableTreeItem :
-        obj.menuActions = []
-        obj.menuActions.append(menu.addAction("Refresh"))
-        obj.menuActions.append(menu.addAction("Properties ..."))
-        obj.menuActions.append(menu.addAction("Browse Data"))
-        obj.menuActions.append(menu.addAction("Browse Data with Foreign Key"))
-        obj.menuActions.append(menu.addAction("Browse Data with Foreign Key Recursive"))
-        obj.menuActions.append(menu.addAction("Generate Cube"))
-
-    elif type(obj) == BaseTreeItem :
-        if obj.text() in ('FK','FK_REFERENCE'):
-            obj.menuActions = []
-            obj.menuActions.append(menu.addAction("Go to reverse FK"))
-            obj.menuActions.append(menu.addAction("Set descriptive fields"))
-        else:
-            obj.menuActions = []
-            obj.menuActions.append(menu.addAction("Set as descriptive field"))
-
-def getContextMenu(obj,action,exec_object=None):
-    if action is None:
-        return
-    if type(obj) == ConnectionTreeItem:
- 
-        ind = obj.menuActions.index(action)
-                    
-        if ind == 0:
-            obj.model().beginResetModel()
-            obj.refresh()
-            obj.model().endResetModel()
-        if ind == 1 :
-            exec_object.modConnection(obj.text())
-            pass  # edit item, save config, refresh tree
-        elif ind == 2:
-            exec_object.delConnection(obj.text())
-            pass  # close connection, delete tree, delete config
-        elif ind == 3:
-            if obj.isOpen():
-                obj.data().close()
-                obj.model().beginResetModel()
-                obj.deleteChildren()
-                obj.setIcon(QIcon('icons/16/database_lightning.png'))
-                obj.setData(None)
-                obj.model().endResetModel()
-            else:
-                exec_object.updateModel(obj.text())
-                #obj.model().updateModel(obj.text())
-    elif type(obj) == SchemaTreeItem :
- 
-        ind = obj.menuActions.index(action)
-
-        if ind == 0 :
-            obj.model().beginResetModel()
-            obj.refresh()
-            obj.model().endResetModel()
-
-    elif type(obj) == TableTreeItem :
- 
-        ind = obj.menuActions.index(action)
-        if ind == 0 :
-            obj.model().beginResetModel()
-            obj.refresh()
-            obj.model().endResetModel()
-        # show properties sheet
-        elif ind == 1:
-            obj.queryModel().beginResetModel()
-            obj.refresh()
-            obj.queryModel().endResetModel()
-
-        elif ind in (2,3,4):
-            if ind == 2:
-                niters = 0
-            elif ind == 3:
-                niters = 1
-            elif ind == 4:
-                #TODO consulta FK recursivas
-                niters = 3 #de momento NO
-            
-            conn,schema,table=obj.getFullDesc().split('.')
-            exec_object.databrowse(conn,schema,table,iters=niters)
-        elif ind == 5:
-            pass # generate cube
-
-    elif type(obj) == BaseTreeItem :
- 
-        ind = obj.menuActions.index(action)
-        if obj.text() in ('FK','FK_REFERENCE'):
-            if ind == 0 :
-                pass # get element with same name, selecte that item
-            elif ind == 1:
-                pass # select field from referred table
-        else:
-            obj.setDescriptive()
 
 class SelectConnectionDlg(QDialog):
     def __init__(self,configDict,parent=None):
@@ -498,9 +390,10 @@ class MainWindow(QMainWindow):
             index = indexes[0]
             item = self.model.itemFromIndex(index)
         menu = QMenu()
-        setContextMenu(item,menu)        
+        #setContextMenu(item,menu,self)        
+        item.setMenuActions(menu,self)
         action = menu.exec_(self.view.viewport().mapToGlobal(position))
-        getContextMenu(item,action,self)
+        #getContextMenu(item,action,self)
   
     @waiting_effects
     def databrowse(self,confName,schema,table,iters=0):
@@ -540,7 +433,10 @@ class MainWindow(QMainWindow):
         if self.querySplitter.count() == 1:  #de momento parece un modo sencillo de no multiplicar en exceso
             self.querySplitter.addWidget(self.queryView)
         
-            
+    @waiting_effects
+    def cubebrowse(self,confName,schema,table):
+        infox = info2cube(self.dictionary,confName,schema,table)
+    
         
     def test(self,index):
         return

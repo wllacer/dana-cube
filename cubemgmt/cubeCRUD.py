@@ -9,6 +9,8 @@ from cubemgmt.cubetree  import *
 from cubemgmt.cubeTypes import *
 from cubemgmt.cubeutil  import *
 
+
+    
 def editTableElem(exec_object,obj,valor,refTable=None):
     #TODO determinar que es lo que necesito hacer cuando no esta disponible
     #TODO  Unificar con la de abajo
@@ -194,37 +196,45 @@ def addDefault(obj,exec_object):
         dato =parmDialog_d.sheet.cellWidget(4,0).currentText()
         vista.appendRow((CubeItem(str('elemento')),CubeItem(str(dato)),CubeItem(str('elemento')),))
     
-def setContextMenu(obj,menu):
+def setContextMenu(obj,menu,exec_object=None):
     tipo = obj.type()
     jerarquia = obj.typeHierarchy()
 
     obj.menuActions = []
-    obj.menuActions.append(menu.addAction("Add ..."))
+    obj.menuActions.append(menu.addAction("Add ",lambda:execAction(exec_object,obj,"add")))
+    obj.menuActions.append(menu.addAction("Edit ",lambda :execAction(exec_object,obj,"edit")))
+    obj.menuActions.append(menu.addAction("Delete ",lambda: execAction(exec_object,obj,"delete")))
+    obj.menuActions.append(menu.addAction("Copy ",lambda: execAction(exec_object,obj,"copy")))
+    obj.menuActions.append(menu.addAction("Rename ",lambda: execAction(exec_object,obj,"rename")))
+    obj.menuActions.append(menu.addAction("Refresh ",lambda: execAction(exec_object,obj,"refresh")))
+    
     if tipo in NO_ADD_LIST:
-        obj.menuActions[-1].setEnabled(False)
-    obj.menuActions.append(menu.addAction("Edit ..."))
+        obj.menuActions[0].setEnabled(False)
+
+
     if tipo not in   ( FREE_FORM_ITEMS | DYNAMIC_COMBO_ITEMS ) and tipo not in STATIC_COMBO_ITEMS  :
-        obj.menuActions[-1].setEnabled(False)
+        obj.menuActions[1].setEnabled(False)
     if tipo in ('fields','case_sql') and obj.text() == tipo and obj.hasChildren():
-        obj.menuActions[-1].setEnabled(False)
+        obj.menuActions[1].setEnabled(False)
         
-    obj.menuActions.append(menu.addAction("Delete"))
     if tipo in NO_ADD_LIST:
-        obj.menuActions[-1].setEnabled(False)
+        obj.menuActions[2].setEnabled(False)
     #elif tipo in TYPE_LIST_DICT and obj.text() == tipo:
         #obj.menuActions[-1].setEnabled(False)
-    obj.menuActions.append(menu.addAction("Copy ..."))
-    obj.menuActions[-1].setEnabled(False)
-    obj.menuActions.append(menu.addAction("Rename"))
+
+    obj.menuActions[3].setEnabled(False)
+
     if obj.text() in ITEM_TYPE or obj.text() == "":
-        obj.menuActions[-1].setEnabled(False)
-    obj.menuActions.append(menu.addAction("Refresh"))            
+        obj.menuActions[4].setEnabled(False)
+
     if tipo in COMPLEX_TYPES :
-        obj.menuActions[-1].setEnabled(True)
+        obj.menuActions[5].setEnabled(True)
     else:
         obj.menuActions[-1].setEnabled(False)
 
-def getContextMenu(obj,action,exec_object=None):
+
+    
+def execAction(exec_object,obj,action):
     #TODO listas editables en casi todos los elementos
     if action is None:
         return
@@ -233,9 +243,8 @@ def getContextMenu(obj,action,exec_object=None):
     tipo = obj.type()
     jerarquia = obj.typeHierarchy()
     
-    ind = obj.menuActions.index(action)
     modelo.beginResetModel()
-    if ind == 0:
+    if action ==  'add' :
         print('Add by',obj)
         """
         FREE_FORM_ITEMS = set([
@@ -339,7 +348,7 @@ def getContextMenu(obj,action,exec_object=None):
         else:
             print('Se escapa',obj,tipo)
         pass  # edit item, save config, refresh tree
-    elif ind == 1 :
+    elif action == 'edit':
         if tipo in   ( FREE_FORM_ITEMS | DYNAMIC_COMBO_ITEMS ) or tipo in STATIC_COMBO_ITEMS  :
             valor = obj.getColumnData(1)
             result = atomicEditAction(obj,valor,exec_object)
@@ -348,13 +357,13 @@ def getContextMenu(obj,action,exec_object=None):
         else:
             print('Se escapa',obj,tipo)
         pass  # edit item, save config, refresh tree
-    elif ind == 2:
+    elif action == 'delete' :
         obj.suicide()
         pass  # close connection, delete tree, delete config
-    elif ind == 3:
+    elif action == 'copy':
         print('copy ',obj)
         pass
-    elif ind == 4:
+    elif action == 'rename':
         print('rename',obj)
         text = QInputDialog.getText(None, "Renombrar el nodo :"+obj.text(),"Nodo", QLineEdit.Normal,obj.text())
         obj.setData(text[0],Qt.EditRole)
@@ -364,11 +373,13 @@ def getContextMenu(obj,action,exec_object=None):
                 item.setColumnData(1,text[0],Qt.EditRole)
                 break
                 
-    elif ind == 5:
+    elif action == 'refresh':
         print('refresh',obj)
         pass
+    else:
+        print('Action ',action,' desconocida')
+        pass
     modelo.endResetModel()
-    
  
 
 

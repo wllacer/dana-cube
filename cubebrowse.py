@@ -38,7 +38,6 @@ from cubemgmt.cubeCRUD  import *
 
 (_ROOT, _DEPTH, _BREADTH) = range(3)
 
-from cubeTypes import *
 """
    cubo --> lista de cubos
    col,row
@@ -214,9 +213,9 @@ class CubeBrowserWin(QMainWindow):
             index = indexes[0]
             item = self.model.itemFromIndex(index)
         menu = QMenu()
-        setContextMenu(item,menu)        
+        setContextMenu(item,menu,self)        
         action = menu.exec_(self.view.viewport().mapToGlobal(position))
-        getContextMenu(item,action,self)
+        # getContextMenu(item,action,self)
         
     def test(self):
         return

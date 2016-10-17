@@ -235,6 +235,26 @@ class BaseTreeItem(QStandardItem):
     def __repr__(self):
         return "<" + self.getTypeText() + " " + self.text() + ">"
 
+    def setMenuActions(self,menu,context):  
+        if self.isAuxiliar():
+            return
+        else:
+            pai = self.parent() # que debe ser auxiliar
+        self.menuActions = []
+        if pai.text() in  ('FK','FK_REFERENCE'):
+            self.menuActions.append(menu.addAction("Go to reverse FK",lambda:self.execAction(context,"reverse")))
+            self.menuActions.append(menu.addAction("Set descriptive fields",lambda:self.execAction(context,"descset")))
+        elif pai.text() == 'FIELDS':
+            self.menuActions.append(menu.addAction("Set as descriptive field",lambda:self.execAction(context,"desc")))
+        for entrada in self.menuActions:
+            entrada.setEnabled(False)
+        
+    def execAction(self,context,action):
+        if action in ('reverse','descset'):
+            pass
+        else:
+            self.setDescriptive()
+
     
 class ConnectionTreeItem(BaseTreeItem):
     def __init__(self, name,connection=None):
@@ -358,8 +378,40 @@ class ConnectionTreeItem(BaseTreeItem):
             #TODO deberia verificar que de verdad lo esta
             return True
         
-          
+    def setMenuActions(self,menu,context):      
+        self.menuActions = []
+        self.menuActions.append(menu.addAction("Refresh",lambda:self.execAction(context,"refresh")))
+        self.menuActions.append(menu.addAction("Edit ...",lambda:self.execAction(context,"edit")))
+        self.menuActions.append(menu.addAction("Delete",lambda:self.execAction(context,"delete")))
+        if self.isOpen():
+            self.menuActions.append(menu.addAction("Disconnect",lambda:self.execAction(context,"switch")))
+        else:
+            self.menuActions.append(menu.addAction("Connect",lambda:self.execAction(context,"switch")))
 
+    def execAction(self,context,action):
+        
+        if action == "refresh" :
+            self.model().beginResetModel()
+            self.refresh()
+            self.model().endResetModel()
+        if action == "edit" :
+            context.modConnection(self.text())
+            pass  # edit item, save config, refresh tree
+        elif action == "delete":
+            context.delConnection(self.text())
+            pass  # close connection, delete tree, delete config
+        elif action == "switch":
+            if self.isOpen():
+                self.model().beginResetModel()
+                self.data().close()
+                self.deleteChildren()
+                self.setIcon(QIcon('icons/16/database_lightning.png'))
+                self.setData(None)
+                self.model().endResetModel()
+            else:
+                context.updateModel(self.text())
+                #self.model().updateModel(self.text())
+        
 class SchemaTreeItem(BaseTreeItem):
     def __init__(self, name):
         BaseTreeItem.__init__(self, name)
@@ -379,6 +431,15 @@ class SchemaTreeItem(BaseTreeItem):
             curTable.refresh()
         # fk reference
        
+    def setMenuActions(self,menu,context):      
+        self.menuActions = []
+        self.menuActions.append(menu.addAction("Refresh",lambda:self.execAction(context,"refresh")))
+
+    def execAction(self,context,action):
+        if action == "refresh" :
+            self.model().beginResetModel()
+            self.refresh()
+            self.model().endResetModel()
 
 class TableTreeItem(BaseTreeItem):
     def __init__(self, name):
@@ -577,6 +638,43 @@ class TableTreeItem(BaseTreeItem):
                 TableInfo['FK'].append(refInfo)   
         
         return TableInfo
+
+    def setMenuActions(self,menu,context):      
+        self.menuActions = []
+        
+        self.menuActions.append(menu.addAction("Refresh",lambda:self.execAction(context,"refresh")))
+        self.menuActions.append(menu.addAction("Properties",lambda:self.execAction(context,"properties")))
+        self.menuActions[-1].setEnabled(False)
+        self.menuActions.append(menu.addAction("Browse Data",lambda:self.execAction(context,"browse")))
+        self.menuActions.append(menu.addAction("Browse Data with Foreign Key",lambda:self.execAction(context,"browseFK")))
+        self.menuActions.append(menu.addAction("Browse Data with Foreign Key recursive",lambda:self.execAction(context,"browseFKR")))
+        self.menuActions[-1].setEnabled(False)
+        self.menuActions.append(menu.addAction("Generate Cube",lambda:self.execAction(context,"generate")))
+        
+        
+    def execAction(self,context,action):
+        
+        if action == 'refresh' :
+            self.model().beginResetModel()
+            self.refresh()
+            self.model().endResetModel()
+        # show properties sheet
+        elif action == 'properties':
+            pass
+        elif 'browse' in action:
+            conn,schema,table=self.getFullDesc().split('.')
+            if action == 'browse':
+                niters = 0 #de momento NO
+            elif action == 'browseFK':
+                niters = 1
+            elif action == 'browseFKR':
+                niters = 3 #de momento NO
+            context.databrowse(conn,schema,table,iters=niters)
+            
+        elif action == 'generate':
+            conn,schema,table=self.getFullDesc().split('.')
+            context.cubebrowse(conn,schema,table)
+            pass # generate cube
 
     #def getConnectionItem(self):
         #item = self
