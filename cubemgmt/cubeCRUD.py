@@ -123,7 +123,7 @@ def atomicEditAction(obj,valor,exec_object):
 
         elif tipo in ('rel_elem'):
             pai = obj.parent()
-            while pai.type() and pai.type() != 'related via':
+            while pai.type() and pai.type() != 'link via':
                 pai = pai.parent()
             refTable  = childByName(pai,'table')
             
@@ -311,14 +311,14 @@ def execAction(exec_object,obj,action):
 
             pass
         #elif tipo == 'fields'  no porque lo definimos como elemento libre
-        elif tipo == 'guides':
+        elif tipo in ('guides','prod',:
             print(tipo,obj.text(),obj.getRow())
             # aqui el proceso del objeto
             if obj.text() != tipo:
                 #add a new array entry
                 idx = obj.index()
                 pai = obj.parent()
-             else:
+            else:
                 pai = obj
             #pai.insertRow(idx.row()+1,(CubeItem(None),CubeItem(str(result)),CubeItem(tipo)))            
         elif tipo in   ( FREE_FORM_ITEMS | DYNAMIC_COMBO_ITEMS ) or tipo in STATIC_COMBO_ITEMS  :

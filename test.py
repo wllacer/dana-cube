@@ -237,7 +237,7 @@ def info2cube(dataDict,confName,schema,table,maxlevel=1):
                    join film_category on film.film_id = film_category.film_id
                    group by category_id
                    *
-                   "related via":[{
+                   "link via":[{
                         "table": "geo_rel",
                         "clause": [
                             {
@@ -248,13 +248,13 @@ def info2cube(dataDict,confName,schema,table,maxlevel=1):
                         "filter": "geo_rel.tipo_padre = 'P'"
                         }
                 """
-                rule['related via']=list()
+                rule['link via']=list()
                 for idx in range(len(elem)-1):
                     actor = elem[idx]
                     join_clause = { "table":actor['ParentTable'],
                                     "clause":[{"rel_elem":actor["ParentField"],"base_elem":actor['Field']},],
                                     "filter":"" }
-                    rule['related via'].append(join_clause)
+                    rule['link via'].append(join_clause)
                 
             entrada['guides'].append({'name':nombre,
                                         'class':'o',
@@ -272,7 +272,7 @@ def info2cube(dataDict,confName,schema,table,maxlevel=1):
                                 #],
                             #"filter": "",
                             #}
-                    #rule['related via']=[join,]
+                    #rule['link via']=[join,]
                 #prod_rules.insert(0,rule)
             #activa['prod']=prod_rules
             #if len(elem) > 1:
@@ -405,7 +405,7 @@ FROM votos_locales
      JOIN geo_rel ON geo_rel.hijo = votos_locales.municipio AND geo_rel.tipo_padre = 'P'  
      GROUP BY geo_rel.padre, partido  
      
-"related via":[{
+"link via":[{
     "table": "geo_rel",
     "clause": [
         {

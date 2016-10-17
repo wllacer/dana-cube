@@ -462,7 +462,7 @@ def main():
         u'pos',
         u'prod',
         u'rel_elem',
-        u'related via',
+        u'link via',
         u'result',
         u'row',
         u'domain',

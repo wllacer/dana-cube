@@ -41,7 +41,7 @@ ITEM_TYPE = set([
      u'pos',
      u'prod',
      u'rel_elem',
-     u'related via',
+     u'link via',
      u'result',
      u'row',
      u'domain',
@@ -70,7 +70,7 @@ TYPE_LIST_DICT = set([
      'clause',
      'guides',
      'prod',
-     'related via'])
+     'link via'])
 
 COMPLEX_TYPES = TYPE_DICT | TYPE_LIST | TYPE_LIST_DICT
 

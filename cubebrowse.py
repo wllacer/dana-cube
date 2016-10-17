@@ -125,13 +125,13 @@ def info2cube(dataDict,confName,schema,table,maxlevel=1):
                                 },
                          'elem':activo['Field']}   #?no lo tengo claro
             if len(elem) > 1:
-                rule['related via']=list()
+                rule['link via']=list()
                 for idx in range(len(elem)-1):
                     actor = elem[idx]
                     join_clause = { "table":actor['ParentTable'],
                                     "clause":[{"rel_elem":actor["ParentField"],"base_elem":actor['Field']},],
                                     "filter":"" }
-                    rule['related via'].append(join_clause)
+                    rule['link via'].append(join_clause)
                 
             entrada['guides'].append({'name':nombre,
                                         'class':'o',

@@ -333,8 +333,8 @@ class Cubo:
                                                     'elem':guia['elem'][:],
                                                     'name':nombre,
                                                     'class':clase})
-                if 'related via' in componente:
-                    guia['rules'][-1]['join']=componente['related via']
+                if 'link via' in componente:
+                    guia['rules'][-1]['join']=componente['link via']
                 if 'fmt' in componente:
                     guia['rules'][-1]['fmt']=componente['fmt']
                 

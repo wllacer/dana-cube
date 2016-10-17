@@ -146,7 +146,7 @@
                             ]
                         }, 
                         "elem": "city_id", 
-                        "related via": [
+                        "link via": [
                             {
                                 "filter": "", 
                                 "table": "sakila.address", 
