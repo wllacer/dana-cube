@@ -44,7 +44,7 @@ ITEM_TYPE = set([
      u'related via',
      u'result',
      u'row',
-     u'source',
+     u'domain',
      u'table',
      u'type',
      u'values',
@@ -54,7 +54,7 @@ TYPE_DICT = set([u'base',
      u'default_base',
      'connect',
      u'default_start',
-     'source',
+     'domain',
      'vista'])
 
 TYPE_LIST = set(['case_sql',

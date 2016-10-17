@@ -184,7 +184,7 @@ def info2cube(dataDict,confName,schema,table,maxlevel=1):
                                       'prod':[{'elem':fld[0],},]})  #no es completo
         """
                 "prod": [
-                    {   "source": {
+                    {   "domain": {
                             "filter": "code in (select distinct partido from votos_provincia where votes_percent >= 3)", 
                             "table": "partidos", 
                             "code": "code", 
@@ -202,7 +202,7 @@ def info2cube(dataDict,confName,schema,table,maxlevel=1):
                 
             entrada['guides'].append({'name':fk['Name'],
                                         'class':'o',
-                                        'prod':[{'source': {
+                                        'prod':[{'domain': {
                                                 "filter":"",
                                                 "table":fk['ParentTable'],
                                                 "code":fk['ParentField'],
@@ -224,7 +224,7 @@ def info2cube(dataDict,confName,schema,table,maxlevel=1):
             nombre = '@'.join(nombres)
             activo = elem[-1]
             base   = elem[0]
-            rule =   {'source': {
+            rule =   {'domain': {
                                     "filter":"",
                                     "table":activo['ParentTable'],
                                     "code":activo['ParentField'],

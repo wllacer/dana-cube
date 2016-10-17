@@ -36,38 +36,31 @@ def editTableElem(exec_object,obj,valor,refTable=None):
     return None
 
 def editaCombo(obj,valueTable,valorActual):
-    # primero determino el indice del valor actual
-    act_valor_idx = 0
-    for k,value in enumerate(valueTable):
-        if isinstance(value,(list,tuple,set)):
-            kval =value[0]
-        else:
-            kval = value
-        if str(kval) == str(valorActual):  #FIXME sto es un poco asi así
-            act_valor_idx = k
-            break
-    #print(valueTable,valorActual,act_valor_idx)
-    #normalizo la tabla de valores para que presente solo las descripciones (si las hay)
-    hasDescriptions = False
-    if isinstance(valueTable[0],(list,tuple,set)) and len(valueTable[0]) > 1:
-        hasDescriptions = True
-        combo = [ item[1] for item in valueTable]
+    descriptivo = False
+    if isinstance(valueTable[0],(list,tuple,set)):
+        descriptivo = True
+        comboList = [ item[1] for item in valueTable ]
+        claveList = [ str(item[0]) for item in valueTable ]
     else:
-        combo = list(valueTable)
-        
-    result,controlvar = QInputDialog.getItem(None,"Editar:"+obj.text(),obj.text(),combo,current=act_valor_idx) 
+        claveList = comboList = tuple(valueTable)
+    spec = []
+    spec.append(('Seleccione',QComboBox,None,comboList))
+    if descriptivo and valorActual:
+        values = [ claveList.index(valorActual) ]
+    elif descriptivo:
+        values = [ None , ]
+    else:
+        values = [ valorActual, ]
+
+    parmDialog = propertySheetDlg('Defina '+obj.text(),spec,values)
+    if parmDialog.exec_():
+        print(values[0],parmDialog.sheet.cellWidget(0,0).currentText)
+        if descriptivo:
+            return claveList[values[0]]
+        else:
+            return parmDialog.sheet.cellWidget(0,0).currentText  #pues no lo tengo tan claro
     
-    # si tiene descripciones tengo que averiguar a que elemento pertenecen
-    if hasDescriptions:
-        idx = None
-        for k,value in enumerate(combo):
-            if value == result:
-                #idx = k
-                result = valueTable[k][0]
-                break
-    return result
-    #if result != valorActual:
-        #obj.setColumnData(1,result,Qt.EditRole) 
+
 
 def atomicEditAction(obj,valor,exec_object):
     modelo = obj.model() # es necesario para que el delete no pierda la localizacion
@@ -233,19 +226,6 @@ def setContextMenu(obj,menu,exec_object=None):
         obj.menuActions[-1].setEnabled(False)
 
 
-    
-def execAction(exec_object,obj,action):
-    #TODO listas editables en casi todos los elementos
-    if action is None:
-        return
-    
-    modelo = obj.model() # es necesario para que el delete no pierda la localizacion
-    tipo = obj.type()
-    jerarquia = obj.typeHierarchy()
-    
-    modelo.beginResetModel()
-    if action ==  'add' :
-        print('Add by',obj)
         """
         FREE_FORM_ITEMS = set([
             -'base filter'# on base add
@@ -286,6 +266,20 @@ def execAction(exec_object,obj,action):
             ])
 
         """
+    
+def execAction(exec_object,obj,action):
+    #TODO listas editables en casi todos los elementos
+    if action is None:
+        return
+    
+    modelo = obj.model() # es necesario para que el delete no pierda la localizacion
+    tipo = obj.type()
+    jerarquia = obj.typeHierarchy()
+    if not tipo:
+        print('NO tiene tipo',obj.getDataList())
+    modelo.beginResetModel()
+    if action ==  'add' :
+        print('Add by',obj)
         #TODO deberia capturarse duplicados en la lista existente
         #FIXME no entiendo el porque los valors de un listbox tienen que venir en forma de tuple()
         if tipo in ('base','default_start'):
@@ -316,7 +310,18 @@ def execAction(exec_object,obj,action):
                         recTreeLoader(exec_object.hiddenRoot,values[0],info[clave],'base')
 
             pass
-        if tipo in   ( FREE_FORM_ITEMS | DYNAMIC_COMBO_ITEMS ) or tipo in STATIC_COMBO_ITEMS  :
+        #elif tipo == 'fields'  no porque lo definimos como elemento libre
+        elif tipo == 'guides':
+            print(tipo,obj.text(),obj.getRow())
+            # aqui el proceso del objeto
+            if obj.text() != tipo:
+                #add a new array entry
+                idx = obj.index()
+                pai = obj.parent()
+             else:
+                pai = obj
+            #pai.insertRow(idx.row()+1,(CubeItem(None),CubeItem(str(result)),CubeItem(tipo)))            
+        elif tipo in   ( FREE_FORM_ITEMS | DYNAMIC_COMBO_ITEMS ) or tipo in STATIC_COMBO_ITEMS  :
             result = atomicEditAction(obj,None,exec_object)
             #TODO repasar el grouped_by
             if tipo in ('fields','elem','code','desc','base_elem','rel_elem','grouped_by','case_sql','values'):

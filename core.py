@@ -157,25 +157,25 @@ class Cubo:
         
         sqlDef=dict()
 
-        if 'source' in entrada.keys():
-          sqlDef['tables'] = entrada['source']['table']
+        if 'domain' in entrada.keys():
+          sqlDef['tables'] = entrada['domain']['table']
           
-          if 'filter' in entrada['source']:
-              sqlDef['base_filter']=entrada['source']['filter']
+          if 'filter' in entrada['domain']:
+              sqlDef['base_filter']=entrada['domain']['filter']
               
           sqlDef['fields'] = []
           #REFINE grouped by determina la jerarquia explicitamente.
           #     hay que hallar la manera de determinarla implicitamente
-          if 'grouped by' in entrada['source']:
-              sqlDef['fields'] += norm2List(entrada['source']['grouped by'])
+          if 'grouped by' in entrada['domain']:
+              sqlDef['fields'] += norm2List(entrada['domain']['grouped by'])
           if len(fields) > 0:
               sqlDef['fields'] += fields[:]
 
-          sqlDef['fields'] += norm2List(entrada['source']['code'])
+          sqlDef['fields'] += norm2List(entrada['domain']['code'])
           
             
-          if 'desc' in entrada['source']:
-              desc_tup = norm2List(entrada['source']['desc'])
+          if 'desc' in entrada['domain']:
+              desc_tup = norm2List(entrada['domain']['desc'])
               sqlDef['fields'] += desc_tup
               desc_fld = len(desc_tup)
         else:
@@ -293,7 +293,7 @@ class Cubo:
                     else:
                         elem[-1] = [caseConstructor(nombre,componente),]
                           
-                    if 'source' in componente:  #TODO no usada. No parece tener sentido
+                    if 'domain' in componente:  #TODO no usada. No parece tener sentido
                         (sqlString,code_fld,desc_fld) = self.__setGuidesSqlStatement(componente,[])
                         enum = None
                     elif 'categories' not in componente:

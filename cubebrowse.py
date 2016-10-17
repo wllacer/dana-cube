@@ -96,7 +96,7 @@ def info2cube(dataDict,confName,schema,table,maxlevel=1):
                 
             entrada['guides'].append({'name':fk['Name'],
                                         'class':'o',
-                                        'prod':[{'source': {
+                                        'prod':[{'domain': {
                                                 "filter":"",
                                                 "table":fk['ParentTable'],
                                                 "code":fk['ParentField'],
@@ -117,7 +117,7 @@ def info2cube(dataDict,confName,schema,table,maxlevel=1):
             nombre = '@'.join(nombres)
             activo = elem[-1]
             base   = elem[0]
-            rule =   {'source': {
+            rule =   {'domain': {
                                     "filter":"",
                                     "table":activo['ParentTable'],
                                     "code":activo['ParentField'],
@@ -186,7 +186,7 @@ class CubeBrowserWin(QMainWindow):
             recTreeLoader(parent,entrada,info[entrada],tipo)
         #navigateTree(self.hiddenRoot)
         #pprint(tree2dict(self.hiddenRoot))
-        getOpenConnections(self.dataDict)
+        #getOpenConnections(self.dataDict)
         
     def setupView(self):
         self.view = QTreeView(self)

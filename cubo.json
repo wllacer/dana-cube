@@ -116,7 +116,7 @@
             {
                 "prod": [
                     {
-                        "source": {
+                        "domain": {
                             "filter": "", 
                             "table": "sakila.address", 
                             "code": "address_id", 
@@ -137,7 +137,7 @@
             {
                 "prod": [
                     {
-                        "source": {
+                        "domain": {
                             "filter": "", 
                             "table": "sakila.city", 
                             "code": "city_id", 
@@ -160,7 +160,7 @@
                         ]
                     }, 
                     {
-                        "source": {
+                        "domain": {
                             "filter": "", 
                             "table": "sakila.address", 
                             "code": "address_id", 

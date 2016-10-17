@@ -465,7 +465,7 @@ def main():
         u'related via',
         u'result',
         u'row',
-        u'source',
+        u'domain',
         u'table',
         u'type',
         u'values',
