@@ -59,8 +59,11 @@ class WPowerTable(QTableWidget):
             if item is None:
                 pass
             else:
-                print(item)
-                editItem.setCurrentIndex(item)
+                if isinstance(item,int):
+                    editItem.setCurrentIndex(item)
+                else:  #esto es para el caso en que no existe en origen (prefijos, por ejemplo)
+                    editItem.addItem(item)
+                    editItem.setCurrentIndex(editItem.count() -1)
               
         else:
             print('Noooop',x)

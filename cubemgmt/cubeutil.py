@@ -200,5 +200,31 @@ def getListAvailableTables(obj,exec_object):
         print(connURL,'NO ESTA A MANO')
     return array
 
+def getFldTable(exec_object,obj,refTable=None):
+    #TODO determinar que es lo que necesito hacer cuando no esta disponible
+    #TODO  Unificar con la de abajo
+    #TODO base elem probablemente trasciende esta definicion
+    #TODO calcular dos veces FQ ... es un exceso. simplificar
+    FQtablaArray,connURL = getCubeTarget(obj)
+    if refTable:
+        if isinstance(refTable,CubeItem):
+            FQtablaArray = FQName2array(refTable.getColumnData(1))
+        else:
+            FQtablaArray = FQName2array(refTable)
+    #print(FQtablaArray,connURL)
+    actConn = connMatch(exec_object.dataDict,connURL)
+    if actConn:
+        tableItem = actConn.findElement(FQtablaArray[1],FQtablaArray[2])
+        if tableItem:
+            fieldIdx = childByName(tableItem,'FIELDS')
+            #array = getDataList(fieldIdx,0)
+            array = [ (item.fqn(),item.text(),item.getColumnData(1))  for item in fieldIdx.listChildren() ]
+            return array
+        else:
+            print(connURL,'ESTA DISPONIBLE y el fichero NOOOOOR')
+            return None
+    else:
+        print(connURL,'NO ESTA A MANO')
+    return None
 
 

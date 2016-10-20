@@ -11,31 +11,8 @@ from cubemgmt.cubeutil  import *
 
 from widgets import WDataSheet
 from dialogs import propertySheetDlg
-from PyQt5.QtWidgets import QWizard,QWizardPage,QLabel,QComboBox,QGridLayout,QGroupBox,QRadioButton,QVBoxLayout,QGridLayout,QPlainTextEdit
+from PyQt5.QtWidgets import QWizard,QWizardPage,QLabel,QComboBox,QGridLayout,QGroupBox,QRadioButton,QVBoxLayout,QGridLayout,QPlainTextEdit,QListWidget,QCheckBox
     
-def getFldTable(exec_object,obj,refTable=None):
-    #TODO determinar que es lo que necesito hacer cuando no esta disponible
-    #TODO  Unificar con la de abajo
-    #TODO base elem probablemente trasciende esta definicion
-    #TODO calcular dos veces FQ ... es un exceso. simplificar
-    FQtablaArray,connURL = getCubeTarget(obj)
-    if refTable:
-        FQtablaArray = FQName2array(refTable.getColumnData(1))
-    #print(FQtablaArray,connURL)
-    actConn = connMatch(exec_object.dataDict,connURL)
-    if actConn:
-        tableItem = actConn.findElement(FQtablaArray[1],FQtablaArray[2])
-        if tableItem:
-            fieldIdx = childByName(tableItem,'FIELDS')
-            #array = getDataList(fieldIdx,0)
-            array = [ (item.fqn(),item.text(),item.getColumnData(1))  for item in fieldIdx.listChildren() ]
-            return array
-        else:
-            print(connURL,'ESTA DISPONIBLE y el fichero NOOOOOR')
-            return None
-    else:
-        print(connURL,'NO ESTA A MANO')
-    return None
     
 def editTableElem(exec_object,obj,valor,refTable=None):
     lista = getFldTable(exec_object,obj,refTable)
@@ -100,7 +77,7 @@ def editaCombo(obj,valueTable,valorActual):
             else:
                 return claveList[values[0]] 
         else:
-            return parmDialog.sheet.cellWidget(0,0).currentText  #pues no lo tengo tan claro
+            return parmDialog.sheet.cellWidget(0,0).currentText()  #pues no lo tengo tan claro
     
 
 
@@ -153,6 +130,7 @@ def atomicEditAction(obj,valor,exec_object):
             #Acepto cualquier tabla en la conexion actual, no necesariamente el esquema
             array = getListAvailableTables(obj,exec_object)
             result = editaCombo(obj,array,valor)
+            print('El resultado de andar por el combo es',result)
                 
         elif tipo in ('elem','base_elem','fields'):
             #TODO base_elem no tiene esta base, ojala
@@ -361,7 +339,7 @@ def guideWizard(exec_object,obj):
     if not tipo:
         print('NO tiene tipo',obj.getDataList())
     
-    (ixWzBase,ixWzCategory,ixWzRowEditor,ixWzTime,ixWzLink, ixWzTerminator) = range(6) 
+    (ixWzBase,ixWzCategory,ixWzRowEditor,ixWzTime,ixWzLink, ixWzJoin) = range(6) 
 
 
     class WzBase(QWizardPage):
@@ -433,7 +411,7 @@ def guideWizard(exec_object,obj):
 
             if self.directCtorRB.isChecked():
                 # Fin de todo
-                return -1 #ixWzTerminator
+                return -1 #ixWzJoin
             elif self.catCtorRB.isChecked():
                 return ixWzCategory
             elif self.caseCtorRB.isChecked():
@@ -604,18 +582,185 @@ def guideWizard(exec_object,obj):
             return -1
     
     class WzLink(QWizardPage):
+        """
+           table    QComboBox 
+           filter   QListItem
+           code 1+  QListWidget
+           desc 1+  idm
+           *
+           a checkbox to send to link
+           *link via
+              table
+              filter
+              clause +1
+                rel_elem
+                base_elem
+                condition
+           *grouped_by (que ya no me acuerdo ni que significa
+        """
         def __init__(self, parent=None):
             super(WzLink,self).__init__(parent)
             self.setFinalPage(True)
             #super().__init__(self,parent)
             self.setTitle("Definicion de tabla relacionada")
             self.setSubTitle("Defina la tabla y atributos a traves de la cual obtendra los valores de la guía")
+            
+            self.listOfTables = getListAvailableTables(obj,exec_object)
+            self.listOfFields = []
+            
+            targetTableLabel = QLabel("&Tabla origen:")
+            self.targetTableCombo = QComboBox()
+            #MARK VERY CAREFULLY. If has default value, DON'T make it mandatory in wizard
+            #                     Use a null value in combos if mandatory
+            self.targetTableCombo.addItems(self.listOfTables)
+            self.targetTableCombo.setCurrentIndex(0)
+            targetTableLabel.setBuddy(self.targetTableCombo)
+            self.targetTableCombo.currentIndexChanged[int].connect(self.tablaElegida)
+
+            targetFilterLabel = QLabel("&Filtro:")
+            self.targetFilterLineEdit = QLineEdit()
+            targetFilterLabel.setBuddy(self.targetFilterLineEdit)
+           
+
+            targetCodeLabel = QLabel("&Clave de enlace:")
+            self.targetCodeList = QListWidget()
+            targetCodeLabel.setBuddy(self.targetCodeList)
+            self.targetCodeList.setSelectionMode(QListWidget.ExtendedSelection)
+
+            targetDescLabel = QLabel("&Textos desciptivos:")
+            self.targetDescList = QListWidget()
+            targetDescLabel.setBuddy(self.targetDescList)
+            self.targetDescList.setSelectionMode(QListWidget.ExtendedSelection)
+
+            linkLabel = QLabel("¿Requiere de un enlace externo?")
+            self.linkCheck = QCheckBox()
+            linkLabel.setBuddy(self.linkCheck)
+            self.linkCheck.stateChanged.connect(self.estadoLink)
+            
+            layout = QGridLayout()
+            layout.addWidget(targetTableLabel,0,0)
+            layout.addWidget(self.targetTableCombo,0,1)
+            layout.addWidget(targetFilterLabel,1,0)
+            layout.addWidget(self.targetFilterLineEdit,1,1)
+            layout.addWidget(targetCodeLabel,2,0)
+            layout.addWidget(self.targetCodeList,2,1)
+            layout.addWidget(targetDescLabel,3,0)
+            layout.addWidget(self.targetDescList,3,1)
+            layout.addWidget(linkLabel,4,0)
+            layout.addWidget(self.linkCheck,4,1)
+            self.setLayout(layout)
+            #FIXME ¿de verdad no se pueden usar?
+            #self.setCentralWidget(self.editArea)
+            self.registerField('targetTable', self.targetTableCombo)
+            self.registerField('targetFilter', self.targetFilterLineEdit)
+            self.registerField('targetCode',self.targetCodeList)
+            self.registerField('targetDesc',self.targetDescList)
 
         def nextId(self):
-            return -1
-    
-    class WzTerminator(QWizardPage):
-        pass
+            #if not self.linkCheck.isChecked():
+                #return -1 
+            #else:
+                return ixWzJoin
+            
+        def estadoLink(self,idx):
+            if self.linkCheck.isChecked():
+                self.setFinalPage(False)
+            else:
+                self.setFinalPage(True)
+                
+        def tablaElegida(self,idx):
+            print('Algo encuentra',idx)
+            tabname = self.listOfTables[idx]
+            self.listOfFields = [ item[0] for item in getFldTable(exec_object,obj,tabname) ]
+            self.targetCodeList.clear()
+            self.targetDescList.clear()
+            self.targetCodeList.addItems(self.listOfFields)
+            self.targetDescList.addItems(self.listOfFields)
+            
+    class WzJoin(QWizardPage):
+        """
+           *link via
+              table
+              filter
+              clause +1
+                rel_elem
+                base_elem
+                condition
+           *grouped_by (que ya no me acuerdo ni que significa
+        """
+        #FIXME nombres de los campos 
+        def __init__(self, parent=None):
+            super(WzJoin,self).__init__(parent)
+            self.setFinalPage(True)
+            #super().__init__(self,parent)
+            self.setTitle("Definicion del enlace")
+            self.setSubTitle("Definimos la tabla de enlace entre datos y guia \n. Si su modelo requiere mas de un enlace, por favor edite a mano a partir del segundo")
+            
+            self.listOfTables = getListAvailableTables(obj,exec_object)
+            
+            pai = obj.parent()
+            while pai and pai.type() != 'base':
+                pai = pai.parent()
+            baseItem = childByName(pai,'table')
+            self.listOfFieldsBase = [ item[0] for item in getFldTable(exec_object,baseItem) ]
+            
+            self.listOfFieldsRel = []
+            
+            joinTableLabel = QLabel("&Tabla de enlace")
+            self.joinTableCombo = QComboBox()
+            #MARK VERY CAREFULLY. If has default value, DON'T make it mandatory in wizard
+            #                     Use a null value in combos if mandatory
+            self.joinTableCombo.addItems(self.listOfTables)
+            self.joinTableCombo.setCurrentIndex(0)
+            joinTableLabel.setBuddy(self.joinTableCombo)
+            self.joinTableCombo.currentIndexChanged[int].connect(self.tablaElegida)
+
+            joinFilterLabel = QLabel("&Filtro:")
+            self.joinFilterLineEdit = QLineEdit()
+            joinFilterLabel.setBuddy(self.joinFilterLineEdit)
+           
+            #TODO esto quedaria mejor con un WDataSheet 
+            
+            joinCodeLabel = QLabel("&Campos de la tabla base")  #base_elem
+            self.joinCodeList = QListWidget()
+            self.joinCodeList.addItems(self.listOfFieldsBase)
+            joinCodeLabel.setBuddy(self.joinCodeList)
+            self.joinCodeList.setSelectionMode(QListWidget.ExtendedSelection)
+
+            joinDescLabel = QLabel("&Campos de la tabla de enlace") #join_table
+            self.joinDescList = QListWidget()
+            joinDescLabel.setBuddy(self.joinDescList)
+            self.joinDescList.setSelectionMode(QListWidget.ExtendedSelection)
+
+            
+            layout = QGridLayout()
+            layout.addWidget(joinTableLabel,0,0)
+            layout.addWidget(self.joinTableCombo,0,1)
+            layout.addWidget(joinFilterLabel,1,0)
+            layout.addWidget(self.joinFilterLineEdit,1,1)
+            layout.addWidget(joinCodeLabel,2,0)
+            layout.addWidget(self.joinCodeList,2,1)
+            layout.addWidget(joinDescLabel,3,0)
+            layout.addWidget(self.joinDescList,3,1)
+            self.setLayout(layout)
+            #FIXME ¿de verdad no se pueden usar?
+            #self.setCentralWidget(self.editArea)
+            self.registerField('joinTable', self.joinTableCombo)
+            self.registerField('joinFilter', self.joinFilterLineEdit)
+            self.registerField('joinCode',self.joinCodeList)
+            self.registerField('joinDesc',self.joinDescList)
+
+        def nextId(self):
+            return -1 
+            
+                
+        def tablaElegida(self,idx):
+            print('Algo encuentra',idx)
+            tabname = self.listOfTables[idx]
+            self.listOfFieldsRel = [ item[0] for item in getFldTable(exec_object,obj,tabname) ]
+            self.joinDescList.clear()
+            self.joinDescList.addItems(self.listOfFieldsRel)
+            
 
     wizard = QWizard(exec_object)
     wizard.setPage(ixWzBase, WzBase())
@@ -623,7 +768,7 @@ def guideWizard(exec_object,obj):
     wizard.setPage(ixWzRowEditor, WzRowEditor())
     wizard.setPage(ixWzTime, WzTime())
     wizard.setPage(ixWzLink, WzLink())
-    wizard.setPage(ixWzTerminator, WzTerminator())
+    wizard.setPage(ixWzJoin, WzJoin())
     
     wizard.setWindowTitle("Definición de guias")
     wizard.show()
