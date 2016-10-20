@@ -23,6 +23,7 @@ class WPowerTable(QTableWidget):
 
     def __init__(self,rows=0,cols=0,parent=None):
         super(WPowerTable,self).__init__(rows,cols,parent)
+        self.horizontalHeader().setStretchLastSection(True)
         #self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum);
         #self.resizeRowsToContents()
         #self.resizeColumnsToContents()
@@ -126,7 +127,7 @@ class WDataSheet(WPowerTable):
         se inicializa con el context
            context[0] titulos de las filas
            context[1 -n] columnas
-                context[k][0] valores iniciales (si es comun)
+                (??)context[k][0] valores iniciales (si es comun)
                 context[k][1] widget a utilizar (defecto QLineEdit)
                 context[k][2] parametrizacion del widget (metodo:valor)
                 context[k][3] lista adicinal de valores (para QComboBox y similares)
@@ -136,23 +137,24 @@ class WDataSheet(WPowerTable):
     """
     def __init__(self,context,rows,parent=None): 
         
-        cols=len(context -1)
+        cols=len(context) -1
 
-        super(WPropertySheet, self).__init__(rows,cols,parent)
+        super(WDataSheet, self).__init__(rows,cols,parent)
         # cargando parametros de defecto
         self.context = context
         
-        cabeceras = [ k[0] for k in range(rows) ]
+        #FIXME es un desastre
+        cabeceras = [ item  for item in self.context[0] ]
         for k in range(rows):
             self.addRow(k)
 
-        self.setVerticalHeaderLabels(cabeceras)
+        self.setHorizontalHeaderLabels(cabeceras)
         
 
         self.resizeRowsToContents()
 
     def addRow(self,line):
-        for y,colDef in enumerate(context[1:]):
+        for y,colDef in enumerate(self.context[1:]):
             self.addCell(line,y,colDef)
             
     def fill(self,data):

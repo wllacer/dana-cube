@@ -80,10 +80,10 @@ GUIDE_CLASS = (
     ('h','jerarquia',),
     ('d','fecha',),
     );
-LOGICAL_OPERATOR = ('in','not in','between','not between','=','!=','<','>','>=','<=')
+LOGICAL_OPERATOR = ('in','between','like','=','!=','<','>','>=','<=','not in','not between','not like')
 ENUM_FORMAT = ( ('t','texto'),('n','numerico'),('d','fecha'))
 TIPO_FECHA = ('Ymd', 'Ym','Ymw','YWw') 
-
+FECHADOR = (('Y','Año'),('C','Cuatrimestre'),('Q','Trimestre'),('m','Mes'),('q','Quincena'),('W','Semana del Año'),('w','semana'),('d','Día'))
 EDITED_ITEMS = set([
      u'agregado',  # AGR_LIST
      u'base_elem', #             field of  Reference  table
