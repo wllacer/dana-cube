@@ -446,9 +446,9 @@ def guideWizard(exec_object,obj):
                 "<RESULTADO> <operacion (por defecto IN> <lista de valores, separada por comas>")
             
             
-            wizard.setOptions(QWizard.HaveCustomButton1)
-            self.setButtonText(QWizard.CustomButton1,'Mas entradas')
-            wizard.customButtonClicked.connect(self.addEntry)
+            #wizard.setOptions(QWizard.HaveCustomButton1)
+            #self.setButtonText(QWizard.CustomButton1,'Mas entradas')
+            #wizard.customButtonClicked.connect(self.addEntry)
             #FIXME no admite mandatory
 
             Formatos = [ item[1] for item in ENUM_FORMAT ]
@@ -496,6 +496,23 @@ def guideWizard(exec_object,obj):
             self.registerField('catResultDefault', self.catResultDefaultLine)
             self.registerField('catArray',self.catArray)
 
+        def initializePage(self):            
+            self.wizard().setOptions(QWizard.HaveCustomButton1)
+            self.setButtonText(QWizard.CustomButton1,'Mas entradas')
+            self.wizard().customButtonClicked.connect(self.addEntry)
+
+
+            campo=self.wizard().field('guideFld')
+            datosCampo = getFldTable(exec_object,obj)[campo -1]
+            pprint(getFldTable(exec_object,obj))
+            print(campo,'==>',datosCampo)
+            if datosCampo[2] == 'numerico':
+                self.catValueFormatCombo.setCurrentIndex(1) 
+            elif datosCampo[2] == 'fecha':
+                self.catValueFormatCombo.setCurrentIndex(2)
+            else:
+                self.catValueFormatCombo.setCurrentIndex(0)
+
         def nextId(self):
             return -1
     
@@ -507,17 +524,6 @@ def guideWizard(exec_object,obj):
                 self.catArray.addRow(count)
                 self.catArray.setCurrentCell(count,0)
 
-        def initializePage(self):
-            campo=wizard.field('guideFld')
-            datosCampo = getFldTable(exec_object,obj)[campo -1]
-            pprint(getFldTable(exec_object,obj))
-            print(campo,'==>',datosCampo)
-            if datosCampo[2] == 'numerico':
-                self.catValueFormatCombo.setCurrentIndex(1) 
-            elif datosCampo[2] == 'fecha':
-                self.catValueFormatCombo.setCurrentIndex(2)
-            else:
-                self.catValueFormatCombo.setCurrentIndex(0)
             
             
     class WzRowEditor(QWizardPage):
@@ -530,7 +536,7 @@ def guideWizard(exec_object,obj):
             
             #FIXME no admite mandatory
             self.editArea = QPlainTextEdit()
-            self.editArea.textChanged.connect(self.validatePage)
+            #self.editArea.textChanged.connect(self.validatePage)
             self.registerField('sqlEdit',self.editArea)
             
             layout = QGridLayout()
@@ -798,13 +804,100 @@ def guideWizard(exec_object,obj):
     wizard.setWindowTitle("Definición de guias")
     wizard.show()
 
-    return wizard.exec_()
-        
-        
-    result = dict()  # vamos a definir el resultado como una estructura cubo para luego volcarlo 
-    
-    
-    return result
+    if wizard.exec_() :
+        guide = dict()
+        guide['name']= wizard.field('resultDefault')
+        guide['class']= GUIDE_CLASS[wizard.field('valueFormat') -1][0]
+        guide['prod']=list()
+        guide['prod'].append(dict())
+        produccion = guide['prod'][-1]
+        produccion['elem'] = wizard.page(ixWzBase).fieldArray[wizard.field('guideFld') - 1][0]        
+        if wizard.field('ctorDirect') :
+            guide['class'] = 'o'
+        elif wizard.field('ctorCat'):
+            print('categorias')
+            guide['class'] = 'c'
+            produccion['fmt']=ENUM_FORMAT[wizard.field('catValueFormat')] [0]
+            produccion['enum_fmt']=ENUM_FORMAT[wizard.field('catResultFormat')] [0]
+            produccion['categories']=list()
+            if wizard.field('catResultDefault') != '':
+                produccion['categories'].append({"default":wizard.field('catResultDefault') })
+            tabla = wizard.page(ixWzCategory).catArray
+            for i in range(tabla.rowCount()):
+                if tabla.get(i,0) == '' and tabla.get(i,2) == '':
+                    break
+                result = tabla.get(i,0)
+                condition = LOGICAL_OPERATOR[tabla.get(i,1)]
+                values = tabla.get(i,2).split(',')
+                #TODO comprobar que no son necesarios formateos
+                #FIXM que hago con los decimales
+                produccion['categories'].append({"result":result,"condition":condition,"values":values})
+            pass
+        elif wizard.field('ctorCase'):
+            produccion['case_sql']=wizard.page(ixWzRowEditor).editArea.document().toPlainText()
+            produccion['class'] = 'c'
+            pass
+        elif wizard.field('ctorDate'):
+            print('fecha')
+            #TODO no todas las opciones son posibles ahora mismo con este codigo (no cuatrimestres, no trimestres, no quincenas)
+            #es solo cuestion de tirar codigo
+            secuencia = ''
+            for k,entry in enumerate(wizard.page(ixWzTime).formFechaCombo):
+                if entry.isHidden():
+                    break
+                if k == 0:
+                    print(FECHADOR[entry.currentIndex()])
+                    secuencia = FECHADOR[entry.currentIndex()][0]
+                else:
+                    print(FECHADOR[entry.currentIndex() -1])
+                    secuencia += FECHADOR[entry.currentIndex() -1][0]
+            guide['class']='d'
+            produccion['fmt'] = 'date' #FIXME puede provocar probleas con otros formatos
+            guide['type']=secuencia
+            
+            pass
+            
+        elif wizard.field('ctorLink'):
+            print('link')
+            produccion['domain']=dict()
+            #self.registerField('targetTable', self.targetTableCombo)
+            produccion['domain']['table'] = wizard.page(ixWzLink).targetTableCombo.currentText()
+            produccion['domain']['filter'] = wizard.field('targetFilter')
+            produccion['domain']['code'] = [ item.text() for item in wizard.page(ixWzLink).targetCodeList.selectedItems() ]
+            produccion['domain']['desc'] = [ item.text() for item in wizard.page(ixWzLink).targetDescList.selectedItems() ]
+            #self.registerField('targetFilter', self.targetFilterLineEdit)
+            #self.registerField('targetCode',self.targetCodeList)
+            #self.registerField('targetDesc',self.targetDescList)
+            if wizard.page(ixWzLink).linkCheck.isChecked():
+                print('join')
+                produccion['link via']=list()
+                tabla = wizard.page(ixWzJoin).joinTableCombo.currentText()
+                filter = wizard.field('joinFilter') 
+                array = wizard.page(ixWzJoin).joinClauseArray
+                clausulas = list()
+                for i in range(array.rowCount()):
+                    if array.get(i,0) == '' and array.get(i,2) == '':
+                        break
+                    base = array.get(i,0)
+                    condition = LOGICAL_OPERATOR[array.get(i,1)]
+                    related = array.get(i,2)
+                    if condition == '=':
+                        clausulas.append({"base_elem":base,"rel_elem":related,})
+                    else:
+                        clausulas.append({"base_elem":base,"rel_elem":related,"condition":condition})
+                produccion['link via'].append({"table":tabla,"clause":clausulas,"filter":filter})
+                #self.registerField('joinTable', self.joinTableCombo)
+                #self.registerField('joinFilter', self.joinFilterLineEdit)
+                #self.registerField('joinClauseArray',self.joinClauseArray)
+
+            pass
+        else :
+            return None
+        pprint(guide)
+        return guide
+    else:
+        return None
+
 def execAction(exec_object,obj,action):
     #TODO listas editables en casi todos los elementos
     if action is None:
@@ -849,13 +942,13 @@ def execAction(exec_object,obj,action):
 
             pass
         #elif tipo == 'fields'  no porque lo definimos como elemento libre
-        elif tipo in ('guides','prod'):
+        elif tipo in ('guides',):
             #print(tipo,obj.text(),obj.getRow())
             # aqui el proceso del objeto
             result = guideWizard(exec_object,obj)
             print('Y al final lo que devuelve es',result)
             #TODO lo de abajo es lo que deberia ejecutar
-            """
+            
             if obj.text() != tipo:
                 #add a new array entry
                 idx = obj.index()
@@ -864,7 +957,7 @@ def execAction(exec_object,obj,action):
                 pai = obj
             nombre = result.get('name',pai.rowCount())
             recTreeLoader(pai,nombre,result,tipo)
-            """
+            
         elif tipo in   ( FREE_FORM_ITEMS | DYNAMIC_COMBO_ITEMS ) or tipo in STATIC_COMBO_ITEMS  :
             result = atomicEditAction(obj,None,exec_object)
             #TODO repasar el grouped_by
