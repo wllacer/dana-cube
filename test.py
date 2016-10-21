@@ -352,7 +352,7 @@ def experimento():
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
     import sys
-    print(sys.version_info)
+    #print(sys,version_info)
     if sys.version_info[0] < 3:
         reload(sys)
         sys.setdefaultencoding('utf-8')

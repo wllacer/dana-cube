@@ -335,7 +335,7 @@ if __name__ == '__main__':
 
     import sys
     # con utf-8, no lo recomiendan pero me funciona
-    print(sys.version_info)
+    #print(sys,version_info)
     if sys.version_info[0] < 3:
         reload(sys)
         sys.setdefaultencoding('utf-8')

@@ -969,8 +969,10 @@ def experimental():
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
     import sys
-    reload(sys)
-    sys.setdefaultencoding('utf-8')
+    #print(sys,version_info)
+    if sys.version_info[0] < 3:
+        reload(sys)
+        sys.setdefaultencoding('utf-8')
 
     experimental()
         

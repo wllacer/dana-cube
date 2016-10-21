@@ -503,7 +503,9 @@ def main():
 
 if __name__ == '__main__':
     import sys
-    reload(sys)
-    sys.setdefaultencoding('utf-8')    
+    #print(sys,version_info)
+    if sys.version_info[0] < 3:
+        reload(sys)
+        sys.setdefaultencoding('utf-8')
 
     main()
