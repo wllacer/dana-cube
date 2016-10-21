@@ -18,7 +18,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QSplitter, QAb
           QTableView
 
 from  sqlalchemy import create_engine,inspect,MetaData, types
-from  sqlalchemy.exc import CompileError, OperationalError
+from  sqlalchemy.exc import CompileError, OperationalError, ProgrammingError
 from  sqlalchemy.sql import text
 
 from datalayer.access_layer import *
@@ -161,7 +161,7 @@ class ConnectionSheetDlg(QDialog):
             else:
                 conn = dbConnectAlch(conf)
                 conn.close()
-        except OperationalError as e:
+        except ( OperationalError, ProgrammingError)  as e:
             showConnectionError(datos[0],norm2String(e.orig.args))
             self.msgLine.setText('Error en la conexión')
             return
@@ -451,8 +451,10 @@ if __name__ == '__main__':
 
     import sys
     # con utf-8, no lo recomiendan pero me funciona
-    reload(sys)
-    sys.setdefaultencoding('utf-8')
+    print(sys.version_info)
+    if sys.version_info[0] < 3:
+        reload(sys)
+        sys.setdefaultencoding('utf-8')
 
     app = QApplication(sys.argv)
     window = MainWindow()

@@ -58,7 +58,7 @@ def driver2Qt(pdriver):
     driver = pdriver.lower()
     if driver in ('sqlite','qsqlite'): #solo compatibilidad codigo actural
         return 'QSQLITE'
-    elif driver in ('mysql','mariadb','mysqldb'):
+    elif driver in ('mysql','mariadb','mysqldb','msyqlconnector'):
         return 'QMYSQL'
     elif driver ('postgresql','postgres','pg','psycopg2'):
         return 'QPSQL'
@@ -71,7 +71,9 @@ def driver2Alch(pdriver):
     driver = pdriver.lower()
     if driver in ('sqlite','qsqlite'):
         return 'sqlite'
-    elif driver in ('mysql','mysqldb','mariadb'):
+    elif driver in ('mysql','mysqlconnector','mariadb'):
+        return 'mysql+mysqlconnector'
+    elif driver in ('mysqldb',):
         return 'mysql+mysqldb'
     elif driver in ('postgresql','postgres','pg','psycopg2'):
         return 'postgresql+psycopg2'

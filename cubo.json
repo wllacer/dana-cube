@@ -5,8 +5,8 @@
         "connect": {
             "dbuser": null, 
             "dbhost": null, 
-            "driver": "mysqldb", 
-            "dbname": "mysql+mysqldb://demo:demo123@localhost/mysql", 
+            "driver": "mysqlconnector", 
+            "dbname": "mysql+mysqlconnector://demo:demo123@localhost/mysql", 
             "dbpass": null
         }, 
         "fields": [

@@ -73,7 +73,7 @@ def getCubeInfo(rootElem):
         fieldmaster = childByName(rootElem,'fields')
         guias =  getItemList(guidemaster,'guides') 
         campos = getDataList(fieldmaster,1)  #los campos no tienen nombre
-        print (campos,fieldmaster)
+        #print (campos,fieldmaster)
         return guias,campos
     else:
         return [],[]
@@ -110,8 +110,8 @@ def getCubeTarget(obj):
         tablaItem = childByName(pai,'table')
         FQtablaArray = FQName2array(tablaItem.getColumnData(1))
         connItem = childByName(pai,'connect')
-        print(connItem)
-        pprint(tree2dict(connItem,isDictionaryEntry))
+        #print(connItem)
+        #pprint(tree2dict(connItem,isDictionaryEntry))
         conn_data = tree2dict(connItem,isDictionaryEntry)
     return FQtablaArray,dbDict2Url(conn_data)
 

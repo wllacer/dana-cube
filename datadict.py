@@ -124,7 +124,7 @@ class DataDict():
             padre.insertRow(pos,(ConnectionTreeItem(confName,conexion),QStandardItem(str(engine))))
             curConnection = padre.child(pos)
 
-        except OperationalError as e:
+        except ( OperationalError, ProgrammingError ) as e:
             #TODO deberia ampliar la informacion de no conexion
             self.conn[confName] = None
             showConnectionError(confName,norm2String(e.orig.args))             

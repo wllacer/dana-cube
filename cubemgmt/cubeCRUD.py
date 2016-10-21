@@ -70,7 +70,7 @@ def editaCombo(obj,valueTable,valorActual):
 
     parmDialog = propertySheetDlg('Defina '+obj.text(),spec,values)
     if parmDialog.exec_():
-        print(values[0],parmDialog.sheet.cellWidget(0,0).currentText())
+        #print(values[0],parmDialog.sheet.cellWidget(0,0).currentText())
         if descriptivo:
             if parmDialog.sheet.cellWidget(0,0).currentText() != comboList[values[0]]:
                 return parmDialog.sheet.cellWidget(0,0).currentText()
@@ -106,7 +106,7 @@ def atomicEditAction(obj,valor,exec_object):
             pai = obj.parent()
             if pai.type() == 'vista':
                 cubeItem = pai.getBrotherByName('cubo')
-                print (pai.text(),cubeItem.text(),cubeItem.getColumnData(1))
+                #print (pai.text(),cubeItem.text(),cubeItem.getColumnData(1))
                 cubo = childByName(exec_object.hiddenRoot,cubeItem.getColumnData(1))
                 guidemaster = childByName(cubo,'guides')
                 nombres = getItemList(guidemaster,'guides')
@@ -130,7 +130,7 @@ def atomicEditAction(obj,valor,exec_object):
             #Acepto cualquier tabla en la conexion actual, no necesariamente el esquema
             array = getListAvailableTables(obj,exec_object)
             result = editaCombo(obj,array,valor)
-            print('El resultado de andar por el combo es',result)
+            #print('El resultado de andar por el combo es',result)
                 
         elif tipo in ('elem','base_elem','fields'):
             #TODO base_elem no tiene esta base, ojala
@@ -157,7 +157,7 @@ def atomicEditAction(obj,valor,exec_object):
 
 def addDefault(obj,exec_object):
     #TODO cuando existe default cargar valores como defecto
-    print('Procesar Default')
+    #print('Procesar Default')
     spec_d = []
     parray=[]
     listCubes=['', ]+getCubeList(exec_object.hiddenRoot) 
@@ -289,49 +289,6 @@ def setContextMenu(obj,menu,exec_object=None):
         
 def guideWizard(exec_object,obj):
     """
-        class
-        name 
-        elem
-        (if prod --> antes/despues y grouped )
-        type of guide values
-            -> as such
-            -> category
-                -> Case SQL  (case / end as $$2)
-                -> Defined values
-                    result fmt
-                    value fmt
-                    iterate *
-                        result
-                        condition
-                        * source values
-            -> time function
-            -> other table as definition domain
-                --> linked via
-                
-    1 ----- as such ----> END
-        ----  category ---> 2a
-                    ------->   ( 3a -->( 3b-O-> ) ) --O-->
-        ----  case sql ---> 2b -O-> END
-        ----  time func. -> 2c
-        ----  other table ->2d
-    Page 1 WzBase
-        class <- from list
-        name  <- free form
-        elem  <- fields(file)
-        type of guided value
-        
-    Page 2a WzCategpry
-        result fmt
-        value fmt
-            3a return condition iterate value
-                                        3b more values ... row editor
-    Page 2b WzRowEditor
-        -> row editor 
-                    MORE
-    Page 2c WzTime
-        -> list of time criteria -> END
-    
-        
     """
     modelo = obj.model() # es necesario para que el delete no pierda la localizacion
     tipo = obj.type()
@@ -343,6 +300,7 @@ def guideWizard(exec_object,obj):
 
 
     class WzBase(QWizardPage):
+        #FIXME no se si todo el bloqueo de fechas tenia sentido. Me temo que en SQLITE no
         def __init__(self,parent=None):
             super(WzBase,self).__init__(parent)
             #super().__init__(self,parent)
@@ -350,23 +308,29 @@ def guideWizard(exec_object,obj):
             self.setSubTitle(""" Introduzca el campo por el que desea agrupar los resultados y como determinar el texto asociado a los valores de estos campos""")
  
             valueFormatLabel = QLabel("&Tipo de guia:")
-            valueFormatCombo = QComboBox()
+            self.valueFormatCombo = QComboBox()
             #MARK VERY CAREFULLY. If has default value, DON'T make it mandatory in wizard
             #                     Use a null value in combos if mandatory
-            valueFormatCombo.addItems([None , ] + [elem[1] for elem in GUIDE_CLASS ])
-            valueFormatCombo.setCurrentIndex(1)
-            valueFormatLabel.setBuddy(valueFormatCombo)
+            self.valueFormatCombo.addItems([None , ] + [elem[1] for elem in GUIDE_CLASS ])
+            self.valueFormatCombo.setCurrentIndex(1)
+            valueFormatLabel.setBuddy(self.valueFormatCombo)
+            
+            #desactivo las jerarquias por defecto, de momento
+            self.valueFormatCombo.model().item(3).setEnabled(False)
+            self.valueFormatCombo.currentIndexChanged[int].connect(self.tipoElegido)
 
             resultDefaultLabel = QLabel("&Nombre:")
-            resultDefaultLineEdit = QLineEdit()
-            resultDefaultLabel.setBuddy(resultDefaultLineEdit)
+            self.resultDefaultLineEdit = QLineEdit()
+            resultDefaultLabel.setBuddy(self.resultDefaultLineEdit)
             #TODO el campo debe de ser editable. Como actuar ver en editaCombo
             guideFldLabel = QLabel("&Campo guia:")
-            guideFldCombo = QComboBox()
-            fieldArray = getFldTable(exec_object,obj)
-            comboArray = [None , ] + [ '{}  ({})'.format(item[1],item[2]) for item in fieldArray]
-            guideFldCombo.addItems(comboArray)
-            guideFldLabel.setBuddy(guideFldCombo)
+            self.guidFldCombo = QComboBox()
+            self.fieldArray = getFldTable(exec_object,obj)
+            comboArray = [None , ] + [ '{}  ({})'.format(item[1],item[2]) for item in self.fieldArray]
+            self.guidFldCombo.addItems(comboArray)
+            guideFldLabel.setBuddy(self.guidFldCombo)
+            
+            self.guidFldCombo.currentIndexChanged[int].connect(self.campoElegido)
 
             groupBox = QGroupBox("C&onstructor de textos ")
 
@@ -374,9 +338,10 @@ def guideWizard(exec_object,obj):
             self.catCtorRB = QRadioButton("Agrupado en Categorias, enunciando &valores")
             self.caseCtorRB = QRadioButton("Directamente via código SQL")
             self.dateCtorRB = QRadioButton("Agrupaciones de intervalos de fecha")
+            #self.dateCtorRB.setDisabled(True)
             self.linkCtorRB = QRadioButton("A traves de otra tabla")            
 
-            self.directCtorRB.setChecked(False)
+            self.directCtorRB.setChecked(True)
             self.directCtorRB.toggled.connect(self.setFinalPage)
 
             groupBoxLayout = QVBoxLayout()
@@ -388,9 +353,9 @@ def guideWizard(exec_object,obj):
 
             groupBox.setLayout(groupBoxLayout)
 
-            self.registerField('valueFormat', valueFormatCombo)
-            self.registerField('resultDefault*', resultDefaultLineEdit)
-            self.registerField('guideFld*', guideFldCombo)
+            self.registerField('valueFormat', self.valueFormatCombo)
+            self.registerField('resultDefault*', self.resultDefaultLineEdit)
+            self.registerField('guideFld*', self.guidFldCombo)
             self.registerField('ctorDirect',self.directCtorRB)
             self.registerField('ctorCat',self.catCtorRB)
             self.registerField('ctorCase',self.caseCtorRB)
@@ -399,11 +364,11 @@ def guideWizard(exec_object,obj):
             
             layout = QGridLayout()
             layout.addWidget(valueFormatLabel, 0, 0)
-            layout.addWidget(valueFormatCombo, 0, 1)
+            layout.addWidget(self.valueFormatCombo, 0, 1)
             layout.addWidget(resultDefaultLabel, 1, 0)
-            layout.addWidget(resultDefaultLineEdit, 1, 1)
+            layout.addWidget(self.resultDefaultLineEdit, 1, 1)
             layout.addWidget(guideFldLabel, 2, 0)
-            layout.addWidget(guideFldCombo, 2, 1)
+            layout.addWidget(self.guidFldCombo, 2, 1)
             layout.addWidget(groupBox, 3, 0, 1, 2)
             self.setLayout(layout)
 
@@ -421,8 +386,55 @@ def guideWizard(exec_object,obj):
             elif self.linkCtorRB.isChecked():
                 return ixWzLink
             else:
-                return ixWzLink
-    
+                return -1
+           
+        def tipoElegido(self,ind):
+            # control parcial de tipo y cosas que se pueden hacer.
+            # el tipo se normalizara al generar el arbol
+            if   ind in (0,1,3): # nomral y jerarquia
+#                self.directCtorRB.setDisabled(False)
+                self.directCtorRB.setChecked(True)
+                #self.catCtorRB.setDisabled(False)
+                #self.catCtorRB.setChecked(False)
+                #self.caseCtorRB.setDisabled(False)
+                #self.caseCtorRB.setChecked(False)
+                #self.dateCtorRB.setDisabled(True)
+                #self.dateCtorRB.setChecked(False)
+                #self.linkCtorRB.setDisabled(False)
+                #self.linkCtorRB.setChecked(True)
+            elif ind == 2: # categorias
+                #self.directCtorRB.setDisabled(True)
+                #self.directCtorRB.setChecked(False)
+                #self.catCtorRB.setDisabled(False)
+                self.catCtorRB.setChecked(True)
+                #self.caseCtorRB.setDisabled(False)
+                #self.caseCtorRB.setChecked(False)
+                #self.dateCtorRB.setDisabled(True)
+                #self.dateCtorRB.setChecked(False)
+                #self.linkCtorRB.setDisabled(True) #de momento
+                #self.linkCtorRB.setChecked(False)
+            elif ind == 4: #fecha
+                #self.directCtorRB.setDisabled(True)
+                #self.directCtorRB.setChecked(False)
+                #self.catCtorRB.setDisabled(True)
+                #self.catCtorRB.setChecked(False)
+                #self.caseCtorRB.setDisabled(False)
+                #self.caseCtorRB.setChecked(False)
+                #self.dateCtorRB.setDisabled(False)
+                self.dateCtorRB.setChecked(True)
+                #self.linkCtorRB.setDisabled(True) #de momento
+                #self.linkCtorRB.setChecked(False)
+                
+                
+        def campoElegido(self,ind):
+            formato = self.fieldArray[ind - 1][2]
+            print(self.fieldArray[ind -1][1],formato)
+            if formato == 'fecha':
+#                self.dateCtorRB.setDisabled(False)
+                self.dateCtorRB.setChecked(True)
+            else:
+               self.tipoElegido(self.valueFormatCombo.currentIndex()) 
+                
     class WzCategory(QWizardPage):
         #TODO con esta sintaxis puede incluirse el critero de LIKE. Falta en core
         def __init__(self, parent=None):
@@ -450,10 +462,9 @@ def guideWizard(exec_object,obj):
             catValueFormatLabel = QLabel("Formato de los &Valores:")
             self.catValueFormatCombo = QComboBox()
             self.catValueFormatCombo.addItems(Formatos)
-            self.catValueFormatCombo.setCurrentIndex(0)
             catValueFormatLabel.setBuddy(self.catValueFormatCombo)
-
-
+    
+        
             context=[]
             
             context.append(('categoria','condicion','valores'))
@@ -496,6 +507,18 @@ def guideWizard(exec_object,obj):
                 self.catArray.addRow(count)
                 self.catArray.setCurrentCell(count,0)
 
+        def initializePage(self):
+            campo=wizard.field('guideFld')
+            datosCampo = getFldTable(exec_object,obj)[campo -1]
+            pprint(getFldTable(exec_object,obj))
+            print(campo,'==>',datosCampo)
+            if datosCampo[2] == 'numerico':
+                self.catValueFormatCombo.setCurrentIndex(1) 
+            elif datosCampo[2] == 'fecha':
+                self.catValueFormatCombo.setCurrentIndex(2)
+            else:
+                self.catValueFormatCombo.setCurrentIndex(0)
+            
             
     class WzRowEditor(QWizardPage):
         def __init__(self, parent=None):
@@ -721,35 +744,34 @@ def guideWizard(exec_object,obj):
            
             #TODO esto quedaria mejor con un WDataSheet 
             
-            joinCodeLabel = QLabel("&Campos de la tabla base")  #base_elem
-            self.joinCodeList = QListWidget()
-            self.joinCodeList.addItems(self.listOfFieldsBase)
-            joinCodeLabel.setBuddy(self.joinCodeList)
-            self.joinCodeList.setSelectionMode(QListWidget.ExtendedSelection)
-
-            joinDescLabel = QLabel("&Campos de la tabla de enlace") #join_table
-            self.joinDescList = QListWidget()
-            joinDescLabel.setBuddy(self.joinDescList)
-            self.joinDescList.setSelectionMode(QListWidget.ExtendedSelection)
-
+            context=[]
             
+            context.append(('c. base','condicion','c. enlace'))
+            context.append((QComboBox,None,('',)+tuple(self.listOfFieldsBase)))
+            context.append((QComboBox,None,tuple(LOGICAL_OPERATOR)))
+            context.append((QComboBox,None,None))
+            
+            numrows=3
+            
+            self.joinClauseArray = WDataSheet(context,numrows)
+            
+            for k in range(self.joinClauseArray.rowCount()):
+                self.joinClauseArray.cellWidget(k,1).setCurrentIndex(3) #la condicion de igualdad
+            self.joinClauseArray.resizeColumnToContents(0)
+             
             layout = QGridLayout()
             layout.addWidget(joinTableLabel,0,0)
             layout.addWidget(self.joinTableCombo,0,1)
             layout.addWidget(joinFilterLabel,1,0)
             layout.addWidget(self.joinFilterLineEdit,1,1)
-            layout.addWidget(joinCodeLabel,2,0)
-            layout.addWidget(self.joinCodeList,2,1)
-            layout.addWidget(joinDescLabel,3,0)
-            layout.addWidget(self.joinDescList,3,1)
+            layout.addWidget(self.joinClauseArray,2,0,1,2)
             self.setLayout(layout)
             #FIXME ¿de verdad no se pueden usar?
             #self.setCentralWidget(self.editArea)
             self.registerField('joinTable', self.joinTableCombo)
             self.registerField('joinFilter', self.joinFilterLineEdit)
-            self.registerField('joinCode',self.joinCodeList)
-            self.registerField('joinDesc',self.joinDescList)
-
+            self.registerField('joinClauseArray',self.joinClauseArray)
+ 
         def nextId(self):
             return -1 
             
@@ -758,8 +780,11 @@ def guideWizard(exec_object,obj):
             print('Algo encuentra',idx)
             tabname = self.listOfTables[idx]
             self.listOfFieldsRel = [ item[0] for item in getFldTable(exec_object,obj,tabname) ]
-            self.joinDescList.clear()
-            self.joinDescList.addItems(self.listOfFieldsRel)
+            for k in range(self.joinClauseArray.rowCount()):
+                self.joinClauseArray.cellWidget(k,2).clear()
+                self.joinClauseArray.cellWidget(k,2).addItems(['',]+self.listOfFieldsRel)
+            #self.joinDescList.clear()
+            #self.joinDescList.addItems(self.listOfFieldsRel)
             
 
     wizard = QWizard(exec_object)
@@ -825,7 +850,7 @@ def execAction(exec_object,obj,action):
             pass
         #elif tipo == 'fields'  no porque lo definimos como elemento libre
         elif tipo in ('guides','prod'):
-            print(tipo,obj.text(),obj.getRow())
+            #print(tipo,obj.text(),obj.getRow())
             # aqui el proceso del objeto
             result = guideWizard(exec_object,obj)
             print('Y al final lo que devuelve es',result)
@@ -859,10 +884,10 @@ def execAction(exec_object,obj,action):
                     #creo un nuevo registro
                     #FIXME esto deberia hacerse con takeRow
                     oldRecord = [ CubeItem(obj.getColumnData[k]) for k in range(1,obj.columnCount()) ]
-                    print(obj.columnCount())
-                    pprint(oldRecord)
+                    #print(obj.columnCount())
+                    #pprint(oldRecord)
                     oldRecord.insert(0,CubeItem(None))
-                    pprint(oldRecord)
+                    #pprint(oldRecord)
                     obj.appendRow((CubeItem(None),CubeItem(obj.getColumnData(1)),CubeItem(obj.getColumnData(2))))
                     obj.appendRow((CubeItem(None),CubeItem(str(result)),CubeItem(tipo)))
                     obj.setColumnData(1,None,Qt.EditRole)

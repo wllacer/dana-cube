@@ -418,7 +418,7 @@ def getDataList(rootElem,column,tipo = None):
         lista = [ item.getColumnData(column) for item in childItems(rootElem) if item.type() == tipo ]
     else:
         lista = [ item.getColumnData(column) for item in childItems(rootElem) ]
-    print(lista)
+    #print(lista)
     return lista
 
 def main():

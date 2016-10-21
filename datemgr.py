@@ -122,7 +122,7 @@ def getDateEntry(psource, fmt, driver='QSQLITE'):
         marker["d"] = '%d'
         marker["w"] = '%w'
         marker["J"] = '%J'
-    elif driver in ('mysql','mariadb','mysqldb'):  #GENERADOR
+    elif driver in ('mysql','mariadb','mysqldb','mysqlconnector'):  #GENERADOR
         function = 'DATE_FORMAT' 
         marker["Y"] = '%Y'
         marker["m"]= '%m'
@@ -215,7 +215,7 @@ def genTrimestreCode(fieldname,driver='QSQLITE'):
         year_marker='%Y'
         month_marker = '%m'
         cat_stmt = "{} || '{}' "
-    elif driver in ('mysql','mariadb','mysqldb'):  #GENERADOR
+    elif driver in ('mysql','mariadb','mysqldb','mysqlconnector'):  #GENERADOR
         function = 'DATE_FORMAT'
         function_mask ="{0}({1},'{2}')"
         year_marker='%Y'

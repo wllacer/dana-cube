@@ -26,7 +26,7 @@ from util.record_functions import norm2String,dict2row, row2dict
 #from widgets import WPropertySheet
 
 from  sqlalchemy import create_engine,inspect,MetaData, types
-from  sqlalchemy.exc import CompileError, OperationalError
+from  sqlalchemy.exc import CompileError, OperationalError, ProgrammingError
 #from  sqlalchemy.sql import text
 
 
@@ -333,7 +333,7 @@ class ConnectionTreeItem(BaseTreeItem):
                             referencer = kitem.child(2)
                             referencer.appendRow((name,table,referred,constrained))
                         
-                except OperationalError:
+                except ( OperationalError, ProgrammingError) :
                     print('error operativo en ',schema,table_name)
                     continue
                 except AttributeError:
@@ -486,7 +486,7 @@ class TableTreeItem(BaseTreeItem):
                 constrained = BaseTreeItem(norm2String(fk['constrained_columns']))
                 referred    = BaseTreeItem(norm2String(fk['referred_columns']))
                 curTableFK.appendRow((name,table,constrained,referred))                         
-        except OperationalError as e:
+        except (OperationalError, ProgrammingError) as e:
             showConnectionError('Error en {}.{}'.format(schema,table_name),norm2String(e.orig.args))
         
     def getFields(self,simple=False):
