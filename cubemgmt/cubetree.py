@@ -236,7 +236,7 @@ def recTreeLoader(parent,key,data,tipo=None):
         parent.appendRow((CubeItem(str(key)),None,CubeItem(tipo),))
     newparent = lastChild(parent)
     if isinstance(data,dict):
-        for elem in data:
+        for elem in sorted(data):
             recTreeLoader(newparent,elem,data[elem])
     elif isinstance(data,(list,tuple)):
         for idx,elem in enumerate(data):

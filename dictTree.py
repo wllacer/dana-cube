@@ -21,6 +21,7 @@ from PyQt5.QtWidgets import QMessageBox
           #QTableView
 
 from datalayer.access_layer import *
+#from cubebrowse import *
 from util.record_functions import norm2String,dict2row, row2dict
 #from util.jsonmgr import *
 #from widgets import WPropertySheet
@@ -674,6 +675,7 @@ class TableTreeItem(BaseTreeItem):
         elif action == 'generate':
             conn,schema,table=self.getFullDesc().split('.')
             context.cubebrowse(conn,schema,table)
+            #cubemgr = CubeBrowserWin(conn,schema,table,pdataDict=self.model())
             pass # generate cube
 
     #def getConnectionItem(self):

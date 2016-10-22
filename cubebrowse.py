@@ -14,14 +14,14 @@ Documentation, License etc.
 '''
 
 from pprint import pprint
-
+import datetime
 from decimal import *
 
 #from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QSplitter, QMenu, \
-     QDialog, QInputDialog, QLineEdit, QComboBox
-
+     QDialog, QInputDialog, QLineEdit, QComboBox, QMessageBox
+ 
 from datadict import *    
 from datalayer.query_constructor import *
 from datalayer.access_layer import dbDict2Url
@@ -47,8 +47,6 @@ def info2cube(dataDict,confName,schema,table,maxlevel=1):
        de la informacion de la tabla en DANACUBE crea un cubo por defecto
 
     """
-    #TODO strftime no vale para todos los gestores de base de datos
-    #pprint(dataDict)
     info = getTable(dataDict,confName,schema,table,maxlevel)                
     #pprint(info)
     
@@ -81,7 +79,6 @@ def info2cube(dataDict,confName,schema,table,maxlevel=1):
                                       'type':'Ymd',
                                       'prod':[{'fmt':'date','elem':fld[0]},]
                                       })  #no es completo
-            #TODO cambiar strftime por la funcion correspondiente en otro gestor 
             entrada['guides'].append( genTrimestreCode(fld[0],conn.driver))
 
         else:
@@ -141,39 +138,48 @@ def info2cube(dataDict,confName,schema,table,maxlevel=1):
 
 
 class CubeBrowserWin(QMainWindow):
-    def __init__(self,confName,schema,table,pdataDict=None):
-        super(CubeBrowserWin, self).__init__()
+    def __init__(self,confName=None,schema=None,table=None,pdataDict=None,parent=None):
+        super(CubeBrowserWin, self).__init__(parent)
         self.configFile = 'cuboSqliteOrig.json'
         #Leeo la configuracion
         #TODO variables asociadas del diccionario. Reevaluar al limpiar
-
+        # para notificar si estoy editando el fichero de configuracion completo o solo para una tabla
+        # desactivado porque aparentemente no es necesario
+        #self.fullConfig = True
         self.setupModel(confName,schema,table,pdataDict)
         self.setupView()
         print('inicializacion completa')
         ##CHANGE here
     
-        self.querySplitter = QSplitter(Qt.Horizontal)
-        self.querySplitter.addWidget(self.view)
+        #self.querySplitter = QSplitter(Qt.Horizontal)
         #self.querySplitter.addWidget(self.view)
-        self.setCentralWidget(self.querySplitter)
-               
-        self.setWindowTitle("Visualizador de base de datos")
+        #self.querySplitter.addWidget(self.view)
+        #self.setCentralWidget(self.querySplitter)
+        self.setCentralWidget(self.view)
+        
+        self.setWindowTitle("Visualizador del fichero de definición")
      
             
     def setupModel(self,confName,schema,table,pdataDict): 
         self.model = QStandardItemModel()
         self.hiddenRoot = self.model.invisibleRootItem()
         if type(pdataDict) is DataDict:
-            self.dataDict = pself.dataDict
+            self.dataDict = pdataDict
         else:
             self.dataDict = DataDict()
             #self.dataDict=DataDict(conn=confName,schema=schema)
-        infox = info2cube(self.dataDict,confName,schema,table)
-        #TODO convertir eso en una variable
-        info = load_cubo(self.configFile)
-        for nuevo in infox:
-            info[nuevo] = infox[nuevo]
-        #pprint(info)
+        if confName and schema and table:
+            info = info2cube(self.dataDict,confName,schema,table)
+            #self.fullConfig = False
+        else:
+            info = load_cubo(self.configFile)
+            #infox = None
+        ##TODO convertir eso en una variable
+        #info = load_cubo(self.configFile)
+        #if infox:
+            #for nuevo in infox:
+                #info[nuevo] = infox[nuevo]
+
         #
         parent = self.hiddenRoot
         for entrada in info:
@@ -194,12 +200,13 @@ class CubeBrowserWin(QMainWindow):
         self.view.customContextMenuRequested.connect(self.openContextMenu)
         self.view.doubleClicked.connect(self.test)
         self.view.setModel(self.model)
-        #self.view.hideColumn(2) # eso no interesa al usuario final
+        self.view.hideColumn(2) # eso no interesa al usuario final
         self.view.expandAll() # es necesario para el resize
         for m in range(self.model.columnCount()):
             self.view.resizeColumnToContents(m)
-        #self.view.collapseAll()
+        self.view.collapseAll()
         #self.view.verticalHeader().hide()
+        self.view.setHeaderHidden(True)
         #self.view.setSortingEnabled(True)
         self.view.setAlternatingRowColors(True)
         #self.view.sortByColumn(0, Qt.AscendingOrder)
@@ -220,18 +227,31 @@ class CubeBrowserWin(QMainWindow):
     def test(self):
         return
     
+    def saveDialog(self):
+        if (QMessageBox.question(self,
+                "Salvar",
+                "Desea salvar los cambios del fichero de configuracion {}?".format(self.configFile),
+                QMessageBox.Yes|QMessageBox.No) == QMessageBox.Yes):
+            return True
+        else:
+            return False
+
     def saveConfigFile(self):
-        baseCubo=load_cubo(self.configFile)
-        newcubeStruct = tree2dict(self.hiddenRoot,isDictionaryEntry)
-        for entrada in newcubeStruct:
-            baseCubo[entrada] = newcubeStruct[entrada]
-        #TODO salvar la version anterior
-        dump_structure(baseCubo,self.configFile)
+        if self.saveDialog():
+            print('Voy a salvar el fichero')
+            baseCubo=load_cubo(self.configFile)
+            dump_structure(baseCubo,'{}.{}'.format(self.configFile,datetime.datetime.now().strftime("%Y%m%d-%H%M%S")))
+            newcubeStruct = tree2dict(self.hiddenRoot,isDictionaryEntry)
+            for entrada in newcubeStruct:
+                baseCubo[entrada] = newcubeStruct[entrada]
+            #TODO salvar la version anterior
+            dump_structure(baseCubo,self.configFile)
     
     def closeEvent(self, event):
         self.close()
         
     def close(self):
+        import sys
         #TODO  deberia cerrar los recursos de base de datos
         #for conid in self.conn:
             #if self.conn[conid] is None:
@@ -240,7 +260,7 @@ class CubeBrowserWin(QMainWindow):
                 #self.conn[conid].close()
         self.saveConfigFile()
 
-        sys.exit()
+        #sys.exit()
 
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
@@ -250,7 +270,7 @@ if __name__ == '__main__':
         reload(sys)
         sys.setdefaultencoding('utf-8')
     app = QApplication(sys.argv)
-    window = CubeBrowserWin('MariaBD Local','sakila','film')
+    window = CubeBrowserWin()#'MariaBD Local','sakila','film')
     window.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
     window.show()
     sys.exit(app.exec_())

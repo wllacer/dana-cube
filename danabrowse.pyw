@@ -29,7 +29,7 @@ from widgets import WPropertySheet
 from dictTree import *
 from datadict import *
 from tablebrowse import *
-from cubebrowse import info2cube
+from cubebrowse import info2cube, CubeBrowserWin
 
 def waiting_effects(function):
     """
@@ -268,6 +268,7 @@ class MainWindow(QMainWindow):
         self.close()
         
     def close(self):
+
         for conid in self.conn:
             if self.conn[conid] is None:
                 continue
@@ -319,8 +320,7 @@ class MainWindow(QMainWindow):
         #del self.conn[confName]
         #del self.configData['Conexiones'][nombre]
 
-    def editConnection(self,nombre=None):
-        
+    def editConnection(self,nombre=None):        
         attr_list =  ('driver','dbname','dbhost','dbuser','dbpass','dbport','debug')
         if nombre is None:
             datos = [None for k in range(len(attr_list) +1) ]
@@ -397,7 +397,6 @@ class MainWindow(QMainWindow):
   
     @waiting_effects
     def databrowse(self,confName,schema,table,iters=0):
-        
         #self.queryView = QTableView(self)
         #self.queryModel = QStandardItemModel()
         #self.queryView.setModel(self.queryModel)        
@@ -436,7 +435,8 @@ class MainWindow(QMainWindow):
     @waiting_effects
     def cubebrowse(self,confName,schema,table):
         infox = info2cube(self.dictionary,confName,schema,table)
-    
+        cubeMgr = CubeBrowserWin(confName,schema,table,self.dictionary,self)
+        cubeMgr.show()
         
     def test(self,index):
         return
