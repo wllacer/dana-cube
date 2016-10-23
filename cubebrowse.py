@@ -142,34 +142,76 @@ class CubeBrowserWin(QMainWindow):
         super(CubeBrowserWin, self).__init__(parent)
         self.configFile = 'cuboSqliteOrig.json'
         #Leeo la configuracion
+
         #TODO variables asociadas del diccionario. Reevaluar al limpiar
         # para notificar si estoy editando el fichero de configuracion completo o solo para una tabla
         # desactivado porque aparentemente no es necesario
         #self.fullConfig = True
-        self.setupModel(confName,schema,table,pdataDict)
-        self.setupView()
-        print('inicializacion completa')
+        #self.setupModel(confName,schema,table,pdataDict)
+        #self.setupView()
+        #print('inicializacion completa')
         ##CHANGE here
-    
+        self.cubeMgr = CubeMgr(self,confName,schema,table,pdataDict,self.configFile)
         #self.querySplitter = QSplitter(Qt.Horizontal)
         #self.querySplitter.addWidget(self.view)
         #self.querySplitter.addWidget(self.view)
         #self.setCentralWidget(self.querySplitter)
-        self.setCentralWidget(self.view)
+        self.fileMenu = self.menuBar().addMenu("&General")
+        self.fileMenu.addAction("&Salvar", self.cubeMgr.saveConfigFile, "Ctrl+S")
+        self.fileMenu.addAction("&Restaurar", self.cubeMgr.restoreConfigFile, "Ctrl+M")
+        self.fileMenu.addAction("S&alir", self.close, "Ctrl+D")
+
+        self.setCentralWidget(self.cubeMgr)
         
         self.setWindowTitle("Visualizador del fichero de definición")
      
-            
-    def setupModel(self,confName,schema,table,pdataDict): 
-        self.model = QStandardItemModel()
-        self.hiddenRoot = self.model.invisibleRootItem()
+    
+    def closeEvent(self, event):
+        self.close()
+        
+    def close(self):
+        import sys
+        #TODO  deberia cerrar los recursos de base de datos
+        #for conid in self.conn:
+            #if self.conn[conid] is None:
+                #continue
+            #if self.conn[conid].closed :
+                #self.conn[conid].close()
+        self.cubeMgr.saveConfigFile()
+        #sys.exit()
+    
+    
+
+class CubeMgr(QTreeView):
+    def __init__(self,parent=None,confName=None,schema=None,table=None,pdataDict=None,configFile=None):
+        super(CubeMgr, self).__init__(parent)
+        if not configFile:
+            self.configFile = 'cuboSqliteOrig.json'
+        else:
+            self.configFile = configFile
         if type(pdataDict) is DataDict:
             self.dataDict = pdataDict
         else:
             self.dataDict = DataDict()
+
+
+        self.model = QStandardItemModel()
+        self.hiddenRoot = self.model.invisibleRootItem()
+        self.particular = False #variable auxiliar para saber que tipo de uso hago
+        self.setupModel(confName,schema,table)
+        
+        self.view = self  #truco para no tener demasiados problemas de migracion
+        self.setupView()
+
+        print('inicializacion completa')
+
+    def setupModel(self,confName=None,schema=None,table=None ):
             #self.dataDict=DataDict(conn=confName,schema=schema)
         if confName and schema and table:
+            print('por aqui')
             info = info2cube(self.dataDict,confName,schema,table)
+            self.particular = True
+            self.particularContext=(confName,schema,table)
             #self.fullConfig = False
         else:
             info = load_cubo(self.configFile)
@@ -181,7 +223,10 @@ class CubeBrowserWin(QMainWindow):
                 #info[nuevo] = infox[nuevo]
 
         #
-        parent = self.hiddenRoot
+
+        parent = self.hiddenRoot = self.model.invisibleRootItem()
+        if not info:
+            print('Algo ha fallado espectacularmente',self.particular,self.particularContext)
         for entrada in info:
             if entrada == 'default':
                 tipo = 'default_start'
@@ -190,12 +235,13 @@ class CubeBrowserWin(QMainWindow):
             else:
                 tipo = 'base'
             recTreeLoader(parent,entrada,info[entrada],tipo)
+            print(entrada,'procesada')
         #navigateTree(self.hiddenRoot)
         #pprint(tree2dict(self.hiddenRoot))
         #getOpenConnections(self.dataDict)
         
     def setupView(self):
-        self.view = QTreeView(self)
+        #self.view = QTreeView(self)
         self.view.setContextMenuPolicy(Qt.CustomContextMenu)
         self.view.customContextMenuRequested.connect(self.openContextMenu)
         self.view.doubleClicked.connect(self.test)
@@ -223,10 +269,7 @@ class CubeBrowserWin(QMainWindow):
         setContextMenu(item,menu,self)        
         action = menu.exec_(self.view.viewport().mapToGlobal(position))
         # getContextMenu(item,action,self)
-        
-    def test(self):
-        return
-    
+ 
     def saveDialog(self):
         if (QMessageBox.question(self,
                 "Salvar",
@@ -236,31 +279,36 @@ class CubeBrowserWin(QMainWindow):
         else:
             return False
 
+
     def saveConfigFile(self):
         if self.saveDialog():
             print('Voy a salvar el fichero')
+            """DEVELOP
             baseCubo=load_cubo(self.configFile)
             dump_structure(baseCubo,'{}.{}'.format(self.configFile,datetime.datetime.now().strftime("%Y%m%d-%H%M%S")))
+            """
+            baseCubo = dict()
             newcubeStruct = tree2dict(self.hiddenRoot,isDictionaryEntry)
             for entrada in newcubeStruct:
-                baseCubo[entrada] = newcubeStruct[entrada]
-            #TODO salvar la version anterior
+                if newcubeStruct[entrada]:
+                    baseCubo[entrada] = newcubeStruct[entrada]
+                else:
+                    del baseCubo[entrada]
+                # con los borrados hay un problema. La unica opcion que he encotrado es borrar si esta vacia
             dump_structure(baseCubo,self.configFile)
-    
-    def closeEvent(self, event):
-        self.close()
-        
-    def close(self):
-        import sys
-        #TODO  deberia cerrar los recursos de base de datos
-        #for conid in self.conn:
-            #if self.conn[conid] is None:
-                #continue
-            #if self.conn[conid].closed :
-                #self.conn[conid].close()
-        self.saveConfigFile()
 
-        #sys.exit()
+    def restoreConfigFile(self):
+        self.model.beginResetModel()
+        self.model.clear()
+        if self.particular:
+            self.setupModel(*self.particularContext)
+        else:
+            self.setupModel()
+        self.model.endResetModel()
+    
+    def test(self):
+        return
+    
 
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona

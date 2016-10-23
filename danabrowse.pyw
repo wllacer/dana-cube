@@ -29,7 +29,7 @@ from widgets import WPropertySheet
 from dictTree import *
 from datadict import *
 from tablebrowse import *
-from cubebrowse import info2cube, CubeBrowserWin
+from cubebrowse import info2cube, CubeMgr
 
 def waiting_effects(function):
     """
@@ -178,7 +178,7 @@ class ConnectionSheetDlg(QDialog):
             self.data[k] = valor
         QDialog.accept(self)
 
-
+    
 def showConnectionError(context,detailed_error):
     msg = QMessageBox()
     msg.setIcon(QMessageBox.Warning)
@@ -195,6 +195,7 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
         #Leeo la configuracion
 
+
         self.dictionary = DataDict()
         #TODO variables asociadas del diccionario. Reevaluar al limpiar
         self.model = self.dictionary.model
@@ -207,17 +208,16 @@ class MainWindow(QMainWindow):
         print('inicializacion completa')
         #CHANGE here
         
-        #self.queryView = QTableView()
-        
+        self.queryView = QTableView() #!!!!???? debe ir delante de la definicion de menu
         self.fileMenu = self.menuBar().addMenu("&Conexiones")
         self.fileMenu.addAction("&New ...", self.newConnection, "Ctrl+N")
         self.fileMenu.addAction("&Modify ...", self.modConnection, "Ctrl+M")
-        self.fileMenu.addAction("&Delete ...", self.delConnection, "Ctrl+D")
+        self.fileMenu.addAction("&Delete ...", self.delConnection, "Ctrl+D")        
         self.fileMenu.addAction("&Save Config File", self.saveConfigFile, "Ctrl+S")
         self.fileMenu.addAction("E&xit", self.close, "Ctrl+Q")
-
-
-        self.queryView = QTableView(self)
+        
+        
+        #self.queryView = QTableView(self)
         self.queryModel = QStandardItemModel()
         self.queryView.setModel(self.queryModel)        
 
@@ -226,7 +226,7 @@ class MainWindow(QMainWindow):
         self.querySplitter.addWidget(self.view)
         #self.querySplitter.addWidget(self.queryView)
         self.setCentralWidget(self.querySplitter)
-               
+
         self.setWindowTitle("Visualizador de base de datos")
         
     def setupView(self):
@@ -243,7 +243,7 @@ class MainWindow(QMainWindow):
         for m in range(self.model.columnCount()):
             self.view.resizeColumnToContents(m)
         self.view.collapseAll()
-
+        self.view.setHeaderHidden(True)
         #self.view.setSortingEnabled(True)
         #self.view.setRootIsDecorated(False)
         self.view.setAlternatingRowColors(True)
@@ -390,7 +390,6 @@ class MainWindow(QMainWindow):
             index = indexes[0]
             item = self.model.itemFromIndex(index)
         menu = QMenu()
-        #setContextMenu(item,menu,self)        
         item.setMenuActions(menu,self)
         action = menu.exec_(self.view.viewport().mapToGlobal(position))
         #getContextMenu(item,action,self)
@@ -435,8 +434,15 @@ class MainWindow(QMainWindow):
     @waiting_effects
     def cubebrowse(self,confName,schema,table):
         infox = info2cube(self.dictionary,confName,schema,table)
-        cubeMgr = CubeBrowserWin(confName,schema,table,self.dictionary,self)
-        cubeMgr.show()
+        #cubeMgr = CubeBrowserWin(confName,schema,table,self.dictionary,self)
+        self.cubeMgr = CubeMgr(self,confName,schema,table,self.dictionary)
+        self.cubeMgr.expandToDepth(3)
+        self.querySplitter.addWidget(self.cubeMgr)
+        self.cubeMgr.show()
+ 
+ 
+    def saveCubeFile(self):
+        self.cubeMgr.saveConfigFile()
         
     def test(self,index):
         return

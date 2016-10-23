@@ -1000,7 +1000,13 @@ def execAction(exec_object,obj,action):
             print('Se escapa',obj,tipo)
         pass  # edit item, save config, refresh tree
     elif action == 'delete' :
-        obj.suicide()
+        if obj.type() == 'base': #no puedo borrarlo pero si vaciarlo, es un probleam de logica. ver cubebrowewin.close()
+            indice = obj.index()
+            while obj.hasChildren():
+                obj.model().item(indice.row()).removeRow(0)
+            obj.setEnabled(False)
+        else:
+            obj.suicide()
         pass  # close connection, delete tree, delete config
     elif action == 'copy':
         print('copy ',obj)
