@@ -205,17 +205,28 @@ class MainWindow(QMainWindow):
             self.newConfigData()
             self.dictionary._cargaModelo(self.dictionary.model)
         self.setupView()
+        self.cubeMgr = None # necesito mas adelante que este definida
         print('inicializacion completa')
         #CHANGE here
         
         self.queryView = QTableView() #!!!!???? debe ir delante de la definicion de menu
-        self.fileMenu = self.menuBar().addMenu("&Conexiones")
-        self.fileMenu.addAction("&New ...", self.newConnection, "Ctrl+N")
-        self.fileMenu.addAction("&Modify ...", self.modConnection, "Ctrl+M")
-        self.fileMenu.addAction("&Delete ...", self.delConnection, "Ctrl+D")        
-        self.fileMenu.addAction("&Save Config File", self.saveConfigFile, "Ctrl+S")
-        self.fileMenu.addAction("E&xit", self.close, "Ctrl+Q")
+        self.dictMenu = self.menuBar().addMenu("&Conexiones")
+        self.dictMenu.addAction("&New ...", self.newConnection, "Ctrl+N")
+        self.dictMenu.addAction("&Modify ...", self.modConnection, "Ctrl+M")
+        self.dictMenu.addAction("&Delete ...", self.delConnection, "Ctrl+D")        
+        self.dictMenu.addAction("&Save Config File", self.saveConfigFile, "Ctrl+S")
+        self.dictMenu.addAction("E&xit", self.close, "Ctrl+Q")
         
+        
+        self.queryMenu = self.menuBar().addMenu('C&onsulta de datos')
+        self.queryMenu.addAction("Cerrar",self.hideDatabrowse)
+        self.queryMenu.setEnabled(False)
+        
+        self.cubeMenu = self.menuBar().addMenu("Cubo")
+        self.cubeMenu.addAction("&Salvar", self.saveCubeFile, "Ctrl+S")
+        self.cubeMenu.addAction("&Restaurar", self.restoreCubeFile, "Ctrl+M")
+        self.cubeMenu.addAction("S&alir", self.hideCube, "Ctrl+D")
+        self.cubeMenu.setEnabled(False)
         
         #self.queryView = QTableView(self)
         self.queryModel = QStandardItemModel()
@@ -225,7 +236,11 @@ class MainWindow(QMainWindow):
         self.querySplitter = QSplitter(Qt.Vertical)
         self.querySplitter.addWidget(self.view)
         #self.querySplitter.addWidget(self.queryView)
-        self.setCentralWidget(self.querySplitter)
+
+        self.configSplitter = QSplitter(Qt.Horizontal)
+        self.configSplitter.addWidget(self.querySplitter)
+        
+        self.setCentralWidget(self.configSplitter)
 
         self.setWindowTitle("Visualizador de base de datos")
         
@@ -269,6 +284,9 @@ class MainWindow(QMainWindow):
         
     def close(self):
 
+        if self.cubeMgr:
+            self.cubeMgr.saveConfigFile()
+            
         for conid in self.conn:
             if self.conn[conid] is None:
                 continue
@@ -427,23 +445,43 @@ class MainWindow(QMainWindow):
         #self.queryView.setSortingEnabled(True)
         self.queryView.setAlternatingRowColors(True)
         #self.queryView.sortByColumn(0, Qt.AscendingOrder)
-
+        
+        self.queryMenu.setEnabled(True)
+   
         if self.querySplitter.count() == 1:  #de momento parece un modo sencillo de no multiplicar en exceso
             self.querySplitter.addWidget(self.queryView)
+            
+    def hideDatabrowse(self):
+        self.queryView.hide()
+        self.queryModel.clear()
+        self.queryMenu.setEnabled(False)
         
     @waiting_effects
     def cubebrowse(self,confName,schema,table):
         infox = info2cube(self.dictionary,confName,schema,table)
         #cubeMgr = CubeBrowserWin(confName,schema,table,self.dictionary,self)
+        if self.cubeMgr:
+            self.hideCube()
         self.cubeMgr = CubeMgr(self,confName,schema,table,self.dictionary)
-        self.cubeMgr.expandToDepth(3)
-        self.querySplitter.addWidget(self.cubeMgr)
+        self.cubeMgr.expandToDepth(3)        
+        #if self.configSplitter.count() == 1:  #de momento parece un modo sencillo de no multiplicar en exceso
+        self.configSplitter.addWidget(self.cubeMgr)
+
         self.cubeMgr.show()
+        self.cubeMenu.setEnabled(True)
  
  
     def saveCubeFile(self):
         self.cubeMgr.saveConfigFile()
+    
+    def restoreCubeFile(self):
+        self.cubeMgr.restoreConfigFile()
         
+    def hideCube(self):
+        self.cubeMgr.saveConfigFile()
+        self.cubeMgr.hide()
+        self.cubeMenu.setEnabled(False)
+
     def test(self,index):
         return
         print(index.row(),index.column())

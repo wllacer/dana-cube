@@ -946,7 +946,8 @@ def execAction(exec_object,obj,action):
             #print(tipo,obj.text(),obj.getRow())
             # aqui el proceso del objeto
             result = guideWizard(exec_object,obj)
-            print('Y al final lo que devuelve es',result)
+            if not result:
+                return
             #TODO lo de abajo es lo que deberia ejecutar
             
             if obj.text() != tipo:

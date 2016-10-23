@@ -13,11 +13,12 @@ At the other end of the spectrum, very expensive (in more senses than cost) OLAP
 
 We provide a database, OS agnostic environment for runing and managing those kind of queries and show them in tabular fashion.
 
-We have created an environment where you can run an arbitrary aggregate query and show it in tabular fashion.
+We have created an environment where you can run an -almost- arbitrary aggregate query and show it in tabular fashion.
 
 ![Screenshot](docs/screenshot.png "Title")
 
-This is __not an end user tool__ , rather it is designed to be used for knowledgable users (DBAs, developers, data owners) or as a ready made __API__ cum sample tool to ne integrated in other's people work (as it still is in heavy development, _Caveat emptor_ ).
+This is __not an end user tool__ , rather it is designed to be used for knowledgable users (DBAs, developers, data owners) or as a ready made __API__ cum sample tool to be integrated in other's people work (as it still is in heavy development, _Caveat emptor_ ).
+
 
 Each instance of the application runs against what we call a Cube. This is the view of a data table (or table-like DB object -a view, a select statement, ...) and the definition of the potential indexes over which to search. This indexes can be scalar fields or hierarchical structures. If the index is a date field; we automatically provide (for SQLITE, MySQL, PostGreSQL and Oracle, atm) for several subindexes (years, years-month, ...) The definition of the Cube is a simple text (Json) file like this
 
@@ -59,7 +60,10 @@ Each instance of the application runs against what we call a Cube. This is the v
     }, 
  ```
 
-Why a text file for definition? Getting the table definitions from the DB Catalog is one of the areas not standarized in SQL, nor the underlying tool i'm using (QtSQL) abstract them. Although we have plans to overcome it, it is no trivial task and we decided to postpone its implementation to a point when the tool is more mature. Second, text files are easy to distribute and for "emergency' changes. 
+Why a text file for definition? To avoid a dependency to a concrete DB Manager or of their DBA's . Second, text files are easier to distribute and for "emergency' changes. 
+
+We provide a tool to manage these definitions, and another to generate directly from the database a basic outline
+(screenshots should follow)
 
 The tool is programmed in python2 + PyQt5?, but we test it also under python3.
 
@@ -70,7 +74,7 @@ in Master
 ## Dependencies
 
 Besides PyQt, we use  [SqlAlchemy](http://www.sqlalchemy.org/) as a data backend (only core functionality). If you don't 
-want it, can be made to fallback to plain PyQt/QtSql (by hand, actually)
+want it, can be made to fallback to plain PyQt/QtSql (by hand, actually, and only for the cube viewer)
 
 ## License
 
@@ -85,6 +89,10 @@ PyQt licensing might impose other restrictions, please keep an eye on it (AFAIK 
 
 __MASTER works__ but some pieces are lacking (Above all documentation). The latest __release__ has still not converted
 to the new code. 
+
+_Update XXIII ordinary sunday (vesper of S. Raphael Archangel 2016_ . For the first time, the code has all the main components in place. A release will be tagged during the day
+Of course there are still lots of bugs or areas with a minimal implementation, but the tool is usable on its full life cycle, so real debugging, -and fleshing- can start
+It only lacks -as a full subsystem- export capabilities. For end users they are critical, but as a subsystem fully isolated, they aren't as important from the application architecture POV
 
 _Update Feast of St. Francis of Borja 2016_ We have merged today the development tree at _Github_  The core code is more or less in an alfa release state, but the ancilliary tools aren't still there
 

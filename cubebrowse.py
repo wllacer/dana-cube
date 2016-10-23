@@ -140,7 +140,7 @@ def info2cube(dataDict,confName,schema,table,maxlevel=1):
 class CubeBrowserWin(QMainWindow):
     def __init__(self,confName=None,schema=None,table=None,pdataDict=None,parent=None):
         super(CubeBrowserWin, self).__init__(parent)
-        self.configFile = 'cuboSqliteOrig.json'
+        self.configFile = 'cubo.json'   #DEVELOP
         #Leeo la configuracion
 
         #TODO variables asociadas del diccionario. Reevaluar al limpiar
@@ -186,7 +186,7 @@ class CubeMgr(QTreeView):
     def __init__(self,parent=None,confName=None,schema=None,table=None,pdataDict=None,configFile=None):
         super(CubeMgr, self).__init__(parent)
         if not configFile:
-            self.configFile = 'cuboSqliteOrig.json'
+            self.configFile = 'cubo.json' #DEVELOP
         else:
             self.configFile = configFile
         if type(pdataDict) is DataDict:
@@ -283,11 +283,10 @@ class CubeMgr(QTreeView):
     def saveConfigFile(self):
         if self.saveDialog():
             print('Voy a salvar el fichero')
-            """DEVELOP
+        
             baseCubo=load_cubo(self.configFile)
             dump_structure(baseCubo,'{}.{}'.format(self.configFile,datetime.datetime.now().strftime("%Y%m%d-%H%M%S")))
-            """
-            baseCubo = dict()
+            
             newcubeStruct = tree2dict(self.hiddenRoot,isDictionaryEntry)
             for entrada in newcubeStruct:
                 if newcubeStruct[entrada]:
@@ -304,6 +303,7 @@ class CubeMgr(QTreeView):
             self.setupModel(*self.particularContext)
         else:
             self.setupModel()
+        self.setupView()
         self.model.endResetModel()
     
     def test(self):
