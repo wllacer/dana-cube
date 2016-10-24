@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
@@ -18,7 +17,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QSplitter, QAb
           QTableView
 
 from  sqlalchemy import create_engine,inspect,MetaData, types
-from  sqlalchemy.exc import CompileError, OperationalError, ProgrammingError
+from  sqlalchemy.exc import CompileError, OperationalError, ProgrammingError, InterfaceError
 from  sqlalchemy.sql import text
 
 from datalayer.access_layer import *
@@ -31,6 +30,7 @@ from dictmgmt.datadict import *
 from tablebrowse import *
 from cubebrowse import info2cube, CubeMgr
 
+DEBUG = True
 def waiting_effects(function):
     """
       decorator from http://stackoverflow.com/questions/8218900/how-can-i-change-the-cursor-shape-with-pyqt
@@ -45,7 +45,11 @@ def waiting_effects(function):
             return function(*args, **kwargs)
         except Exception as e:
             raise e
-            print("Error {}".format(e.args[0]))
+            QMessageBox.warning(self,
+                            "Warning",
+                            "Error {}".format(e.args[0]))
+            if DEBUG:
+                print("Error {}".format(e.args[0]))
         finally:
             QApplication.restoreOverrideCursor()
     return new_function
@@ -204,7 +208,8 @@ class MainWindow(QMainWindow):
             self.dictionary._cargaModelo(self.dictionary.model)
         self.setupView()
         self.cubeMgr = None # necesito mas adelante que este definida
-        print('inicializacion completa')
+        if DEBUG:
+            print('inicializacion completa')
         #CHANGE here
         
         self.queryView = QTableView() #!!!!???? debe ir delante de la definicion de menu
@@ -271,7 +276,9 @@ class MainWindow(QMainWindow):
             self.saveConfigFile()
             self.dictionary._cargaModelo(self.dictionary.model)
         else:
-            #TODO mensaje informativo
+            QMessageBox.critical(self,
+                                "Error Fatal",
+                                "No se ha encontrado una conexión valida.\nFin de proceso")
             self.close()
             
     def saveConfigFile(self):
@@ -294,7 +301,6 @@ class MainWindow(QMainWindow):
 
         sys.exit()
         
-    #TODO actualizar el arbol tras hacer la edicion   
     def newConnection(self):
         confName=self.editConnection(None)
         # esta claro que sobran parametros
@@ -394,7 +400,6 @@ class MainWindow(QMainWindow):
             datos[1]=DRIVERS[datos[1]]
             self.configData['Conexiones'][datos[0]] = row2dict(datos[1:],attr_list)
             return datos[0]
-            #TODO modificar el arbol, al menos desde ahí
      
         
 

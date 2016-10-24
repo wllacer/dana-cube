@@ -121,7 +121,7 @@ class DataDict():
             padre.insertRow(pos,(ConnectionTreeItem(confName,conexion),QStandardItem(str(engine))))
             curConnection = padre.child(pos)
 
-        except ( OperationalError, ProgrammingError ) as e:
+        except ( OperationalError, ProgrammingError, InterfaceError ) as e:
             self.conn[confName] = None
             showConnectionError(confName,norm2String(e.orig.args))             
             padre.insertRow(pos,(ConnectionTreeItem(confName,None),QStandardItem('Disconnected')))

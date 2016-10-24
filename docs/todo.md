@@ -8,6 +8,7 @@
                          Ora   to_char
                          SyS   datepart (!!!)
 * Nombre de driver (buscar #DRIVERNAME) y (acceslayer.driver2alch)
+* Ojo que no todos escupen los mismos errores
 
 ## short term TODO list (2016)
 

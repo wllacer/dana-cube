@@ -19,23 +19,37 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * Filtros de entrada en el cubo
 * Parametrizar ficheros de configuracion
 * Traduccion
+* Finalizar la gestion CRUD de cubos
+* Ocultar las claves en las cadenas importantes
 
 ## Annoyances
 
 * Como hacer que los arboles no se cierren y abran aleatoriamente
 * Mensajes de usuario en caso de error graficos (proseguir desde util.base_dialogs. No funciona de momento)
+    ** Danacube
+    ** Danabrowse y asoociados
+       *** __DONE__ danabrowse
+       *** __DONE__ datadict
+       *** __DONE__ dicttree
+    * tablebrowse
+    * cubebrowse
+    * core & default
+* unificar su tratamiento
+* uso de variables globales
+* ¿que hago con los errores SQL ?
+
 * SQL performance ¿?
 
 ## Pequeños TODO
 
 * Sesiones salvables
-* Finalizar la gestion CRUD de cubos
 * Repaso de bugs (iniciar en danabrowse -> cubebrowse -> danacube)
-* Ocultar las claves en las cadenas importantes
 * Unficar el tratamiento de arboles en la medida de lo posible
 * Unificar (y aumentar el uso de decoradores)
 * Mejorar la IU de los widgets de defecto
     ** __DONE__ eliminar la cabecera en WPropertySheet
+* Eliminar sinonimos de variables en inicializaciones (p.e en danacube y DataDict)
+* Filtrado, al menos, en tablebrowse
 
 ### CubeBrowse
 
@@ -98,6 +112,29 @@ UnboundLocalError: local variable 'item' referenced before assignment
 * __DONE__ El sistema de salvado se dispara si se activa una generacion despues de cerrada la primera
 
 
+## DANABROWSE e hijos
+Limpieza general
+next -> danabrowse.pyw:200:        #TODO variables asociadas del diccionario. Reevaluar al limpiar
++ danabrowse.pyw:276:            #TODO mensaje informativo
+- danabrowse.pyw:299:    #TODO actualizar el arbol tras hacer la edicion   
+hold -> danabrowse.pyw:395:            #TODO deberia verificar que se han cambiado los datos
+- danabrowse.pyw:399:            #TODO modificar el arbol, al menos desde ahí
+next -> danabrowse.pyw:39:       TODO unificar en un solo sitio
+- danabrowse.pyw:90:       TODO faltan datos adicionales para cada item, otro widget, cfg del widget, formato de salida
+- danabrowse.pyw:91:       FIXME los botones estan fatal colocados
+- dictmgmt.datadict.py:109:    #TODO probablemente padre sea un parametro inncecesario
++ dictmgmt.datadict.py:128:            #TODO deberia ampliar la informacion de no conexion
++ dictmgmt.datadict.py:175:                ##TODO gestionar error de conexion no existente
+next ->dictmgmt.datadict.py:44:        #FIXME eliminar parametros espureos
+- dictmgmt.datadict.py:83:        definimos el modelo. Tengo que ejecutarlo cada vez que cambie la vista. TODO no he conseguido hacerlo dinamicamente
+dictmgmt.dictTree.py:263:        #FIXME no podemos poner el icono de momento
+- dictmgmt.dictTree.py:345:        ##TODO cambiar la columna 
+bypass -> dictmgmt.dictTree.py:346:        #TODO de desconectada a conectada
+- dictmgmt.dictTree.py:368:            #FIXME no podemos poner el icono de momento
+dictmgmt.dictTree.py:379:            #TODO deberia verificar que de verdad lo esta
+- dictmgmt.dictTree.py:419:        #FIXME no podemos poner el icono de momento
+- dictmgmt.dictTree.py:448:        #FIXME no podemos poner el icono de momento
+next -> dictmgmt.dictTree.py:579:        #FIXME ver si puede utilizarse nomenclatura fqn() aquí
 
 
 * __EXPERIMENTAL__: __PASS__ Substitute PySide for PyQt (licensing issues) (but only Qt4.8)

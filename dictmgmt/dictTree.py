@@ -27,19 +27,19 @@ from util.record_functions import norm2String,dict2row, row2dict
 #from widgets import WPropertySheet
 
 from  sqlalchemy import create_engine,inspect,MetaData, types
-from  sqlalchemy.exc import CompileError, OperationalError, ProgrammingError
+from  sqlalchemy.exc import CompileError, OperationalError, ProgrammingError, InterfaceError
 #from  sqlalchemy.sql import text
 
+DEBUG=True
 
 
-
-def showConnectionError(context,detailed_error):
+def showConnectionError(context,detailed_error,title="Error de Conexion"):
     msg = QMessageBox()
     msg.setIcon(QMessageBox.Warning)
 
-    msg.setText("Error en la conexion con {}".format(context))
+    msg.setText("Error en {}".format(context))
     #msg.setInformativeText(detailed_error)
-    msg.setWindowTitle("Error de Conexion")
+    msg.setWindowTitle(title)
     msg.setDetailedText(detailed_error)
     msg.setStandardButtons(QMessageBox.Ok)                
     retval = msg.exec_()
@@ -270,43 +270,16 @@ class ConnectionTreeItem(BaseTreeItem):
     def findElement(self,schemaName,tableName):
         sch = self.getChildrenByName(schemaName)
         if sch is None:
-            print('Esquema >{}< no definido'.format(schemaName))
+            if DEBUG:
+                print('Esquema >{}< no definido'.format(schemaName))
             return
         tab = sch.getChildrenByName(tableName)
         if tab is None:
-            print('Tabla {} no definida'.format(tableName))
+            if DEBUG:
+                print('Tabla {} no definida'.format(tableName))
             return
         return tab
 
-        #ischema = None
-        #for item in self.model().findItems(schema,Qt.MatchExactly|Qt.MatchRecursive,0):
-            #if type(item) != SchemaTreeItem:
-                #continue
-            #if item.parent() != self :
-                #continue
-            #ischema = item
-            #break
-        
-        #if ischema is None:
-            #print ('Esquema {} no encontrado'.format(schema))
-            #return None
-        
-        #kitem = None
-        #for item in self.model().findItems(table,Qt.MatchExactly|Qt.MatchRecursive,0):
-            #if type(item) != TableTreeItem :
-                #continue
-            #if item.parent() != ischema:
-                #continue
-            #if item.parent().parent() != self :
-                #continue
-            #kitem = item
-            #break
-        
-        #if kitem is None:
-            #print ('Tabla {}.{} no encontrado'.format(schema,table))
-            #return None
-        
-        #return kitem
     
     def FK_hierarchy(self,inspector,schemata):
         for schema in schemata:
@@ -334,16 +307,23 @@ class ConnectionTreeItem(BaseTreeItem):
                             referencer = kitem.child(2)
                             referencer.appendRow((name,table,referred,constrained))
                         
-                except ( OperationalError, ProgrammingError) :
-                    print('error operativo en ',schema,table_name)
+                except ( OperationalError, ProgrammingError) as e:
+                    showConnectionError('Error en {}.{}'.format(schema,table_name),norm2String(e.orig.args),'Error en el diccionario')
+                    if DEBUG:
+                        print('error operativo en ',schema,table_name)
                     continue
-                except AttributeError:
-                    print(schema,table_name,fk['referred_table'],'casca')
+                except AttributeError as e:
+                    showConnectionError('Error en {}.{}, >{}'.format(schema,table_name,fk['referred_table']),norm2String(e.orig.args),'Error en el diccionario')
+                    if DEBUG:
+                        print(schema,table_name,fk['referred_table'],'casca')
                     continue
                 
     def refresh(self,pSchema=None):
-        ##TODO cambiar la columna 
-        #TODO de desconectada a conectada
+        """
+           Refesca los datos de la conexion
+           Probablemente no se usa ahora mismo.
+           El problema es que no acaba de cuadran para el caso que la base este caida
+        """
         self.deleteChildren()
         if self.isOpen():
             engine = self.getConnection().data().engine
@@ -364,8 +344,6 @@ class ConnectionTreeItem(BaseTreeItem):
             self.FK_hierarchy(inspector,schemata)
             
         else:
-            # error mesg
-            #FIXME no podemos poner el icono de momento
             self.setIcon(QIcon('icons/16/database_lightning.png'))
             self.setData(None)
 
@@ -373,10 +351,12 @@ class ConnectionTreeItem(BaseTreeItem):
     def isOpen(self):
         if isinstance(self.data(),ConnectionTreeItem):
             return False
-        if self.data() is None or self.data().closed:
+        if self.data() is None:
+            return False
+        if self.data().closed:
             return False
         else:
-            #TODO deberia verificar que de verdad lo esta
+            #No esta garantizado que realmente este arriba el servidor
             return True
         
     def setMenuActions(self,menu,context):      
@@ -392,9 +372,14 @@ class ConnectionTreeItem(BaseTreeItem):
     def execAction(self,context,action):
         
         if action == "refresh" :
-            self.model().beginResetModel()
-            self.refresh()
-            self.model().endResetModel()
+            modelo = self.model()
+            modelo.beginResetModel()
+            #if self.isOpen():
+                #self.refresh()
+            #else:
+                #context.updateModel(self.text())
+            context.updateModel(self.text())
+            modelo.endResetModel()
         if action == "edit" :
             context.modConnection(self.text())
             pass  # edit item, save config, refresh tree
@@ -445,7 +430,6 @@ class SchemaTreeItem(BaseTreeItem):
 class TableTreeItem(BaseTreeItem):
     def __init__(self, name):
         BaseTreeItem.__init__(self, name)
-        #FIXME no podemos poner el icono de momento
         self.setIcon(QIcon("icons/16/database_table"))
                 
     def refresh(self):
@@ -471,7 +455,8 @@ class TableTreeItem(BaseTreeItem):
                     curTableFields.appendRow((name,tipo))
                 except CompileError: 
                 #except CompileError:
-                    print('Columna sin tipo',schema,' ',table_name,' ',name)
+                    if DEBUG:
+                        print('Columna sin tipo',schema,' ',table_name,' ',name)
                     if name and name != '':
                         tipo = BaseTreeItem(typeHandler('TEXT'))
                         curTableFields.appendRow((name,tipo))
@@ -561,7 +546,11 @@ class TableTreeItem(BaseTreeItem):
                     if esqReferred is not None:
                         padre = esqReferred.getChildByName(qualName[1])
                     else:
-                        print('Error horroroso en ',self.text(),asociacion)
+                        QMessageBox.critical(self,
+                                "Error fatal",
+                                'Error horroroso en {}{}'.format(self.text(),asociacion))
+                        if DEBUG:
+                            print('Error horroroso en ',self.text(),asociacion)
                         exit()
                 camposPadre = padre.getFields()
                 for i in range(0,len(camposPadre)):
@@ -592,9 +581,13 @@ class TableTreeItem(BaseTreeItem):
             if esqReferred is not None:
                 padre = esqReferred.getChildByName(qualName[1])
             else:
-                print('Error horroroso en ',self.text(),asociacion)
+                QMessageBox.critical(self,
+                        "Error fatal",
+                        'Error horroroso en {}{}'.format(self.text(),asociacion))
+                if DEBUG:
+                    print('Error horroroso en ',self.text(),asociacion)
                 exit()
-                
+
         camposPadre = padre.getFields()
         for i in range(0,len(camposPadre)):
             if camposPadre[i][0] == asociacion[3]:
@@ -609,7 +602,6 @@ class TableTreeItem(BaseTreeItem):
         if  FKs and len(FKs) > 0:
             RefInfo['FK']= []
             for idx,asoc_2 in enumerate(FKs):
-                print('Hay tela',asoc_2[0])
                 refInfo = padre._getFkInfo(asoc_2,esquema,nomEsquema,maxlevel,kiter)
                 RefInfo['FK'].append(refInfo)   
 
