@@ -460,7 +460,7 @@ class MainWindow(QMainWindow):
     def cubebrowse(self,confName,schema,table):
         infox = info2cube(self.dictionary,confName,schema,table)
         #cubeMgr = CubeBrowserWin(confName,schema,table,self.dictionary,self)
-        if self.cubeMgr:
+        if self.cubeMgr and not self.cubeMgr.isHidden():
             self.hideCube()
         self.cubeMgr = CubeMgr(self,confName,schema,table,self.dictionary)
         self.cubeMgr.expandToDepth(3)        

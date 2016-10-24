@@ -91,7 +91,7 @@ s/type(/isinstance/
     setContextMenu(item,menu,self)        
 UnboundLocalError: local variable 'item' referenced before assignment
 
-* El sistema de salvado se dispara si se activa una generacion despues de cerrada la primera
+* __DONE__ El sistema de salvado se dispara si se activa una generacion despues de cerrada la primera
 
 
 
