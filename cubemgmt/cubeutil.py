@@ -22,7 +22,7 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QSplitter, QMenu, \
      QDialog, QInputDialog, QLineEdit, QComboBox
 
-from datadict import *    
+from dictmgmt.datadict import *    
 from datalayer.query_constructor import *
 from datalayer.access_layer import dbDict2Url
 from tablebrowse import *

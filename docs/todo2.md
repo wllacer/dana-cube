@@ -32,6 +32,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * Finalizar la gestion CRUD de cubos
 * Repaso de bugs (iniciar en danabrowse -> cubebrowse -> danacube)
 * Ocultar las claves en las cadenas importantes
+* Unficar el tratamiento de arboles en la medida de lo posible
 
 ### CubeBrowse
 

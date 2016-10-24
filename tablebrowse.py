@@ -16,7 +16,7 @@ Documentation, License etc.
 from pprint import pprint
 
 
-from datadict import *    
+from dictmgmt.datadict import *    
 #from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTableView, QSplitter

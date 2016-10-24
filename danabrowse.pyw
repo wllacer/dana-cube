@@ -26,8 +26,8 @@ from util.record_functions import norm2String,dict2row, row2dict
 from util.jsonmgr import *
 from widgets import WPropertySheet
 
-from dictTree import *
-from datadict import *
+from dictmgmt.dictTree import *
+from dictmgmt.datadict import *
 from tablebrowse import *
 from cubebrowse import info2cube, CubeMgr
 

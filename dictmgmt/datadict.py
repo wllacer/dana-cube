@@ -17,7 +17,7 @@ from pprint import pprint
 
    
 
-from dictTree import *
+from dictmgmt.dictTree import *
 
 #from PyQt5.QtCore import Qt,QSortFilterProxyModel, QCoreApplication, QSize
 

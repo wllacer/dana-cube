@@ -62,7 +62,7 @@ def sql():
 
 
 
-from datadict import *    
+from dictmgmt.datadict import *    
 from tablebrowse import *
 
 #from PyQt5.QtGui import QGuiApplication
@@ -348,7 +348,8 @@ def experimento():
     for k in range(len(cubo.lista_guias)):
         vista=VistaSkel(cubo,k,0,'sum','customer_id')
         print('\n\n\n')
-
+        
+from dictmgmt.dictTree import *
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
     import sys
@@ -356,6 +357,7 @@ if __name__ == '__main__':
     if sys.version_info[0] < 3:
         reload(sys)
         sys.setdefaultencoding('utf-8')
+    exit()
     app = QApplication(sys.argv)
     dataDict=DataDict(conn='MariaBD Local',schema='sakila')
     cubo = info2cube(dataDict,'MariaBD Local','sakila','customer',3)   
