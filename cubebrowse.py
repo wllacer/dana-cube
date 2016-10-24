@@ -185,11 +185,14 @@ class CubeBrowserWin(QMainWindow):
 class CubeMgr(QTreeView):
     def __init__(self,parent=None,confName=None,schema=None,table=None,pdataDict=None,configFile=None):
         super(CubeMgr, self).__init__(parent)
+        
         if not configFile:
             self.configFile = 'cubo.json' #DEVELOP
         else:
             self.configFile = configFile
-        if type(pdataDict) is DataDict:
+        
+       
+        if isinstance(pdataDict,DataDict):
             self.dataDict = pdataDict
         else:
             self.dataDict = DataDict()

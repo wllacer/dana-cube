@@ -183,7 +183,7 @@ class TableBrowserWin(QMainWindow):
         #confName = 'MariaBD Local'
         #schema = 'sakila'
         #table = 'film'
-        if type(pdataDict) is DataDict:
+        if isinstance(pdataDict,DataDict):
             dataDict = pdataDict
         else:
             dataDict=DataDict(conn=confName,schema=schema)

@@ -47,11 +47,11 @@ def getDateIndexElement(max_date, min_date, char):
         format = '%02d'
     elif char == 'Y':
         # GENERADOR
-        if type(min_date) is datetime:
+        if isinstance(min_date,datetime):
             min_rg = min_date.year
         else:
             min_rg=int(Decimal(str(min_date[0:4])))
-        if type(max_date) is datetime:
+        if isinstance(max_date,datetime):
             max_rg = max_date.year + 1
         else:
             max_rg=int(Decimal(str(max_date[0:4])))+1

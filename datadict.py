@@ -61,7 +61,7 @@ class DataDict():
             item = self.hiddenRoot.child(k)
             if item.text() != name:
                 continue
-            if type(item) != ConnectionTreeItem:
+            if not isinstance(item,ConnectionTreeItem):
                 continue
             return item
             break
@@ -72,7 +72,7 @@ class DataDict():
             item = self.hiddenRoot.child(k)
             if item.text() != name:
                 continue
-            if type(item) != ConnectionTreeItem:
+            if not isinstance(item,ConnectionTreeItem):
                 continue
             return k
             break
@@ -188,7 +188,7 @@ class DataDict():
                 item = self.hiddenRoot.child(k)
                 if item.text() != confName:
                     continue
-                if type(item) != ConnectionTreeItem:
+                if not isinstance(item,ConnectionTreeItem):
                     continue
                 self.hiddenRoot.removeRow(k)
                 pos = k

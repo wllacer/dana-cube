@@ -155,11 +155,11 @@ class BaseTreeItem(QStandardItem):
         return self.__class__.__name__ 
 
     def getTypeText(self):
-        if type(self) == ConnectionTreeItem :
+        if isinstance(self,ConnectionTreeItem) :
             return 'Conn'
-        elif type(self) == SchemaTreeItem:
+        elif isinstance(self,SchemaTreeItem):
             return 'Schema'
-        elif type(self) == TableTreeItem :
+        elif isinstance(self,TableTreeItem) :
             return 'Table'
         else:
             return ''
@@ -173,7 +173,7 @@ class BaseTreeItem(QStandardItem):
         probablemente innecesario
         """
         item = self
-        while item is not None and type(item) is not TreeModel:
+        while item is not None and not isinstance(item,TreeModel):
             item = item.parent()
         return item
 
@@ -212,19 +212,19 @@ class BaseTreeItem(QStandardItem):
 
     def getConnection(self):
         item = self
-        while item is not None and type(item) is not ConnectionTreeItem:
+        while item is not None and not isinstance(item,ConnectionTreeItem):
             item = item.parent()
         return item
 
     def getSchema(self):
         item = self
-        while item is not None and type(item) is not SchemaTreeItem:
+        while item is not None and not isinstance(item,SchemaTreeItem):
             item = item.parent()
         return item
 
     def getTable(self):
         item = self
-        while item is not None and type(item) is not TableTreeItem:
+        while item is not None and not isinstance(item,TableTreeItem):
             item = item.parent()
         return item
 
@@ -371,7 +371,7 @@ class ConnectionTreeItem(BaseTreeItem):
 
 
     def isOpen(self):
-        if type(self.data()) is ConnectionTreeItem:
+        if isinstance(self.data(),ConnectionTreeItem):
             return False
         if self.data() is None or self.data().closed:
             return False
