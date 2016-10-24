@@ -211,7 +211,9 @@ class WPropertySheet(WPowerTable):
         for k in range(len(self.context)):
             self.addCell(k,0,context[k][1:],data[k])
         self.setVerticalHeaderLabels(cabeceras)
-        
+        #no necesito cabeceras horizontales en este caso
+        self.horizontalHeader().hide()
+
 
         self.resizeRowsToContents()
         self.horizontalHeader().setStretchLastSection(True)

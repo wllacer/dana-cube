@@ -87,8 +87,6 @@ class SelectConnectionDlg(QDialog):
 class ConnectionSheetDlg(QDialog):
     """
        Genera (mas o menos) una hoja de propiedades
-       TODO faltan datos adicionales para cada item, otro widget, cfg del widget, formato de salida
-       FIXME los botones estan fatal colocados
     """
     def __init__(self,title,context,data,parent=None):   
         super(ConnectionSheetDlg, self).__init__(parent)

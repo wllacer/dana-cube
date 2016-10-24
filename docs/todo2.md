@@ -33,6 +33,9 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * Repaso de bugs (iniciar en danabrowse -> cubebrowse -> danacube)
 * Ocultar las claves en las cadenas importantes
 * Unficar el tratamiento de arboles en la medida de lo posible
+* Unificar (y aumentar el uso de decoradores)
+* Mejorar la IU de los widgets de defecto
+    ** __DONE__ eliminar la cabecera en WPropertySheet
 
 ### CubeBrowse
 
