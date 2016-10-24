@@ -43,7 +43,6 @@ class DataDict():
     def __init__(self,**kwargs):
         #FIXME eliminar parametros espureos
         defFile= kwargs.get('defFile')
-        print('Def File is',defFile)
         self.model = None
         self.hiddenRoot  = None  #self.hiddenRoot
         self.configData = None
@@ -80,7 +79,7 @@ class DataDict():
 
     def _setupModel(self):
         """
-        definimos el modelo. Tengo que ejecutarlo cada vez que cambie la vista. TODO no he conseguido hacerlo dinamicamente
+        definimos el modelo.  
         """
         newModel = QStandardItemModel()
         newModel.setColumnCount(5)
@@ -106,8 +105,6 @@ class DataDict():
         for confName in sorted(definition):
             self.appendConnection(confName)  # aqui no tiene sentido filtrar
 
-    #TODO probablemente padre sea un parametro inncecesario
-    #def appendConnection(self,confName,pos=None):
     def appendConnection(self,confName,**kwargs):
         padre = self.hiddenRoot
         conf = self.configData['Conexiones'].get(confName)
@@ -125,7 +122,6 @@ class DataDict():
             curConnection = padre.child(pos)
 
         except ( OperationalError, ProgrammingError ) as e:
-            #TODO deberia ampliar la informacion de no conexion
             self.conn[confName] = None
             showConnectionError(confName,norm2String(e.orig.args))             
             padre.insertRow(pos,(ConnectionTreeItem(confName,None),QStandardItem('Disconnected')))
@@ -142,7 +138,9 @@ class DataDict():
         # limpio el arbol (podia usar findItem, pero no se, no se ...)
         k = self.getConnNr(confName)
         if not k:
-            print(confName,' conexion inexistente')
+            if DEBUG:
+                print(confName,' conexion inexistente')
+            return
         else:
             self.hiddenRoot.removeRow(k)
         del self.configData['Conexiones'][confName]
@@ -162,22 +160,6 @@ class DataDict():
             self.hiddenRoot = self.model.invisibleRootItem()
             self._cargaModelo(self.model)
         else:
-            # codigo nuevo. no funciona por alguna razon misteriosa en los datos
-            #conexion = self.getConnByName(confName)
-            ##del self.conn[confName]
-            #conf = self.configData['Conexiones'][confName]
-            #self.conn[confName] = dbConnectAlch(conf)
-            #engine=self.conn[confName].engine 
-            
-            ##conexion.setData(QStandardItem(str(engine)))
-
-            #if not conexion:
-                ##TODO gestionar error de conexion no existente
-                #print(confName,' conexion inexistente')
-                #return
-            #conexion.refresh()
-            # codigo antiguo, probablemente innecesario
-            # limpio la tabla de conexiones
             conexion = self.conn.get(confName)
             if conexion is not None:  #conexion nueva
                 self.conn[confName].close()
@@ -195,8 +177,6 @@ class DataDict():
                 break
                     # es un elemento que no estaba en el modelo
             
-            #conf =self.configData['Conexiones'][confName]
-            #aqui la broam era mantener la posicion del elemento y no mandarlo el último
             self.appendConnection(confName,pos=k)
 
         self.model.endResetModel()
