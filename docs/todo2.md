@@ -60,7 +60,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
         *** __DONE__ Salvar
         *** __DONE__ Restaurar
 * __WISH__ Salvar el fichero de configuración solo si se han producido cambios (no se si merece la pena) 
-* __WISH__ Presentar en las guias de defecto el numero de valores distintos para la guia (o mejor en danabrowse ¿?) 
+* __DONE__ Presentar en las guias de defecto el numero de valores distintos para la guia (hecho en DanaBrowse) 
 * __DONE__ que los distintos atributos se presenten siempre en el mismo orden en un arbol del cubo, creo
 * ![cube bugs]docs/cube_todo.txt
 
@@ -70,8 +70,12 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * __DONE__ Desaparce el menu a ratos.  Tengo que definir el widget primero
 * Long term : threads __WISH__ 
 * Long term : varias pestañas __WISH__ 
+* long term : query recursiva
+* Long term : properties
+* Long term : set descriptive y las acciones contextuales de FK's (problema es salvarlo entre sesiones)
 * __DONE__  Que pasa cuando se sustitye una edicion de cubo sin salvar. lo capturamos antes
 * __DONE__  ?revisar el efecto en cubo de salir directamente de danabrowse
+* __DONE__ Contadores en tablas y campos
 
 
 ### DANACUBE

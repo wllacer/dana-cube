@@ -48,7 +48,7 @@ class BaseTreeItem(QStandardItem):
     def __init__(self, name):
         QStandardItem.__init__(self, name)
         self.setEditable(False)
-        self.setColumnCount(1)
+        self.setColumnCount(4)
         #self.setData(self)
         self.gpi = self.getRow        
         
@@ -62,7 +62,7 @@ class BaseTreeItem(QStandardItem):
             return True
         else:
             return False
-        
+     
     def setDescriptive(self):
         if self.isAuxiliar():
             return
@@ -71,7 +71,18 @@ class BaseTreeItem(QStandardItem):
             colind = indice.sibling(indice.row(),2)
             if colind:
                 colind.setData(True)
-                
+    
+    def getValueSpread(self):
+        if self.type() == BaseTreeItem and not self.isAuxiliar() and self.parent().text() == 'FIELDS':
+            conn = self.getConnection().data().engine
+            schema = self.getSchema().text()
+            table = self.getTable().text()
+            sqlq = 'select count(*) from (select distinct {} from {}.{}) as base'.format(self.text(),schema,table)
+            result = getCursor(conn,sqlq)
+            self.setColumnData(2,result[0][0],Qt.EditRole)
+        else:
+            return  
+        
     def getBrotherByName(self,name): 
         # getSibling esta cogido para los elementos de la fila, asi que tengo que inventar esto para obtener
         # un 'hermano' por nomnbre
@@ -433,6 +444,7 @@ class TableTreeItem(BaseTreeItem):
         self.setIcon(QIcon("icons/16/database_table"))
                 
     def refresh(self):
+
         self.deleteChildren()
         self.appendRow(BaseTreeItem('FIELDS'))
         curTableFields = self.lastChild()
@@ -447,12 +459,14 @@ class TableTreeItem(BaseTreeItem):
         if schema == '':
             schema = None
         try:
-            #print('\t',schema,table_name)
+            self.getRecordCount()
+            
             for column in inspector.get_columns(table_name,schema):
                 try:
                     name = BaseTreeItem(column['name'])
                     tipo = BaseTreeItem(typeHandler(column.get('type','TEXT')))
                     curTableFields.appendRow((name,tipo))
+                    curTableFields.lastChild().getValueSpread()
                 except CompileError: 
                 #except CompileError:
                     if DEBUG:
@@ -669,6 +683,17 @@ class TableTreeItem(BaseTreeItem):
             context.cubebrowse(conn,schema,table)
             #cubemgr = CubeBrowserWin(conn,schema,table,pdataDict=self.model())
             pass # generate cube
+
+    def getRecordCount(self):
+        if self.type() == TableTreeItem:
+            conn = self.getConnection().data().engine
+            schema = self.getSchema().text()
+            table = self.text()
+            sqlq = 'select count(*) from {}.{} '.format(schema,table)
+            result = getCursor(conn,sqlq)
+            self.setColumnData(1,result[0][0],Qt.EditRole)
+        else:
+            return None
 
     #def getConnectionItem(self):
         #item = self
