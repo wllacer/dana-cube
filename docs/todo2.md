@@ -52,6 +52,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * ¿que hago con los errores SQL ?
 * Renombrar conexiones en danabrowse
 *¿Donde estan las columnas en Danabrowse?
+* Mejorar la presentacion de las propiedades de la vista http://stackoverflow.com/questions/5631078/sqlalchemy-print-the-actual-query
 
 * SQL performance ¿? __VIP__ perdida de rendimiento en DanaBrowse con la inclusion de contadores
 

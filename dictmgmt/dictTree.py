@@ -427,10 +427,11 @@ class SchemaTreeItem(BaseTreeItem):
             curTable = self.lastChild()
             curTable.refresh()
         for table_name in inspector.get_view_names(schema):
-            self.appendRow(TableTreeItem(table_name))
+            #self.appendRow(TableTreeItem(table_name))
+            self.appendRow(ViewTreeItem(table_name))
             curTable = self.lastChild()
             curTable.refresh()
-            curTable.setIcon(QIcon("icons/16/code"))
+#            curTable.setIcon(QIcon("icons/16/code"))
         # fk reference
        
     def setMenuActions(self,menu,context):      
@@ -691,7 +692,7 @@ class TableTreeItem(BaseTreeItem):
             pass # generate cube
 
     def getRecordCount(self):
-        if self.type() == TableTreeItem:
+        if isinstance(self,TableTreeItem) :   #Recordar que especializamos Table.. con View luego el type no va
             conn = self.getConnection().data().engine
             schema = self.getSchema().text()
             table = self.text()
@@ -700,6 +701,27 @@ class TableTreeItem(BaseTreeItem):
             self.setColumnData(1,result[0][0],Qt.EditRole)
         else:
             return None
+
+class ViewTreeItem(TableTreeItem):
+    def __init__(self, name):
+        TableTreeItem.__init__(self, name)
+        self.setIcon(QIcon("icons/16/code"))
+
+    def setMenuActions(self,menu,context):      
+        TableTreeItem.setMenuActions(self,menu,context)
+        self.menuActions[1].setEnabled(True)  #FIXME buscar una manera mas segura de invocar el indice
+                
+    def execAction(self,context,action):
+        TableTreeItem.execAction(self,context,action)
+        if action == 'properties' :
+            engine = self.getConnection().data().engine
+            inspector = inspect(engine)
+            table_name = self.text()
+            schema = self.getSchema().text()
+            #print(inspector.get_view_definition(table_name,schema))
+            QMessageBox.information(context,
+                                "Información de la vista",
+                                inspector.get_view_definition(table_name,schema))
 
     #def getConnectionItem(self):
         #item = self
