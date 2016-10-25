@@ -17,28 +17,10 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * Incluir vistas en el cubo (2º escalon)
 * Incluir extraccion de datos en cubo e interfaz con MatPlotLib  (critica para usuarios pero no tecnicamente)
 * Filtros de entrada en el cubo
-* Parametrizar ficheros de configuracion
 * Traduccion
 * Finalizar la gestion CRUD de cubos
 * Ocultar las claves en las cadenas importantes
-
-## Annoyances
-
-* Como hacer que los arboles no se cierren y abran aleatoriamente
-* Mensajes de usuario en caso de error graficos (proseguir desde util.base_dialogs. No funciona de momento)
-    ** Danacube
-    ** Danabrowse y asoociados
-       *** __DONE__ danabrowse
-       *** __DONE__ datadict
-       *** __DONE__ dicttree
-    * tablebrowse
-    * cubebrowse
-    * core & default
-* unificar su tratamiento
-* uso de variables globales
-* ¿que hago con los errores SQL ?
-
-* SQL performance ¿?
+* Claves multicampo
 
 ## Pequeños TODO
 
@@ -50,6 +32,29 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
     ** __DONE__ eliminar la cabecera en WPropertySheet
 * Eliminar sinonimos de variables en inicializaciones (p.e en danacube y DataDict)
 * Filtrado, al menos, en tablebrowse
+* Parametrizar ficheros de configuracion
+
+## Annoyances
+
+* Como hacer que los arboles no se cierren y abran aleatoriamente
+* Mensajes de usuario en caso de error graficos (proseguir desde util.base_dialogs. No funciona de momento)
+    ** Danacube
+    ** Danabrowse y asoociados
+       *** __DONE__ danabrowse
+       *** __DONE__ datadict
+       *** __DONE__ dicttree
+       *** Tengo que decidr que hacer en el caso de los mensajes algo superfluos en danacube.suprimidos por ahora. debe ser configurable
+    * tablebrowse
+    * cubebrowse
+    * core & default
+* unificar su tratamiento
+* uso de variables globales
+* ¿que hago con los errores SQL ?
+* Renombrar conexiones en danabrowse
+*¿Donde estan las columnas en Danabrowse?
+
+* SQL performance ¿? __VIP__ perdida de rendimiento en DanaBrowse con la inclusion de contadores
+
 
 ### CubeBrowse
 
@@ -77,6 +82,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * __DONE__  ?revisar el efecto en cubo de salir directamente de danabrowse
 * __DONE__ Contadores en tablas y campos
 
+Triage de pendientes:
 
 ### DANACUBE
 
@@ -118,6 +124,12 @@ UnboundLocalError: local variable 'item' referenced before assignment
 
 ## DANABROWSE e hijos
 Limpieza general
+( - Ya superado
+  + incluido,
+  next -> siguiente iteracion,
+  bypass -> comportamiento modificado para evitar el problema -pero no resuelto en sí
+  NOOP   -> eso
+  
 next -> danabrowse.pyw:200:        #TODO variables asociadas del diccionario. Reevaluar al limpiar
 + danabrowse.pyw:276:            #TODO mensaje informativo
 - danabrowse.pyw:299:    #TODO actualizar el arbol tras hacer la edicion   

@@ -319,14 +319,14 @@ class ConnectionTreeItem(BaseTreeItem):
                             referencer.appendRow((name,table,referred,constrained))
                         
                 except ( OperationalError, ProgrammingError) as e:
-                    showConnectionError('Error en {}.{}'.format(schema,table_name),norm2String(e.orig.args),'Error en el diccionario')
+                    # showConnectionError('Error en {}.{}'.format(schema,table_name),norm2String(e.orig.args),'Error en el diccionario')
                     if DEBUG:
-                        print('error operativo en ',schema,table_name)
+                        print('error operativo en ',schema,table_name,norm2String(e.orig.args))
                     continue
                 except AttributeError as e:
-                    showConnectionError('Error en {}.{}, >{}'.format(schema,table_name,fk['referred_table']),norm2String(e.orig.args),'Error en el diccionario')
+                    # showConnectionError('Error en {}.{}, >{}'.format(schema,table_name,fk['referred_table']),norm2String(e.orig.args),'Error en el diccionario')
                     if DEBUG:
-                        print(schema,table_name,fk['referred_table'],'casca')
+                        print(schema,table_name,fk['referred_table'],'casca',norm2String(e.orig.args))
                     continue
                 
     def refresh(self,pSchema=None):
@@ -426,6 +426,11 @@ class SchemaTreeItem(BaseTreeItem):
             self.appendRow(TableTreeItem(table_name))
             curTable = self.lastChild()
             curTable.refresh()
+        for table_name in inspector.get_view_names(schema):
+            self.appendRow(TableTreeItem(table_name))
+            curTable = self.lastChild()
+            curTable.refresh()
+            curTable.setIcon(QIcon("icons/16/code"))
         # fk reference
        
     def setMenuActions(self,menu,context):      
@@ -487,8 +492,9 @@ class TableTreeItem(BaseTreeItem):
                 referred    = BaseTreeItem(norm2String(fk['referred_columns']))
                 curTableFK.appendRow((name,table,constrained,referred))                         
         except (OperationalError, ProgrammingError) as e:
-            showConnectionError('Error en {}.{}'.format(schema,table_name),norm2String(e.orig.args))
-        
+            if DEBUG:
+                #showConnectionError('Error en {}.{}'.format(schema,table_name),norm2String(e.orig.args))
+                print('Error en {}.{}'.format(schema,table_name),norm2String(e.orig.args))
     def getFields(self,simple=False):
         lista = []
         for item in self.listChildren():
