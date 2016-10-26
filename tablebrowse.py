@@ -186,14 +186,11 @@ class TableBrowser(QTableView):
     def __init__(self,confName=None,schema=None,table=None,pdataDict=None,iters=0):
         super(TableBrowser, self).__init__()
         self.view = self # sinomimo para no tener que tocar codigo mas abajo
+        self.model = QStandardItemModel()
         self.setupModel(confName,schema,table,pdataDict,iters)
         self.setupView()
     
     def setupModel(self,confName,schema,table,pdataDict,iters): 
-        self.model = QStandardItemModel()
-        #confName = 'MariaBD Local'
-        #schema = 'sakila'
-        #table = 'film'
         if isinstance(pdataDict,DataDict):
             dataDict = pdataDict
         else:
@@ -212,7 +209,7 @@ class TableBrowser(QTableView):
             self.model.appendRow(modelRow)
             
     def setupView(self):
-#        self.view = QTableView(self)
+        #        self.view = QTableView(self)
         # aqui por coherencia --es un tema de presentacion
         sortProxy = SortProxy()
         sortProxy.setSourceModel(self.model)
@@ -232,7 +229,15 @@ class TableBrowser(QTableView):
         self.view.setAlternatingRowColors(True)
         #self.view.sortByColumn(0, Qt.AscendingOrder)
         self.areHidden = False
-        
+     
+    def loadData(self,confName=None,schema=None,table=None,pdataDict=None,iters=0):
+        self.model.beginResetModel()
+        self.model.clear()
+        self.setupModel(confName,schema,table,pdataDict,iters)
+        self.model.endResetModel()
+        for m in range(self.model.columnCount()):
+            self.view.resizeColumnToContents(m)
+    
     def openContextMenu(self,position):
         indexes = self.view.selectedIndexes()
         if len(indexes) > 0:

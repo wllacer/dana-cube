@@ -53,8 +53,10 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * Renombrar conexiones en danabrowse
 *¿Donde estan las columnas en Danabrowse?
 * Mejorar la presentacion de las propiedades de la vista http://stackoverflow.com/questions/5631078/sqlalchemy-print-the-actual-query
-
+* Me parece que la clave extrangera aparece dos veces en "Browse with fk"
 * SQL performance ¿? __VIP__ perdida de rendimiento en DanaBrowse con la inclusion de contadores
+* El diccionario es pasado entre danabrowse u tablebrowse demasiadas veces
+
 
 
 ### CubeBrowse
@@ -97,11 +99,10 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
     ** __DONE__ en danabrowse
  Filtros
  Query libre ¿? (con mensajes de error)
- * __WIP__ Ocultar columnas
+ * __DONE__ Ocultar columnas
     ** __DONE__ en tablebrowse
-
- * __HOLD__ Con cubebrowse como ejemplo separar widget y main window
-    ** No refresca. si hay tiempo ...
+ * __DONE__ Con cubebrowse como ejemplo separar widget y main window
+* Formatos de columan en tablebrowse mas chachis. Pude ser una annoyance
 
 
  Mucho del código se puede sacar a una de las utilidades

@@ -213,7 +213,8 @@ class MainWindow(QMainWindow):
             print('inicializacion completa')
         #CHANGE here
         
-        self.queryView = QTableView() #!!!!???? debe ir delante de la definicion de menu
+         
+        self.queryView = TableBrowser(pdataDict=self.dictionary)  #!!!!???? debe ir delante de la definicion de menu
         self.dictMenu = self.menuBar().addMenu("&Conexiones")
         self.dictMenu.addAction("&New ...", self.newConnection, "Ctrl+N")
         self.dictMenu.addAction("&Modify ...", self.modConnection, "Ctrl+M")
@@ -232,15 +233,8 @@ class MainWindow(QMainWindow):
         self.cubeMenu.addAction("S&alir", self.hideCube, "Ctrl+D")
         self.cubeMenu.setEnabled(False)
         
-        
-        self.queryModel = QStandardItemModel()
-        #self.queryView.selfModel(self.queryModel)
-        sortProxy = SortProxy()
-        sortProxy.setSourceModel(self.queryModel)
-        self.queryView.setModel(sortProxy)   
+        self.queryModel = self.queryView.model
 
-
-        
         self.querySplitter = QSplitter(Qt.Vertical)
         self.querySplitter.addWidget(self.view)
         #self.querySplitter.addWidget(self.queryView)
@@ -336,16 +330,7 @@ class MainWindow(QMainWindow):
                 return 
         else:
             confName = nombre
-            
-        #self.model.beginResetModel()   
         self.dictionary.dropConnection(confName)
-        #for item in self.model.findItems(confName,Qt.MatchExactly,0):
-            #if type(item) == ConnectionTreeItem:
-                #self.model.removeRow(item.row())
-                #break
-        #self.model.endResetModel()
-        #del self.conn[confName]
-        #del self.configData['Conexiones'][nombre]
 
     def editConnection(self,nombre=None):        
         attr_list =  ('driver','dbname','dbhost','dbuser','dbpass','dbport','debug')
@@ -422,36 +407,9 @@ class MainWindow(QMainWindow):
   
     @waiting_effects
     def databrowse(self,confName,schema,table,iters=0):
-        self.queryModel.beginResetModel()
-        self.queryModel.clear()
-        
-        info = getTable(self.dictionary,confName,schema,table)
-        sqlContext= setLocalQuery(self.dictionary.conn[confName],info,iters)
-        sqls = sqlContext['sqls'] 
-        cabeceras = [ fld for fld in sqlContext['fields']]
-        self.queryModel.setHorizontalHeaderLabels(cabeceras)
-        #cursor = getCursor(self.dictionary.conn[confName],sqls,LIMIT=100)
-        cursor = getCursor(self.dictionary.conn[confName],sqls)
-        for row in cursor:
-            modelRow = [ QStandardItem(str(fld)) for fld in row ]
-            self.queryModel.appendRow(modelRow)
-            
-        self.queryModel.endResetModel()
- 
-        
-        self.queryView.setContextMenuPolicy(Qt.CustomContextMenu)
-        #self.queryView.customContextMenuRequested.connect(self.openContextMenu)
-        #self.queryView.doubleClicked.connect(self.test)
-        
-        for m in range(self.queryModel.columnCount()):
-            self.queryView.resizeColumnToContents(m)
-        self.queryView.verticalHeader().hide()
-        self.queryView.setSortingEnabled(True)
-        self.queryView.setAlternatingRowColors(True)
-        #self.queryView.sortByColumn(0, Qt.AscendingOrder)
+        self.queryView.loadData(confName,schema,table,self.dictionary,iters)
         
         self.queryMenu.setEnabled(True)
-   
         if self.querySplitter.count() == 1:  #de momento parece un modo sencillo de no multiplicar en exceso
             self.querySplitter.addWidget(self.queryView)
             
