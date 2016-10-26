@@ -24,6 +24,15 @@ def getFmtArgs(kwargs):
          salida[ind]=kwargs[ind]
     return salida
 
+def queryFormat(sqlstring):
+    STATEMENT=('WITH','SELECT ','FROM ','WHERE ','LEFT OUTER JOIN ','GROUP BY ','ORDER BY ','WHERE ')
+    cadena = sqlstring
+    for entry in STATEMENT:
+        salida = '\n{}\n\t'.format(entry)
+        cadena = cadena.replace(entry,salida)
+    cadena = cadena.replace(',',',\n\t')
+    return cadena
+    
 def sqlFmt(parametro,**kwargs):
     """
       Devuelve, de una entrada (parametro) la salida en un formato compatible con sqlClause

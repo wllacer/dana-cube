@@ -21,6 +21,7 @@ from PyQt5.QtWidgets import QMessageBox
           #QTableView
 
 from datalayer.access_layer import *
+from datalayer.query_constructor import queryFormat
 #from cubebrowse import *
 from util.record_functions import norm2String,dict2row, row2dict
 #from util.jsonmgr import *
@@ -718,10 +719,10 @@ class ViewTreeItem(TableTreeItem):
             inspector = inspect(engine)
             table_name = self.text()
             schema = self.getSchema().text()
-            #print(inspector.get_view_definition(table_name,schema))
+            cadena = queryFormat(inspector.get_view_definition(table_name,schema))
             QMessageBox.information(context,
                                 "Información de la vista",
-                                inspector.get_view_definition(table_name,schema))
+                                cadena)
 
     #def getConnectionItem(self):
         #item = self

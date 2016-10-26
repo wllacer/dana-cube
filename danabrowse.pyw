@@ -27,6 +27,7 @@ from widgets import WPropertySheet
 
 from dictmgmt.dictTree import *
 from dictmgmt.datadict import *
+
 from tablebrowse import *
 from cubebrowse import info2cube, CubeMgr
 
@@ -231,9 +232,13 @@ class MainWindow(QMainWindow):
         self.cubeMenu.addAction("S&alir", self.hideCube, "Ctrl+D")
         self.cubeMenu.setEnabled(False)
         
-        #self.queryView = QTableView(self)
+        
         self.queryModel = QStandardItemModel()
-        self.queryView.setModel(self.queryModel)        
+        #self.queryView.selfModel(self.queryModel)
+        sortProxy = SortProxy()
+        sortProxy.setSourceModel(self.queryModel)
+        self.queryView.setModel(sortProxy)   
+
 
         
         self.querySplitter = QSplitter(Qt.Vertical)
@@ -417,10 +422,6 @@ class MainWindow(QMainWindow):
   
     @waiting_effects
     def databrowse(self,confName,schema,table,iters=0):
-        #self.queryView = QTableView(self)
-        #self.queryModel = QStandardItemModel()
-        #self.queryView.setModel(self.queryModel)        
-        
         self.queryModel.beginResetModel()
         self.queryModel.clear()
         
@@ -445,7 +446,7 @@ class MainWindow(QMainWindow):
         for m in range(self.queryModel.columnCount()):
             self.queryView.resizeColumnToContents(m)
         self.queryView.verticalHeader().hide()
-        #self.queryView.setSortingEnabled(True)
+        self.queryView.setSortingEnabled(True)
         self.queryView.setAlternatingRowColors(True)
         #self.queryView.sortByColumn(0, Qt.AscendingOrder)
         

@@ -18,6 +18,7 @@ from pprint import pprint
 
 from dictmgmt.datadict import *    
 #from PyQt5.QtGui import QGuiApplication
+from PyQt5.QtCore import  QSortFilterProxyModel
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTableView, QSplitter
 
@@ -71,15 +72,7 @@ def normRef(namespace,entry):
         reference='{} AS {}'.format(namespace[entry][0],prefix)
     return reference,prefix
 
-def queryPrint(sqlstring):
-    STATEMENT=('SELECT ','FROM ','WHERE ','LEFT OUTER JOIN ','GROUP BY ','ORDER BY ','WHERE ')
-    cadena = sqlstring
-    for entry in STATEMENT:
-        salida = '\n{}\n\t'.format(entry)
-        cadena = cadena.replace(entry,salida)
-    cadena = cadena.replace(',',',\n\t')
-    print(cadena)
-    
+
 
 def setLocalQuery(conn,info,iters=None):
     """
@@ -152,7 +145,7 @@ def setLocalQuery(conn,info,iters=None):
     sqlContext['fields'] = [ item[0] for item in dataspace ]
     pprint(sqlContext)
     sqls = sqlContext['sqls'] = queryConstructor(**sqlContext)
-    queryPrint(sqls)
+    print(queryFormat(sqls))
     return sqlContext
 
 def localQuery(conn,info,iters=None):
@@ -160,14 +153,25 @@ def localQuery(conn,info,iters=None):
     sqls = sqlContext['sqls'] #solo por compatibilidad
     return getCursor(conn,sqls,LIMIT=1000)
 
+
+class SortProxy(QSortFilterProxyModel):
+    def lessThan(self, left, right):
+        leftData = left.data(Qt.DisplayRole)
+        rightData = right.data(Qt.DisplayRole)
+        try:
+            return float(leftData) < float(rightData)
+        except (ValueError, TypeError):
+            pass
+        return leftData < rightData
+    
 class TableBrowserWin(QMainWindow):
     def __init__(self,confName,schema,table,pdataDict=None):
         super(TableBrowserWin, self).__init__()
         #Leeo la configuracion
         #TODO variables asociadas del diccionario. Reevaluar al limpiar
-
-        self.setupModel(confName,schema,table,pdataDict)
-        self.setupView()
+        self.view = TableBrowser(confName,schema,table,pdataDict)
+        #self.setupModel(confName,schema,table,pdataDict)
+        #self.setupView()
         print('inicializacion completa')
         ##CHANGE here
     
@@ -177,8 +181,15 @@ class TableBrowserWin(QMainWindow):
         self.setCentralWidget(self.querySplitter)
                
         self.setWindowTitle("Visualizador de base de datos")
-     
-    def setupModel(self,confName,schema,table,pdataDict): 
+
+class TableBrowser(QTableView):
+    def __init__(self,confName=None,schema=None,table=None,pdataDict=None,iters=0):
+        super(TableBrowser, self).__init__()
+        self.view = self # sinomimo para no tener que tocar codigo mas abajo
+        self.setupModel(confName,schema,table,pdataDict,iters)
+        self.setupView()
+    
+    def setupModel(self,confName,schema,table,pdataDict,iters): 
         self.model = QStandardItemModel()
         #confName = 'MariaBD Local'
         #schema = 'sakila'
@@ -187,8 +198,10 @@ class TableBrowserWin(QMainWindow):
             dataDict = pdataDict
         else:
             dataDict=DataDict(conn=confName,schema=schema)
+        if not confName or confName == '':
+            return
         info = getTable(dataDict,confName,schema,table)
-        sqlContext= setLocalQuery(dataDict.conn[confName],info,1)
+        sqlContext= setLocalQuery(dataDict.conn[confName],info,iters)
         sqls = sqlContext['sqls'] 
         cabeceras = [ fld for fld in sqlContext['fields']]
         self.model.setHorizontalHeaderLabels(cabeceras)
@@ -199,15 +212,20 @@ class TableBrowserWin(QMainWindow):
             self.model.appendRow(modelRow)
             
     def setupView(self):
-        self.view = QTableView(self)
+#        self.view = QTableView(self)
+        # aqui por coherencia --es un tema de presentacion
+        sortProxy = SortProxy()
+        sortProxy.setSourceModel(self.model)
+        self.view.setModel(sortProxy)
+        
         self.view.setContextMenuPolicy(Qt.CustomContextMenu)
         #self.view.customContextMenuRequested.connect(self.openContextMenu)
         self.view.doubleClicked.connect(self.test)
-        self.view.setModel(self.model)
+
         for m in range(self.model.columnCount()):
             self.view.resizeColumnToContents(m)
         self.view.verticalHeader().hide()
-        #self.view.setSortingEnabled(True)
+        self.view.setSortingEnabled(True)  #TODO, que plastazo, orden alfa, debo implementar un proxy
         self.view.setAlternatingRowColors(True)
         #self.view.sortByColumn(0, Qt.AscendingOrder)
         
@@ -222,6 +240,6 @@ if __name__ == '__main__':
         sys.setdefaultencoding('utf-8')
     app = QApplication(sys.argv)
     window = TableBrowserWin('MariaBD Local','sakila','film')
-    #window.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
+    window.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
     window.show()
     sys.exit(app.exec_())

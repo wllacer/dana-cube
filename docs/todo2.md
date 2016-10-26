@@ -74,21 +74,34 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 ### DanaBrowse
 
 * __DONE__ Desaparce el menu a ratos.  Tengo que definir el widget primero
-* Long term : threads __WISH__ 
-* Long term : varias pestañas __WISH__ 
-* long term : query recursiva
 * Long term : properties
 * Long term : set descriptive y las acciones contextuales de FK's (problema es salvarlo entre sesiones)
 * __DONE__  Que pasa cuando se sustitye una edicion de cubo sin salvar. lo capturamos antes
 * __DONE__  ?revisar el efecto en cubo de salir directamente de danabrowse
 * __DONE__ Contadores en tablas y campos
 
-Triage de pendientes:
 
 ### DANACUBE
 
 *  Grandes totales desordenados en el caso de ENUMS
 
+
+ ### tablebrowse 
+ 
+* Long term : threads __WISH__ 
+* Long term : varias pestañas __WISH__ 
+* long term : query recursiva
+ * __WIP__Ordenar por columnas
+    ** __DONE__ orden alfanumerico http://stackoverflow.com/questions/11938459/sorting-in-pyqt-tablewidget
+    ** __DONE__ en tablebrowse
+    ** __DONE__ en danabrowse
+ Filtros
+ Query libre ¿? (con mensajes de error)
+ Ocultar columnas
+ * __HOLD__ Con cubebrowse como ejemplo separar widget y main window
+    ** No refresca. si hay tiempo ...
+ Mucho del código se puede sacar a una de las utilidades
+ Controlar errores ejecucion SQL
 
 # BUGS
 
