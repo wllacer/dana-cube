@@ -20,7 +20,7 @@ from dictmgmt.datadict import *
 #from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtCore import  QSortFilterProxyModel
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTableView, QSplitter
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTableView, QSplitter, QMenu
 
 from datalayer.query_constructor import *
 
@@ -219,7 +219,10 @@ class TableBrowser(QTableView):
         self.view.setModel(sortProxy)
         
         self.view.setContextMenuPolicy(Qt.CustomContextMenu)
-        #self.view.customContextMenuRequested.connect(self.openContextMenu)
+        self.view.customContextMenuRequested.connect(self.openContextMenu)
+        self.view.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
+        self.view.horizontalHeader().customContextMenuRequested.connect(self.openContextMenu)
+
         self.view.doubleClicked.connect(self.test)
 
         for m in range(self.model.columnCount()):
@@ -228,6 +231,33 @@ class TableBrowser(QTableView):
         self.view.setSortingEnabled(True)  #TODO, que plastazo, orden alfa, debo implementar un proxy
         self.view.setAlternatingRowColors(True)
         #self.view.sortByColumn(0, Qt.AscendingOrder)
+        self.areHidden = False
+        
+    def openContextMenu(self,position):
+        indexes = self.view.selectedIndexes()
+        if len(indexes) > 0:
+            index = indexes[0]
+            columna = index.column()
+        else:
+            columna=self.view.horizontalHeader().logicalIndexAt(position)
+        
+        menu = QMenu()
+        self.menuActions = []
+        self.menuActions.append(menu.addAction("HideColumn",lambda a = columna:self.view.hideColumn(a)))
+        if self.areHidden:
+            self.menuActions.append(menu.addAction("Show hidden columns",self.view.unhideColumns))
+        
+        action = menu.exec_(self.view.viewport().mapToGlobal(position))
+        
+    def hideColumn(self,pos):
+        self.view.setColumnHidden(pos,True)
+        self.areHidden = True
+        
+    def unhideColumns(self):
+        for k in range(self.model.columnCount()): #TableView no tiene colimn count, pero si el modelo)
+            if self.view.isColumnHidden(k):
+                self.view.showColumn(k)
+        self.areHidden = False
         
     def test(self):
         return

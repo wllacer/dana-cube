@@ -97,9 +97,13 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
     ** __DONE__ en danabrowse
  Filtros
  Query libre ¿? (con mensajes de error)
- Ocultar columnas
+ * __WIP__ Ocultar columnas
+    ** __DONE__ en tablebrowse
+
  * __HOLD__ Con cubebrowse como ejemplo separar widget y main window
     ** No refresca. si hay tiempo ...
+
+
  Mucho del código se puede sacar a una de las utilidades
  Controlar errores ejecucion SQL
 
