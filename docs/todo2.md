@@ -102,7 +102,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
  * __DONE__ Ocultar columnas
     ** __DONE__ en tablebrowse
  * __DONE__ Con cubebrowse como ejemplo separar widget y main window
-* Formatos de columan en tablebrowse mas chachis. Pude ser una annoyance
+* Formatos de columna en tablebrowse mas chachis. Pude ser una annoyance
 
 
  Mucho del código se puede sacar a una de las utilidades

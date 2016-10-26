@@ -14,7 +14,7 @@ Documentation, License etc.
 '''
 #from PyQt4.QtSql import *
 #transitional
-from  sqlalchemy import create_engine,types
+from  sqlalchemy import create_engine,types 
 from  sqlalchemy.sql import text
 from PyQt5.QtSql import *    
 
@@ -27,8 +27,10 @@ from PyQt5.QtSql import *
 from pprint import pprint
 
 def typeHandler(type):
-    if  isinstance(type,(types.Numeric,types.Integer,types.BigInteger)):
+    if  isinstance(type,(types.Numeric)):
           return 'numerico'
+    elif isinstance(type,(types.Integer,types.BigInteger)):
+          return 'entero'
     elif isinstance(type,types.String):
           return 'texto'
     elif isinstance(type,(types._Binary,types.LargeBinary)):
@@ -220,6 +222,36 @@ def getCursorAlch(db, sql_string,funcion=None,**kwargs):
             else:
                 break
     return cursor
+
+def XgetCursor(db, sql_string,funcion=None,**kwargs):
+    if db is None:
+        return None
+    if sql_string is None or sql_string.strip() == '':
+        return None
+      
+    sqlString=text(sql_string)
+    cursor= []
+    #TODO ¿sera posible que Alch me devuelva directamente una lista?
+    #TODO buscar una alternativa mas potable para el limite
+    lim = kwargs.get('LIMIT')
+    if lim:
+        cont = 0
+    datos = db.execute(sqlString)
+    for item in datos._cursor_description():
+        print(item[0],typeHandler(item[1]))
+    for row in datos:
+        trow = list(row) #viene en tupla y no me conviene
+        if callable(funcion):
+            funcion(trow,**kwargs)
+        if trow != []:
+            cursor.append(trow)
+        if lim:
+            if cont < lim:
+                cont += 1
+            else:
+                break
+    exit()
+    return cursor,None
 
 def getCursorQt(db, sql_string,funcion=None,**kwargs):
     if db is None:

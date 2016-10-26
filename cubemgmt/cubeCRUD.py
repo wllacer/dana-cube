@@ -506,7 +506,7 @@ def guideWizard(exec_object,obj):
             datosCampo = getFldTable(exec_object,obj)[campo -1]
             pprint(getFldTable(exec_object,obj))
             print(campo,'==>',datosCampo)
-            if datosCampo[2] == 'numerico':
+            if datosCampo[2] in ('numerico','entero'):
                 self.catValueFormatCombo.setCurrentIndex(1) 
             elif datosCampo[2] == 'fecha':
                 self.catValueFormatCombo.setCurrentIndex(2)
