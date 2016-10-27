@@ -154,28 +154,6 @@ def dbConnectAlch(conDict):
     else:
         debug=False
 
-    #driver = driver2Alch(conDict['driver'])
-    #if 'debug' in conDict:
-        #debug=conDict['debug']
-    #else:
-        #debug=False
-    #dbname = conDict['dbname']
-    ##GENERADOR
-    #pos = dbname.find('://')
-    #if pos > 0:
-    ##if driver == dbname[0:len(driver)]:
-        ##driver = dbname[0:pos]    
-        #print('Ya viene definida la base de datos')
-        #context = dbname
-    #else:
-        #if conDict['driver'] not in ('QSQLITE','sqlite'):
-            #host = conDict['dbhost']
-            #user = conDict['dbuser']
-            #password = conDict['dbpass']
-            #context = '{}://{}:{}@{}/{}'.format(driver,user,password,host,dbname)
-        #else:
-            #context = '{}:///{}'.format(driver,dbname)
-    ##TODO debería controlar los errores de conexion
     engine = create_engine(context,echo=debug)
     return engine.connect()
 
@@ -205,7 +183,6 @@ def getCursorAlch(db, sql_string,funcion=None,**kwargs):
       
     sqlString=text(sql_string)
     cursor= []
-    #TODO ¿sera posible que Alch me devuelva directamente una lista?
     #TODO buscar una alternativa mas potable para el limite
     lim = kwargs.get('LIMIT')
     if lim:
@@ -242,8 +219,6 @@ def XgetCursor(db, sql_string,funcion=None,**kwargs):
       
     sqlString=text(sql_string)
     cursor= []
-    #TODO ¿sera posible que Alch me devuelva directamente una lista?
-    #TODO buscar una alternativa mas potable para el limite
     lim = kwargs.get('LIMIT')
     if lim:
         cont = 0

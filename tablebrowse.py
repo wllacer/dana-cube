@@ -26,6 +26,8 @@ from datalayer.query_constructor import *
 
 from models import fmtNumber               
 
+DEBUG = True
+
 DEFAULT_FORMAT = dict(thousandsseparator=".",
                             decimalmarker=",",
                             decimalplaces=2,
@@ -62,28 +64,34 @@ class CursorItem(QStandardItem):
                         if rawData == 'None':
                             return ''
                         else:
-                            print ('error de formato en ',
-                               self.model().recordStructure[index.column()],
-                               super(CursorItem,self).data(role))
+                            if DEBUG:
+                                print ('error de formato en ',
+                                self.model().recordStructure[index.column()],
+                                super(CursorItem,self).data(role))
                             return '=>'+rawData
             #else:
                 #return Qt.AlignLeft| Qt.AlignVCenter
         return super(CursorItem,self).data(role)
     
 def getTable(dd,confName,schemaName,tableName,maxlevel=1):
+    #OJO silent error
     con = dd.getConnByName(confName)
     if con is None:
-        print('Conexion {} no definida'.format(confName))
+        if DEBUG:
+            print('Conexion {} no definida'.format(confName))
         return
     sch = con.getChildrenByName(schemaName)
     if sch is None:
-        print('Esquema {} no definido'.format(schemaName))
+        if DEBUG:
+            print('Esquema {} no definido'.format(schemaName))
         return
     tab = sch.getChildrenByName(tableName)
     if tab is None:
-        print('Tabla {} no definida'.format(tableName))
+        if DEBUG:
+            print('Tabla {} no definida'.format(tableName))
         return
-    print(tab.getFullDesc())
+    if DEBUG:
+        print('get Table ->',tab.getFullDesc())
     #return tab.getFullInfo()
     #pprint(tab.getBackRefInfo())
     return tab.getFullInfoRecursive(maxlevel)
@@ -145,10 +153,10 @@ def setLocalQuery(conn,info,iters=None):
             namespace[relation['Name']] = [relation['ParentTable'],relation['ParentTable'].split('.')[-1],]        
         name_collisions(namespace)
     sqlContext['tables'],prefix = normRef(namespace,'base')
-    print('namespace')
-    pprint(namespace)
-    print('prefix ',prefix)
-    print('\n')
+    #print('namespace')
+    #pprint(namespace)
+    #print('prefix ',prefix)
+    #print('\n')
     
     dataspace = info['Fields'][:]
     for entry in dataspace:
@@ -211,12 +219,9 @@ class SortProxy(QSortFilterProxyModel):
 class TableBrowserWin(QMainWindow):
     def __init__(self,confName,schema,table,pdataDict=None,iters=0):
         super(TableBrowserWin, self).__init__()
-        #Leeo la configuracion
-        #TODO variables asociadas del diccionario. Reevaluar al limpiar
         self.view = TableBrowser(confName,schema,table,pdataDict,iters)
-        #self.setupModel(confName,schema,table,pdataDict)
-        #self.setupView()
-        print('inicializacion completa')
+        if DEBUG:
+            print('inicializacion completa')
         ##CHANGE here
     
         self.querySplitter = QSplitter(Qt.Horizontal)
@@ -273,7 +278,7 @@ class TableBrowser(QTableView):
         for m in range(self.model.columnCount()):
             self.view.resizeColumnToContents(m)
         self.view.verticalHeader().hide()
-        self.view.setSortingEnabled(True)  #TODO, que plastazo, orden alfa, debo implementar un proxy
+        self.view.setSortingEnabled(True)  
         self.view.setAlternatingRowColors(True)
         #self.view.sortByColumn(0, Qt.AscendingOrder)
         self.areHidden = False

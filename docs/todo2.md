@@ -34,6 +34,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * Filtrado, al menos, en tablebrowse
 * Parametrizar ficheros de configuracion
 * Uso de formateo en tablebrowse y en danacube debe unificarse y flexibilizarse
+* El sistema de generacion de query admite mejoras (limit) y falta comprobar con claves compuestas
 
 ## Annoyances
 
@@ -100,7 +101,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
     ** __DONE__ en tablebrowse
     ** __DONE__ en danabrowse
  Filtros
- Query libre ¿? (con mensajes de error)
+ Query libre ¿? (con mensajes de error) __WISH__
  * __DONE__ Ocultar columnas
     ** __DONE__ en tablebrowse
  * __DONE__ Con cubebrowse como ejemplo separar widget y main window
@@ -172,6 +173,21 @@ dictmgmt.dictTree.py:379:            #TODO deberia verificar que de verdad lo es
 - dictmgmt.dictTree.py:419:        #FIXME no podemos poner el icono de momento
 - dictmgmt.dictTree.py:448:        #FIXME no podemos poner el icono de momento
 next -> dictmgmt.dictTree.py:579:        #FIXME ver si puede utilizarse nomenclatura fqn() aquí
+
+# tablebrowse
+
+NOOP -> tablebrowse.py:148:            #FIXME horrible la sentencia de abajo y consume demasiados recursos. Debo buscar una alternativa
+tablebrowse.py:167:        #TODO variables asociadas del diccionario. Reevaluar al limpiar
+NOOP -> tablebrowse.py:52:            #TODO seguro que puede pitonizarse
+next ->tablebrowse.py:86:    TODO limit generico
+next -> tablebrowse.py:87:    TODO relaciones con mas de un campo como enlace
+next -> tablebrowse.py:91:    TODO generalizar :
+- datalayer/access_layer.py:176:    ##TODO debería controlar los errores de conexion
+- datalayer/access_layer.py:206:    #TODO ¿sera posible que Alch me devuelva directamente una lista? NO
+next -> datalayer/access_layer.py:207:    #TODO buscar una alternativa mas potable para el limite
+NOOP -> datalayer/access_layer.py:252:    #TODO include functions which depend on DB driver
+(ELIMINADO) datalayer/directory.py:216:    getTableFields(conn,'votos_locales','default') #TODO deberia contemplarse
+NOOP ->datalayer/query_constructor.py:377:      #FIXME no entiendo porque necesito renormalizar la cadena
 
 
 * __EXPERIMENTAL__: __PASS__ Substitute PySide for PyQt (licensing issues) (but only Qt4.8)
