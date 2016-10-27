@@ -201,12 +201,12 @@ class MainWindow(QMainWindow):
 
         self.dictionary = DataDict()
         #TODO variables asociadas del diccionario. Reevaluar al limpiar
-        self.model = self.dictionary.model
+        self.baseModel = self.dictionary.baseModel
         self.configData = self.dictionary.configData
         self.conn = self.dictionary.conn
         if self.dictionary.isEmpty:
             self.newConfigData()
-            self.dictionary._cargaModelo(self.dictionary.model)
+            self.dictionary._cargaModelo(self.dictionary.baseModel)
         self.setupView()
         self.cubeMgr = None # necesito mas adelante que este definida
         if DEBUG:
@@ -233,7 +233,7 @@ class MainWindow(QMainWindow):
         self.cubeMenu.addAction("S&alir", self.hideCube, "Ctrl+D")
         self.cubeMenu.setEnabled(False)
         
-        self.queryModel = self.queryView.model
+        self.queryModel = self.queryView.baseModel
 
         self.querySplitter = QSplitter(Qt.Vertical)
         self.querySplitter.addWidget(self.view)
@@ -251,13 +251,13 @@ class MainWindow(QMainWindow):
         self.view.setContextMenuPolicy(Qt.CustomContextMenu)
         self.view.customContextMenuRequested.connect(self.openContextMenu)
         self.view.doubleClicked.connect(self.test)
-        self.view.setModel(self.model)
+        self.view.setModel(self.baseModel)
         self.view.resizeColumnToContents(0)
         self.view.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
 
         self.view.expandAll()
-        for m in range(self.model.columnCount()):
+        for m in range(self.baseModel.columnCount()):
             self.view.resizeColumnToContents(m)
         self.view.collapseAll()
         self.view.setHeaderHidden(True)
@@ -273,7 +273,7 @@ class MainWindow(QMainWindow):
         self.editConnection(None)
         if self.configData['Conexiones']:
             self.saveConfigFile()
-            self.dictionary._cargaModelo(self.dictionary.model)
+            self.dictionary._cargaModelo(self.dictionary.baseModel)
         else:
             QMessageBox.critical(self,
                                 "Error Fatal",
@@ -399,7 +399,7 @@ class MainWindow(QMainWindow):
         indexes = self.view.selectedIndexes()
         if len(indexes) > 0:
             index = indexes[0]
-            item = self.model.itemFromIndex(index)
+            item = self.baseModel.itemFromIndex(index)
         menu = QMenu()
         item.setMenuActions(menu,self)
         action = menu.exec_(self.view.viewport().mapToGlobal(position))
@@ -447,11 +447,11 @@ class MainWindow(QMainWindow):
     def test(self,index):
         return
         print(index.row(),index.column())
-        item = self.model.itemFromIndex(index)
+        item = self.baseModel.itemFromIndex(index)
         print(item.text(),item.model())
 
     def refreshTable(self):
-        self.model.emitModelReset()
+        self.baseModel.emitModelReset()
 
 if __name__ == '__main__':
 

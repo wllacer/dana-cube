@@ -98,10 +98,10 @@ class MainWindow(QMainWindow):
                                     yellowoutliers=True)
 
         self.vista = None
-        self.model = None
+        self.baseModel = None
         self.cubo =  None
         self.view = QTreeView(self)
-        self.view.setModel(self.model)
+        self.view.setModel(self.baseModel)
 
         #TODO como crear menu de contexto https://wiki.python.org/moin/PyQt/Creating%20a%20context%20menu%20for%20a%20tree%20view
         
@@ -127,7 +127,7 @@ class MainWindow(QMainWindow):
         proxyModel.setSourceModel(newModel)
         proxyModel.setSortRole(33)
         self.view.setModel(proxyModel)
-        self.model = newModel #proxyModel
+        self.baseModel = newModel #proxyModel
         self.view.expandToDepth(2)
         # estas vueltas para permitir ordenacion
         # para que aparezcan colapsados los indices jerarquicos
@@ -151,11 +151,11 @@ class MainWindow(QMainWindow):
     def changeView(self,row, col, agregado, campo, total=True, estad=True):
         self.vista.setNewView(row, col, agregado, campo, totalizado=total, stats=estad)
         self.vista.toTree2D()
-        self.model.beginResetModel()       
-        self.model.datos=self.vista
-        self.model.getHeaders()
-        self.model.rootItem = self.vista.row_hdr_idx.rootItem
-        self.model.endResetModel()
+        self.baseModel.beginResetModel()       
+        self.baseModel.datos=self.vista
+        self.baseModel.getHeaders()
+        self.baseModel.rootItem = self.vista.row_hdr_idx.rootItem
+        self.baseModel.endResetModel()
         self.view.expandToDepth(2)
         
     @waiting_effects
@@ -228,11 +228,11 @@ class MainWindow(QMainWindow):
         
     @waiting_effects
     def traspose(self):
-        self.model.beginResetModel()
+        self.baseModel.beginResetModel()
         self.vista.traspose()
-        self.model.getHeaders()
-        self.model.rootItem = self.vista.row_hdr_idx.rootItem
-        self.model.endResetModel()
+        self.baseModel.getHeaders()
+        self.baseModel.rootItem = self.vista.row_hdr_idx.rootItem
+        self.baseModel.endResetModel()
         self.view.expandToDepth(2)
 
         #self.refreshTable()
@@ -243,15 +243,15 @@ class MainWindow(QMainWindow):
     @waiting_effects
     def restoreData(self):
         #app.setOverrideCursor(QCursor(Qt.WaitCursor))
-        self.model.beginResetModel()
-        for key in self.model.datos.row_hdr_idx.traverse(mode=1):
-            item = self.model.datos.row_hdr_idx[key]
+        self.baseModel.beginResetModel()
+        for key in self.baseModel.datos.row_hdr_idx.traverse(mode=1):
+            item = self.baseModel.datos.row_hdr_idx[key]
             item.restoreBackup()
             if self.vista.stats :
                item.setStatistics()
 
-        #self.model.rootItem = self.vista.row_hdr_idx.rootItem    
-        self.model.endResetModel()
+        #self.baseModel.rootItem = self.vista.row_hdr_idx.rootItem    
+        self.baseModel.endResetModel()
         self.view.expandToDepth(2)
         #app.restoreOverrideCursor()
         self.restorator.setEnabled(False)
@@ -269,9 +269,9 @@ class MainWindow(QMainWindow):
         #FIXME clarificar codificacion. es enrevesada
         if entry[1] in ('colkey','colparm','rowparm'):
            if entry[1] in ('colkey','colparm'):
-               guia = self.model.datos.col_hdr_idx
+               guia = self.baseModel.datos.col_hdr_idx
            else:
-               guia = self.model.datos.row_hdr_idx
+               guia = self.baseModel.datos.row_hdr_idx
                
            a_key = [None for k in range(guia.count())]
            a_desc = [None for k in range(guia.count())]
@@ -292,8 +292,8 @@ class MainWindow(QMainWindow):
               a_data = [ None for k in range(len(a_desc))]
               self.requestFunctionParms(a_spec,a_data)            
               
-        for key in self.model.datos.row_hdr_idx.traverse(mode=1):
-            item = self.model.datos.row_hdr_idx[key]
+        for key in self.baseModel.datos.row_hdr_idx.traverse(mode=1):
+            item = self.baseModel.datos.row_hdr_idx[key]
             item.setBackup()
             if entry[1] == 'row':
                 item.setPayload(entry[0](item.getPayload()))
@@ -315,21 +315,21 @@ class MainWindow(QMainWindow):
         #TODO reducir el numero de arrays temporales
 
         self.restorator.setEnabled(True)
-        self.model.beginResetModel()
+        self.baseModel.beginResetModel()
 
         for elem in USER_FUNCTION_LIST[ind][1]:
             self.funDispatch(elem,ind)
             if len(elem) > 2: 
                 if elem[2] == 'leaf':
                     self.vista.recalcGrandTotal()
-        self.model.endResetModel()
+        self.baseModel.endResetModel()
         self.view.expandToDepth(2)
 
             
     
         
     def refreshTable(self):
-        self.model.emitModelReset()
+        self.baseModel.emitModelReset()
 
 if __name__ == '__main__':
 

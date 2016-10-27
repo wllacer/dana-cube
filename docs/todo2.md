@@ -35,6 +35,10 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * Parametrizar ficheros de configuracion
 * Uso de formateo en tablebrowse y en danacube debe unificarse y flexibilizarse
 * El sistema de generacion de query admite mejoras (limit) y falta comprobar con claves compuestas
+* (CRASH) al consultar vista staff_list (falta un campo) --> errores de ejecucion SQL
+* __DONE__ BUG cancelar wizard vacia datos en cubebrowse
+* __DONE__ s/self.model/self.baseModel/g para evitar colisiones con la funcion .model() de las ItemViews
+
 
 ## Annoyances
 

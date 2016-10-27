@@ -43,7 +43,7 @@ class DataDict():
     def __init__(self,**kwargs):
         #FIXME eliminar parametros espureos
         defFile= kwargs.get('defFile')
-        self.model = None
+        self.baseModel = None
         self.hiddenRoot  = None  #self.hiddenRoot
         self.configData = None
         self.conn = dict()
@@ -88,7 +88,7 @@ class DataDict():
         #proxyModel = QSortFilterProxyModel()
         #proxyModel.setSourceModel(newModel)
         #proxyModel.setSortRole(33)
-        self.model = newModel #proxyModel
+        self.baseModel = newModel #proxyModel
         
     def _readConfigData(self,fileName=None):
         self.configData = load_cubo(getConfigFileName(fileName))
@@ -134,7 +134,7 @@ class DataDict():
     
     def dropConnection(self,confName):
     
-        self.model.beginResetModel()
+        self.baseModel.beginResetModel()
         # limpio el arbol (podia usar findItem, pero no se, no se ...)
         k = self.getConnNr(confName)
         if not k:
@@ -145,7 +145,7 @@ class DataDict():
             self.hiddenRoot.removeRow(k)
         del self.configData['Conexiones'][confName]
         del self.conn[confName]
-        self.model.endResetModel()
+        self.baseModel.endResetModel()
         
     def changeConnection(self,padre,confName,conf):
         self.configData['Conexiones'][confName] = conf
@@ -154,11 +154,11 @@ class DataDict():
     def updateModel(self,confName=None):
         """
         """
-        self.model.beginResetModel()       
+        self.baseModel.beginResetModel()       
         if confName is None:
-            self.model.clear()
-            self.hiddenRoot = self.model.invisibleRootItem()
-            self._cargaModelo(self.model)
+            self.baseModel.clear()
+            self.hiddenRoot = self.baseModel.invisibleRootItem()
+            self._cargaModelo(self.baseModel)
         else:
             conexion = self.conn.get(confName)
             if conexion is not None:  #conexion nueva
@@ -179,5 +179,5 @@ class DataDict():
             
             self.appendConnection(confName,pos=k)
 
-        self.model.endResetModel()
+        self.baseModel.endResetModel()
 

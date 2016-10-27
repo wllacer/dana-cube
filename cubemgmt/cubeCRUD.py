@@ -947,17 +947,16 @@ def execAction(exec_object,obj,action):
             # aqui el proceso del objeto
             result = guideWizard(exec_object,obj)
             if not result:
-                return
-            #TODO lo de abajo es lo que deberia ejecutar
-            
-            if obj.text() != tipo:
-                #add a new array entry
-                idx = obj.index()
-                pai = obj.parent()
+                pass
             else:
-                pai = obj
-            nombre = result.get('name',pai.rowCount())
-            recTreeLoader(pai,nombre,result,tipo)
+                if obj.text() != tipo:
+                    #add a new array entry
+                    idx = obj.index()
+                    pai = obj.parent()
+                else:
+                    pai = obj
+                nombre = result.get('name',pai.rowCount())
+                recTreeLoader(pai,nombre,result,tipo)
             
         elif tipo in   ( FREE_FORM_ITEMS | DYNAMIC_COMBO_ITEMS ) or tipo in STATIC_COMBO_ITEMS  :
             result = atomicEditAction(obj,None,exec_object)

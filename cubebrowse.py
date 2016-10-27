@@ -198,8 +198,8 @@ class CubeMgr(QTreeView):
             self.dataDict = DataDict()
 
 
-        self.model = QStandardItemModel()
-        self.hiddenRoot = self.model.invisibleRootItem()
+        self.baseModel = QStandardItemModel()
+        self.hiddenRoot = self.baseModel.invisibleRootItem()
         self.particular = False #variable auxiliar para saber que tipo de uso hago
         self.setupModel(confName,schema,table)
         
@@ -227,7 +227,7 @@ class CubeMgr(QTreeView):
 
         #
 
-        parent = self.hiddenRoot = self.model.invisibleRootItem()
+        parent = self.hiddenRoot = self.baseModel.invisibleRootItem()
         if not info:
             print('Algo ha fallado espectacularmente',self.particular,self.particularContext)
         for entrada in info:
@@ -248,10 +248,10 @@ class CubeMgr(QTreeView):
         self.view.setContextMenuPolicy(Qt.CustomContextMenu)
         self.view.customContextMenuRequested.connect(self.openContextMenu)
         self.view.doubleClicked.connect(self.test)
-        self.view.setModel(self.model)
+        self.view.setModel(self.baseModel)
         self.view.hideColumn(2) # eso no interesa al usuario final
         self.view.expandAll() # es necesario para el resize
-        for m in range(self.model.columnCount()):
+        for m in range(self.baseModel.columnCount()):
             self.view.resizeColumnToContents(m)
         self.view.collapseAll()
         #self.view.verticalHeader().hide()
@@ -267,7 +267,9 @@ class CubeMgr(QTreeView):
         indexes = self.view.selectedIndexes()
         if len(indexes) > 0:
             index = indexes[0]
-            item = self.model.itemFromIndex(index)
+            item = self.baseModel.itemFromIndex(index)
+        else:
+            return
         menu = QMenu()
         setContextMenu(item,menu,self)        
         action = menu.exec_(self.view.viewport().mapToGlobal(position))
@@ -300,14 +302,14 @@ class CubeMgr(QTreeView):
             dump_structure(baseCubo,self.configFile)
 
     def restoreConfigFile(self):
-        self.model.beginResetModel()
-        self.model.clear()
+        self.baseModel.beginResetModel()
+        self.baseModel.clear()
         if self.particular:
             self.setupModel(*self.particularContext)
         else:
             self.setupModel()
         self.setupView()
-        self.model.endResetModel()
+        self.baseModel.endResetModel()
     
     def test(self):
         return

@@ -235,7 +235,7 @@ class TableBrowser(QTableView):
     def __init__(self,confName=None,schema=None,table=None,pdataDict=None,iters=0):
         super(TableBrowser, self).__init__()
         self.view = self # sinomimo para no tener que tocar codigo mas abajo
-        self.model = CursorItemModel()
+        self.baseModel = CursorItemModel()
         self.setupModel(confName,schema,table,pdataDict,iters)
         self.setupView()
     
@@ -248,24 +248,24 @@ class TableBrowser(QTableView):
             return
         info = getTable(dataDict,confName,schema,table)
         sqlContext= setLocalQuery(dataDict.conn[confName],info,iters)
-        self.model.recordStructure = []
+        self.baseModel.recordStructure = []
         for  idx,fld in enumerate(sqlContext['fields']):
-            self.model.recordStructure.append({'name':fld,'format':sqlContext['formats'][idx]})
+            self.baseModel.recordStructure.append({'name':fld,'format':sqlContext['formats'][idx]})
         sqls = sqlContext['sqls'] 
         cabeceras = [ fld for fld in sqlContext['fields']]
-        self.model.setHorizontalHeaderLabels(cabeceras)
+        self.baseModel.setHorizontalHeaderLabels(cabeceras)
 
         cursor = getCursor(dataDict.conn[confName],sqls)
         for row in cursor:
             modelRow = [ CursorItem(str(fld)) for fld in row ]
-            self.model.appendRow(modelRow)
+            self.baseModel.appendRow(modelRow)
             
         cursor = [] #operacion de limpieza, por si las mac-flies
     def setupView(self):
         #        self.view = QTableView(self)
         # aqui por coherencia --es un tema de presentacion
         sortProxy = SortProxy()
-        sortProxy.setSourceModel(self.model)
+        sortProxy.setSourceModel(self.baseModel)
         self.view.setModel(sortProxy)
         
         self.view.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -275,7 +275,7 @@ class TableBrowser(QTableView):
 
         self.view.doubleClicked.connect(self.test)
 
-        for m in range(self.model.columnCount()):
+        for m in range(self.baseModel.columnCount()):
             self.view.resizeColumnToContents(m)
         self.view.verticalHeader().hide()
         self.view.setSortingEnabled(True)  
@@ -284,11 +284,11 @@ class TableBrowser(QTableView):
         self.areHidden = False
      
     def loadData(self,confName=None,schema=None,table=None,pdataDict=None,iters=0):
-        self.model.beginResetModel()
-        self.model.clear()
+        self.baseModel.beginResetModel()
+        self.baseModel.clear()
         self.setupModel(confName,schema,table,pdataDict,iters)
-        self.model.endResetModel()
-        for m in range(self.model.columnCount()):
+        self.baseModel.endResetModel()
+        for m in range(self.baseModel.columnCount()):
             self.view.resizeColumnToContents(m)
     
     def openContextMenu(self,position):
@@ -312,7 +312,7 @@ class TableBrowser(QTableView):
         self.areHidden = True
         
     def unhideColumns(self):
-        for k in range(self.model.columnCount()): #TableView no tiene colimn count, pero si el modelo)
+        for k in range(self.baseModel.columnCount()): #TableView no tiene colimn count, pero si el modelo)
             if self.view.isColumnHidden(k):
                 self.view.showColumn(k)
         self.areHidden = False
