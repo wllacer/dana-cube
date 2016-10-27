@@ -17,7 +17,7 @@ Documentation, License etc.
 from  sqlalchemy import create_engine,types 
 from  sqlalchemy.sql import text
 from PyQt5.QtSql import *    
-
+from PyQt5.QtGui import QStandardItemModel, QStandardItem
 #if BACKEND == 'Alchemy':
     #from  sqlalchemy import create_engine
     #from  sqlalchemy.sql import text
@@ -224,10 +224,21 @@ def getCursorAlch(db, sql_string,funcion=None,**kwargs):
     return cursor
 
 def XgetCursor(db, sql_string,funcion=None,**kwargs):
+    """
+        Version experimental.
+        Sorprendentemente cargar directamente en el Qmodelo es entre un 25 y un 50% mas de tiempo que generar el array
+        y luego cargar el modelo
+        Como es logico no proseguimos con ese experimento
+    """
     if db is None:
         return None
     if sql_string is None or sql_string.strip() == '':
         return None
+    
+    if 'model' in kwargs:
+        model = kwargs['model']
+        ItemClass = kwargs.get('iclass',QStandardItem)
+        toModel = True
       
     sqlString=text(sql_string)
     cursor= []
@@ -236,22 +247,23 @@ def XgetCursor(db, sql_string,funcion=None,**kwargs):
     lim = kwargs.get('LIMIT')
     if lim:
         cont = 0
-    datos = db.execute(sqlString)
-    for item in datos._cursor_description():
-        print(item[0],typeHandler(item[1]))
-    for row in datos:
+    for row in db.execute(sqlString):
         trow = list(row) #viene en tupla y no me conviene
         if callable(funcion):
             funcion(trow,**kwargs)
         if trow != []:
-            cursor.append(trow)
+            if toModel:
+                modelRow = [ ItemClass(str(fld)) for fld in trow ]
+                model.appendRow(modelRow)
+            else:
+                cursor.append(trow)
+            
         if lim:
             if cont < lim:
                 cont += 1
             else:
                 break
-    exit()
-    return cursor,None
+    return cursor
 
 def getCursorQt(db, sql_string,funcion=None,**kwargs):
     if db is None:

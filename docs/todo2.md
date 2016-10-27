@@ -33,6 +33,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * Eliminar sinonimos de variables en inicializaciones (p.e en danacube y DataDict)
 * Filtrado, al menos, en tablebrowse
 * Parametrizar ficheros de configuracion
+* Uso de formateo en tablebrowse y en danacube debe unificarse y flexibilizarse
 
 ## Annoyances
 
@@ -56,6 +57,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * Me parece que la clave extrangera aparece dos veces en "Browse with fk"
 * SQL performance ¿? __VIP__ perdida de rendimiento en DanaBrowse con la inclusion de contadores
 * El diccionario es pasado entre danabrowse u tablebrowse demasiadas veces
+
 
 
 
@@ -102,7 +104,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
  * __DONE__ Ocultar columnas
     ** __DONE__ en tablebrowse
  * __DONE__ Con cubebrowse como ejemplo separar widget y main window
-* Formatos de columna en tablebrowse mas chachis. Pude ser una annoyance
+* __DONE__ Formatos de columna en tablebrowse mas chachis. Pude ser una annoyance
 
 
  Mucho del código se puede sacar a una de las utilidades

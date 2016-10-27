@@ -24,9 +24,52 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QTableView, QSplitter, QM
 
 from datalayer.query_constructor import *
 
-                
+from models import fmtNumber               
 
+DEFAULT_FORMAT = dict(thousandsseparator=".",
+                            decimalmarker=",",
+                            decimalplaces=2,
+                            rednegatives=False,
+                            yellowoutliers=False)
 
+class CursorItemModel(QStandardItemModel):
+    def __init__(self,parent=None):
+        super(CursorItemModel, self).__init__(parent)
+        self.recordStructure = None
+        
+class CursorItem(QStandardItem):
+    def __init__(self,*args):  #solo usamos valor (str o standarItem)
+        super(CursorItem, self).__init__(*args)
+    
+    def data(self,role=Qt.UserRole +1):
+        if self.model() and self.model().recordStructure and role in (Qt.DisplayRole, Qt.TextAlignmentRole):
+            index = self.index()
+            format = self.model().recordStructure[index.column()]['format']
+            if format in ('numerico','entero'):
+                if role == Qt.TextAlignmentRole:
+                    return Qt.AlignRight| Qt.AlignVCenter
+                else:
+                    defFmt = DEFAULT_FORMAT.copy()
+                    try:
+                        if format == 'numerico':
+                            defFmt['decimalplaces'] = 2
+                        else:
+                            defFmt['decimalplaces'] = 0
+                        rawData = super(CursorItem,self).data(role)
+                        text, sign = fmtNumber(float(rawData),defFmt)
+                        return '{}{}'.format(sign,text)
+                    except ValueError:
+                        if rawData == 'None':
+                            return ''
+                        else:
+                            print ('error de formato en ',
+                               self.model().recordStructure[index.column()],
+                               super(CursorItem,self).data(role))
+                            return '=>'+rawData
+            #else:
+                #return Qt.AlignLeft| Qt.AlignVCenter
+        return super(CursorItem,self).data(role)
+    
 def getTable(dd,confName,schemaName,tableName,maxlevel=1):
     con = dd.getConnByName(confName)
     if con is None:
@@ -120,7 +163,7 @@ def setLocalQuery(conn,info,iters=None):
             entry = dict()
             fkname = relation['Name']
             entry['table'],fk_prefix = normRef(namespace,fkname) #relation['ParentTable']
-            print(fkname,entry['table'],fk_prefix)
+            #print(fkname,entry['table'],fk_prefix)
             if prefix:
                 leftclause = prefix+'.'+relation['Field'].split('.')[-1]
             else:
@@ -143,9 +186,10 @@ def setLocalQuery(conn,info,iters=None):
             dataspace[idx+1:idx+1] = campos
                 
     sqlContext['fields'] = [ item[0] for item in dataspace ]
-    pprint(sqlContext)
+    sqlContext['formats'] = [ item[1] for item in dataspace ]
     sqls = sqlContext['sqls'] = queryConstructor(**sqlContext)
-    print(queryFormat(sqls))
+    if DEBUG:
+        print(queryFormat(sqls))
     return sqlContext
 
 def localQuery(conn,info,iters=None):
@@ -156,8 +200,8 @@ def localQuery(conn,info,iters=None):
 
 class SortProxy(QSortFilterProxyModel):
     def lessThan(self, left, right):
-        leftData = left.data(Qt.DisplayRole)
-        rightData = right.data(Qt.DisplayRole)
+        leftData = left.data(Qt.EditRole)
+        rightData = right.data(Qt.EditRole)
         try:
             return float(leftData) < float(rightData)
         except (ValueError, TypeError):
@@ -165,11 +209,11 @@ class SortProxy(QSortFilterProxyModel):
         return leftData < rightData
     
 class TableBrowserWin(QMainWindow):
-    def __init__(self,confName,schema,table,pdataDict=None):
+    def __init__(self,confName,schema,table,pdataDict=None,iters=0):
         super(TableBrowserWin, self).__init__()
         #Leeo la configuracion
         #TODO variables asociadas del diccionario. Reevaluar al limpiar
-        self.view = TableBrowser(confName,schema,table,pdataDict)
+        self.view = TableBrowser(confName,schema,table,pdataDict,iters)
         #self.setupModel(confName,schema,table,pdataDict)
         #self.setupView()
         print('inicializacion completa')
@@ -186,7 +230,7 @@ class TableBrowser(QTableView):
     def __init__(self,confName=None,schema=None,table=None,pdataDict=None,iters=0):
         super(TableBrowser, self).__init__()
         self.view = self # sinomimo para no tener que tocar codigo mas abajo
-        self.model = QStandardItemModel()
+        self.model = CursorItemModel()
         self.setupModel(confName,schema,table,pdataDict,iters)
         self.setupView()
     
@@ -199,15 +243,19 @@ class TableBrowser(QTableView):
             return
         info = getTable(dataDict,confName,schema,table)
         sqlContext= setLocalQuery(dataDict.conn[confName],info,iters)
+        self.model.recordStructure = []
+        for  idx,fld in enumerate(sqlContext['fields']):
+            self.model.recordStructure.append({'name':fld,'format':sqlContext['formats'][idx]})
         sqls = sqlContext['sqls'] 
         cabeceras = [ fld for fld in sqlContext['fields']]
         self.model.setHorizontalHeaderLabels(cabeceras)
-        
+
         cursor = getCursor(dataDict.conn[confName],sqls)
         for row in cursor:
-            modelRow = [ QStandardItem(str(fld)) for fld in row ]
+            modelRow = [ CursorItem(str(fld)) for fld in row ]
             self.model.appendRow(modelRow)
             
+        cursor = [] #operacion de limpieza, por si las mac-flies
     def setupView(self):
         #        self.view = QTableView(self)
         # aqui por coherencia --es un tema de presentacion
@@ -274,7 +322,7 @@ if __name__ == '__main__':
         reload(sys)
         sys.setdefaultencoding('utf-8')
     app = QApplication(sys.argv)
-    window = TableBrowserWin('MariaBD Local','sakila','film')
+    window = TableBrowserWin('MariaBD Local','sakila','film',iters=1)
     window.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
     window.show()
     sys.exit(app.exec_())
