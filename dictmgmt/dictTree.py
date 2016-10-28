@@ -509,6 +509,8 @@ class TableTreeItem(BaseTreeItem):
                     else:
                         struct = field.getRow()
                         struct[0] = field.fqn()
+                        baseName = field.text()
+                        struct.append(baseName)
                         lista.append(struct)
                 break
         return lista
@@ -576,7 +578,7 @@ class TableTreeItem(BaseTreeItem):
                         exit()
                 camposPadre = padre.getFields()
                 for i in range(0,len(camposPadre)):
-                    if camposPadre[i][0] == asociacion[3]:
+                    if camposPadre[i][0] == asociacion[3] or camposPadre[i][4] == asociacion[3]: #tanto fqn como normal
                         del camposPadre[i]
                         break
                 RefInfo['CamposReferencia'] = camposPadre
@@ -612,7 +614,7 @@ class TableTreeItem(BaseTreeItem):
 
         camposPadre = padre.getFields()
         for i in range(0,len(camposPadre)):
-            if camposPadre[i][0] == asociacion[3]:
+            if camposPadre[i][0] == asociacion[3] or camposPadre[i][4] == asociacion[3]: #tanto fqn como normal
                 del camposPadre[i]
                 break
         RefInfo['CamposReferencia'] = camposPadre

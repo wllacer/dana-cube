@@ -63,7 +63,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * Renombrar conexiones en danabrowse
 *¿Donde estan las columnas en Danabrowse?
 * Mejorar la presentacion de las propiedades de la vista http://stackoverflow.com/questions/5631078/sqlalchemy-print-the-actual-query
-* Me parece que la clave extrangera aparece dos veces en "Browse with fk". Confirmado
+* __DONE__ Me parece que la clave extrangera aparece dos veces en "Browse with fk". Confirmado
 * SQL performance ¿? __VIP__ perdida de rendimiento en DanaBrowse con la inclusion de contadores
 * El diccionario es pasado entre danabrowse u tablebrowse demasiadas veces
 * Color en mensajes de error
