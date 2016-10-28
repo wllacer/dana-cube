@@ -18,14 +18,17 @@ from pprint import pprint
 
 from dictmgmt.datadict import *    
 #from PyQt5.QtGui import QGuiApplication
-from PyQt5.QtCore import  QSortFilterProxyModel
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTableView, QSplitter, QMenu
+from PyQt5.QtCore import  QSortFilterProxyModel, QModelIndex, QSize
+from PyQt5.QtGui import QStandardItemModel, QStandardItem, QColor, QPalette
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTableView, QSplitter, QMenu, QLineEdit, QComboBox, QLabel, QPlainTextEdit
 
 from datalayer.query_constructor import *
-
+from dialogs import dataEntrySheetDlg
 from models import fmtNumber               
+from cubemgmt.cubeTypes import LOGICAL_OPERATOR
+from filterDlg import filterDialog
 
+from util.decorators import waiting_effects 
 DEBUG = True
 
 DEFAULT_FORMAT = dict(thousandsseparator=".",
@@ -66,9 +69,9 @@ class CursorItem(QStandardItem):
                         else:
                             if DEBUG:
                                 print ('error de formato en ',
-                                self.model().recordStructure[index.column()],
+                                self.model().recordStructure[index.column()],index.row(),
                                 super(CursorItem,self).data(role))
-                            return '=>'+rawData
+                            return rawData
             #else:
                 #return Qt.AlignLeft| Qt.AlignVCenter
         return super(CursorItem,self).data(role)
@@ -192,7 +195,8 @@ def setLocalQuery(conn,info,iters=None):
             #FIXME horrible la sentencia de abajo y consume demasiados recursos. Debo buscar una alternativa
             idx = [ k[0] for k in dataspace].index(entry['join_clause'][0][0])
             dataspace[idx+1:idx+1] = campos
-                
+    if info.get('base_filter'):
+        sqlContext['base_filter']=info['base_filter']
     sqlContext['fields'] = [ item[0] for item in dataspace ]
     sqlContext['formats'] = [ item[1] for item in dataspace ]
     sqls = sqlContext['sqls'] = queryConstructor(**sqlContext)
@@ -232,21 +236,27 @@ class TableBrowserWin(QMainWindow):
         self.setWindowTitle("Visualizador de base de datos")
 
 class TableBrowser(QTableView):
+    """
+    """
     def __init__(self,confName=None,schema=None,table=None,pdataDict=None,iters=0):
         super(TableBrowser, self).__init__()
-        self.view = self # sinomimo para no tener que tocar codigo mas abajo
+        #self.view = self # sinomimo para no tener que tocar codigo mas abajo
         self.baseModel = CursorItemModel()
         self.setupModel(confName,schema,table,pdataDict,iters)
         self.setupView()
     
-    def setupModel(self,confName,schema,table,pdataDict,iters): 
+    @waiting_effects
+    def setupModel(self,confName,schema,table,pdataDict,iters,pFilter=None): 
         if isinstance(pdataDict,DataDict):
             dataDict = pdataDict
         else:
             dataDict=DataDict(conn=confName,schema=schema)
         if not confName or confName == '':
             return
-        info = getTable(dataDict,confName,schema,table)
+        info = getTable(dataDict,confName,schema,table,iters)
+        if pFilter:
+            info['base_filter']=pFilter
+        self.localContext = (dataDict,confName,schema,table,iters)
         sqlContext= setLocalQuery(dataDict.conn[confName],info,iters)
         self.baseModel.recordStructure = []
         for  idx,fld in enumerate(sqlContext['fields']):
@@ -266,59 +276,132 @@ class TableBrowser(QTableView):
         # aqui por coherencia --es un tema de presentacion
         sortProxy = SortProxy()
         sortProxy.setSourceModel(self.baseModel)
-        self.view.setModel(sortProxy)
+        self.setModel(sortProxy)
         
-        self.view.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.view.customContextMenuRequested.connect(self.openContextMenu)
-        self.view.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
-        self.view.horizontalHeader().customContextMenuRequested.connect(self.openContextMenu)
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.openContextMenu)
+        self.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
+        self.horizontalHeader().customContextMenuRequested.connect(self.openContextMenu)
 
-        self.view.doubleClicked.connect(self.test)
+        self.doubleClicked.connect(self.test)
 
         for m in range(self.baseModel.columnCount()):
-            self.view.resizeColumnToContents(m)
-        self.view.verticalHeader().hide()
-        self.view.setSortingEnabled(True)  
-        self.view.setAlternatingRowColors(True)
-        #self.view.sortByColumn(0, Qt.AscendingOrder)
+            self.resizeColumnToContents(m)
+        self.verticalHeader().hide()
+        self.setSortingEnabled(True)  
+        self.setAlternatingRowColors(True)
+        #self.sortByColumn(0, Qt.AscendingOrder)
         self.areHidden = False
-     
-    def loadData(self,confName=None,schema=None,table=None,pdataDict=None,iters=0):
+        self.areFiltered = False
+  
+    def defaultFromContext(self,context,*args,**kwargs):
+        results = []
+        if isinstance(context,dict):
+            for item in context:
+                results.append(kwargs.get(item,context[item]))
+        else:
+            for k,item in enumerate(context):
+                if k >= len(args):
+                    break
+                if args[k]:
+                    results.append(args[k])
+                else:
+                    results.append(context[k])
+        return results
+    
+    @waiting_effects
+    def loadData(self, pconfName=None,pschema=None,ptable=None,pdataDict=None,piters=1,pFilter=None):
+        (dataDict,confName,schema,table,iters) = self.defaultFromContext(self.localContext,*(pdataDict,pconfName,pschema,ptable,piters))
         self.baseModel.beginResetModel()
         self.baseModel.clear()
-        self.setupModel(confName,schema,table,pdataDict,iters)
+        self.setupModel(confName,schema,table,dataDict,iters,pFilter)
         self.baseModel.endResetModel()
         for m in range(self.baseModel.columnCount()):
-            self.view.resizeColumnToContents(m)
+            self.resizeColumnToContents(m)
     
     def openContextMenu(self,position):
-        indexes = self.view.selectedIndexes()
+        indexes = self.selectedIndexes()
         if len(indexes) > 0:
             index = indexes[0]
             columna = index.column()
+            fila    = index.row()
         else:
-            columna=self.view.horizontalHeader().logicalIndexAt(position)
+            columna=self.horizontalHeader().logicalIndexAt(position)
+            fila = -1
         
         menu = QMenu()
         self.menuActions = []
-        self.menuActions.append(menu.addAction("HideColumn",lambda a = columna:self.view.hideColumn(a)))
+        self.menuActions.append(menu.addAction("Filter query",self.filterQuery))
+        if fila != -1:
+            self.menuActions.append(menu.addAction("Filter query (pick this value)",lambda a=index:self.filterQueryPick(a)))
+        if self.areFiltered:
+            self.menuActions.append(menu.addAction("remove Filter",self.filterRemove))
+        self.menuActions.append(menu.addSeparator())
+        self.menuActions.append(menu.addAction("HideColumn",lambda a = columna:self.hideColumn(a)))
         if self.areHidden:
-            self.menuActions.append(menu.addAction("Show hidden columns",self.view.unhideColumns))
+            self.menuActions.append(menu.addAction("Show hidden columns",self.unhideColumns))
         
-        action = menu.exec_(self.view.viewport().mapToGlobal(position))
+        action = menu.exec_(self.viewport().mapToGlobal(position))
         
     def hideColumn(self,pos):
-        self.view.setColumnHidden(pos,True)
+        self.setColumnHidden(pos,True)
         self.areHidden = True
         
     def unhideColumns(self):
         for k in range(self.baseModel.columnCount()): #TableView no tiene colimn count, pero si el modelo)
-            if self.view.isColumnHidden(k):
-                self.view.showColumn(k)
+            if self.isColumnHidden(k):
+                self.showColumn(k)
         self.areHidden = False
+     
+
+    def filterRemove(self):
+        self.areFiltered = False
+        self.loadData()
+        pass
+    
+
+    def filterQuery(self):
+        self.areFiltered = True
+        filterDlg = filterDialog(self.baseModel.recordStructure,self)
+        if filterDlg.exec_():
+            self.loadData(pFilter=filterDlg.result)
+
+
+    def filterQueryPick(self,index):
+        """
+            index es QModelIndex
+            El enredo de codigo es cuando tenemos un sort proxy y entonces los indices no
+            cuadran con los del modelo base y hay que hacer la traduccion esa ...
+            Eso si, con columnas ocultas funciona
+        """
+        row = index.row()
+        column = index.column()
+        field = self.baseModel.headerData(column, Qt.Horizontal)
+        valueIndex = self.model().mapToSource(QModelIndex(index))
+        value = self.baseModel.itemFromIndex(valueIndex).text()
+        # es la unica manera de encontrar el formato
+        for item in  self.baseModel.recordStructure:
+            if item['name'] == field:
+                formato = item['format']
+                break
+        #TODO esto deberia sacarse con lo del dialogo
+        qfmt = 't'     
+        if formato in ('entero','numerico'):
+            qfmt = 'n'
+        elif formato in ('fecha','hora'):
+            qfmt = 'f'
+        elif formato in ('booleano'):
+            qfmt = 'n' #me parece 
+        pfilter = searchConstructor('where',{'where':((field,'=',value,qfmt),)})
+        self.areFiltered = True
+        self.loadData(pFilter=pfilter)
         
+        pass 
+    
     def test(self):
         return
+    
+   
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
     import sys

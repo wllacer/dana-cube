@@ -30,31 +30,8 @@ from dictmgmt.datadict import *
 
 from tablebrowse import *
 from cubebrowse import info2cube, CubeMgr
-
+from util.decorators import waiting_effects 
 DEBUG = True
-def waiting_effects(function):
-    """
-      decorator from http://stackoverflow.com/questions/8218900/how-can-i-change-the-cursor-shape-with-pyqt
-      para poner el cursor en busy/libre al ejectuar una funcion que va a tardar
-      
-      TODO unificar en un solo sitio
-      
-    """
-    def new_function(*args, **kwargs):
-        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-        try:
-            return function(*args, **kwargs)
-        except Exception as e:
-            raise e
-            QMessageBox.warning(self,
-                            "Warning",
-                            "Error {}".format(e.args[0]))
-            if DEBUG:
-                print("Error {}".format(e.args[0]))
-        finally:
-            QApplication.restoreOverrideCursor()
-    return new_function
-
 
 class SelectConnectionDlg(QDialog):
     def __init__(self,configDict,parent=None):

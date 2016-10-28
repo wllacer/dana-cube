@@ -167,14 +167,14 @@ class WDataSheet(WPowerTable):
             for y in range(cols):
                 self.set(x,y,data[x][y])
             
-    #def values(self):
-        #valores=[]
-        #for x in range(self.rowCount()):
-            #linea=[]
-            #for y in range(self.columnCount()):
-                #linea.append(self.get(x,y))
-            #valores.append(linea)
-        #return valores
+    def values(self):
+        valores=[]
+        for x in range(self.rowCount()):
+            linea=[]
+            for y in range(self.columnCount()):
+                linea.append(self.get(x,y))
+            valores.append(linea)
+        return valores
      
     def valueCol(self,col=0):
         """

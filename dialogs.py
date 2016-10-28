@@ -212,7 +212,7 @@ class dataEntrySheetDlg(QDialog):
        FIXME los botones estan fatal colocados
     """
     def __init__(self,title,context,numrows,data,parent=None):   
-        super(propertySheetDlg, self).__init__(parent)
+        super(dataEntrySheetDlg, self).__init__(parent)
         # cargando parametros de defecto
         self.context = context
         self.data = data
@@ -225,20 +225,20 @@ class dataEntrySheetDlg(QDialog):
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel,
                                      Qt.Horizontal)
 
-
         #formLayout = QHBoxLayout()
-        meatLayout = QVBoxLayout()
+        self.meatLayout = QVBoxLayout()
         buttonLayout = QHBoxLayout()
-        
+        formLayout = QVBoxLayout()
        
-        meatLayout.addWidget(InicioLabel)
-        meatLayout.addWidget(self.sheet)
+        self.meatLayout.addWidget(InicioLabel)
+        self.meatLayout.addWidget(self.sheet)
         
-        #formLayout.addLayout(meatLayout)        
         buttonLayout.addWidget(buttonBox)
-        meatLayout.addLayout(buttonLayout)
         
-        self.setLayout(meatLayout)
+        formLayout.addLayout(self.meatLayout)        
+        formLayout.addLayout(buttonLayout)
+        
+        self.setLayout(formLayout)
         self.setMinimumSize(QSize(480,480))
         
         buttonBox.accepted.connect(self.accept)
@@ -248,11 +248,10 @@ class dataEntrySheetDlg(QDialog):
         
 
     def accept(self):
-        self.data = self.sheet.values()
-        #for k,valor in enumerate(datos):
-            #if valor == '' and self.context[k][1] is None:
-               #continue
-            #self.data[k] = valor
+        tmp_data = self.sheet.values()
+        for x in range(self.sheet.rowCount()):
+            for y in range(self.sheet.columnCount()):
+                self.data[x][y] = tmp_data[x][y]
         QDialog.accept(self)
 
 class CuboDlg(QDialog):

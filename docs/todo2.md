@@ -27,7 +27,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * Sesiones salvables
 * Repaso de bugs (iniciar en danabrowse -> cubebrowse -> danacube)
 * Unficar el tratamiento de arboles en la medida de lo posible
-* Unificar (y aumentar el uso de decoradores)
+* __DONE__ Unificar (y aumentar) el uso de decoradores
 * Mejorar la IU de los widgets de defecto
     ** __DONE__ eliminar la cabecera en WPropertySheet
 * Eliminar sinonimos de variables en inicializaciones (p.e en danacube y DataDict)
@@ -38,6 +38,10 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * (CRASH) al consultar vista staff_list (falta un campo) --> errores de ejecucion SQL
 * __DONE__ BUG cancelar wizard vacia datos en cubebrowse
 * __DONE__ s/self.model/self.baseModel/g para evitar colisiones con la funcion .model() de las ItemViews
+* Utilizacion de validadores en los campos de entrada
+* en la verificacion de logicales tener en cuenta is null(is not null) -CubeCRUD y tablebrowse-
+* __DONE__ Interfaz de usuario del filtro (simplemente cambiando QTextEdit por QLineEdit he conseguido lo que queria
+
 
 
 ## Annoyances
@@ -59,10 +63,11 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * Renombrar conexiones en danabrowse
 *¿Donde estan las columnas en Danabrowse?
 * Mejorar la presentacion de las propiedades de la vista http://stackoverflow.com/questions/5631078/sqlalchemy-print-the-actual-query
-* Me parece que la clave extrangera aparece dos veces en "Browse with fk"
+* Me parece que la clave extrangera aparece dos veces en "Browse with fk". Confirmado
 * SQL performance ¿? __VIP__ perdida de rendimiento en DanaBrowse con la inclusion de contadores
 * El diccionario es pasado entre danabrowse u tablebrowse demasiadas veces
-
+* Color en mensajes de error
+* Hay funciones en filterDlg que pueden reutilzarse
 
 
 

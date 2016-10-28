@@ -20,7 +20,7 @@ from util.jsonmgr import load_cubo
 from models import *
 
 from user_functions import *
-
+from util.decorators import waiting_effects 
 
 #FIXED 1 zoom view breaks. Some variables weren't available
 #     FIXME zoom doesn't trigger any action with the new interface
@@ -36,24 +36,6 @@ from user_functions import *
 #TODO uso de formato numerico directamente en la view setNumberFormat
 #ALERT dopado para que vaya siempre a datos de prueba
 
-def waiting_effects(function):
-    """
-      decorator from http://stackoverflow.com/questions/8218900/how-can-i-change-the-cursor-shape-with-pyqt
-      para poner el cursor en busy/libre al ejectuar una funcion que va a tardar
-    """
-    def new_function(*args, **kwargs):
-        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-        #FIXME problemas para capturar errores con el try GENERADOR
-        return function(*args, **kwargs)
-        try:
-            return function(*args, **kwargs)
-        except Exception as e:
-            raise e
-            print("Error {}".format(e.args[0]))
-        finally:
-            QApplication.restoreOverrideCursor()
-    
-    return new_function
 
 #def model_change(model):
     #"""

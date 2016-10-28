@@ -18,10 +18,18 @@ from pprint import pprint
 from datetime import date,datetime
 from dateutil.relativedelta import *
 from dateutil.rrule import *
+from dateutil.parser import parse
 
 CLASES_INTERVALO = ('todo','actual','intervalo','ultimo intervalo Abierto','ultimo intervalo Cerrado')
 TIPOS_INTERVALO = ('año','cuatrimestre','trimestre','mes','quincena','semana','dia')
 
+
+def isDate(string):
+    try:
+        k = parse(string)
+    except ValueError:
+        return False
+    return True
 
 def ldm(anyo,mes):
     if mes in (1,3,5,7,8,10,12):

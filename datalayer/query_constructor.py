@@ -201,7 +201,7 @@ def sqlClause(left,comparator,right=None,twarn=True,**kwargs):
                 return None
 
         derecha,rwarntype = sqlFmt(right,side='R',warn=True,**kwargs)
-        print(derecha)
+        #1610 print(derecha)
         # checkeo el caso raro del IS (NOT) (NULL/TRUE/FALSE) (realmente no es un operador, sino operador y valor)
     
     if twarn and lwarntype and rwarntype:
@@ -390,7 +390,7 @@ def groupConstructor(kwargs):
           kelemento = nelemento[0:pos]
       else:
         kelemento = nelemento
-      print(kelemento)
+      #1610 print(kelemento)
       texto.append(kelemento.strip())
     
     statement += ', '.join(texto)
@@ -436,8 +436,12 @@ def searchConstructor(definicion,kwargs):
     for ind,kelem in enumerate(entrada):
         ltype=None
         rtype=None
-        izquierda,comparador,derecha=slicer(kelem,3,None)   
+        #izquierda,comparador,derecha=slicer(kelem,3,None)   
+        izquierda,comparador,derecha,fmt=slicer(kelem,4,None)   
         gargs=getFmtArgs(kwargs)
+        if fmt:
+            gargs['rtype']=fmt
+
         if isinstance(izquierda,dict):
             args = deepcopy(izquierda) # no quiero efectos secundarios
             izquierda='({})'.format(searchConstructor(definicion,args))
