@@ -45,6 +45,31 @@ def showConnectionError(context,detailed_error,title="Error de Conexion"):
     msg.setStandardButtons(QMessageBox.Ok)                
     retval = msg.exec_()
 
+def arbol(fileSet,inspector, schema,table,maxiters,parentIter):
+    """
+        funcion recursiva utilizada para obtener el set (fileSet) de tablas que deben formar parte 
+        del diccionario en el caso que lo pidamos centrado en una sola tabla
+    """
+    try:
+        fks =  inspector.get_foreign_keys(table,schema)
+    except:
+        print('Tabla {}.{} no puede ser consultada'.format(schema,table))
+        return
+    fileSet.add(table) 
+    # el control de iteracion se hace aqui porque maxiters 0 es sin referencias y en otro sitio 
+    # es demasiado 
+    actIter = parentIter  + 1
+    if maxiters < actIter:
+        return  
+    for entry in fks:
+        #TODO de momento solo en el esquema de la tabla original 99% de los casos
+        #if entry['referred_schema'] is not None:
+            #table = entry['referred_schema']+'.'+entry['referred_table']
+        #else:
+            #table = entry['referred_table']
+        arbol (fileSet,inspector,entry.get('referred_schema',schema),entry['referred_table'],maxiters,actIter)
+    return 
+
 class BaseTreeItem(QStandardItem):
     def __init__(self, name):
         QStandardItem.__init__(self, name)
@@ -171,6 +196,8 @@ class BaseTreeItem(QStandardItem):
             return 'Conn'
         elif isinstance(self,SchemaTreeItem):
             return 'Schema'
+        elif isinstance(self,ViewTreeItem) : # con isinstance las especializaciones por delante
+            return 'View'
         elif isinstance(self,TableTreeItem) :
             return 'Table'
         else:
@@ -330,12 +357,13 @@ class ConnectionTreeItem(BaseTreeItem):
                         print(schema,table_name,fk['referred_table'],'casca',norm2String(e.orig.args))
                     continue
                 
-    def refresh(self,pSchema=None):
+    def refresh(self,**kwargs):
         """
            Refesca los datos de la conexion
            Probablemente no se usa ahora mismo.
            El problema es que no acaba de cuadran para el caso que la base este caida
         """
+        pSchema = kwargs.get('schema')
         self.deleteChildren()
         if self.isOpen():
             engine = self.getConnection().data().engine
@@ -351,9 +379,10 @@ class ConnectionTreeItem(BaseTreeItem):
             for schema in schemata:
                 self.appendRow(SchemaTreeItem(schema))
                 curSchema = self.lastChild()
-                curSchema.refresh()
-                
-            self.FK_hierarchy(inspector,schemata)
+                curSchema.refresh(**kwargs)
+            # en el caso de pedir una tabla en concreto NO se calculan la FK hierarchy
+            if not kwargs.get('table'):    
+                self.FK_hierarchy(inspector,schemata)
             
         else:
             self.setIcon(QIcon('icons/16/database_lightning.png'))
@@ -416,24 +445,43 @@ class SchemaTreeItem(BaseTreeItem):
         #FIXME no podemos poner el icono de momento
         self.setIcon(QIcon("icons/16/database"))
         
-    def refresh(self):
+    def refresh(self,**kwargs):
         self.deleteChildren()
+        pFile = kwargs.get('table')
+        
         engine = self.getConnection().data().engine
         inspector = inspect(engine)
         schema = self.text() if self.text() != '' else None
         if schema == inspector.default_schema_name:
             schema = None
-        for table_name in inspector.get_table_names(schema):
+    
+
+
+
+        if pFile: 
+            maxIter = kwargs.get('iters',1) # el defecto es un nivel de anidacion
+            list_of_files = set()
+            arbol(list_of_files,inspector,schema,pFile,maxIter,0)
+            for entry in list_of_files:
+                self.appendRow(TableTreeItem(entry))
+                curTable = self.lastChild()
+                curTable.refresh()
+            return
+        
+        """
+          el codigo a partir de ahora no se ve afectado por lo que necesito hacer
+        """
+        list_of_files = inspector.get_table_names(schema)
+        for table_name in list_of_files:
             self.appendRow(TableTreeItem(table_name))
             curTable = self.lastChild()
             curTable.refresh()
-        for table_name in inspector.get_view_names(schema):
-            #self.appendRow(TableTreeItem(table_name))
-            self.appendRow(ViewTreeItem(table_name))
+
+        list_of_views = inspector.get_view_names(schema)
+        for view_name in list_of_views:
+            self.appendRow(ViewTreeItem(view_name))
             curTable = self.lastChild()
             curTable.refresh()
-#            curTable.setIcon(QIcon("icons/16/code"))
-        # fk reference
        
     def setMenuActions(self,menu,context):      
         self.menuActions = []
@@ -451,7 +499,6 @@ class TableTreeItem(BaseTreeItem):
         self.setIcon(QIcon("icons/16/database_table"))
                 
     def refresh(self):
-
         self.deleteChildren()
         self.appendRow(BaseTreeItem('FIELDS'))
         curTableFields = self.lastChild()
@@ -481,6 +528,7 @@ class TableTreeItem(BaseTreeItem):
                     if name and name != '':
                         tipo = BaseTreeItem(typeHandler('TEXT'))
                         curTableFields.appendRow((name,tipo))
+                        
             for fk in inspector.get_foreign_keys(table_name,schema):
                 if fk['name'] is None:
                     name = BaseTreeItem(table_name+'2'+fk['referred_table']+'*')
@@ -497,6 +545,7 @@ class TableTreeItem(BaseTreeItem):
             if DEBUG:
                 #showConnectionError('Error en {}.{}'.format(schema,table_name),norm2String(e.orig.args))
                 print('Error en {}.{}'.format(schema,table_name),norm2String(e.orig.args))
+                
     def getFields(self,simple=False):
         lista = []
         for item in self.listChildren():
@@ -612,12 +661,16 @@ class TableTreeItem(BaseTreeItem):
                     print('Error horroroso en ',self.text(),asociacion)
                 exit()
 
-        camposPadre = padre.getFields()
-        for i in range(0,len(camposPadre)):
-            if camposPadre[i][0] == asociacion[3] or camposPadre[i][4] == asociacion[3]: #tanto fqn como normal
-                del camposPadre[i]
-                break
-        RefInfo['CamposReferencia'] = camposPadre
+        
+        """ si el diccionario se ha construido para una tabla con nivel de profundidad 0 (el parametro iters en DataDict.__init__) la evalaucin de FKs no tiene sentido, pero no he encontrado un sitio decente para 
+        controlarlo. Como aqui es donde falla es donde se parchea. pero es eso, un parche FIXME"""
+        if padre:
+            camposPadre = padre.getFields()
+            for i in range(0,len(camposPadre)):
+                if camposPadre[i][0] == asociacion[3] or camposPadre[i][4] == asociacion[3]: #tanto fqn como normal
+                    del camposPadre[i]
+                    break
+            RefInfo['CamposReferencia'] = camposPadre
         
         if maxlevel > kiter :
             FKs = padre.getFK(False)

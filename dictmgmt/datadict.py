@@ -84,10 +84,6 @@ class DataDict():
         newModel = QStandardItemModel()
         newModel.setColumnCount(5)
         self.hiddenRoot = newModel.invisibleRootItem()
-        #self.multischema(newModel)        
-        #proxyModel = QSortFilterProxyModel()
-        #proxyModel.setSourceModel(newModel)
-        #proxyModel.setSortRole(33)
         self.baseModel = newModel #proxyModel
         
     def _readConfigData(self,fileName=None):
@@ -128,7 +124,8 @@ class DataDict():
             curConnection = padre.child(pos)
         
         #if kwargs.get('schema') is not None:
-        curConnection.refresh(kwargs.get('schema'))
+        #curConnection.refresh(kwargs.get('schema')) #ENFRIAR
+        curConnection.refresh(**kwargs)
         #else: #probablemente innecesario
             #curConnection.refresh()
     

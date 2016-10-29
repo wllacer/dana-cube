@@ -33,23 +33,8 @@ from util.fechas import isDate
 
 from datalayer.query_constructor import *
 
-def hasContent(string):
-    if not string:
-        return False
-    elif string == '':
-        return False
-    return True
-        
-def empalmador(left,right,clause):
-    if hasContent(left) and hasContent(right):
-        return '{} {} {}'.format(left,right,clause)
-    elif hasContent(left):
-        return left
-    elif hasContent(right):
-        return right
-    else:
-        return ''
-    
+from util.record_functions import empalmador, hasContent 
+
 class filterDialog(QDialog):
     def __init__(self,recordStructure,title,parent=None):
         super(filterDialog, self).__init__(parent)

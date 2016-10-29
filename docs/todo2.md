@@ -31,21 +31,27 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * Mejorar la IU de los widgets de defecto
     ** __DONE__ eliminar la cabecera en WPropertySheet
 * Eliminar sinonimos de variables en inicializaciones (p.e en danacube y DataDict)
-* Filtrado, al menos, en tablebrowse
+* __DONE__ Filtrado en tablebrowse
+* Filtrado en DanaCube
 * Parametrizar ficheros de configuracion
 * Uso de formateo en tablebrowse y en danacube debe unificarse y flexibilizarse
 * El sistema de generacion de query admite mejoras (limit) y falta comprobar con claves compuestas
 * (CRASH) al consultar vista staff_list (falta un campo) --> errores de ejecucion SQL
 * __DONE__ BUG cancelar wizard vacia datos en cubebrowse
 * __DONE__ s/self.model/self.baseModel/g para evitar colisiones con la funcion .model() de las ItemViews
-* Utilizacion de validadores en los campos de entrada
-* en la verificacion de logicales tener en cuenta is null(is not null) -CubeCRUD y tablebrowse-
+* Utilizacion de validadores en los campos de entrada.
+* __DONE__ (performance) poder limitar la generacion del diccionario a tablas concretas relacionadas con una sola
+    ** __DONE__ (BUG) cuando se elige nivel 0 falla la obtencion de FKS (obviamente). __PARCHE__
+    ** (Limitacion) reservado a relaciones en el mismo esquema __TODO__
+
+
 * __DONE__ Interfaz de usuario del filtro (simplemente cambiando QTextEdit por QLineEdit he conseguido lo que queria
 
 
 
 ## Annoyances
 
+* en la verificacion de logicales tener en cuenta is null(is not null) -CubeCRUD y tablebrowse-
 * Como hacer que los arboles no se cierren y abran aleatoriamente
 * Mensajes de usuario en caso de error graficos (proseguir desde util.base_dialogs. No funciona de momento)
     ** Danacube
@@ -109,8 +115,8 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
     ** __DONE__ orden alfanumerico http://stackoverflow.com/questions/11938459/sorting-in-pyqt-tablewidget
     ** __DONE__ en tablebrowse
     ** __DONE__ en danabrowse
- Filtros
- Query libre ¿? (con mensajes de error) __WISH__
+ __DONE__ Filtros
+ __DONE__ Query libre (muy limitada como filtro)
  * __DONE__ Ocultar columnas
     ** __DONE__ en tablebrowse
  * __DONE__ Con cubebrowse como ejemplo separar widget y main window

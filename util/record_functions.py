@@ -13,6 +13,8 @@ Documentation, License etc.
 '''
 
 from pprint import *
+from copy import deepcopy
+
 DELIMITER=':'
 
 def norm2List(entrada):
@@ -321,3 +323,36 @@ def ker_trans(vector,regla):
       pass
   return vector_salida  
 
+def defaultFromContext(context,*args,**kwargs):
+    if isinstance(context,dict):
+        results = dict()
+        results = deepcopy(kwargs)
+        for item in context:
+            results[item] = kwargs.get(item,context[item])
+    else:
+        results = []
+        for k,item in enumerate(context):
+            if k >= len(args):
+                break
+            if args[k]:
+                results.append(args[k])
+            else:
+                results.append(context[k])
+    return results
+
+def hasContent(string):
+    if not string:
+        return False
+    elif string == '':
+        return False
+    return True
+        
+def empalmador(left,right,clause):
+    if hasContent(left) and hasContent(right):
+        return '{} {} {}'.format(left,right,clause)
+    elif hasContent(left):
+        return left
+    elif hasContent(right):
+        return right
+    else:
+        return ''

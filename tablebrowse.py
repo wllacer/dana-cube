@@ -29,6 +29,7 @@ from cubemgmt.cubeTypes import LOGICAL_OPERATOR
 from filterDlg import filterDialog
 
 from util.decorators import waiting_effects 
+from util.record_functions import defaultFromContext
 DEBUG = True
 
 DEFAULT_FORMAT = dict(thousandsseparator=".",
@@ -250,10 +251,11 @@ class TableBrowser(QTableView):
         if isinstance(pdataDict,DataDict):
             dataDict = pdataDict
         else:
-            dataDict=DataDict(conn=confName,schema=schema)
+            dataDict=DataDict(conn=confName,schema=schema,table=table,iters=iters) #iters todavia no procesamos
         if not confName or confName == '':
             return
         info = getTable(dataDict,confName,schema,table,iters)
+        
         if pFilter:
             info['base_filter']=pFilter
         self.localContext = (dataDict,confName,schema,table,iters)
@@ -294,24 +296,10 @@ class TableBrowser(QTableView):
         self.areHidden = False
         self.areFiltered = False
   
-    def defaultFromContext(self,context,*args,**kwargs):
-        results = []
-        if isinstance(context,dict):
-            for item in context:
-                results.append(kwargs.get(item,context[item]))
-        else:
-            for k,item in enumerate(context):
-                if k >= len(args):
-                    break
-                if args[k]:
-                    results.append(args[k])
-                else:
-                    results.append(context[k])
-        return results
     
     @waiting_effects
     def loadData(self, pconfName=None,pschema=None,ptable=None,pdataDict=None,piters=1,pFilter=None):
-        (dataDict,confName,schema,table,iters) = self.defaultFromContext(self.localContext,*(pdataDict,pconfName,pschema,ptable,piters))
+        (dataDict,confName,schema,table,iters) = defaultFromContext(self.localContext,*(pdataDict,pconfName,pschema,ptable,piters))
         self.baseModel.beginResetModel()
         self.baseModel.clear()
         self.setupModel(confName,schema,table,dataDict,iters,pFilter)
@@ -410,7 +398,7 @@ if __name__ == '__main__':
         reload(sys)
         sys.setdefaultencoding('utf-8')
     app = QApplication(sys.argv)
-    window = TableBrowserWin('MariaBD Local','sakila','film',iters=1)
+    window = TableBrowserWin('MariaBD Local','sakila','film')
     window.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
     window.show()
     sys.exit(app.exec_())
