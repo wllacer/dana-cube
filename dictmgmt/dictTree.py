@@ -55,7 +55,7 @@ def arbol(fileSet,inspector, schema,table,maxiters,parentIter):
     except:
         print('Tabla {}.{} no puede ser consultada'.format(schema,table))
         return
-    fileSet.add(table) 
+    fileSet.add('{}.{}'.format(schema,table) )
     # el control de iteracion se hace aqui porque maxiters 0 es sin referencias y en otro sitio 
     # es demasiado 
     actIter = parentIter  + 1
@@ -454,18 +454,31 @@ class SchemaTreeItem(BaseTreeItem):
         schema = self.text() if self.text() != '' else None
         if schema == inspector.default_schema_name:
             schema = None
-    
-
-
 
         if pFile: 
             maxIter = kwargs.get('iters',1) # el defecto es un nivel de anidacion
             list_of_files = set()
             arbol(list_of_files,inspector,schema,pFile,maxIter,0)
             for entry in list_of_files:
-                self.appendRow(TableTreeItem(entry))
-                curTable = self.lastChild()
-                curTable.refresh()
+                (kschema,ktable) = entry.split('.')
+                if kschema and kschema  == '':
+                    kschema = None
+                if (kschema and schema) and kschema == schema:  #?? como se comportara eso con los nones 
+                    self.appendRow(TableTreeItem(ktable))
+                    curTable = self.lastChild()
+                    curTable.refresh()
+                else:
+                    hermano = self.getBrotherByName(kschema)
+                    if hermano:
+                        hermano.appendRow(TableTreeItem(ktable))
+                        curTable = hermano.lastChild()
+                        curTable.refresh()
+                    else:
+                        conexion = self.getParent()
+                        conexion.appendRow(SchemaTreeItem(kschema))  
+                        curSchema = conexion.lastChild()
+                        curSchema.refresh(table=ktable,iters=0)
+
             return
         
         """

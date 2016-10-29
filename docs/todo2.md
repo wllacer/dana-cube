@@ -42,7 +42,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * Utilizacion de validadores en los campos de entrada.
 * __DONE__ (performance) poder limitar la generacion del diccionario a tablas concretas relacionadas con una sola
     ** __DONE__ (BUG) cuando se elige nivel 0 falla la obtencion de FKS (obviamente). __PARCHE__
-    ** (Limitacion) reservado a relaciones en el mismo esquema __TODO__
+    ** __DONE__ (Limitacion) reservado a relaciones en el mismo esquema __TODO__
 
 
 * __DONE__ Interfaz de usuario del filtro (simplemente cambiando QTextEdit por QLineEdit he conseguido lo que queria

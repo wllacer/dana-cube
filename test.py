@@ -51,8 +51,8 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     confName = 'MariaBD Local'
     schema   = 'sakila'
-    table    = 'film'
-    iters    = 0
+    table    = 'payment'
+    iters    = 2
     dataDict=DataDict(conn=confName,schema=schema,table=table,iters=iters)
     for entry in traverse(dataDict.hiddenRoot):
         tabs = '\t'*entry.depth()
