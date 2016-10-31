@@ -108,8 +108,8 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 
 ### DANACUBE
 
-
-
+* Juraria que habia implementado el ocultar columnas (a lo peor copiar de tablebrowse)
+  
 
  ### tablebrowse 
  

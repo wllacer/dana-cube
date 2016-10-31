@@ -25,13 +25,18 @@ def getFmtArgs(kwargs):
     return salida
 
 def queryFormat(sqlstring):
-    STATEMENT=('WITH','SELECT ','FROM ','WHERE ','LEFT OUTER JOIN ','GROUP BY ','ORDER BY ','WHERE ')
-    cadena = sqlstring
-    for entry in STATEMENT:
-        salida = '\n{}\n\t'.format(entry)
-        cadena = cadena.replace(entry,salida)
-    cadena = cadena.replace(',',',\n\t')
-    return cadena
+    try:
+        import sqlparse
+        return sqlparse.format(sqlstring)
+    except ImportError:
+        print('lo tengo que hacer a mano')
+        STATEMENT=('WITH','SELECT ','FROM ','WHERE ','LEFT OUTER JOIN ','GROUP BY ','ORDER BY ','WHERE ')
+        cadena = sqlstring
+        for entry in STATEMENT:
+            salida = '\n{}\n\t'.format(entry)
+            cadena = cadena.replace(entry,salida)
+        cadena = cadena.replace(',',',\n\t')
+        return cadena
     
 def sqlFmt(parametro,**kwargs):
     """

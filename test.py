@@ -23,6 +23,7 @@ from tablebrowse import getTable
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTableView, QSplitter
 
+from datalayer.query_constructor import queryFormat
 
 def traverse(root,base=None):
     if base is not None:
@@ -48,15 +49,16 @@ if __name__ == '__main__':
     if sys.version_info[0] < 3:
         reload(sys)
         sys.setdefaultencoding('utf-8')
-    app = QApplication(sys.argv)
-    confName = 'MariaBD Local'
-    schema   = 'sakila'
-    table    = 'payment'
-    iters    = 2
-    dataDict=DataDict(conn=confName,schema=schema,table=table,iters=iters)
-    for entry in traverse(dataDict.hiddenRoot):
-        tabs = '\t'*entry.depth()
-        if entry.type() != BaseTreeItem : #not entry.isAuxiliar():
-            print(entry.getTypeText(),tabs,entry.text(),entry.fqn(),entry.getFullDesc()) # entry.getRow(),entry.gpi()) #(tabs,entry) #entry.text(),'\t',entry.getRow())
-    info = getTable(dataDict,confName,schema,table)    
-    pprint(info)
+    print(queryFormat('select * from pepe'))
+    #app = QApplication(sys.argv)
+    #confName = 'MariaBD Local'
+    #schema   = 'sakila'
+    #table    = 'payment'
+    #iters    = 2
+    #dataDict=DataDict(conn=confName,schema=schema,table=table,iters=iters)
+    #for entry in traverse(dataDict.hiddenRoot):
+        #tabs = '\t'*entry.depth()
+        #if entry.type() != BaseTreeItem : #not entry.isAuxiliar():
+            #print(entry.getTypeText(),tabs,entry.text(),entry.fqn(),entry.getFullDesc()) # entry.getRow(),entry.gpi()) #(tabs,entry) #entry.text(),'\t',entry.getRow())
+    #info = getTable(dataDict,confName,schema,table)    
+    #pprint(info)
