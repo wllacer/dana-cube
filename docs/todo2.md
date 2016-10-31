@@ -21,6 +21,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * Finalizar la gestion CRUD de cubos
 * Ocultar las claves en las cadenas importantes
 * Claves multicampo
+* BUG Grandes totales desordenados en TODOS los casosel caso de ENUMS
 
 ## Pequeños TODO
 
@@ -89,7 +90,10 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * __DONE__ Presentar en las guias de defecto el numero de valores distintos para la guia (hecho en DanaBrowse) 
 * __DONE__ que los distintos atributos se presenten siempre en el mismo orden en un arbol del cubo, creo
 * ![cube bugs]docs/cube_todo.txt
-
+* (BUG) Borrar default no funciona 
+* __DONE__ (BUG) source no esta especializado. Se me habia olvidado que ahora es domain
+* Problemas si no se especifica el esquema. probablemente deba incluir en la def. de la conexion el esquema de defecto.
+* __DONE__ (BUG) problemas donde se define localContext
 
 ### DanaBrowse
 
@@ -99,11 +103,12 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * __DONE__  Que pasa cuando se sustitye una edicion de cubo sin salvar. lo capturamos antes
 * __DONE__  ?revisar el efecto en cubo de salir directamente de danabrowse
 * __DONE__ Contadores en tablas y campos
+* Si cancelo al inicio casca 
 
 
 ### DANACUBE
 
-*  Grandes totales desordenados en el caso de ENUMS
+
 
 
  ### tablebrowse 

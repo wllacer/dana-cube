@@ -252,13 +252,13 @@ class TableBrowser(QTableView):
             dataDict = pdataDict
         else:
             dataDict=DataDict(conn=confName,schema=schema,table=table,iters=iters) #iters todavia no procesamos
+        self.localContext = (dataDict,confName,schema,table,iters)    
         if not confName or confName == '':
             return
         info = getTable(dataDict,confName,schema,table,iters)
         
         if pFilter:
             info['base_filter']=pFilter
-        self.localContext = (dataDict,confName,schema,table,iters)
         sqlContext= setLocalQuery(dataDict.conn[confName],info,iters)
         self.baseModel.recordStructure = []
         for  idx,fld in enumerate(sqlContext['fields']):
