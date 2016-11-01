@@ -321,7 +321,7 @@ class Cubo:
                     if 'categories' not in componente:
                        aux_entrada = { 'elem':guia['rules'][-1]['elem'][-1]}
                        (sqlString,code_fld,desc_fld) = self.__setGuidesSqlStatement(aux_entrada,[])
-                       print(sqlString)
+                       print(queryFormat(sqlString))
                     else:
                        guia['rules'][-1]['enum']=componente['categories'] 
                 else:
@@ -392,7 +392,7 @@ class Cubo:
                 sqlString=componente['string']
                 cursor += getCursor(self.db,sqlString,regHashFill,**lista_compra)
             if DEBUG:
-                print(time.time(),guiaId,idx,sqlString)
+                print(time.time(),guiaId,idx,queryFormat(sqlString))
         cursor = sorted(cursor)
         tree=TreeDict()
         for entryNum,elem in enumerate(cursor):
@@ -565,7 +565,7 @@ class Vista:
                 #cursor_data=getCursor(self.cubo.db,sqlstring,regHasher2D,**lista_compra)
                 self.array +=getCursor(self.cubo.db,sqlstring,regTree,**lista_compra)
                 if DEBUG:
-                    print(time.time(),'Datos ',sqlstring)
+                    print(time.time(),'Datos ',queryFormat(sqlstring))
     
     def grandTotal(self):
         array = []
@@ -605,7 +605,7 @@ class Vista:
             #cursor_data=getCursor(self.cubo.db,sqlstring,regHasher2D,**lista_compra)
             array +=getCursor(self.cubo.db,sqlstring,regTree1D,**lista_compra)
             if DEBUG:
-                print(time.time(),'Datos ',sqlstring)
+                print(time.time(),'Datos ',queryFormat(sqlstring))
         return array
         
     def toTable(self):

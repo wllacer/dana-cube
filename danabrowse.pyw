@@ -229,13 +229,13 @@ class MainWindow(QMainWindow):
         self.view.customContextMenuRequested.connect(self.openContextMenu)
         self.view.doubleClicked.connect(self.test)
         self.view.setModel(self.baseModel)
-        self.view.resizeColumnToContents(0)
+        #self.view.resizeColumnToContents(0)
         self.view.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
 
         self.view.expandAll()
-        for m in range(self.baseModel.columnCount()):
-            self.view.resizeColumnToContents(m)
+        #for m in range(self.baseModel.columnCount()):
+            #self.view.resizeColumnToContents(m)
         self.view.collapseAll()
         self.view.setHeaderHidden(True)
         #self.view.setSortingEnabled(True)

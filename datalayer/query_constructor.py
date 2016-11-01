@@ -27,9 +27,8 @@ def getFmtArgs(kwargs):
 def queryFormat(sqlstring):
     try:
         import sqlparse
-        return sqlparse.format(sqlstring)
+        return sqlparse.format(sqlstring,reindent=True,keyword_case = 'upper',indent_width=2)+'\n\n'
     except ImportError:
-        print('lo tengo que hacer a mano')
         STATEMENT=('WITH','SELECT ','FROM ','WHERE ','LEFT OUTER JOIN ','GROUP BY ','ORDER BY ','WHERE ')
         cadena = sqlstring
         for entry in STATEMENT:

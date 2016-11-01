@@ -14,6 +14,7 @@ Documentation, License etc.
 '''
 #from PyQt4.QtSql import *
 #transitional
+from datalayer.query_constructor import queryFormat
 from  sqlalchemy import create_engine,types 
 from  sqlalchemy.sql import text
 from PyQt5.QtSql import *    
@@ -25,6 +26,7 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem
     #from PyQt5.QtSql import *    
     
 from pprint import pprint
+import datetime 
 
 def typeHandler(type):
     if  isinstance(type,(types.Numeric)):
@@ -187,7 +189,8 @@ def getCursorAlch(db, sql_string,funcion=None,**kwargs):
     lim = kwargs.get('LIMIT')
     if lim:
         cont = 0
-    for row in db.execute(sqlString):
+    resultCursor = db.execute(sqlString)
+    for row in resultCursor:
         trow = list(row) #viene en tupla y no me conviene
         if callable(funcion):
             funcion(trow,**kwargs)

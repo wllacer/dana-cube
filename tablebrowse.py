@@ -15,6 +15,7 @@ Documentation, License etc.
 
 from pprint import pprint
 
+import datetime
 
 from dictmgmt.datadict import *    
 #from PyQt5.QtGui import QGuiApplication
@@ -202,6 +203,7 @@ def setLocalQuery(conn,info,iters=None):
     sqlContext['formats'] = [ item[1] for item in dataspace ]
     sqls = sqlContext['sqls'] = queryConstructor(**sqlContext)
     if DEBUG:
+        print('and the loser is')
         print(queryFormat(sqls))
     return sqlContext
 
@@ -267,11 +269,10 @@ class TableBrowser(QTableView):
         cabeceras = [ fld for fld in sqlContext['fields']]
         self.baseModel.setHorizontalHeaderLabels(cabeceras)
 
-        cursor = getCursor(dataDict.conn[confName],sqls)
+        cursor = getCursor(dataDict.conn[confName],sqls,LIMIT=10000)
         for row in cursor:
             modelRow = [ CursorItem(str(fld)) for fld in row ]
             self.baseModel.appendRow(modelRow)
-            
         cursor = [] #operacion de limpieza, por si las mac-flies
     def setupView(self):
         #        self.view = QTableView(self)
@@ -287,8 +288,8 @@ class TableBrowser(QTableView):
 
         self.doubleClicked.connect(self.test)
 
-        for m in range(self.baseModel.columnCount()):
-            self.resizeColumnToContents(m)
+        #for m in range(self.baseModel.columnCount()):
+            #self.resizeColumnToContents(m)
         self.verticalHeader().hide()
         self.setSortingEnabled(True)  
         self.setAlternatingRowColors(True)
