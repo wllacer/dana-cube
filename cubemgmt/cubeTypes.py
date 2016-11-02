@@ -55,11 +55,14 @@ TYPE_DICT = set([u'base',
      'connect',
      u'default_start',
      'domain',
-     'vista'])
+     'vista',])
 
 TYPE_LIST = set(['case_sql',
      'fields',
-     'values'])
+     'values',
+     'code',
+     'desc',
+     'grouped_by'])
 
 NO_ADD_LIST = set([
     u'cubo',u'vista',u'row',u'col',u'agregado',u'elemento',

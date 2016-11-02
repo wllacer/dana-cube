@@ -264,7 +264,7 @@ class Cubo:
                     guia['elem'] +=norm2List(componente['elem'])
                 if clase == 'd':
                     if 'mask' not in componente:
-                        componente['mask'] = 'Ymd'  #(agrupado en año mes dia por defecto'
+                        componente['mask'] = 'Ym'  #(agrupado en año mes dia por defecto'
                         base_date = norm2List(componente['elem'])[-1]
                     #
                     for k in range(len(componente['mask'])):

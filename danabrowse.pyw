@@ -237,7 +237,7 @@ class MainWindow(QMainWindow):
         #for m in range(self.baseModel.columnCount()):
             #self.view.resizeColumnToContents(m)
         self.view.collapseAll()
-        self.view.setHeaderHidden(True)
+        #self.view.setHeaderHidden(True)
         #self.view.setSortingEnabled(True)
         #self.view.setRootIsDecorated(False)
         self.view.setAlternatingRowColors(True)

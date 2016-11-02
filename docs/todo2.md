@@ -15,13 +15,19 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
     ** __DONE__ generar la version
     
 * __DONE__ Incluir vistas en el cubo (2º escalon)
+
 * __NOW__ Incluir extraccion de datos en cubo e interfaz con MatPlotLib  (critica para usuarios pero no tecnicamente)
 * __NOW__ Filtros de entrada en el cubo
+* __NOW__ Claves multicampo
+* __NOW__ BUG Grandes totales desordenados en TODOS los casosel caso de ENUMS.
+    ** ENUMS
+    ** Primer caso. Es un off by one. -(datos light 6,0)En este caso es porque la primera columna es nula. Ademas hay un pequeño problema de calidad de datos, pero no parece ser de interes ahora
+* __NOW__ documentacion preliminar
+* __NOW__ Como hacer que los arboles no se cierren y abran aleatoriamente
+
 * Traduccion
 * Finalizar la gestion CRUD de cubos
 * Ocultar las claves en las cadenas importantes
-* __NOW__ Claves multicampo
-* __NOW__ BUG Grandes totales desordenados en TODOS los casosel caso de ENUMS
 
 ## Pequeños TODO
 
@@ -54,7 +60,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 ## Annoyances
 
 * en la verificacion de logicales tener en cuenta is null(is not null) -CubeCRUD y tablebrowse-
-* Como hacer que los arboles no se cierren y abran aleatoriamente
+
 * Mensajes de usuario en caso de error graficos (proseguir desde util.base_dialogs. No funciona de momento)
     ** Danacube
     ** Danabrowse y asoociados
@@ -74,7 +80,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * __DONE__ Me parece que la clave extrangera aparece dos veces en "Browse with fk". Confirmado
 * SQL performance ¿? 
     ** __VIP__ perdida de rendimiento en DanaBrowse con la inclusion de contadores
-    ** __DONE__ supresion de resizeToContent para mejorar -extraordinariamente- el rendimiento en tablas
+    ** __DONE__ supresion de resizeToContent para mejorar -extraordinariamente- el rendimiento en tablas. Me obliga a poner cabeceras
 * El diccionario es pasado entre danabrowse u tablebrowse demasiadas veces
 * Color en mensajes de error
 * Hay funciones en filterDlg que pueden reutilzarse
@@ -100,6 +106,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
     ** En edicion contemplar caso que el atributo NO exista en el diccionario
 * Problemas si no se especifica el esquema. probablemente deba incluir en la def. de la conexion el esquema de defecto.
 * __DONE__ (BUG) problemas donde se define localContext
+* __DONE__ (BUG) tratamiento de listas provocado por el cambio en el control de atributos
 
 
 ### DanaBrowse
