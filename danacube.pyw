@@ -22,6 +22,8 @@ from models import *
 from user_functions import *
 from util.decorators import waiting_effects 
 
+from filterDlg import filterDialog
+
 #FIXED 1 zoom view breaks. Some variables weren't available
 #     FIXME zoom doesn't trigger any action with the new interface
 #FIXED 1 config view doesn't fire. Definition too early
@@ -61,9 +63,15 @@ class MainWindow(QMainWindow):
         self.fileMenu.addAction("&Open Cube ...", self.initCube, "Ctrl+O")
         self.fileMenu.addAction("C&hange View ...", self.requestVista, "Ctrl+H")
         self.fileMenu.addAction("E&xit", self.close, "Ctrl+Q")
+        
         self.fileMenu = self.menuBar().addMenu("&Opciones")
         #TODO skipped has to be retougth with the new interface
         #self.fileMenu.addAction("&Zoom View ...", self.zoomData, "Ctrl+Z")
+        self.fileMenu.addAction('Crear &Filtro',self.setFilter,"Ctrl+K")
+        self.fileMenu.addAction('Borrar &Filtro',self.dropFilter,"Ctrl+K")
+        self.fileMenu.addAction('Guardar &Filtro',self.saveFilter,"Ctrl+K")
+        self.fileMenu.addSeparator()
+
         self.fileMenu.addAction("&Trasponer datos",self.traspose,"CtrlT")
         self.fileMenu.addAction("&Presentacion ...",self.setNumberFormat,"Ctrl+F")
         #
@@ -130,8 +138,8 @@ class MainWindow(QMainWindow):
         self.defineModel()
         
         
-    def changeView(self,row, col, agregado, campo, total=True, estad=True):
-        self.vista.setNewView(row, col, agregado, campo, totalizado=total, stats=estad)
+    def changeView(self,row, col, agregado, campo, total=True, estad=True,filtro=''):
+        self.vista.setNewView(row, col, agregado, campo, totalizado=total, stats=estad,filtro=filtro)
         self.vista.toTree2D()
         self.baseModel.beginResetModel()       
         self.baseModel.datos=self.vista
@@ -141,13 +149,13 @@ class MainWindow(QMainWindow):
         self.view.expandToDepth(2)
         
     @waiting_effects
-    def cargaVista(self,row, col, agregado, campo, total=True, estad=True):
+    def cargaVista(self,row, col, agregado, campo, total=True, estad=True, filtro=''):
         if self.vista is None:
-            self.vista = Vista(self.cubo, row, col, agregado, campo, totalizado=total, stats=estad)
+            self.vista = Vista(self.cubo, row, col, agregado, campo, totalizado=total, stats=estad,filtro=filtro)
             self.vista.format = self.format
             self.defineModel()
         else:
-            self.changeView(row, col, agregado, campo, total,estad)
+            self.changeView(row, col, agregado, campo, total,estad,filtro)
             self.refreshTable()
 
         
@@ -312,6 +320,22 @@ class MainWindow(QMainWindow):
         
     def refreshTable(self):
         self.baseModel.emitModelReset()
+        
+    def setFilter(self):
+        self.areFiltered = True
+        recordStructure = []
+        filterDlg = filterDialog(recordStructure,self)
+        if filterDlg.exec_():
+            #self.loadData(pFilter=filterDlg.result)
+            pFilter=filterDlg.result  #¿ no deberia ponero en self.vista.filtro ?
+            self.cargaVista(self.vista.row_id,self.vista.col_id,
+                            self.vista.agregado,self.vista.campo,
+                            self.vista.totalizado,self.vista.stats,filtro=pFilter) #__WIP__ evidentemente aqui faltan todos los parametros
+
+    def dropFilter(self):
+        pass
+    def saveFilter(self):
+        pass
 
 if __name__ == '__main__':
 

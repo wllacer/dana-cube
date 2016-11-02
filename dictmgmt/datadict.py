@@ -50,7 +50,7 @@ class DataDict():
         self.isEmpty = False
         
         self._setupModel()
-        if self._readConfigData(defFile):
+        if 'confData' in kwargs or self._readConfigData(defFile):
             self._cargaModelo(**kwargs)
         else:
             self.isEmpty = True
@@ -94,7 +94,8 @@ class DataDict():
             return True
         
     def _cargaModelo(self,**kwargs):
-        definition = self.configData.get('Conexiones')
+        if 'confData' not in kwargs:
+            definition = self.configData.get('Conexiones')
         if 'conn' in kwargs:
             self.appendConnection(kwargs.get('conn'),**kwargs)
             return
@@ -103,7 +104,11 @@ class DataDict():
 
     def appendConnection(self,confName,**kwargs):
         padre = self.hiddenRoot
-        conf = self.configData['Conexiones'].get(confName)
+        if 'confData' in kwargs:
+            conf = kwargs['confData']
+        else:
+            conf = self.configData['Conexiones'].get(confName)
+            
         if kwargs.get('pos') is None:
 #        if pos is None:
             pos = padre.rowCount()
