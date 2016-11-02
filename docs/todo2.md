@@ -14,14 +14,14 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
     ** __DONE__ documentacion elemental
     ** __DONE__ generar la version
     
-* Incluir vistas en el cubo (2º escalon)
-* Incluir extraccion de datos en cubo e interfaz con MatPlotLib  (critica para usuarios pero no tecnicamente)
-* Filtros de entrada en el cubo
+* __DONE__ Incluir vistas en el cubo (2º escalon)
+* __NOW__ Incluir extraccion de datos en cubo e interfaz con MatPlotLib  (critica para usuarios pero no tecnicamente)
+* __NOW__ Filtros de entrada en el cubo
 * Traduccion
 * Finalizar la gestion CRUD de cubos
 * Ocultar las claves en las cadenas importantes
-* Claves multicampo
-* BUG Grandes totales desordenados en TODOS los casosel caso de ENUMS
+* __NOW__ Claves multicampo
+* __NOW__ BUG Grandes totales desordenados en TODOS los casosel caso de ENUMS
 
 ## Pequeños TODO
 
@@ -50,6 +50,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 
 
 
+
 ## Annoyances
 
 * en la verificacion de logicales tener en cuenta is null(is not null) -CubeCRUD y tablebrowse-
@@ -71,7 +72,9 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 *¿Donde estan las columnas en Danabrowse?
 * Mejorar la presentacion de las propiedades de la vista http://stackoverflow.com/questions/5631078/sqlalchemy-print-the-actual-query
 * __DONE__ Me parece que la clave extrangera aparece dos veces en "Browse with fk". Confirmado
-* SQL performance ¿? __VIP__ perdida de rendimiento en DanaBrowse con la inclusion de contadores
+* SQL performance ¿? 
+    ** __VIP__ perdida de rendimiento en DanaBrowse con la inclusion de contadores
+    ** __DONE__ supresion de resizeToContent para mejorar -extraordinariamente- el rendimiento en tablas
 * El diccionario es pasado entre danabrowse u tablebrowse demasiadas veces
 * Color en mensajes de error
 * Hay funciones en filterDlg que pueden reutilzarse
@@ -89,11 +92,15 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * __WISH__ Salvar el fichero de configuración solo si se han producido cambios (no se si merece la pena) 
 * __DONE__ Presentar en las guias de defecto el numero de valores distintos para la guia (hecho en DanaBrowse) 
 * __DONE__ que los distintos atributos se presenten siempre en el mismo orden en un arbol del cubo, creo
+* ¿Realmente necesito el diccionario completo en todos los casos?
 * ![cube bugs]docs/cube_todo.txt
 * (BUG) Borrar default no funciona 
 * __DONE__ (BUG) source no esta especializado. Se me habia olvidado que ahora es domain
+    ** __DONE__ Ser mas permisivo con atributos no especificados (ahora los guarda)
+    ** En edicion contemplar caso que el atributo NO exista en el diccionario
 * Problemas si no se especifica el esquema. probablemente deba incluir en la def. de la conexion el esquema de defecto.
 * __DONE__ (BUG) problemas donde se define localContext
+
 
 ### DanaBrowse
 

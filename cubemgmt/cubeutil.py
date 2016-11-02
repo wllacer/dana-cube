@@ -93,9 +93,15 @@ def FQName2array(fqname):
 
         
 def isDictionaryEntry(rootElem):
-    result = False
-    if rootElem.type() in TYPE_DICT or ( rootElem.type() in TYPE_LIST_DICT and rootElem.text() != rootElem.type() ):
-        result = True
+    #result = False
+    #if rootElem.type() in TYPE_DICT or ( rootElem.type() in TYPE_LIST_DICT and rootElem.text() != rootElem.type() ):
+        #result = True
+    #return result
+    result = True
+    #if not rootElem.hasChildren(): #?seguro
+        #return False
+    if rootElem.type() in TYPE_LIST or ( rootElem.type() in TYPE_LIST_DICT and rootElem.text() == rootElem.type() ):
+        result = False
     return result
     
  

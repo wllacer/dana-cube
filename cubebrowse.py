@@ -230,7 +230,7 @@ class CubeMgr(QTreeView):
         parent = self.hiddenRoot = self.baseModel.invisibleRootItem()
         if not info:
             print('Algo ha fallado espectacularmente',self.particular,self.particularContext)
-        for entrada in info:
+        for entrada in sorted(info):  #quiero que el orden sea constante
             if entrada == 'default':
                 tipo = 'default_start'
             elif entrada in ITEM_TYPE:

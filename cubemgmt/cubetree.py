@@ -257,7 +257,7 @@ def recTreeLoader(parent,key,data,tipo=None):
         
 def recTreeLoaderAtomic(parent,key,data,tipo=None):
     """
-    Funcion que carga de estructura de cubo python a arbol
+    Funcion que carga de estructura de cubo python a arbol. NO USADA
     
     version con los valores de elementos atomicos son nodos en el arbol
     """
