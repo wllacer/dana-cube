@@ -123,7 +123,8 @@ class WPowerTable(QTableWidget):
             print('Noooop',x,y)
             return self.cellWidget(x,y).text()
         
-    
+   
+
 class WDataSheet(WPowerTable):
     """
         Version del TableWidget para simular hojas de entrada de datos

@@ -18,6 +18,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 
 * __NOW__ Incluir extraccion de datos en cubo e interfaz con MatPlotLib  (critica para usuarios pero no tecnicamente)
 * __NOW__ Filtros de entrada en el cubo
+    ** __DONE__ interfaz de usuario con guias
 * __NOW__ Claves multicampo
 * __NOW__ BUG Grandes totales desordenados en TODOS los casosel caso de ENUMS.
     ** ENUMS

@@ -1,3 +1,4 @@
+
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from __future__ import division
@@ -16,7 +17,11 @@ from PyQt5.QtWidgets import QApplication
 from core import Cubo, Vista
 
 from dictmgmt.datadict import DataDict
+from filterDlg import filterDialogX
+
 from cubemgmt.cubetree import traverseTree
+from util.tree import _DEPTH,_BREADTH
+
 string1="SELECT DISTINCT  region, provincia, nombre FROM  localidades WHERE  provincia <> '' and municipio = '' and isla = '' ORDER BY  1, 2"
 
 def traverse(tree, key=None, mode=1):
@@ -28,14 +33,14 @@ def traverse(tree, key=None, mode=1):
     # 'Essential LISP' by John R. Anderson, Albert T. Corbett, 
     # and Brian J. Reiser, page 239-241
     if key is not None:
-        yield key
+        yield tree.content[key]
         queue = tree.content[key].childItems
     else:
         queue = tree.rootItem.childItems
-        print(queue)
-        print('')
+        #print(queue)
+        #print('')
     while queue:
-        yield queue[0].key
+        yield queue[0] 
         expansion = queue[0].childItems
         if mode == _DEPTH:
             queue = expansion + queue[1:]  # depth-first
@@ -49,15 +54,30 @@ def jerarquias():
                 un  diccionario (con funcionalidad adicional)        0.12 segundos (mas de 100 veces mejor)
     """
     from util.jsonmgr import load_cubo
-        
+    DEBUG=False    
     vista = None
     mis_cubos = load_cubo()
-    cubo = Cubo(mis_cubos['experimento'])
-
-    vista=Vista(cubo,1,2,'avg','votes_percent')
-    for elem in vista.array:
-        print(elem[0].desc,elem[1].desc,elem[2])
-     
+    #cubo = Cubo(mis_cubos['experimento'])
+    #vista=Vista(cubo,1,2,'avg','votes_percent')
+    cubo = Cubo(mis_cubos['datos light'])
+    vista=Vista(cubo,5,1,'avg','votes_percent')
+    summaryGuia = []
+    for k in range(len(cubo.lista_guias)):
+        cubo.fillGuia(k)
+        guia = cubo.lista_guias[k]
+        dataGuia = []
+        for item in traverse(guia['dir_row']):
+            dataGuia.append((item.key,item.desc))
+        summaryGuia.append({'name':guia['name'],'format':guia.get('fmt','texto'),
+                            'source':guia['elem'] if guia['class'] != 'c' else guia['name'] ,
+                            'values':dataGuia,
+                            'class':guia['class']}
+                            )
+    #for elem in vista.array:
+        #print(elem[0].desc,elem[1].desc,elem[2])
+    pprint(summaryGuia)
+    #dios mio que lio 
+    
     confData = cubo.definition['connect']
     confName = '$$TEMP'
     (schema,table) = cubo.definition['table'].split('.')
@@ -66,8 +86,27 @@ def jerarquias():
         schema = ''  #definitivamente necesito el esquema de defecto
     iters = 0
     dict = DataDict(conn=confName,schema=schema,table=table,iters=iters,confData=confData) #iters todavia no procesamos
+    tabInfo = []
+    gotcha = False
     for item in traverseTree(dict.hiddenRoot):
-        print(item.text())
+        if item == dict.hiddenRoot:
+           continue
+        tabs = '\t'*item.depth()
+        if gotcha:
+            if item.isAuxiliar():
+                gotcha = False
+                break
+            else:
+                summaryGuia.append({'name':item.fqn(),'format':item.getColumnData(1),})
+        if item.isAuxiliar():
+            gotcha = 'True'
+        
+       # print(tabs,item.text(),item.getColumnData(1))
+    form = filterDialogX(summaryGuia,'Version experimental')
+    form.show()
+    if form.exec_():
+        pprint(form.result)
+
     #cubo.fillGuias()
     #pprint(cubo.lista_guias[5]['dir_row'][0:10])
     #pprint(cubo.lista_guias[5]['des_row'][0:10])
