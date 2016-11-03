@@ -7,6 +7,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import time
+import sqlparse
 
 from util.record_functions import *
 from datalayer.access_layer import *
@@ -17,7 +18,7 @@ from PyQt5.QtWidgets import QApplication
 from core import Cubo, Vista
 
 from dictmgmt.datadict import DataDict
-from filterDlg import filterDialogX
+from filterDlg import filterDialog
 
 from cubemgmt.cubetree import traverseTree
 from util.tree import _DEPTH,_BREADTH
@@ -102,11 +103,10 @@ def jerarquias():
             gotcha = 'True'
         
        # print(tabs,item.text(),item.getColumnData(1))
-    form = filterDialogX(summaryGuia,'Version experimental')
+    form = filterDialog(summaryGuia,'Version experimental')
     form.show()
     if form.exec_():
         pprint(form.result)
-
     #cubo.fillGuias()
     #pprint(cubo.lista_guias[5]['dir_row'][0:10])
     #pprint(cubo.lista_guias[5]['des_row'][0:10])
@@ -137,7 +137,10 @@ def jerarquias():
     #cursor = getCursor(cubo.db,string1)
     #pprint(cursor[0:10])
 
-
+def  parser():
+    stmt = "partido_id = '0993'"
+    parsed = sqlparse.parse(stmt)
+    print(parsed)
 if __name__ == '__main__':
     import sys
     if sys.version_info[0] < 3:
@@ -145,7 +148,8 @@ if __name__ == '__main__':
         sys.setdefaultencoding('utf-8')
     app = QApplication(sys.argv)
 
-    jerarquias()
+    #jerarquias()
+    parser()
     exit()
 
     #pepe=dict()

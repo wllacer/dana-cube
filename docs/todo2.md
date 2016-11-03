@@ -20,7 +20,8 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * __NOW__ Filtros de entrada en el cubo
     ** __DONE__ interfaz de usuario con guias
     ** __DONE__ Integracion en Danacube
-    ** Serializacion (con edit)
+    ** __DONE__ Serializacion (v.infra)
+    ** reeditar filtro
 * Filtros previos por tiempo ( campo + periodo (dia, ...). 
     ** Interfaz de usuario. Hay un prototipo de IU (dialogs.dateFilterDlg)
     ** Integracion en Danacube
@@ -57,7 +58,8 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * __DONE__ (performance) poder limitar la generacion del diccionario a tablas concretas relacionadas con una sola
     ** __DONE__ (BUG) cuando se elige nivel 0 falla la obtencion de FKS (obviamente). __PARCHE__
     ** __DONE__ (Limitacion) reservado a relaciones en el mismo esquema __TODO__
-
+* DANACUBE. Salvar filtro de modo menos radical
+* DANACUBE  cargar de inicio mas cosas
 
 * __DONE__ Interfaz de usuario del filtro (simplemente cambiando QTextEdit por QLineEdit he conseguido lo que queria
 

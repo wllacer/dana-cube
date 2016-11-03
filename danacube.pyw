@@ -139,9 +139,8 @@ class MainWindow(QMainWindow):
     def autoCarga(self,my_cubos):
         #FIXME horror con los numeros
         base = my_cubos['default']
-        self.cubo=Cubo(my_cubos[base['cubo']])
-        self.cubo.nombre = base['cubo'] #FIXME es que no tengo sitio en Cubo para definirlo
-        #self.vista = Vista(self.cubo, base['vista']['row'], base['vista']['col'],base['vista']['agregado'],base['vista']['elemento'])
+        self.setupCubo(my_cubos,base['cubo'])
+
         self.vista = Vista(self.cubo, int(base['vista']['row']), int(base['vista']['col']),base['vista']['agregado'],base['vista']['elemento'])
         self.vista.format = self.format
         self.defineModel()
@@ -182,14 +181,17 @@ class MainWindow(QMainWindow):
         dialog = CuboDlg(my_cubos, self)
         if dialog.exec_():
             seleccion = str(dialog.cuboCB.currentText())
-            self.cubo = Cubo(my_cubos[seleccion])
-            self.cubo.nombre = seleccion #FIXME es que no tengo sitio en Cubo para definirlo
-            self.filtro = ''
-            self.vista = None
-
+            self.setupCubo(my_cubos,seleccion)
+            
         self.setWindowTitle("Cubo "+ seleccion)
-        self.requestVista()
-
+       
+    def setupCubo(self,my_cubos,seleccion):
+        self.cubo = Cubo(my_cubos[seleccion])
+        self.cubo.nombre = seleccion #FIXME es que no tengo sitio en Cubo para definirlo
+        self.filtro = ''
+        self.vista = None
+        self.recordStructure = self.summaryGuia()
+        
     def requestVista(self):
 
         parametros = [None for k in range(6)]
@@ -332,8 +334,7 @@ class MainWindow(QMainWindow):
         
     def setFilter(self):
         #self.areFiltered = True
-        recordStructure = self.summaryGuia()
-        filterDlg = filterDialog(recordStructure,self)
+        filterDlg = filterDialog(self.recordStructure,self)
         if filterDlg.exec_():
             #self.loadData(pFilter=filterDlg.result)
             self.filtro=filterDlg.result  #¿ no deberia ponero en self.vista.filtro ?
@@ -364,9 +365,8 @@ class MainWindow(QMainWindow):
     
     def summaryGuia(self):
         result = []
-        for k in range(len(self.cubo.lista_guias)):
-            self.cubo.fillGuia(k)
-            guia = self.cubo.lista_guias[k]
+        for k,guia in enumerate(self.cubo.lista_guias):
+            #self.cubo.fillGuia(k) LLENADO DE GUIA
             dataGuia = []
             for item in traverse(guia['dir_row']):
                 dataGuia.append((item.key,item.desc))
