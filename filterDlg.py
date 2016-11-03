@@ -35,9 +35,12 @@ from datalayer.query_constructor import *
 
 from util.record_functions import empalmador, hasContent 
 
-class filterDialog(QDialog):
+class filterDialogOld(QDialog):
+    """
+        version obsoleta. Sirve para los casos mas sencillos
+    """
     def __init__(self,recordStructure,title,parent=None):
-        super(filterDialog, self).__init__(parent)
+        super(filterDialogOld, self).__init__(parent)
         # cargando parametros de defecto
         self.record = recordStructure
         
@@ -183,14 +186,14 @@ class filterDialog(QDialog):
                 
         QDialog.accept(self)
         
-class filterDialogX(QDialog):
+class filterDialog(QDialog):
     """
+       Esta clase NO tiene valores de entrada. Deben incluirse en la celda (x,3) dentro del llamador
        TODO en el caso de tener una guia, no podemos, de momento, aceptar valores multiples, y si es una jerarquia sólo = o !=
-       es cuestion de jugar con los enabled del combobox de condiciones
        #TODO permitir formatos distintos para las entradas jerarquicas
     """
     def __init__(self,recordStructure,title,parent=None):
-        super(filterDialogX, self).__init__(parent)
+        super(filterDialog, self).__init__(parent)
         # cargando parametros de defecto
         self.record = recordStructure
         
@@ -260,7 +263,7 @@ class filterDialogX(QDialog):
         self.mensaje.setText(self.origMsg)
         self.defaultBackground = self.mensaje.backgroundRole()
         
-        for k in range(3):
+        for k in range(4):
             self.sheet.resizeColumnToContents(k)
         
         #for k in range(self.sheet.rowCount()):
@@ -400,7 +403,7 @@ def main():
                 {'format': 'texto', 'name': 'film.special_features'},
                 {'format': 'fecha', 'name': 'film.last_update'}]
 
-    form = filterDialogX(record,'Version experimental')
+    form = filterDialog(record,'Version experimental')
     form.show()
     if form.exec_():
         pprint(form.result)

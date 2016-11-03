@@ -14,15 +14,18 @@ from PyQt5.QtCore import Qt,QSortFilterProxyModel
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView
 
-from core import Cubo,Vista
+from core import Cubo,Vista, mergeString
 from dialogs import *
-from util.jsonmgr import load_cubo
+from util.jsonmgr import *
 from models import *
 
 from user_functions import *
 from util.decorators import waiting_effects 
 
+from util.tree import traverse
 from filterDlg import filterDialog
+from dictmgmt.datadict import DataDict
+from cubemgmt.cubetree import traverseTree
 
 #FIXED 1 zoom view breaks. Some variables weren't available
 #     FIXME zoom doesn't trigger any action with the new interface
@@ -64,22 +67,27 @@ class MainWindow(QMainWindow):
         self.fileMenu.addAction("C&hange View ...", self.requestVista, "Ctrl+H")
         self.fileMenu.addAction("E&xit", self.close, "Ctrl+Q")
         
-        self.fileMenu = self.menuBar().addMenu("&Opciones")
+        self.optionsMenu = self.menuBar().addMenu("&Opciones")
         #TODO skipped has to be retougth with the new interface
-        #self.fileMenu.addAction("&Zoom View ...", self.zoomData, "Ctrl+Z")
-        self.fileMenu.addAction('Crear &Filtro',self.setFilter,"Ctrl+K")
-        self.fileMenu.addAction('Borrar &Filtro',self.dropFilter,"Ctrl+K")
-        self.fileMenu.addAction('Guardar &Filtro',self.saveFilter,"Ctrl+K")
-        self.fileMenu.addSeparator()
+        #self.optionsMenu.addAction("&Zoom View ...", self.zoomData, "Ctrl+Z")
+        self.filterActions = dict()
+        self.filterActions['create'] = self.optionsMenu.addAction('Crear &Filtro',self.setFilter,"Ctrl+K")
+        self.filterActions['drop'] = self.optionsMenu.addAction('Borrar &Filtro',self.dropFilter,"Ctrl+K")
+        self.filterActions['save'] = self.optionsMenu.addAction('Guardar &Filtro permanentemente',self.saveFilter,"Ctrl+K")
+        self.filterActions['drop'].setEnabled(False)
+        self.filterActions['save'].setEnabled(False)
+        self.optionsMenu.addSeparator()
 
-        self.fileMenu.addAction("&Trasponer datos",self.traspose,"CtrlT")
-        self.fileMenu.addAction("&Presentacion ...",self.setNumberFormat,"Ctrl+F")
+        self.optionsMenu.addAction("&Trasponer datos",self.traspose,"CtrlT")
+        self.optionsMenu.addAction("&Presentacion ...",self.setNumberFormat,"Ctrl+F")
         #
-        self.fileMenu = self.menuBar().addMenu("&Funciones de usuario")
-        self.restorator = self.fileMenu.addAction("&Restaurar valores originales",self.restoreData,"Ctrl+R")
+        self.userFunctionsMenu = self.menuBar().addMenu("&Funciones de usuario")
+        self.restorator = self.userFunctionsMenu.addAction("&Restaurar valores originales",self.restoreData,"Ctrl+R")
         self.restorator.setEnabled(False)
+        self.userFunctionsMenu.addSeparator()
+        
         for ind,item in enumerate(USER_FUNCTION_LIST):
-             self.fileMenu.addAction(USER_FUNCTION_LIST[ind][0],lambda  idx=ind: self.dispatch(idx))        
+             self.userFunctionsMenu.addAction(USER_FUNCTION_LIST[ind][0],lambda  idx=ind: self.dispatch(idx))        
         
         self.format = dict(thousandsseparator=".",
                                     decimalmarker=",",
@@ -92,6 +100,7 @@ class MainWindow(QMainWindow):
         self.cubo =  None
         self.view = QTreeView(self)
         self.view.setModel(self.baseModel)
+        self.filtro = ''
 
         #TODO como crear menu de contexto https://wiki.python.org/moin/PyQt/Creating%20a%20context%20menu%20for%20a%20tree%20view
         
@@ -130,16 +139,16 @@ class MainWindow(QMainWindow):
     def autoCarga(self,my_cubos):
         #FIXME horror con los numeros
         base = my_cubos['default']
-        print(base)
         self.cubo=Cubo(my_cubos[base['cubo']])
+        self.cubo.nombre = base['cubo'] #FIXME es que no tengo sitio en Cubo para definirlo
         #self.vista = Vista(self.cubo, base['vista']['row'], base['vista']['col'],base['vista']['agregado'],base['vista']['elemento'])
         self.vista = Vista(self.cubo, int(base['vista']['row']), int(base['vista']['col']),base['vista']['agregado'],base['vista']['elemento'])
         self.vista.format = self.format
         self.defineModel()
         
         
-    def changeView(self,row, col, agregado, campo, total=True, estad=True,filtro=''):
-        self.vista.setNewView(row, col, agregado, campo, totalizado=total, stats=estad,filtro=filtro)
+    def changeView(self,row, col, agregado, campo, total=True, estad=True):
+        self.vista.setNewView(row, col, agregado, campo, totalizado=total, stats=estad,filtro=self.filtro)
         self.vista.toTree2D()
         self.baseModel.beginResetModel()       
         self.baseModel.datos=self.vista
@@ -149,13 +158,13 @@ class MainWindow(QMainWindow):
         self.view.expandToDepth(2)
         
     @waiting_effects
-    def cargaVista(self,row, col, agregado, campo, total=True, estad=True, filtro=''):
+    def cargaVista(self,row, col, agregado, campo, total=True, estad=True):
         if self.vista is None:
-            self.vista = Vista(self.cubo, row, col, agregado, campo, totalizado=total, stats=estad,filtro=filtro)
+            self.vista = Vista(self.cubo, row, col, agregado, campo, totalizado=total, stats=estad,filtro=self.filtro)
             self.vista.format = self.format
             self.defineModel()
         else:
-            self.changeView(row, col, agregado, campo, total,estad,filtro)
+            self.changeView(row, col, agregado, campo, total,estad)
             self.refreshTable()
 
         
@@ -174,7 +183,8 @@ class MainWindow(QMainWindow):
         if dialog.exec_():
             seleccion = str(dialog.cuboCB.currentText())
             self.cubo = Cubo(my_cubos[seleccion])
-
+            self.cubo.nombre = seleccion #FIXME es que no tengo sitio en Cubo para definirlo
+            self.filtro = ''
             self.vista = None
 
         self.setWindowTitle("Cubo "+ seleccion)
@@ -184,7 +194,6 @@ class MainWindow(QMainWindow):
 
         parametros = [None for k in range(6)]
        
-        #TODO  falta el filtro
         if self.vista is not  None:
             parametros[0]=self.vista.row_id
             parametros[1]=self.vista.col_id
@@ -322,21 +331,74 @@ class MainWindow(QMainWindow):
         self.baseModel.emitModelReset()
         
     def setFilter(self):
-        self.areFiltered = True
-        recordStructure = []
+        #self.areFiltered = True
+        recordStructure = self.summaryGuia()
         filterDlg = filterDialog(recordStructure,self)
         if filterDlg.exec_():
             #self.loadData(pFilter=filterDlg.result)
-            pFilter=filterDlg.result  #¿ no deberia ponero en self.vista.filtro ?
+            self.filtro=filterDlg.result  #¿ no deberia ponero en self.vista.filtro ?
             self.cargaVista(self.vista.row_id,self.vista.col_id,
                             self.vista.agregado,self.vista.campo,
-                            self.vista.totalizado,self.vista.stats,filtro=pFilter) #__WIP__ evidentemente aqui faltan todos los parametros
+                            self.vista.totalizado,self.vista.stats) #__WIP__ evidentemente aqui faltan todos los parametros
+            self.filterActions['drop'].setEnabled(True)
+            self.filterActions['save'].setEnabled(True)
+
 
     def dropFilter(self):
-        pass
-    def saveFilter(self):
-        pass
+        self.filtro = ''
+        self.cargaVista(self.vista.row_id,self.vista.col_id,
+                        self.vista.agregado,self.vista.campo,
+                        self.vista.totalizado,self.vista.stats) #__WIP__ evidentemente aqui     def saveFilter(self):
+        self.filterActions['drop'].setEnabled(False)
+        self.filterActions['save'].setEnabled(False)
 
+    
+    def saveFilter(self):
+        nuevo_filtro = mergeString(self.filtro,self.cubo.definition['base filter'],'AND')
+        my_cubos = load_cubo()
+        my_cubos[self.cubo.nombre]['base filter'] = nuevo_filtro
+        dump_structure(my_cubos)
+        self.filterActions['drop'].setEnabled(False)
+        self.filterActions['save'].setEnabled(False)
+
+    
+    def summaryGuia(self):
+        result = []
+        for k in range(len(self.cubo.lista_guias)):
+            self.cubo.fillGuia(k)
+            guia = self.cubo.lista_guias[k]
+            dataGuia = []
+            for item in traverse(guia['dir_row']):
+                dataGuia.append((item.key,item.desc))
+            result.append({'name':guia['name'],'format':guia.get('fmt','texto'),
+                                'source':guia['elem'] if guia['class'] != 'c' else guia['name'] ,
+                                'values':dataGuia,
+                                'class':guia['class']}
+                                )
+        
+        confData = self.cubo.definition['connect']
+        confName = '$$TEMP'
+        (schema,table) = self.cubo.definition['table'].split('.')
+        if table == None:
+            table = schema
+            schema = ''  #definitivamente necesito el esquema de defecto
+        iters = 0
+        dict = DataDict(conn=confName,schema=schema,table=table,iters=iters,confData=confData) #iters todavia no procesamos
+        tabInfo = []
+        gotcha = False
+        for item in traverseTree(dict.hiddenRoot):
+            if item == dict.hiddenRoot:
+                continue
+            if gotcha:
+                if item.isAuxiliar():
+                    gotcha = False
+                    break
+                else:
+                    result.append({'name':item.fqn(),'format':item.getColumnData(1),})
+            if item.isAuxiliar():
+                gotcha = 'True'
+        return result
+    
 if __name__ == '__main__':
 
     import sys

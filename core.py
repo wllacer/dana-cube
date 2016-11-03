@@ -39,7 +39,11 @@ import time
 
 
 def mergeString(string1,string2,connector):
-    if len(string1.strip()) > 0 and len(string1.strip()) > 0:
+    if not string1 :
+        merge = string2
+    elif not string2:
+        merge = string1
+    elif len(string1.strip()) > 0 and len(string1.strip()) > 0:
         merge ='{} {} {}'.format(string1,connector,string2)
     elif len(string1.strip()) > 0 or len(string2.strip()) > 0: 
         merge ='{}{}'.format(string1,string2).strip()

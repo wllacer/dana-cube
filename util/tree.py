@@ -11,6 +11,28 @@ from util.fivenumbers import stats
 (_ROOT, _DEPTH, _BREADTH) = range(3)
 DELIMITER=':'
 
+def traverse(tree, key=None, mode=1):
+    """
+        variante de TreeDict.traverse().
+        En lugar de las claves devuelve el item
+        TODO deberia normalizar todos los traverses
+        
+    """
+    if key is not None:
+        yield tree.content[key]
+        queue = tree.content[key].childItems
+    else:
+        queue = tree.rootItem.childItems
+        #print(queue)
+        #print('')
+    while queue:
+        yield queue[0] 
+        expansion = queue[0].childItems
+        if mode == _DEPTH:
+            queue = expansion + queue[1:]  # depth-first
+        elif mode == _BREADTH:
+            queue = queue[1:] + expansion  # width-first
+
 class TreeItem(object):
     
     def __init__(self, key, ord=None, desc=None, data=None, parent=None):

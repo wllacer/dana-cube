@@ -19,9 +19,15 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * __NOW__ Incluir extraccion de datos en cubo e interfaz con MatPlotLib  (critica para usuarios pero no tecnicamente)
 * __NOW__ Filtros de entrada en el cubo
     ** __DONE__ interfaz de usuario con guias
+    ** __DONE__ Integracion en Danacube
+    ** Serializacion (con edit)
+* Filtros previos por tiempo ( campo + periodo (dia, ...). 
+    ** Interfaz de usuario. Hay un prototipo de IU (dialogs.dateFilterDlg)
+    ** Integracion en Danacube
+    ** Serializacion (con edit)
 * __NOW__ Claves multicampo
-* __NOW__ BUG Grandes totales desordenados en TODOS los casosel caso de ENUMS.
-    ** ENUMS
+* __NOW__ BUG Grandes totales desordenados.
+    ** ENUMS (film cualquiera con rating)
     ** Primer caso. Es un off by one. -(datos light 6,0)En este caso es porque la primera columna es nula. Ademas hay un pequeño problema de calidad de datos, pero no parece ser de interes ahora
 * __NOW__ documentacion preliminar
 * __NOW__ Como hacer que los arboles no se cierren y abran aleatoriamente
