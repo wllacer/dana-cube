@@ -102,7 +102,7 @@ class Cubo:
         # no se usa en core. No se todavia en la parte GUI
         self.lista_campos = self.getFields()
         
-        self.__fillGuias()  #LLENADO GUIAS
+        #self.__fillGuias()  #LLENADO GUIAS
       
     #
     def getGuideNames(self):
@@ -345,7 +345,7 @@ class Cubo:
                 if 'fmt' in componente:
                     guia['rules'][-1]['fmt']=componente['fmt']
                 
-    def __fillGuias(self):
+    def fillGuias(self):
         for k in range(len(self.lista_guias)):
             self.fillGuia(k)
             
@@ -498,16 +498,13 @@ class Vista:
             
             self.dim_row = len(self.cubo.lista_guias[row]['rules'])
             self.dim_col = len(self.cubo.lista_guias[col]['rules'])
-            """
-                LLENADO DE GUIAS AL INICIO. Ahora no, evidentemente
-                
             for guia in self.cubo.lista_guias:
                 if 'dir_row' in guia:
                     del guia['dir_row']
                     
             self.cubo.fillGuia(row)
             self.cubo.fillGuia(col)
-            """
+
             self.row_hdr_idx = self.cubo.lista_guias[row]['dir_row']
             self.col_hdr_idx = self.cubo.lista_guias[col]['dir_row']
         

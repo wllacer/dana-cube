@@ -190,7 +190,7 @@ class MainWindow(QMainWindow):
         self.cubo.nombre = seleccion #FIXME es que no tengo sitio en Cubo para definirlo
         self.filtro = ''
         self.vista = None
-        self.recordStructure = self.summaryGuia()
+        self.filterValues = None
         
     def requestVista(self):
 
@@ -334,10 +334,17 @@ class MainWindow(QMainWindow):
         
     def setFilter(self):
         #self.areFiltered = True
+        self.recordStructure = self.summaryGuia()
+        
         filterDlg = filterDialog(self.recordStructure,self)
+        if self.filterValues :
+            for k in range(len(self.filterValues)):
+                filterDlg.sheet.set(k,3,self.filterValues[k])
+                
         if filterDlg.exec_():
             #self.loadData(pFilter=filterDlg.result)
-            self.filtro=filterDlg.result  #¿ no deberia ponero en self.vista.filtro ?
+            self.filtro=filterDlg.result
+            self.filterValues = [ data[3] for data in filterDlg.data]
             self.cargaVista(self.vista.row_id,self.vista.col_id,
                             self.vista.agregado,self.vista.campo,
                             self.vista.totalizado,self.vista.stats) #__WIP__ evidentemente aqui faltan todos los parametros
@@ -347,6 +354,7 @@ class MainWindow(QMainWindow):
 
     def dropFilter(self):
         self.filtro = ''
+        self.filterValues = None
         self.cargaVista(self.vista.row_id,self.vista.col_id,
                         self.vista.agregado,self.vista.campo,
                         self.vista.totalizado,self.vista.stats) #__WIP__ evidentemente aqui     def saveFilter(self):
@@ -365,8 +373,8 @@ class MainWindow(QMainWindow):
     
     def summaryGuia(self):
         result = []
+        self.cubo.fillGuias()
         for k,guia in enumerate(self.cubo.lista_guias):
-            #self.cubo.fillGuia(k) LLENADO DE GUIA
             dataGuia = []
             for item in traverse(guia['dir_row']):
                 dataGuia.append((item.key,item.desc))
