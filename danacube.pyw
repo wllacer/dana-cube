@@ -56,11 +56,11 @@ from cubemgmt.cubetree import traverseTree
             #model.endResetModel()
     #return new_function
 
-class MainWindow(QMainWindow):
+class DanaCube(QMainWindow):
 
     
     def __init__(self):
-        super(MainWindow, self).__init__()
+        super(DanaCube, self).__init__()
         #CHANGE here
         self.fileMenu = self.menuBar().addMenu("&Cubo")
         self.fileMenu.addAction("&Open Cube ...", self.initCube, "Ctrl+O")
@@ -71,7 +71,7 @@ class MainWindow(QMainWindow):
         #TODO skipped has to be retougth with the new interface
         #self.optionsMenu.addAction("&Zoom View ...", self.zoomData, "Ctrl+Z")
         self.filterActions = dict()
-        self.filterActions['create'] = self.optionsMenu.addAction('Crear &Filtro',self.setFilter,"Ctrl+K")
+        self.filterActions['create'] = self.optionsMenu.addAction('Editar &Filtro',self.setFilter,"Ctrl+K")
         self.filterActions['drop'] = self.optionsMenu.addAction('Borrar &Filtro',self.dropFilter,"Ctrl+K")
         self.filterActions['save'] = self.optionsMenu.addAction('Guardar &Filtro permanentemente',self.saveFilter,"Ctrl+K")
         self.filterActions['drop'].setEnabled(False)
@@ -191,6 +191,7 @@ class MainWindow(QMainWindow):
         self.filtro = ''
         self.vista = None
         self.filterValues = None
+        self.recordStructure = self.summaryGuia()
         
     def requestVista(self):
 
@@ -334,17 +335,18 @@ class MainWindow(QMainWindow):
         
     def setFilter(self):
         #self.areFiltered = True
-        self.recordStructure = self.summaryGuia()
+        #self.recordStructure = self.summaryGuia()
         
         filterDlg = filterDialog(self.recordStructure,self)
         if self.filterValues :
             for k in range(len(self.filterValues)):
-                filterDlg.sheet.set(k,3,self.filterValues[k])
+                filterDlg.sheet.set(k,2,self.filterValues[k][0])
+                filterDlg.sheet.set(k,3,self.filterValues[k][1])
                 
         if filterDlg.exec_():
             #self.loadData(pFilter=filterDlg.result)
             self.filtro=filterDlg.result
-            self.filterValues = [ data[3] for data in filterDlg.data]
+            self.filterValues = [ (data[2],data[3],) for data in filterDlg.data]
             self.cargaVista(self.vista.row_id,self.vista.col_id,
                             self.vista.agregado,self.vista.campo,
                             self.vista.totalizado,self.vista.stats) #__WIP__ evidentemente aqui faltan todos los parametros
@@ -417,7 +419,7 @@ if __name__ == '__main__':
         sys.setdefaultencoding('utf-8')
 
     app = QApplication(sys.argv)
-    window = MainWindow()
+    window = DanaCube()
     window.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
     window.show()
     sys.exit(app.exec_())

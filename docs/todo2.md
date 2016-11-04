@@ -22,14 +22,15 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
     ** __DONE__ Integracion en Danacube
     ** __DONE__ Serializacion (v.infra)
     ** reeditar filtro
-* Filtros previos por tiempo ( campo + periodo (dia, ...). 
-    ** Interfaz de usuario. Hay un prototipo de IU (dialogs.dateFilterDlg)
-    ** Integracion en Danacube
+* __NOW__ Filtros previos por tiempo ( campo + periodo (dia, ...). 
+    ** __DONE__ Interfaz de usuario. __FALTA__ el caso especial que no existan campos fecha
+    ** Integracion en Danacube. Debe integrarse en cubebrowse, mejor
     ** Serializacion (con edit)
 * __NOW__ Claves multicampo
 * __NOW__ BUG Grandes totales desordenados.
     ** ENUMS (film cualquiera con rating)
     ** Primer caso. Es un off by one. -(datos light 6,0)En este caso es porque la primera columna es nula. Ademas hay un pequeño problema de calidad de datos, pero no parece ser de interes ahora
+    ** Con fillGuias al inicializar el cubo, volver a ejecutar la vista genera otra entrada en los totale
 * __NOW__ documentacion preliminar
 * __NOW__ Como hacer que los arboles no se cierren y abran aleatoriamente
 
@@ -59,10 +60,12 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
     ** __DONE__ (BUG) cuando se elige nivel 0 falla la obtencion de FKS (obviamente). __PARCHE__
     ** __DONE__ (Limitacion) reservado a relaciones en el mismo esquema __TODO__
 * DANACUBE. Salvar filtro de modo menos radical
-* DANACUBE  cargar de inicio mas cosas
+* __HOLD__ DANACUBE  cargar de inicio mas cosas. Genera grandes totales raros
 
 * __DONE__ Interfaz de usuario del filtro (simplemente cambiando QTextEdit por QLineEdit he conseguido lo que queria
-
+* CRASH. danacube con 0 registros tras filtro
+* Salvar defecto
+* Limpiar pantalla en cambio de cubo
 
 
 

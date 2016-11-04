@@ -43,11 +43,11 @@ def ldm(anyo,mes):
            return 28
    
         
-def dateRange(clase_idx,range_idx,fecha=None,intervalo=None):
+def dateRange(clase_idx,range_idx,fecha=None,periodo=None):
     if fecha is None:
         fecha = date.today()+relativedelta(days=-1)
-    if intervalo is None:
-        intervalo = 0
+    if periodo is None:
+        periodo = 0
     intervalo = [None,None]
     try:
         clase = CLASES_INTERVALO[clase_idx]
@@ -59,13 +59,13 @@ def dateRange(clase_idx,range_idx,fecha=None,intervalo=None):
     if    clase == CLASES_INTERVALO[0]:
         return intervalo
     elif    clase == CLASES_INTERVALO[1]:
-        intervalo = dateActual(range,fecha,intervalo)
+        intervalo = dateActual(range,fecha,periodo)
     elif  clase == CLASES_INTERVALO[2]:
-        intervalo = datePeriodo(range,fecha,intervalo)
+        intervalo = datePeriodo(range,fecha,periodo)
     elif  clase == CLASES_INTERVALO[3]:
-        intervalo = dateUltimoAbierto(range,fecha,intervalo)
+        intervalo = dateUltimoAbierto(range,fecha,periodo)
     elif  clase == CLASES_INTERVALO[4]:
-        intervalo = dateUltimoCerrado(range,fecha,intervalo)
+        intervalo = dateUltimoCerrado(range,fecha,periodo)
     return intervalo
         
 def dateActual(flag,HOY,intervalo=None):

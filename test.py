@@ -141,15 +141,66 @@ def  parser():
     stmt = "partido_id = '0993'"
     parsed = sqlparse.parse(stmt)
     print(parsed)
+    
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+
+from pprint import pprint
+
+from widgets import * 
+
+from util.fechas import *
+ 
+"""
+  DEBUG DATA start
+"""
+cubo = None
+from core import Cubo, Vista
+from util.jsonmgr import load_cubo
+from datalayer.directory import camposDeTipo
+from danacube import *
+        
+def dateFilter():
+    from core import Cubo
+    from util.jsonmgr import load_cubo
+    from dialogs import dateFilterDlg
+    
+    
+    app = QApplication(sys.argv)
+    #parametros = [ 1, 0, 2,3, False, False ]
+    #mis_cubos = load_cubo()
+    #cubo = Cubo(mis_cubos['film'])
+    #vista=Vista(cubo,1,0,'sum','sakila.film.film_id')
+    danacube = DanaCube()
+    #descriptores = camposDeTipo("fecha",vista.cubo.db,vista.cubo.definition['table'])
+    descriptores = [ item['name'] for item in danacube.recordStructure if item['format'] == 'fecha' ]
+    print(descriptores)
+    form = dateFilterDlg(descriptores)
+    #form.show()
+    if form.exec_():
+        #cdata = [form.context[k][1] for k in range(len(parametros))]
+        #print('a la vuelta de publicidad',cdata)
+        sqlGrp = []
+        #OJO form.result lleva los indices desplazados respecto de form.data
+        for entry in form.result:
+            if entry[1] != 0:
+                intervalo = dateRange(entry[1],entry[2],periodo=entry[3])
+                sqlGrp.append((entry[0],'BETWEEN',intervalo))
+        if len(sqlGrp) > 0:
+            print(searchConstructor('where',{'where':sqlGrp}))
+        sys.exit()
+
+
 if __name__ == '__main__':
     import sys
     if sys.version_info[0] < 3:
         reload(sys)
         sys.setdefaultencoding('utf-8')
-    app = QApplication(sys.argv)
-
+    #app = QApplication(sys.argv)
+    dateFilter()
     #jerarquias()
-    parser()
+    #parser()
     exit()
 
     #pepe=dict()

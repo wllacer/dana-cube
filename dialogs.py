@@ -77,30 +77,34 @@ class propertySheetDlg(QDialog):
 from util.fechas import *
 
 class dateFilterDlg(QDialog):
-    def __init__(self,vista=None,datos=None,parent=None):   
+    def __init__(self,descriptores=None,datos=None,parent=None):   
         """
-          This is exploratory parameters are at will
-          TODO definir formatos de entrada y salida
         """
+        if descriptores is None:
+            return 
+        else:
+            self.descriptores = descriptores
+
         if datos is None:
             self.data = []
         else:
             self.data = datos
             
-        #TODO como hacer celdas invalidas para entrar en ellas
         super(dateFilterDlg, self).__init__(parent)
         # cargando parametros de defecto
         self.context = []
-        self.descriptores = camposDeTipo("fecha",vista.cubo.db,vista.cubo.definition['table'])
+
         for k in self.descriptores:
             self.context.append(('\t {}'.format(k),
                                   (QComboBox,None,CLASES_INTERVALO),
                                   (QComboBox,None,TIPOS_INTERVALO),
                                   (QSpinBox,{"setRange":(1,366)},None,1),
+                                  (QLineEdit,{"setEnabled":False},None),
+                                  (QLineEdit,{"setEnabled":False},None),
                                   )
                         )
         rows = len(self.context)
-        cols = max( [len(item) -1 for item in self.context ])
+        cols = max( [len(item) -1 for item in self.context ])  #FIXME
         self.sheet1=WPowerTable(rows,cols)
         for i,linea in enumerate(self.context):
             for j in range(1,len(linea)):
@@ -108,102 +112,78 @@ class dateFilterDlg(QDialog):
             self.sheet1.set(i,2,1)                
             self.sheet1.cellWidget(i,0).currentIndexChanged.connect(lambda :self.seleccionCriterio(i))
             self.sheet1.cellWidget(i,1).currentIndexChanged.connect(lambda :self.seleccionIntervalo(i))
+            self.sheet1.cellWidget(i,2).valueChanged.connect(lambda :self.seleccionIntervalo(i))
+            self.flipFlop(i,self.sheet1.get(i,0))
 
        #FIXME valor inicial        
-        cabeceras = [ k[0] for k in self.context ]
-        self.sheet1.setVerticalHeaderLabels(cabeceras)
-         
-        #self.context=[]
-        #for k in vista.cubo.getGuideNames():
-            #self.context.append(('\t{}'.format(k),
-                                 #(QComboBox,None,('=','>','<','>=','<=','como','!=','desde','hasta')),
-                                 #(QComboBox,None,None),
-                               #))
-        #self.data = data
+        campos = [ k[0] for k in self.context ]
+        self.sheet1.setVerticalHeaderLabels(campos)
+        self.sheet1.resizeColumnsToContents()
+        cabeceras = ('Tipo','Periodo','Rango','desde','hasta')
+        self.sheet1.setHorizontalHeaderLabels(cabeceras)
         #
         InicioLabel1 = QLabel('Filtre el rango temporal que desea')
-        #InicioLabel2 = QLabel('Filtre por los campos que desee')
-        #
-        #rows = len(self.context)
-        #cols = max( [len(item) -1 for item in self.context ])
-        
-        #self.sheet2=WPowerTable(rows,cols)
-        #for i,linea in enumerate(self.context):
-            #for j in range(1,len(linea)):
-                #self.sheet2.addCell(i,j -1,linea[j])
-        #cabeceras = [ k[0] for k in self.context ]
-        #self.sheet2.setVerticalHeaderLabels(cabeceras)
 
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel,
                                      Qt.Horizontal)
 
 
-        #formLayout = QGridLayout()
+
         meatLayout = QVBoxLayout()
-        #meatLayout = QGridLayout()
         buttonLayout = QHBoxLayout()
         
 
         meatLayout.addWidget(InicioLabel1)
         meatLayout.addWidget(self.sheet1)
        
-        #meatLayout.addWidget(InicioLabel1)
-        #meatLayout.addWidget(self.sheet1,10)
-        #meatLayout.addWidget(InicioLabel2,2,0)
-        #meatLayout.addWidget(self.sheet2,3,0,5,3)
-        
-        ##formLayout.addLayout(meatLayout)        
         buttonLayout.addWidget(buttonBox)
         meatLayout.addLayout(buttonLayout)
         
         self.setLayout(meatLayout)
-        self.setMinimumSize(QSize(500,200))
+        self.setMinimumSize(QSize(800,200))
         buttonBox.accepted.connect(self.accept)
         buttonBox.rejected.connect(self.reject)
 
         self.setWindowTitle("Item editor")
         
-       
-    def seleccionCriterio(self,idx):
-        print('criterio',self.sheet1.get(idx,0))
-        if self.sheet1.get(idx,0) == 0:
-            print(' a todo')
-            if not self.sheet1.cellWidget(idx,1).isHidden():
-                self.sheet1.cellWidget(idx,1).hide()
-                print('cerre el tipo')
-            if not self.sheet1.cellWidget(idx,2).isHidden():
-                self.sheet1.cellWidget(idx,2).hide()
-                print('cerre el contador')
-
-        if self.sheet1.get(idx,0) == 1:
-            if self.sheet1.cellWidget(idx,1).isHidden():
-                 self.sheet1.cellWidget(idx,1).show()
-
-            if not self.sheet1.cellWidget(idx,2).isHidden():
-                self.sheet1.cellWidget(idx,2).hide()
-                
+    def flipFlop(self,line,value):
+        # puede ser un poco repetitivo, pero no se si es mas costoso el enable/disable que comprobar cada
+        # vez si lo esta. Por lo menos el codigo es menos complejo y todavia no veo una razon para modificarlo
+        if value == 0:
+            self.sheet1.cellWidget(line,1).setEnabled(False)
+            self.sheet1.cellWidget(line,2).setEnabled(False)
+        elif value == 1: 
+            self.sheet1.cellWidget(line,1).setEnabled(True)
+            self.sheet1.cellWidget(line,2).setEnabled(False)
         else:
-            if self.sheet1.cellWidget(idx,1).isHidden():
-                self.sheet1.cellWidget(idx,1).show()
-            if self.sheet1.cellWidget(idx,2).isHidden():
-                self.sheet1.cellWidget(idx,2).show()
+            self.sheet1.cellWidget(line,1).setEnabled(True)
+            self.sheet1.cellWidget(line,2).setEnabled(True)
+        # ponemos los valores ejemplo
 
+    def seleccionCriterio(self,idx):
+        self.flipFlop(idx,self.sheet1.get(idx,0))
+        self.seleccionIntervalo(idx)
             
     def seleccionIntervalo(self,idx):
-       return    
+        if self.sheet1.get(idx,0)  == 0:
+            self.sheet1.set(idx,3,None)
+            self.sheet1.set(idx,4,None)
+        else:
+            desde,hasta = dateRange(self.sheet1.get(idx,0),self.sheet1.get(idx,1),periodo=self.sheet1.get(idx,2))
+            self.sheet1.set(idx,3,str(desde))
+            self.sheet1.set(idx,4,str(hasta))
+
    
     def accept(self):
         self.data = self.sheet1.values()
-        pprint(self.data)
+        self.result = []
+        self.result = []
         for k,valor in enumerate(self.data):
             if valor[0] == 0:
                 continue
             else:
-                desde,hasta = dateRange(valor[0],valor[1],periodo=valor[2])
-                print("{} BETWEEN '{}' AND '{}'".format(self.descriptores[k],desde,hasta))
-            #if valor == '' and self.context[k][1] is None:
-               #continue
-            #self.data[k] = valor
+                self.result.append((self.descriptores[k],valor[0],valor[1],valor[2]))
+        print(self.result)
         QDialog.accept(self)
     
 class dataEntrySheetDlg(QDialog):
@@ -493,21 +473,38 @@ def mainNF():
         print('a la vuelta de publicidad',cdata)
         sys.exit()
 
-def main():
+
+def dateFilter():
     from core import Cubo
     from util.jsonmgr import load_cubo
     
     app = QApplication(sys.argv)
     parametros = [ 1, 0, 2,3, False, False ]
     mis_cubos = load_cubo()
-    cubo = Cubo(mis_cubos['experimento'])
-    vista=Vista(cubo,1,0,'sum','votes_presential')
-    form = dateFilterDlg(vista)
-    form.show()
+    cubo = Cubo(mis_cubos['film'])
+    vista=Vista(cubo,1,0,'sum','sakila.film.film_id')
+    descriptores = camposDeTipo("fecha",vista.cubo.db,vista.cubo.definition['table'])
+    form = dateFilterDlg(descriptores)
+    #form.show()
     if form.exec_():
         #cdata = [form.context[k][1] for k in range(len(parametros))]
         #print('a la vuelta de publicidad',cdata)
+        sqlGrp = []
+        #OJO form.result lleva los indices desplazados respecto de form.data
+        for entry in form.result:
+            if entry[1] != 0:
+                intervalo = dateRange(entry[1],entry[2],periodo=entry[3])
+                sqlGrp.append((entry[0],'BETWEEN',intervalo))
+        if len(sqlGrp) > 0:
+            print(searchConstructor('where',{'where':sqlGrp}))
         sys.exit()
 
+
 if __name__ == '__main__':
-    main()
+    import sys
+    if sys.version_info[0] < 3:
+        reload(sys)
+        sys.setdefaultencoding('utf-8')
+    #app = QApplication(sys.argv)
+    dateFilter()
+
