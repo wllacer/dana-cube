@@ -14,6 +14,7 @@ from util.record_functions import *
 
 from pprint import *
 from copy import deepcopy
+import datetime
 
 CLAUSE_PARMS = ('type','ltype','rtype','table','ltable','rtable','side','warn')
 
@@ -114,6 +115,8 @@ def sqlFmt(parametro,**kwargs):
     else:
         warntype=True
         if isinstance(parametro,(int,float)):
+            resultado="'{}'".format(parametro).strip()
+        if isinstance(parametro,(datetime.date,datetime.time,datetime.datetime)):
             resultado="'{}'".format(parametro).strip()
         elif  parametro.find("'") < 0 :
             resultado = "'{}'".format(parametro.strip())

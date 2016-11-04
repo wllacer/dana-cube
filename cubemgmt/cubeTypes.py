@@ -6,7 +6,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from datalayer.access_layer import DRIVERS, AGR_LIST 
-
+from util.fechas import CLASES_INTERVALO, TIPOS_INTERVALO
 ITEM_TYPE = set([
      u'agregado',
      u'base',
@@ -21,6 +21,10 @@ ITEM_TYPE = set([
      u'condition',
      u'connect',
      u'cubo',
+     u'date filter',
+     u'date range',
+     u'date class',
+     u'date period',
      u'dbhost',
      u'dbname',
      u'dbpass',
@@ -62,11 +66,13 @@ TYPE_LIST = set(['case_sql',
      'values',
      'code',
      'desc',
-     'grouped_by'])
+     'grouped_by',
+     'date filter'])
 
 NO_ADD_LIST = set([
     u'cubo',u'vista',u'row',u'col',u'agregado',u'elemento',
     u'base filter',u'connect',u'dbuser',u'dbhost',u'driver',u'dbname',u'dbpass',
+    u'date class',u'date period',u'date range',
     ])
 TYPE_LIST_DICT = set([
      'categories',
@@ -137,6 +143,8 @@ STATIC_COMBO_ITEMS = dict({
      u'enum_fmt': ENUM_FORMAT,
      u'fmt': ENUM_FORMAT,
      u'type': TIPO_FECHA,
+     u'date class':[ (k,item) for k,item in enumerate(CLASES_INTERVALO) ],
+     u'date range':[ (k,item) for k,item in enumerate(TIPOS_INTERVALO)],
     })
 
 DYNAMIC_COMBO_ITEMS = set([

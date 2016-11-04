@@ -26,6 +26,7 @@ from util.tree import traverse
 from filterDlg import filterDialog
 from dictmgmt.datadict import DataDict
 from cubemgmt.cubetree import traverseTree
+from datalayer.query_constructor import searchConstructor
 
 #FIXED 1 zoom view breaks. Some variables weren't available
 #     FIXME zoom doesn't trigger any action with the new interface
@@ -75,12 +76,18 @@ class DanaCube(QMainWindow):
         #self.optionsMenu.addAction("&Zoom View ...", self.zoomData, "Ctrl+Z")
         self.filterActions = dict()
         self.filterActions['create'] = self.optionsMenu.addAction('Editar &Filtro',self.setFilter,"Ctrl+K")
-        self.filterActions['drop'] = self.optionsMenu.addAction('Borrar &Filtro',self.dropFilter,"Ctrl+K")
-        self.filterActions['save'] = self.optionsMenu.addAction('Guardar &Filtro permanentemente',self.saveFilter,"Ctrl+K")
+        self.filterActions['drop'] = self.optionsMenu.addAction('Borrar &Filtros',self.dropFilter,"Ctrl+K")
+        self.filterActions['save'] = self.optionsMenu.addAction('Guardar &Filtros permanentemente',self.saveFilter,"Ctrl+K")
         self.filterActions['drop'].setEnabled(False)
         self.filterActions['save'].setEnabled(False)
         self.optionsMenu.addSeparator()
-
+        self.dateRangeActions = dict()
+        self.dateRangeActions['dates'] = self.optionsMenu.addAction('Editar &Rango fechas',self.setRange,"Ctrl+K")
+        self.dateRangeActions['drop'] = self.optionsMenu.addAction('Borrar &Rango fechas',self.dropRange,"Ctrl+K")
+        self.dateRangeActions['save'] = self.optionsMenu.addAction('Salvar &Rango fechas',self.saveRange,"Ctrl+K")
+        self.dateRangeActions['drop'].setEnabled(False)
+        self.dateRangeActions['save'].setEnabled(False)
+ 
         self.optionsMenu.addAction("&Trasponer datos",self.traspose,"CtrlT")
         self.optionsMenu.addAction("&Presentacion ...",self.setNumberFormat,"Ctrl+F")
         #
@@ -104,6 +111,8 @@ class DanaCube(QMainWindow):
         self.view = QTreeView(self)
         self.view.setModel(self.baseModel)
         self.filtro = ''
+        self.filtroCampos = ''
+        self.filtroFechas = ''
 
         #TODO como crear menu de contexto https://wiki.python.org/moin/PyQt/Creating%20a%20context%20menu%20for%20a%20tree%20view
         
@@ -348,7 +357,8 @@ class DanaCube(QMainWindow):
                 
         if filterDlg.exec_():
             #self.loadData(pFilter=filterDlg.result)
-            self.filtro=filterDlg.result
+            self.filtroCampos=filterDlg.result
+            self.filtro = mergeString(self.filtroCampos,self.filtroFechas,'AND')
             self.filterValues = [ (data[2],data[3],) for data in filterDlg.data]
             self.cargaVista(self.vista.row_id,self.vista.col_id,
                             self.vista.agregado,self.vista.campo,
@@ -358,7 +368,8 @@ class DanaCube(QMainWindow):
 
 
     def dropFilter(self):
-        self.filtro = ''
+        self.filtroCampos=''
+        self.filtro = mergeString(self.filtroCampos,self.filtroFechas,'AND')
         self.filterValues = None
         self.cargaVista(self.vista.row_id,self.vista.col_id,
                         self.vista.agregado,self.vista.campo,
@@ -368,7 +379,7 @@ class DanaCube(QMainWindow):
 
     
     def saveFilter(self):
-        nuevo_filtro = mergeString(self.filtro,self.cubo.definition['base filter'],'AND')
+        nuevo_filtro = mergeString(self.filtroCampos,self.cubo.definition['base filter'],'AND')
         my_cubos = load_cubo()
         my_cubos[self.cubo.nombre]['base filter'] = nuevo_filtro
         dump_structure(my_cubos)
@@ -384,13 +395,46 @@ class DanaCube(QMainWindow):
             "row": self.vista.row_id,
             "col": self.vista.col_id
             }
-        if self.filtro and self.filtro != '':
-            datos_defecto["vista"]["filter"] = self.filtro
-        print(datos_defecto)
+        if self.filtroCampos != '':  #NO los rangos de fecha que son por naturaleza variables
+            datos_defecto["vista"]["filter"] = self.filtroCampos
         my_cubos = load_cubo()
         my_cubos['default'] = datos_defecto
         dump_structure(my_cubos)
         
+    def setRange(self):
+        descriptores = [ item['name'] for item in self.recordStructure if item['format'] == 'fecha' ]
+        if len(descriptores) == 0:
+            #TODO que hago con Sqlite
+            return
+        form = dateFilterDlg(descriptores)
+        if form.exec_():
+            sqlGrp = []
+            for entry in form.result:
+                if entry[1] != 0:
+                    intervalo = dateRange(entry[1],entry[2],periodo=entry[3])
+                    sqlGrp.append((entry[0],'BETWEEN',intervalo))
+            if len(sqlGrp) > 0:
+                self.filtroFechas = searchConstructor('where',{'where':sqlGrp})
+                self.filtro = mergeString(self.filtroCampos,self.filtroFechas,'AND')
+                self.cargaVista(self.vista.row_id,self.vista.col_id,
+                            self.vista.agregado,self.vista.campo,
+                            self.vista.totalizado,self.vista.stats) #__WIP__ evidentemente aqui faltan todos los parametros
+
+                self.dateRangeActions['drop'].setEnabled(False)
+                #self.dateRangeActions['save'].setEnabled(False)
+            
+    def dropRange(self):
+        self.filtroFechas=''
+        self.filtro = mergeString(self.filtroCampos,self.filtroFechas,'AND')
+        self.cargaVista(self.vista.row_id,self.vista.col_id,
+                        self.vista.agregado,self.vista.campo,
+                        self.vista.totalizado,self.vista.stats) #__WIP__ evidentemente aqui     def saveFilter(self):
+        self.dateRangeActions['drop'].setEnabled(False)
+        #self.dateRangeActions['save'].setEnabled(False)
+
+    def saveRange(self):
+        pass
+    
     def summaryGuia(self):
         result = []
         self.cubo.fillGuias()

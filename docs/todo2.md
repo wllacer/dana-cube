@@ -24,8 +24,8 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
     ** reeditar filtro
 * __NOW__ Filtros previos por tiempo ( campo + periodo (dia, ...). 
     ** __DONE__ Interfaz de usuario. __FALTA__ el caso especial que no existan campos fecha
-    ** Integracion en Danacube. Debe integrarse en cubebrowse, mejor
-    ** Serializacion (con edit)
+    ** __DONE__ Integracion en Danacube. __FALTA__ Debe integrarse en cubebrowse, mejor
+    ** __HOLD__ Serializacion. Hata integrar en cubebrowse
 * __NOW__ Claves multicampo
 * __NOW__ BUG Grandes totales desordenados.
     ** ENUMS (film cualquiera con rating)
@@ -68,6 +68,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * __DONE__ Incluir filtro en defaults
 * __DONE__ Limpiar pantalla en cambio de cubo
 * Crear una funcion TreeModel.clear(). puede simplificar cosas en cambios de cubo y vistas
+* rango de fechas desde/hasta, directamente
 
 
 

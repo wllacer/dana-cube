@@ -221,6 +221,11 @@ def setContextMenu(obj,menu,exec_object=None):
     obj.menuActions.append(menu.addAction("Rename ",lambda: execAction(exec_object,obj,"rename")))
     obj.menuActions.append(menu.addAction("Refresh ",lambda: execAction(exec_object,obj,"refresh")))
     
+    if tipo in ('base') and not obj.getChildrenByName('date filter'):
+        obj.menuActions.append(menu.addSeparator())
+        obj.menuActions.append(menu.addAction("Add date filter",lambda: execAction(exec_object,obj,"date filter")))
+        obj.menuActions[-1].setEnabled(False) #hasta que no lo implemente
+        
     if tipo in NO_ADD_LIST:
         obj.menuActions[0].setEnabled(False)
 
@@ -1024,6 +1029,10 @@ def execAction(exec_object,obj,action):
     elif action == 'refresh':
         print('refresh',obj)
         pass
+    elif action == 'date filter':
+        print('date filter',obj)
+        pass
+        
     else:
         print('Action ',action,' desconocida')
         pass

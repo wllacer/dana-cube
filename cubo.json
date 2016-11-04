@@ -1,136 +1,258 @@
 {
-    "film": {
+    "default": {
+        "vista": {
+            "agregado": "count",
+            "row": 1,
+            "elemento": "sakila.film.film_id",
+            "col": 0
+        },
+        "cubo": "film"
+    },
+    "datos locales": {
         "guides": [
             {
-                "prod": [
-                    {
-                        "elem": "sakila.film.release_year"
-                    }
-                ],
                 "class": "o",
-                "name": "sakila.film.release_year"
-            },
-            {
-                "prod": [
-                    {
-                        "elem": "sakila.film.rating"
-                    }
-                ],
-                "class": "o",
-                "name": "sakila.film.rating"
-            },
-            {
                 "prod": [
                     {
                         "domain": {
-                            "desc": "sakila.language.name",
-                            "table": "sakila.language",
-                            "code": "sakila.language.language_id",
-                            "filter": ""
+                            "desc": "acronym",
+                            "filter": "",
+                            "table": "main.partidos",
+                            "code": "code"
                         },
-                        "elem": "sakila.film.language_id"
+                        "fmt": "txt",
+                        "elem": "partido_id"
                     }
                 ],
-                "class": "o",
-                "name": "fk_film_language"
+                "name": "partido"
             },
             {
+                "class": "o",
                 "prod": [
                     {
                         "domain": {
-                            "desc": "sakila.language.name",
-                            "table": "sakila.language",
-                            "code": "sakila.language.language_id",
-                            "filter": ""
+                            "desc": "acronym",
+                            "filter": "code in (select distinct partido_id from votos_provincia where votes_percent >= 3)",
+                            "table": "main.partidos",
+                            "code": "code"
                         },
-                        "elem": "sakila.film.original_language_id"
+                        "fmt": "txt",
+                        "elem": "partido_id"
                     }
                 ],
+                "name": "partidos importantes"
+            },
+            {
                 "class": "o",
-                "name": "fk_film_language_original"
+                "prod": [
+                    {
+                        "domain": {
+                            "desc": "nombre",
+                            "filter": "provincia = ''",
+                            "table": "main.localidades",
+                            "code": "region"
+                        },
+                        "fmt": "txt",
+                        "elem": "region"
+                    }
+                ],
+                "name": "autonomia"
+            },
+            {
+                "class": "o",
+                "prod": [
+                    {
+                        "domain": {
+                            "desc": "nombre",
+                            "filter": "provincia <> '' and municipio = '' and isla = ''",
+                            "table": "main.localidades",
+                            "code": "provincia"
+                        },
+                        "fmt": "txt",
+                        "elem": "provincia"
+                    }
+                ],
+                "name": "provincia"
+            },
+            {
+                "class": "o",
+                "prod": [
+                    {
+                        "domain": {
+                            "desc": "nombre",
+                            "filter": "municipio <> '' ",
+                            "table": "main.localidades",
+                            "code": "municipio"
+                        },
+                        "fmt": "txt",
+                        "elem": "municipio"
+                    }
+                ],
+                "name": "municipio"
+            },
+            {
+                "class": "h",
+                "prod": [
+                    {
+                        "domain": {
+                            "desc": "nombre",
+                            "filter": "provincia = ''",
+                            "table": "main.localidades",
+                            "code": "region"
+                        },
+                        "fmt": "txt",
+                        "elem": "region",
+                        "name": "region"
+                    },
+                    {
+                        "domain": {
+                            "desc": "nombre",
+                            "filter": "provincia <> '' and municipio = '' and isla = ''",
+                            "grouped by": "region",
+                            "table": "main.localidades",
+                            "code": "provincia"
+                        },
+                        "fmt": "txt",
+                        "elem": "provincia",
+                        "name": "provincia"
+                    }
+                ],
+                "name": "geo"
+            },
+            {
+                "class": "h",
+                "prod": [
+                    {
+                        "domain": {
+                            "desc": "nombre",
+                            "filter": "provincia = '' ",
+                            "table": "main.localidades",
+                            "code": "region"
+                        },
+                        "fmt": "txt",
+                        "elem": "region",
+                        "name": "region"
+                    },
+                    {
+                        "domain": {
+                            "desc": "nombre",
+                            "filter": "region = 'CA01' and provincia <> '' and municipio = '' and isla = ''",
+                            "grouped by": "region",
+                            "table": "main.localidades",
+                            "code": "provincia"
+                        },
+                        "fmt": "txt",
+                        "elem": "provincia",
+                        "name": "provincia"
+                    },
+                    {
+                        "domain": {
+                            "desc": "nombre",
+                            "filter": "region = 'CA01' and municipio <> ''",
+                            "grouped by": "region,provincia",
+                            "table": "main.localidades",
+                            "code": "municipio"
+                        },
+                        "fmt": "txt",
+                        "elem": "municipio",
+                        "name": "municipio"
+                    }
+                ],
+                "name": "geo-detail"
+            },
+            {
+                "class": "d",
+                "prod": [
+                    {
+                        "fmt": "date",
+                        "elem": "fakedate"
+                    }
+                ],
+                "name": "fecha"
             }
         ],
-        "fields": [
-            "sakila.film.film_id",
-            "sakila.film.rental_rate",
-            "sakila.film.replacement_cost"
-        ],
-        "table": "sakila.film",
         "base filter": "",
+        "table": "main.votos_locales",
         "connect": {
             "dbhost": null,
-            "dbuser": null,
+            "driver": "QSQLITE",
+            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
             "dbpass": null,
-            "driver": "mysqlconnector",
-            "dbname": "mysql+mysqlconnector://demo:demo123@localhost/mysql"
-        }
+            "dbuser": null
+        },
+        "fields": [
+            "votes_presential",
+            "votes_percent",
+            "ord"
+        ]
     },
     "experimento": {
         "guides": [
             {
+                "class": "o",
                 "prod": [
                     {
-                        "fmt": "txt",
-                        "elem": "partido_id",
                         "domain": {
                             "desc": "acronym",
+                            "filter": "code in (select distinct partido_id from votos_provincia where votes_percent >= 3)",
                             "table": "main.partidos",
-                            "code": "code",
-                            "filter": "code in (select distinct partido_id from votos_provincia where votes_percent >= 3)"
-                        }
+                            "code": "code"
+                        },
+                        "fmt": "txt",
+                        "elem": "partido_id"
                     }
                 ],
-                "class": "o",
                 "name": "partido"
             },
             {
+                "class": "o",
                 "prod": [
                     {
-                        "fmt": "txt",
-                        "elem": "provincia",
                         "domain": {
                             "desc": "nombre",
+                            "filter": "provincia <> '' and municipio = '' and isla = ''",
                             "table": "main.localidades",
-                            "code": "provincia",
-                            "filter": "provincia <> '' and municipio = '' and isla = ''"
-                        }
+                            "code": "provincia"
+                        },
+                        "fmt": "txt",
+                        "elem": "provincia"
                     }
                 ],
-                "class": "o",
                 "name": "provincia"
             },
             {
+                "class": "c",
                 "prod": [
                     {
-                        "fmt": "txt",
                         "categories": [
                             {
                                 "default": "otros"
                             },
                             {
+                                "result": "Derecha",
                                 "values": [
                                     3316,
                                     4688
                                 ],
-                                "condition": "in",
-                                "result": "Derecha"
+                                "condition": "in"
                             },
                             {
+                                "result": "Centro",
                                 "values": [
                                     1079,
                                     4475
                                 ],
-                                "condition": "in",
-                                "result": "Centro"
+                                "condition": "in"
                             },
                             {
+                                "result": "Izquierda",
                                 "values": [
                                     3484
                                 ],
-                                "condition": "in",
-                                "result": "Izquierda"
+                                "condition": "in"
                             },
                             {
+                                "result": "Extrema Izquierda",
                                 "values": [
                                     3736,
                                     5033,
@@ -140,485 +262,371 @@
                                     2744,
                                     5026
                                 ],
-                                "condition": "in",
-                                "result": "Extrema Izquierda"
+                                "condition": "in"
                             },
                             {
+                                "result": "Separatistas",
                                 "values": [
                                     5063,
                                     4991,
                                     1528
                                 ],
-                                "condition": "in",
-                                "result": "Separatistas"
+                                "condition": "in"
                             },
                             {
+                                "result": "Nacionalistas",
                                 "values": [
                                     1533,
                                     4744,
                                     4223
                                 ],
-                                "condition": "in",
-                                "result": "Nacionalistas"
+                                "condition": "in"
                             }
                         ],
-                        "elem": "partido_id"
+                        "elem": "partido_id",
+                        "fmt": "txt"
                     }
                 ],
-                "class": "c",
                 "name": "ideologia"
             }
         ],
+        "base filter": "",
+        "table": "main.votos_provincia",
+        "connect": {
+            "dbhost": null,
+            "driver": "QSQLITE",
+            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
+            "dbpass": null,
+            "dbuser": null
+        },
         "fields": [
             "votes_presential",
             "votes_percent",
             "seats",
             "ord"
-        ],
-        "table": "main.votos_provincia",
-        "base filter": "",
-        "connect": {
-            "dbhost": null,
-            "dbuser": null,
-            "dbpass": null,
-            "driver": "QSQLITE",
-            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db"
-        }
-    },
-    "default": {
-        "vista": {
-            "agregado": "sum",
-            "col": 2,
-            "elemento": "votes_presential",
-            "row": 1
-        },
-        "cubo": "experimento"
-    },
-    "datos locales": {
-        "guides": [
-            {
-                "prod": [
-                    {
-                        "fmt": "txt",
-                        "elem": "partido_id",
-                        "domain": {
-                            "desc": "acronym",
-                            "table": "main.partidos",
-                            "code": "code",
-                            "filter": ""
-                        }
-                    }
-                ],
-                "class": "o",
-                "name": "partido"
-            },
-            {
-                "prod": [
-                    {
-                        "fmt": "txt",
-                        "elem": "partido_id",
-                        "domain": {
-                            "desc": "acronym",
-                            "table": "main.partidos",
-                            "code": "code",
-                            "filter": "code in (select distinct partido_id from votos_provincia where votes_percent >= 3)"
-                        }
-                    }
-                ],
-                "class": "o",
-                "name": "partidos importantes"
-            },
-            {
-                "prod": [
-                    {
-                        "fmt": "txt",
-                        "elem": "region",
-                        "domain": {
-                            "desc": "nombre",
-                            "table": "main.localidades",
-                            "code": "region",
-                            "filter": "provincia = ''"
-                        }
-                    }
-                ],
-                "class": "o",
-                "name": "autonomia"
-            },
-            {
-                "prod": [
-                    {
-                        "fmt": "txt",
-                        "elem": "provincia",
-                        "domain": {
-                            "desc": "nombre",
-                            "table": "main.localidades",
-                            "code": "provincia",
-                            "filter": "provincia <> '' and municipio = '' and isla = ''"
-                        }
-                    }
-                ],
-                "class": "o",
-                "name": "provincia"
-            },
-            {
-                "prod": [
-                    {
-                        "fmt": "txt",
-                        "elem": "municipio",
-                        "domain": {
-                            "desc": "nombre",
-                            "table": "main.localidades",
-                            "code": "municipio",
-                            "filter": "municipio <> '' "
-                        }
-                    }
-                ],
-                "class": "o",
-                "name": "municipio"
-            },
-            {
-                "prod": [
-                    {
-                        "fmt": "txt",
-                        "domain": {
-                            "desc": "nombre",
-                            "table": "main.localidades",
-                            "code": "region",
-                            "filter": "provincia = ''"
-                        },
-                        "elem": "region",
-                        "name": "region"
-                    },
-                    {
-                        "fmt": "txt",
-                        "domain": {
-                            "grouped by": "region",
-                            "desc": "nombre",
-                            "filter": "provincia <> '' and municipio = '' and isla = ''",
-                            "code": "provincia",
-                            "table": "main.localidades"
-                        },
-                        "elem": "provincia",
-                        "name": "provincia"
-                    }
-                ],
-                "class": "h",
-                "name": "geo"
-            },
-            {
-                "prod": [
-                    {
-                        "fmt": "txt",
-                        "domain": {
-                            "desc": "nombre",
-                            "table": "main.localidades",
-                            "code": "region",
-                            "filter": "provincia = '' "
-                        },
-                        "elem": "region",
-                        "name": "region"
-                    },
-                    {
-                        "fmt": "txt",
-                        "domain": {
-                            "grouped by": "region",
-                            "desc": "nombre",
-                            "filter": "region = 'CA01' and provincia <> '' and municipio = '' and isla = ''",
-                            "code": "provincia",
-                            "table": "main.localidades"
-                        },
-                        "elem": "provincia",
-                        "name": "provincia"
-                    },
-                    {
-                        "fmt": "txt",
-                        "domain": {
-                            "grouped by": "region,provincia",
-                            "desc": "nombre",
-                            "filter": "region = 'CA01' and municipio <> ''",
-                            "code": "municipio",
-                            "table": "main.localidades"
-                        },
-                        "elem": "municipio",
-                        "name": "municipio"
-                    }
-                ],
-                "class": "h",
-                "name": "geo-detail"
-            },
-            {
-                "prod": [
-                    {
-                        "fmt": "date",
-                        "elem": "fakedate"
-                    }
-                ],
-                "class": "d",
-                "name": "fecha"
-            }
-        ],
-        "fields": [
-            "votes_presential",
-            "votes_percent",
-            "ord"
-        ],
-        "table": "main.votos_locales",
-        "base filter": "",
-        "connect": {
-            "dbhost": null,
-            "dbuser": null,
-            "dbpass": null,
-            "driver": "QSQLITE",
-            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db"
-        }
+        ]
     },
     "datos light": {
         "guides": [
             {
+                "class": "o",
                 "prod": [
                     {
-                        "fmt": "txt",
-                        "elem": "partido_id",
                         "domain": {
                             "desc": "acronym",
+                            "filter": "",
                             "table": "main.partidos",
-                            "code": "code",
-                            "filter": ""
-                        }
+                            "code": "code"
+                        },
+                        "fmt": "txt",
+                        "elem": "partido_id"
                     }
                 ],
-                "class": "o",
                 "name": "partido"
             },
             {
+                "class": "o",
                 "prod": [
                     {
-                        "fmt": "txt",
-                        "elem": "partido_id",
                         "domain": {
                             "desc": "acronym",
+                            "filter": "code in (select distinct partido_id from votos_provincia where votes_percent >= 3)",
                             "table": "main.partidos",
-                            "code": "code",
-                            "filter": "code in (select distinct partido_id from votos_provincia where votes_percent >= 3)"
-                        }
+                            "code": "code"
+                        },
+                        "fmt": "txt",
+                        "elem": "partido_id"
                     }
                 ],
-                "class": "o",
                 "name": "partidos importantes"
             },
             {
+                "class": "o",
                 "prod": [
                     {
-                        "fmt": "txt",
-                        "elem": "region",
                         "domain": {
                             "desc": "nombre",
+                            "filter": "provincia = ''",
                             "table": "main.localidades",
-                            "code": "region",
-                            "filter": "provincia = ''"
-                        }
+                            "code": "region"
+                        },
+                        "fmt": "txt",
+                        "elem": "region"
                     }
                 ],
-                "class": "o",
                 "name": "autonomia"
             },
             {
+                "class": "o",
                 "prod": [
                     {
-                        "fmt": "txt",
-                        "elem": "provincia",
                         "domain": {
                             "desc": "nombre",
+                            "filter": "provincia <> '' and municipio = '' and isla = ''",
                             "table": "main.localidades",
-                            "code": "provincia",
-                            "filter": "provincia <> '' and municipio = '' and isla = ''"
-                        }
+                            "code": "provincia"
+                        },
+                        "fmt": "txt",
+                        "elem": "provincia"
                     }
                 ],
-                "class": "o",
                 "name": "provincia"
             },
             {
+                "class": "o",
                 "prod": [
                     {
-                        "fmt": "txt",
-                        "elem": "municipio",
                         "domain": {
                             "desc": "nombre",
+                            "filter": "municipio <> '' ",
                             "table": "main.localidades",
-                            "code": "municipio",
-                            "filter": "municipio <> '' "
-                        }
+                            "code": "municipio"
+                        },
+                        "fmt": "txt",
+                        "elem": "municipio"
                     }
                 ],
-                "class": "o",
                 "name": "municipio"
             },
             {
+                "class": "h",
                 "prod": [
                     {
-                        "fmt": "txt",
                         "domain": {
                             "desc": "nombre",
+                            "filter": "provincia = ''",
                             "table": "main.localidades",
-                            "code": "region",
-                            "filter": "provincia = ''"
+                            "code": "region"
                         },
+                        "fmt": "txt",
                         "elem": "region",
                         "name": "region"
                     },
                     {
-                        "fmt": "txt",
                         "domain": {
-                            "grouped by": "region",
                             "desc": "nombre",
                             "filter": "provincia <> '' and municipio = '' and isla = ''",
-                            "code": "provincia",
-                            "table": "main.localidades"
+                            "grouped by": "region",
+                            "table": "main.localidades",
+                            "code": "provincia"
                         },
+                        "fmt": "txt",
                         "elem": "provincia",
                         "name": "provincia"
                     }
                 ],
-                "class": "h",
                 "name": "geo"
             },
             {
+                "class": "d",
                 "prod": [
                     {
                         "fmt": "date",
                         "elem": "fakedate"
                     }
                 ],
-                "class": "d",
                 "name": "fecha"
             }
         ],
+        "base filter": "",
+        "table": "main.votos_locales",
+        "connect": {
+            "dbhost": null,
+            "driver": "QSQLITE",
+            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
+            "dbpass": null,
+            "dbuser": null
+        },
         "fields": [
             "votes_presential",
             "votes_percent",
             "ord"
-        ],
-        "table": "main.votos_locales",
+        ]
+    },
+    "film": {
         "base filter": "",
+        "fields": [
+            "sakila.film.film_id",
+            "sakila.film.rental_rate",
+            "sakila.film.replacement_cost"
+        ],
+        "guides": [
+            {
+                "class": "o",
+                "prod": [
+                    {
+                        "elem": "sakila.film.release_year"
+                    }
+                ],
+                "name": "sakila.film.release_year"
+            },
+            {
+                "class": "o",
+                "prod": [
+                    {
+                        "elem": "sakila.film.rating"
+                    }
+                ],
+                "name": "sakila.film.rating"
+            },
+            {
+                "class": "o",
+                "prod": [
+                    {
+                        "domain": {
+                            "desc": "sakila.language.name",
+                            "filter": "",
+                            "table": "sakila.language",
+                            "code": "sakila.language.language_id"
+                        },
+                        "elem": "sakila.film.language_id"
+                    }
+                ],
+                "name": "fk_film_language"
+            },
+            {
+                "class": "o",
+                "prod": [
+                    {
+                        "domain": {
+                            "desc": "sakila.language.name",
+                            "filter": "",
+                            "table": "sakila.language",
+                            "code": "sakila.language.language_id"
+                        },
+                        "elem": "sakila.film.original_language_id"
+                    }
+                ],
+                "name": "fk_film_language_original"
+            }
+        ],
+        "date filter": [
+            {
+                "date range": 0,
+                "date class": 2,
+                "date period": 11,
+                "elem": "sakila.film.last_update"
+            }
+        ],
         "connect": {
             "dbhost": null,
-            "dbuser": null,
+            "driver": "mysqlconnector",
+            "dbname": "mysql+mysqlconnector://demo:demo123@localhost/mysql",
             "dbpass": null,
-            "driver": "QSQLITE",
-            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db"
-        }
+            "dbuser": null
+        },
+        "table": "sakila.film"
     },
     "datos provincia": {
         "guides": [
             {
+                "class": "o",
                 "prod": [
                     {
-                        "fmt": "txt",
-                        "elem": "partido_id",
                         "domain": {
                             "desc": "acronym",
+                            "filter": "",
                             "table": "main.partidos",
-                            "code": "code",
-                            "filter": ""
-                        }
+                            "code": "code"
+                        },
+                        "fmt": "txt",
+                        "elem": "partido_id"
                     }
                 ],
-                "class": "o",
                 "name": "partido"
             },
             {
+                "class": "o",
                 "prod": [
                     {
-                        "fmt": "txt",
-                        "elem": "region",
                         "domain": {
                             "desc": "nombre",
+                            "filter": "provincia = ''",
                             "table": "main.localidades",
-                            "code": "region",
-                            "filter": "provincia = ''"
-                        }
+                            "code": "region"
+                        },
+                        "fmt": "txt",
+                        "elem": "region"
                     }
                 ],
-                "class": "o",
                 "name": "autonomia"
             },
             {
+                "class": "o",
                 "prod": [
                     {
-                        "fmt": "txt",
-                        "elem": "provincia",
                         "domain": {
                             "desc": "nombre",
+                            "filter": "provincia <> '' and municipio = '' and isla = ''",
                             "table": "main.localidades",
-                            "code": "provincia",
-                            "filter": "provincia <> '' and municipio = '' and isla = ''"
-                        }
+                            "code": "provincia"
+                        },
+                        "fmt": "txt",
+                        "elem": "provincia"
                     }
                 ],
-                "class": "o",
                 "name": "provincia"
             },
             {
+                "class": "h",
                 "prod": [
                     {
-                        "fmt": "txt",
                         "domain": {
                             "desc": "nombre",
+                            "filter": "provincia = ''",
                             "table": "main.localidades",
-                            "code": "region",
-                            "filter": "provincia = ''"
+                            "code": "region"
                         },
+                        "fmt": "txt",
                         "elem": "region",
                         "name": "region"
                     },
                     {
-                        "fmt": "txt",
                         "domain": {
-                            "grouped by": "region",
                             "desc": "nombre",
                             "filter": "provincia <> '' and municipio = '' and isla = ''",
-                            "code": "provincia",
-                            "table": "main.localidades"
+                            "grouped by": "region",
+                            "table": "main.localidades",
+                            "code": "provincia"
                         },
+                        "fmt": "txt",
                         "elem": "provincia",
                         "name": "provincia"
                     }
                 ],
-                "class": "h",
                 "name": "geo"
             },
             {
+                "class": "o",
                 "prod": [
                     {
-                        "fmt": "txt",
-                        "elem": "partido_id",
                         "domain": {
                             "desc": "acronym",
+                            "filter": "code in (select distinct partido_id from votos_provincia where votes_percent >= 3)",
                             "table": "main.partidos",
-                            "code": "code",
-                            "filter": "code in (select distinct partido_id from votos_provincia where votes_percent >= 3)"
-                        }
+                            "code": "code"
+                        },
+                        "fmt": "txt",
+                        "elem": "partido_id"
                     }
                 ],
-                "class": "o",
                 "name": "partidos importantes"
             }
         ],
+        "base filter": "",
+        "table": "main.votos_provincia",
+        "connect": {
+            "dbhost": null,
+            "driver": "QSQLITE",
+            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
+            "dbpass": null,
+            "dbuser": null
+        },
         "fields": [
             "votes_presential",
             "votes_percent",
             "seats",
             "ord"
-        ],
-        "table": "main.votos_provincia",
-        "base filter": "",
-        "connect": {
-            "dbhost": null,
-            "dbuser": null,
-            "dbpass": null,
-            "driver": "QSQLITE",
-            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db"
-        }
+        ]
     }
 }
