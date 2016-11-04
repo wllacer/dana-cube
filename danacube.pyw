@@ -65,6 +65,9 @@ class DanaCube(QMainWindow):
         self.fileMenu = self.menuBar().addMenu("&Cubo")
         self.fileMenu.addAction("&Open Cube ...", self.initCube, "Ctrl+O")
         self.fileMenu.addAction("C&hange View ...", self.requestVista, "Ctrl+H")
+        self.fileMenu.addSeparator()
+        self.fileMenu.addAction("Convertir vista actual a defecto", self.defaultVista, "Ctrl+H")
+        self.fileMenu.addSeparator()
         self.fileMenu.addAction("E&xit", self.close, "Ctrl+Q")
         
         self.optionsMenu = self.menuBar().addMenu("&Opciones")
@@ -141,7 +144,7 @@ class DanaCube(QMainWindow):
         base = my_cubos['default']
         self.setupCubo(my_cubos,base['cubo'])
 
-        self.vista = Vista(self.cubo, int(base['vista']['row']), int(base['vista']['col']),base['vista']['agregado'],base['vista']['elemento'])
+        self.vista = Vista(self.cubo, int(base['vista']['row']), int(base['vista']['col']),base['vista']['agregado'],base['vista']['elemento'],base['vista'].get('filtro'))
         self.vista.format = self.format
         self.defineModel()
         
@@ -182,7 +185,7 @@ class DanaCube(QMainWindow):
         if dialog.exec_():
             seleccion = str(dialog.cuboCB.currentText())
             self.setupCubo(my_cubos,seleccion)
-            
+            self.requestVista()
         self.setWindowTitle("Cubo "+ seleccion)
        
     def setupCubo(self,my_cubos,seleccion):
@@ -372,7 +375,22 @@ class DanaCube(QMainWindow):
         self.filterActions['drop'].setEnabled(False)
         self.filterActions['save'].setEnabled(False)
 
-    
+    def defaultVista(self):
+        datos_defecto = {}
+        datos_defecto["cubo"] =  self.cubo.nombre
+        datos_defecto["vista"] = {
+            "elemento": self.vista.campo,
+            "agregado": self.vista.agregado,
+            "row": self.vista.row_id,
+            "col": self.vista.col_id
+            }
+        if self.filtro and self.filtro != '':
+            datos_defecto["vista"]["filter"] = self.filtro
+        print(datos_defecto)
+        my_cubos = load_cubo()
+        my_cubos['default'] = datos_defecto
+        dump_structure(my_cubos)
+        
     def summaryGuia(self):
         result = []
         self.cubo.fillGuias()

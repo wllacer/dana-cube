@@ -64,8 +64,10 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 
 * __DONE__ Interfaz de usuario del filtro (simplemente cambiando QTextEdit por QLineEdit he conseguido lo que queria
 * CRASH. danacube con 0 registros tras filtro
-* Salvar defecto
-* Limpiar pantalla en cambio de cubo
+* __DONE__ Salvar defecto
+* __DONE__ Incluir filtro en defaults
+* __DONE__ Limpiar pantalla en cambio de cubo
+* Crear una funcion TreeModel.clear(). puede simplificar cosas en cambios de cubo y vistas
 
 
 
