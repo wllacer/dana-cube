@@ -105,38 +105,13 @@ from datemgr import getDateIndex,getDateEntry
 from pprint import *
 
 from core import Cubo
-from VistaSkel import VistaSkel
+
+from cubemgmt.cubeutil import info2cube
+import cubebrowse as cb
 
 import time
 
-from cubebrowse import info2cube
 
-def experimento():
-    from util.jsonmgr import load_cubo
-    def presenta(vista):
-        guia=vista.row_hdr_idx
-        ind = 0
-        for key in guia.traverse(mode=1):
-            elem = guia[key]
-            print (ind,key,elem.ord,elem.desc,elem.parentItem.key)
-            ind += 1
-    vista = None
-    mis_cubos = load_cubo('experimento.json')
-    cubo = Cubo(mis_cubos['customer'])
-    #pprint(cubo.definition)
-    #pprint(cubo.definition)
-    #pprint(cubo.lista_funciones)
-    #pprint(cubo.lista_campos)
-    #pprint(cubo.lista_guias[6])
-    for ind,guia in enumerate(cubo.lista_guias):
-        print(ind,guia['name'])
-    #cubo.fillGuias()
-    #ind= 5
-    #cubo.fillGuia(ind)
-    #cubo.lista_guias[ind]['dir_row'].display()
-    for k in range(len(cubo.lista_guias)):
-        vista=VistaSkel(cubo,k,0,'sum','customer_id')
-        print('\n\n\n')
 
 if __name__ == '__main__':
     import sys
@@ -145,12 +120,21 @@ if __name__ == '__main__':
         reload(sys)
         sys.setdefaultencoding('utf-8')
 
-    app = QApplication(sys.argv) 
-    dataDict=DataDict(conn='MariaBD Local',schema='sakila')
-    cubo = info2cube(dataDict,'MariaBD Local','sakila','payment',2)   
+    app = QApplication(sys.argv)
+    win = QMainWindow()
+    confName = 'MariaBD Local'
+    schema = 'sakila'
+    table = 'payment'
+    dataDict=DataDict(conn=confName,schema=schema)
+    cubo = info2cube(dataDict,confName,schema,table,2)   
+    cubeMgr = cb.CubeMgr(win,confName,schema,table,dataDict,rawCube=cubo)
+    cubeMgr.expandToDepth(1)        
+    #if self.configSplitter.count() == 1:  #de momento parece un modo sencillo de no multiplicar en exceso
+    win.setCentralWidget(cubeMgr)
+    win.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
+    win.show()
+    app.exec_()
     pprint(cubo)
-    dump_structure(cubo,'experimento.json')
-    #experimento()
     exit()
 
     #window = TableBrowserWin('MariaBD Local','sakila','film',pdataDict=None)

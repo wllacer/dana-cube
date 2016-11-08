@@ -29,7 +29,8 @@ from dictmgmt.dictTree import *
 from dictmgmt.datadict import *
 
 from tablebrowse import *
-from cubebrowse import info2cube, CubeMgr
+from cubemgmt.cubeutil import info2cube
+from cubebrowse import CubeMgr
 from util.decorators import waiting_effects 
 DEBUG = True
 

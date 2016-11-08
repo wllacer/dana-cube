@@ -134,6 +134,7 @@ FECHADOR = (('Y','Año'),('C','Cuatrimestre'),('Q','Trimestre'),('m','Mes'),('q'
     son elementos que solo se definen a traves de otras pantallas o directamente en la generacion
 """
 NO_ADD_LIST = set([
+    u'base',
     u'cubo',u'vista',u'row',u'col',u'agregado',u'elemento',
     u'base filter',u'connect',u'dbuser',u'dbhost',u'driver',u'dbname',u'dbpass',
     u'date class',u'date period',u'date range',

@@ -10,9 +10,10 @@ from cubemgmt.cubeTypes import *
 from cubemgmt.cubeutil  import *
 from cubemgmt.guideWizard import *
 
+
 from widgets import WDataSheet
 from dialogs import propertySheetDlg
-from PyQt5.QtWidgets import QWizard,QWizardPage,QLabel,QComboBox,QGridLayout,QGroupBox,QRadioButton,QVBoxLayout,QGridLayout,QPlainTextEdit,QListWidget,QCheckBox
+from PyQt5.QtWidgets import QWizard,QWizardPage,QLabel,QComboBox,QGridLayout,QGroupBox,QRadioButton,QVBoxLayout,QGridLayout,QPlainTextEdit,QListWidget,QCheckBox, QSpinBox
     
     
 def editTableElem(exec_object,obj,valor,refTable=None):
@@ -139,7 +140,9 @@ def addBase(obj,exec_object):
     spec.append(('Intruduzca el nombre del nuevo cubo',None,None,))
     array=getListAvailableTables(obj,exec_object)
     spec.append(('Seleccione la tabla a utilizar',QComboBox,None,tuple(array)))
+    spec.append(('Profundidad de enlaces',QSpinBox,{"setRange":(1,5)}),)
     values = [ None for k in range(len(spec))]
+    values[2] = 2 #para los niveles de profundidad
     parmDialog = propertySheetDlg('Defina el cubo a generar',spec,values,exec_object)
     if parmDialog.exec_():
         if values[0] :
@@ -151,7 +154,7 @@ def addBase(obj,exec_object):
             tabla = array[values[1]].split('.')
             schemaName= tabla[0] if len(tabla) > 1 else ''
             tableName = tabla[1] if len(tabla) > 1 else tabla[0]
-            info = info2cube(exec_object.dataDict,connName,schemaName,tableName)
+            info = info2cube(exec_object.dataDict,connName,schemaName,tableName,values[2])
             for key in info:
                 clave = key
                 break
@@ -173,28 +176,31 @@ def setContextMenu(obj,menu,exec_object=None):
     
     separador = False
 
-    def setSeparador():
+    def setSeparador(separador):
         if not separador:
             obj.menuActions.append(menu.addSeparator())
             separador = True
-        
+    # tipos especiales    
     if tipo in ('base'): 
+        obj.menuActions.append(menu.addSeparator())
+        obj.menuActions.append(menu.addAction("Add another Cube",lambda: execAction(exec_object,obj,"add")))
+        if 'default' not in getCubeList(exec_object.hiddenRoot,False):
+            obj.menuActions.append(menu.addAction("Add Default View",lambda: execAction(exec_object,obj,"default_base")))
+        
         if not obj.getChildrenByName('date filter'):
-            setSeparador()
+            setSeparador(separador)
             obj.menuActions.append(menu.addAction("Add date filter",lambda: execAction(exec_object,obj,"date filter")))
             obj.menuActions[-1].setEnabled(False) #hasta que no lo implemente
             
-        if 'default' not in getCubeList(exec_object.hiddenRoot,False):
-            setSeparador()
-            obj.menuActions.append(menu.addAction("Add Default View",lambda: execAction(exec_object,obj,"default_base")))
     
     if tipo in ('prod') and obj.text() != 'prod' and not obj.getChildrenByName('domain'):
-            setSeparador()
+            setSeparador(separador)
             obj.menuActions.append(menu.addAction("Add Domain Definition",lambda: execAction(exec_object,obj,"domain")))
-        
+    # acciones
+    # add
     if tipo in NO_ADD_LIST:
         obj.menuActions[0].setEnabled(False)
-
+    #edit
     if tipo in NO_EDIT_LIST :  
         obj.menuActions[1].setEnabled(False)
 
@@ -203,21 +209,23 @@ def setContextMenu(obj,menu,exec_object=None):
 
     if tipo in ('fields','case_sql') and obj.text() == tipo and obj.hasChildren():
         obj.menuActions[1].setEnabled(False)
-        
+    # delete    
     if tipo in NO_ADD_LIST:
         obj.menuActions[2].setEnabled(False)
-    #elif tipo in TYPE_LIST_DICT and obj.text() == tipo:
-        #obj.menuActions[-1].setEnabled(False)
-
+    elif obj.text() in ITEM_TYPE :
+        obj.menuActions[2].setEnabled(False)
+    if obj.type() in ('default_base','domain','link_via','categories'):
+        obj.menuActions[2].setEnabled(True)
+    # copy
     obj.menuActions[3].setEnabled(False)
-
+    # rename
     if obj.text() in ITEM_TYPE or obj.text() == "":
         obj.menuActions[4].setEnabled(False)
-
+    # refresh
     if tipo in COMPLEX_TYPES :
         obj.menuActions[5].setEnabled(True)
     else:
-        obj.menuActions[-1].setEnabled(False)
+        obj.menuActions[5].setEnabled(False)
 
 
         """
@@ -416,13 +424,13 @@ def execAction(exec_object,obj,action):
                             item.suicide()
                         recTreeLoader(pai,entry,result[entry],entry)
                 pass
-            elif tipo == 'connect':
+            elif tipo == 'connect':  # will not be honored
                 pass
             elif tipo == 'link via':
                 pass
             elif tipo == 'clause':
                 pass
-            elif tipo == 'vista': #nunca se actualiza en solitario
+            elif tipo == 'vista': # will not be honored
                 pass
 
             print ('no implementado todavia')
@@ -441,11 +449,11 @@ def execAction(exec_object,obj,action):
     elif action == 'rename':
         text = QInputDialog.getText(None, "Renombrar el nodo :"+obj.text(),"Nodo", QLineEdit.Normal,obj.text())
         obj.setData(text[0],Qt.EditRole)
-        for item in obj.listChildren():
-            if item.text() == 'name':
-                item.setColumnData(1,text[0],Qt.EditRole)
-                break
-
+        nombre = obj.getChildrenByName('name')
+        if nombre:
+            item.setColumnData(1,text[0],Qt.EditRole)
+        else:
+            obj.appendRow((CubeItem('name'),CubeItem(text[0],)))
     elif action == 'refresh':
         pass
     elif action == 'date filter':
