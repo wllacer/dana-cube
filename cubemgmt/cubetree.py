@@ -59,6 +59,7 @@ class CubeItem(QStandardItem):
         if self.hasChildren():
             while self.rowCount() > 0:
                 self.removeRow(self.rowCount() -1)
+
  
     def isAuxiliar(self):
         if self.text() in ('FIELDS','FK','FK_REFERENCE') and self.depth() == 3:
@@ -125,7 +126,16 @@ class CubeItem(QStandardItem):
             for k in range(self.rowCount()):
                 lista.append(self.child(k))
         return lista
-     
+    
+    def getChildrenValuesAsList(self,column):
+        lista = self.listChildren()
+        if len(lista) == 0:
+            return lista
+        array = []
+        for item in lista:
+            array.append(item.getColumnData(column))
+        return array
+    
     def getRow(self,role=None):
         """
           falta el rol
@@ -480,7 +490,7 @@ def main():
     parent = hiddenRoot
     for entrada in mis_cubos:
         if entrada == 'default':
-            tipo = 'default_start'
+            tipo = 'default_base'
         elif entrada in types:
             tipo = entrada
         else:

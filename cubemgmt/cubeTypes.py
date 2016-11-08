@@ -7,6 +7,12 @@ from __future__ import unicode_literals
 
 from datalayer.access_layer import DRIVERS, AGR_LIST 
 from util.fechas import CLASES_INTERVALO, TIPOS_INTERVALO
+
+"""
+    Definimos los tipos y si son hojas o nodos intermedios. Ojo todos los elementosde TYPE_LIST actuan, segun 
+    la circunsancia de una u otra forma (son arrays de valores).
+    
+"""
 ITEM_TYPE = set([
      u'agregado',
      u'base',
@@ -42,7 +48,7 @@ ITEM_TYPE = set([
      u'grouped by',
      u'guides',
      u'name',
-     u'pos',
+     # u'pos', no se de donde sale
      u'prod',
      u'rel_elem',
      u'link via',
@@ -54,32 +60,62 @@ ITEM_TYPE = set([
      u'values',
      u'vista'])
 
-TYPE_DICT = set([u'base',
-     u'default_base',
-     'connect',
-     u'default_start',
-     'domain',
-     'vista',])
+TYPE_LEAF = set([
+    'agregado',
+    'base_elem',
+    'base filter',
+    'case_sql',
+    'class',
+    'code',
+    'col',
+    'condition',
+    'cubo',
+    'date class',
+    'date period',
+    'date range',
+    'dbhost',
+    'dbname',
+    'dbpass',
+    'dbuser',
+    'default',
+    'desc',
+    'driver',
+    'elem',
+    'elemento',
+    'enum_fmt',
+    'fields',
+    'filter',
+    'fmt',
+    'grouped by',
+    'name',
+    'rel_elem',
+    'result',
+    'row',
+    'table',
+    'type',
+    'values'])
 
 TYPE_LIST = set(['case_sql',
      'fields',
      'values',
      'code',
      'desc',
-     'grouped_by',
-     'date filter'])
+     'grouped_by'])
 
-NO_ADD_LIST = set([
-    u'cubo',u'vista',u'row',u'col',u'agregado',u'elemento',
-    u'base filter',u'connect',u'dbuser',u'dbhost',u'driver',u'dbname',u'dbpass',
-    u'date class',u'date period',u'date range',
-    ])
+TYPE_DICT = set([u'base',
+     u'default_base',
+     'connect',
+     u'default_base',
+     'domain',
+     'vista',])
+
 TYPE_LIST_DICT = set([
      'categories',
      'clause',
      'guides',
      'prod',
-     'link via'])
+     'link via',
+     'date filter'])
 
 COMPLEX_TYPES = TYPE_DICT | TYPE_LIST | TYPE_LIST_DICT
 
@@ -90,37 +126,50 @@ GUIDE_CLASS = (
     ('d','fecha',),
     );
 LOGICAL_OPERATOR = ('in','between','like','=','!=','<','>','>=','<=','not in','not between','not like','is null','is not null')
-ENUM_FORMAT = ( ('t','texto'),('n','numerico'),('d','fecha'))
+ENUM_FORMAT = ( ('tXT','texto'),('num','numerico'),('date','fecha'))
 TIPO_FECHA = ('Ymd', 'Ym','Ymw','YWw') 
 FECHADOR = (('Y','Año'),('C','Cuatrimestre'),('Q','Trimestre'),('m','Mes'),('q','Quincena'),('W','Semana del Año'),('w','semana'),('d','Día'))
+
+"""
+    son elementos que solo se definen a traves de otras pantallas o directamente en la generacion
+"""
+NO_ADD_LIST = set([
+    u'cubo',u'vista',u'row',u'col',u'agregado',u'elemento',
+    u'base filter',u'connect',u'dbuser',u'dbhost',u'driver',u'dbname',u'dbpass',
+    u'date class',u'date period',u'date range',
+    u'domain',
+    ])
+
+NO_EDIT_LIST = set([u'base',])
+"""
+   son los tipos que tienen valor y hay que editar
+"""
 EDITED_ITEMS = set([
-     u'agregado',  # AGR_LIST
-     u'base_elem', #             field of  Reference  table
-     u'base filter', # free text
-     u'class',     # GUIDE_CLASS *
-     u'code',      #             field of FK table (key)
-     u'col',       # number (a guide of base)
-     u'condition', # LOGICAL_OPERATOR
-     u'cubo',      # uno de los cubos del fichero
-     u'dbhost',    # free text
-     u'dbname',    # free text 
-     u'dbpass',    # free text (ver como ocultar)
-     u'dbuser',    # free text
-     u'default',   # free text
-     u'desc',       #             field of FK table (values)
-     u'driver',   # DRIVERS
-     u'elem',      #              field of table, or derived value 
-     u'elemento',  # FIELD of cube
-     u'enum_fmt',  # ENUM_FORMAT
-     u'filter',    # free text
-     u'fmt',       # en prod = FORMATO, en categories ENUM_FORMAT
-     u'grouped by',#              field of FK table or derived value ??
-     u'name',      # free text
-     u'rel_elem',  #              field of FK table
-     u'result',    # free text
-     u'row',       # number (a guide of base)
-     u'table',     # table ...
-     u'type'])     # TIPO_FECHA
+    'agregado',
+    'class',
+    'code',
+    'col',
+    'condition',
+    'cubo',
+    'date class',
+    'date period',
+    'date range',
+    'dbhost',
+    'dbname',
+    'dbpass',
+    'dbuser',
+    'default',
+    'desc',
+    'driver',
+    'elem',
+    'elemento',
+    'filter',
+    'fmt',
+    'grouped by',
+    'name',
+    'result',
+    'row',
+    'table' ])
 
 FREE_FORM_ITEMS = set([
      u'base filter',

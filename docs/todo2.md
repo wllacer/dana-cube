@@ -100,7 +100,11 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * Color en mensajes de error
 * Hay funciones en filterDlg que pueden reutilzarse
 
+* __DONE__ NO me genera correctamente los arboles de FK
+* __WIP__ Reescritura del wizard para usarlo mas facilmente
+* Codigo para generar cubo necesita una iteración
 
+* Danacube como widget
 
 ### CubeBrowse
 
@@ -138,7 +142,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 ### DANACUBE
 
 * Juraria que habia implementado el ocultar columnas (a lo peor copiar de tablebrowse)
-  
+* Revisar la implementacion de las fechas (funciona, pero no se porqué)
 
  ### tablebrowse 
  

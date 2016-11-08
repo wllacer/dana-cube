@@ -55,16 +55,19 @@ def getDescList(fk):
         if fld[1] == 'texto':
             desc_fld.append(fld[0])
     if len(desc_fld) == 0:
-        print('No proceso correctamente por falta de texto',fk)
+        print('No proceso correctamente por falta de texto',fk['Name'],fk['ParentTable'])
         desc_fld = fk['ParentField']
     return desc_fld
 
 
 
     
-def getCubeList(rootElem):
+def getCubeList(rootElem,restricted=True):
     entradas_especiales = ('default',)
-    lista = [ item.text() for item in childItems(rootElem) if item.text() not in entradas_especiales ]
+    if restricted:
+        lista = [ item.text() for item in childItems(rootElem) if item.text() not in entradas_especiales ]
+    else:
+        lista = [ item.text() for item in childItems(rootElem) ]
     return lista
 
 def getCubeInfo(rootElem):

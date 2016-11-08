@@ -244,6 +244,8 @@ def caseConstructor(name,datos=None,**kwargs):
 sqlCase(datos,table='votos_provincia')
 
     """
+    # pequeña rutina de traduccion necesaria para el nombre de los formatos
+    fmtTrans = {'txt':'t','num':'n','date':'f'}
     #pprint(datos)
     entrada =  datos
     enum = entrada['categories']
@@ -254,8 +256,8 @@ sqlCase(datos,table='votos_provincia')
     selector = ''
     # para los resultados
     table=kwargs.get('table')
-    fmt_res=entrada.get('fmt','t')
-    fmt_val=entrada.get('enum_fmt')
+    fmt_res=fmtTrans[entrada.get('fmt','txt')]
+    fmt_val=fmtTrans[entrada.get('enum_fmt','txt')]
     # aqui creo la sentencia
     casetree=[]
     for entry in enum:

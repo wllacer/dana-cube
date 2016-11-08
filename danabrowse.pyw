@@ -175,7 +175,7 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
         #Leeo la configuracion
 
-
+        self.maxlevel = 2  #para poder modificarlo luego
         self.dictionary = DataDict()
         #TODO variables asociadas del diccionario. Reevaluar al limpiar
         self.baseModel = self.dictionary.baseModel
@@ -397,12 +397,15 @@ class MainWindow(QMainWindow):
         
     @waiting_effects
     def cubebrowse(self,confName,schema,table):
-        infox = info2cube(self.dictionary,confName,schema,table)
+        # aqui tiene que venir un dialogo para seleccionar nombre del cubo
+        infox = info2cube(self.dictionary,confName,schema,table,self.maxlevel)
+        print(table,self.maxlevel)
+        pprint(infox)
         #cubeMgr = CubeBrowserWin(confName,schema,table,self.dictionary,self)
         if self.cubeMgr and not self.cubeMgr.isHidden():
             self.hideCube()
-        self.cubeMgr = CubeMgr(self,confName,schema,table,self.dictionary)
-        self.cubeMgr.expandToDepth(3)        
+        self.cubeMgr = CubeMgr(self,confName,schema,table,self.dictionary,rawCube=infox)
+        self.cubeMgr.expandToDepth(1)        
         #if self.configSplitter.count() == 1:  #de momento parece un modo sencillo de no multiplicar en exceso
         self.configSplitter.addWidget(self.cubeMgr)
 

@@ -183,7 +183,7 @@ class CubeBrowserWin(QMainWindow):
     
 
 class CubeMgr(QTreeView):
-    def __init__(self,parent=None,confName=None,schema=None,table=None,pdataDict=None,configFile=None):
+    def __init__(self,parent=None,confName=None,schema=None,table=None,pdataDict=None,configFile=None,rawCube=None):
         super(CubeMgr, self).__init__(parent)
         
         if not configFile:
@@ -201,17 +201,20 @@ class CubeMgr(QTreeView):
         self.baseModel = QStandardItemModel()
         self.hiddenRoot = self.baseModel.invisibleRootItem()
         self.particular = False #variable auxiliar para saber que tipo de uso hago
-        self.setupModel(confName,schema,table)
+        self.setupModel(confName,schema,table,rawCube)
         
         self.view = self  #truco para no tener demasiados problemas de migracion
         self.setupView()
 
         print('inicializacion completa')
 
-    def setupModel(self,confName=None,schema=None,table=None ):
+    def setupModel(self,confName=None,schema=None,table=None,rawCube=None):
             #self.dataDict=DataDict(conn=confName,schema=schema)
-        if confName and schema and table:
-            print('por aqui')
+        if confName and schema and table and rawCube:
+            self.particular = True
+            self.particularContext=(confName,schema,table,rawCube)
+            info = rawCube
+        elif confName and schema and table :
             info = info2cube(self.dataDict,confName,schema,table)
             self.particular = True
             self.particularContext=(confName,schema,table)
@@ -232,7 +235,7 @@ class CubeMgr(QTreeView):
             print('Algo ha fallado espectacularmente',self.particular,self.particularContext)
         for entrada in sorted(info):  #quiero que el orden sea constante
             if entrada == 'default':
-                tipo = 'default_start'
+                tipo = 'default_base'
             elif entrada in ITEM_TYPE:
                 tipo = entrada
             else:
@@ -253,7 +256,8 @@ class CubeMgr(QTreeView):
         self.view.expandAll() # es necesario para el resize
         for m in range(self.baseModel.columnCount()):
             self.view.resizeColumnToContents(m)
-        #self.view.collapseAll()
+        self.view.collapseAll()
+        self.view.expandToDepth(1)     
         #self.view.verticalHeader().hide()
         #self.view.setHeaderHidden(True)
         #self.view.setSortingEnabled(True)
