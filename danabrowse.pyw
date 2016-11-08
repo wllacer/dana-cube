@@ -14,7 +14,7 @@ from PyQt5.QtGui import QCursor, QStandardItemModel, QStandardItem, QIcon
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QSplitter, QAbstractItemView, QMenu,\
           QDialog, QLineEdit,QLabel,QDialogButtonBox, QVBoxLayout, QHBoxLayout, QComboBox, QCheckBox,\
           QPushButton, QMessageBox, \
-          QTableView
+          QTableView, QSpinBox
 
 from  sqlalchemy import create_engine,inspect,MetaData, types
 from  sqlalchemy.exc import CompileError, OperationalError, ProgrammingError, InterfaceError
@@ -84,7 +84,6 @@ class ConnectionSheetDlg(QDialog):
         actionButton.setDefault(True)
         
         
-
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel,
                                      Qt.Horizontal)
         buttonBox.addButton(actionButton,QDialogButtonBox.ActionRole)
@@ -158,6 +157,50 @@ class ConnectionSheetDlg(QDialog):
             self.data[k] = valor
         QDialog.accept(self)
 
+class GenerationSheetDlg(QDialog):
+    """
+       Genera (mas o menos) una hoja de propiedades
+    """
+    def __init__(self,title,tableName,maxLevel,parent=None):   
+        super(GenerationSheetDlg, self).__init__(parent)
+        # cargando parametros de defecto
+        self.context = (('Nombre del cubo',QLineEdit,None),
+                        ('Profundidad de enlaces',QSpinBox,{"setRange":(1,5)}),
+                       )
+        self.data = [ tableName,maxLevel ]
+        #
+        InicioLabel = QLabel(title)
+        #
+        self.sheet=WPropertySheet(self.context,self.data)
+       
+
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel,
+                                     Qt.Horizontal)
+
+        #formLayout = QHBoxLayout()
+        meatLayout = QVBoxLayout()
+        buttonLayout = QHBoxLayout()
+        
+       
+        meatLayout.addWidget(InicioLabel)
+        meatLayout.addWidget(self.sheet)
+        buttonLayout.addWidget(buttonBox)
+        meatLayout.addLayout(buttonLayout)
+        
+        self.setLayout(meatLayout)
+        self.setMinimumSize(QSize(382,200))
+        
+        buttonBox.accepted.connect(self.accept)
+        buttonBox.rejected.connect(self.reject)
+        
+        self.setWindowTitle("Generation manager")
+        
+        
+
+              
+    def accept(self):
+        self.data = self.sheet.values()
+        QDialog.accept(self)
     
 def showConnectionError(context,detailed_error):
     msg = QMessageBox()
@@ -234,9 +277,10 @@ class MainWindow(QMainWindow):
 
 
         self.view.expandAll()
-        #for m in range(self.baseModel.columnCount()):
-            #self.view.resizeColumnToContents(m)
+        for m in range(self.baseModel.columnCount()):
+            self.view.resizeColumnToContents(m)
         self.view.collapseAll()
+        self.view.expandToDepth(0)     
         #self.view.setHeaderHidden(True)
         #self.view.setSortingEnabled(True)
         #self.view.setRootIsDecorated(False)
@@ -395,12 +439,17 @@ class MainWindow(QMainWindow):
         self.queryModel.clear()
         self.queryMenu.setEnabled(False)
         
-    @waiting_effects
+
     def cubebrowse(self,confName,schema,table):
         # aqui tiene que venir un dialogo para seleccionar nombre del cubo
-        infox = info2cube(self.dictionary,confName,schema,table,self.maxlevel)
-        print(table,self.maxlevel)
-        pprint(infox)
+        maxLevel = self.maxlevel
+        parmDlg = GenerationSheetDlg('Parámetros de generación',table,maxLevel)   
+        if parmDlg.exec_():
+            kname = parmDlg.data[0]
+            maxLevel = parmDlg.data[1]
+        infox = info2cube(self.dictionary,confName,schema,table,maxLevel)
+        if kname != table:
+            infox[kname] = infox.pop(table)
         #cubeMgr = CubeBrowserWin(confName,schema,table,self.dictionary,self)
         if self.cubeMgr and not self.cubeMgr.isHidden():
             self.hideCube()
