@@ -591,6 +591,9 @@ class Vista:
         sqlDef['base_filter']=mergeString(self.filtro,self.cubo.definition['base filter'],'AND')
         sqlDef['where'] = []
         for item in  self.cubo.definition.get('date filter',[]) :
+            for entry in ('date class','date range','date period'): #necesito numerizarlo
+                item[entry] = int(item[entry])
+                
             if item['date class'] != 0:
                     intervalo = dateRange(item['date class'],item['date range'],periodo=item['date period'])
                     sqlDef['where'].append((item['elem'],'BETWEEN',intervalo,'f'))
@@ -671,6 +674,9 @@ class Vista:
             sqlDef['where'] = []
             for item in  self.cubo.definition.get('date filter',[]) :
                 if item['date class'] != 0:
+                        for entry in ('date class','date range','date period'): #necesito numerizarlo
+                            item[entry] = int(item[entry])
+
                         intervalo = dateRange(item['date class'],item['date range'],periodo=item['date period'])
                         sqlDef['where'].append((item['elem'],'BETWEEN',intervalo,'f'))
 

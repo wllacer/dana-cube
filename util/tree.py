@@ -40,7 +40,10 @@ class TreeItem(object):
         if desc is None:
             self.desc = key
         elif isinstance(desc,(list,tuple)):
-            self.desc = ', '.join(desc)
+            try:
+                self.desc = ', '.join(desc)
+            except TypeError:
+                self.desc = ', '.join([str(item) for item in desc ])
         else:
             self.desc = desc
          

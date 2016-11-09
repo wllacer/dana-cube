@@ -89,6 +89,36 @@ def guideWizard(exec_object,obj):
         return None
 
 
+class CubeWizard(QWizard):
+    def __init__(self,exec_object,obj):
+        super(CubeWizard,self).__init__()
+        """
+           convierto los parametros en atributos para poder usarlos en las paginas 
+        """
+        self.exec_object = exec_object
+        self.modelo = obj.model() # es necesario para que el delete no pierda la localizacion
+        self.tipo = obj.type()
+        self.jerarquia = obj.typeHierarchy()
+        if not self.tipo:   
+            print('NO tiene tipo',obj.getDataList())
+
+    
+        if self.tipo in ('guides','prod','domain'):
+            self.setPage(ixWzBase, WzBase(exec_object,obj))
+            self.setPage(ixWzCategory, WzCategory(exec_object,obj))
+            self.setPage(ixWzRowEditor, WzRowEditor(exec_object,obj))
+            self.setPage(ixWzTime, WzTime(exec_object,obj))
+            self.setPage(ixWzLink, WzLink(exec_object,obj))
+            self.setPage(ixWzJoin, WzJoin(exec_object,obj))
+        elif self.tipo in ('categories'):
+            self.setPage(ixWzCategory, WzCategory(exec_object,obj))
+            pass
+        
+        # TODO if domain elem should be gotten from actual value
+        #      in categories, it should be loaded with existing categories
+        self.setWindowTitle("Definición de guias")
+        self.show()
+
 class WzBase(QWizardPage):
     #FIXME no se si todo el bloqueo de fechas tenia sentido. Me temo que en SQLITE no
     def __init__(self,exec_object,obj,parent=None):
@@ -184,39 +214,11 @@ class WzBase(QWizardPage):
         # control parcial tipo y cosas que se pueden hacer.
         # el tipo se normalizara al generar el arbol
         if   ind in (0,1,3): # nomral jerarquia
-#                self.directCtorRB.setDisabled(False)
             self.directCtorRB.setChecked(True)
-            #self.catCtorRB.setDisabled(False)
-            #self.catCtorRB.setChecked(False)
-            #self.caseCtorRB.setDisabled(False)
-            #self.caseCtorRB.setChecked(False)
-            #self.dateCtorRB.setDisabled(True)
-            #self.dateCtorRB.setChecked(False)
-            #self.linkCtorRB.setDisabled(False)
-            #self.linkCtorRB.setChecked(True)
         elif ind == 2: # categorias
-            #self.directCtorRB.setDisabled(True)
-            #self.directCtorRB.setChecked(False)
-            #self.catCtorRB.setDisabled(False)
             self.catCtorRB.setChecked(True)
-            #self.caseCtorRB.setDisabled(False)
-            #self.caseCtorRB.setChecked(False)
-            #self.dateCtorRB.setDisabled(True)
-            #self.dateCtorRB.setChecked(False)
-            #self.linkCtorRB.setDisabled(True) #de momento
-            #self.linkCtorRB.setChecked(False)
         elif ind == 4: #fecha
-            #self.directCtorRB.setDisabled(True)
-            #self.directCtorRB.setChecked(False)
-            #self.catCtorRB.setDisabled(True)
-            #self.catCtorRB.setChecked(False)
-            #self.caseCtorRB.setDisabled(False)
-            #self.caseCtorRB.setChecked(False)
-            #self.dateCtorRB.setDisabled(False)
             self.dateCtorRB.setChecked(True)
-            #self.linkCtorRB.setDisabled(True) #de momento
-            #self.linkCtorRB.setChecked(False)
-            
             
     def campoElegido(self,ind):
         formato = self.fieldArray[ind - 1][2]
@@ -288,7 +290,8 @@ class WzCategory(QWizardPage):
         
         self.loadData()
 
-    def initializePage(self):            
+    def initializePage(self): 
+        print('paso por aqui')
         self.wizard().setOptions(QWizard.HaveCustomButton1)
         self.setButtonText(QWizard.CustomButton1,'Mas entradas')
         self.wizard().customButtonClicked.connect(self.addEntry)
@@ -552,7 +555,10 @@ class WzLink(QWizardPage):
         self.targetCodeList.clear()
         self.targetDescList.clear()
         self.targetCodeList.addItems(self.listOfFields)
-        self.targetDescList.addItems(self.listOfFields)
+        self.targetDescList.addItems(self.listOfFields) 
+    
+    def initializePage(self): 
+        print('paso por aqui')
         
 class WzJoin(QWizardPage):
     """
@@ -646,35 +652,6 @@ class WzJoin(QWizardPage):
 
 
 
-class CubeWizard(QWizard):
-    def __init__(self,exec_object,obj):
-        super(CubeWizard,self).__init__()
-        """
-           convierto los parametros en atributos para poder usarlos en las paginas 
-        """
-        self.exec_object = exec_object
-        self.modelo = obj.model() # es necesario para que el delete no pierda la localizacion
-        self.tipo = obj.type()
-        self.jerarquia = obj.typeHierarchy()
-        if not self.tipo:   
-            print('NO tiene tipo',obj.getDataList())
-
-    
-        if self.tipo in ('guides','prod','domain'):
-            self.setPage(ixWzBase, WzBase(exec_object,obj))
-            self.setPage(ixWzCategory, WzCategory(exec_object,obj))
-            self.setPage(ixWzRowEditor, WzRowEditor(exec_object,obj))
-            self.setPage(ixWzTime, WzTime(exec_object,obj))
-            self.setPage(ixWzLink, WzLink(exec_object,obj))
-            self.setPage(ixWzJoin, WzJoin(exec_object,obj))
-        elif self.tipo in ('categories'):
-            self.setPage(ixWzCategory, WzCategory(exec_object,obj))
-            pass
-        
-        # TODO if domain elem should be gotten from actual value
-        #      in categories, it should be loaded with existing categories
-        self.setWindowTitle("Definición de guias")
-        self.show()
 
 
 def categoryClause(wizard):

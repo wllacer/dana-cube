@@ -67,7 +67,7 @@ from tablebrowse import *
 
 #from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTableView, QSplitter
+from  PyQt5.QtWidgets import QApplication, QMainWindow, QWizard,QWizardPage,QLabel,QComboBox,QGridLayout,QGroupBox,QRadioButton,QVBoxLayout,QGridLayout,QPlainTextEdit,QListWidget,QCheckBox
 
 from datalayer.query_constructor import *
 
@@ -112,14 +112,7 @@ import cubebrowse as cb
 import time
 
 
-
-if __name__ == '__main__':
-    import sys
-    # para evitar problemas con utf-8, no lo recomiendan pero me funciona
-    if sys.version_info[0] < 3:
-        reload(sys)
-        sys.setdefaultencoding('utf-8')
-
+def miniCube():
     app = QApplication(sys.argv)
     win = QMainWindow()
     confName = 'MariaBD Local'
@@ -134,9 +127,90 @@ if __name__ == '__main__':
     win.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
     win.show()
     app.exec_()
-    pprint(cubo)
     exit()
+    
+class MiniWizard(QWizard):
+    def __init__(self):
+        super(MiniWizard,self).__init__()
+        """
+           convierto los parametros en atributos para poder usarlos en las paginas 
+        """
+        self.setPage(1, Wz1())
+        self.setPage(2, Wz2())
+        self.setPage(3, Wz3())
+        self.setPage(4, Wz4())
+        self.setWindowTitle('Tachan')
+        self.show()
 
+class Wz1(QWizardPage):
+    def __init__(self,parent=None):
+        super(Wz1,self).__init__(parent)
+        self.contador = 0
+        self.diccionario = {'alfa':'omega'}
+        
+    def initializePage(self):
+        self.contador += 1
+
+class Wz2(QWizardPage):
+    def __init__(self,parent=None):
+        super(Wz2,self).__init__(parent)
+        self.contador = 0
+    def initializePage(self):
+        self.contador += 1
+        self.wizard().page(1).diccionario[self.contador] = 'iteracion' + str(self.contador)
+
+class Wz3(QWizardPage):
+    def __init__(self,parent=None):
+        super(Wz3,self).__init__(parent)
+
+        linkLabel = QLabel("¿Quiere volver a empezar?")
+        self.linkCheck = QCheckBox()
+        linkLabel.setBuddy(self.linkCheck)
+        self.linkCheck.stateChanged.connect(self.estadoLink)
+        
+
+        layout = QGridLayout()
+        layout.addWidget(linkLabel,0,0)
+        layout.addWidget(self.linkCheck,0,1)
+        self.setLayout(layout)
+
+        self.contador = 0
+    
+    def estadoLink(self):
+        if self.linkCheck.isChecked():
+            self.wizard().setStartId(2);
+            self.wizard().restart()        
+    def initializePage(self):
+        self.contador += 1
+
+class Wz4(QWizardPage):
+    def __init__(self,parent=None):
+        super(Wz4,self).__init__(parent)
+        self.contador = 0
+    def initializePage(self):
+        self.contador += 1
+        
+
+
+def miniWizard():
+    
+    app = QApplication(sys.argv)
+    wizard = MiniWizard()        
+    if wizard.exec_() :
+        print('Milagro',wizard.page(1).contador,wizard.page(2).contador,wizard.page(3).contador)
+        print(wizard.page(1).diccionario)
+        exit()
+
+if __name__ == '__main__':
+    import sys
+    # para evitar problemas con utf-8, no lo recomiendan pero me funciona
+    if sys.version_info[0] < 3:
+        reload(sys)
+        sys.setdefaultencoding('utf-8')
+
+    #app = QApplication(sys.argv)
+    miniCube()
+    #miniWizard()
     #window = TableBrowserWin('MariaBD Local','sakila','film',pdataDict=None)
     #dataDict=DataDict()
     #window = TableBrowserWin('MariaBD Local','sakila','film',pdataDict=dataDict)
