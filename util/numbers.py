@@ -12,6 +12,54 @@ Documentation, License etc.
 import math
 # import random
 
+#def fmtNumber(number, fmtOptions):
+    #""" taken from Rapid development with PyQT book (chapter 5) """
+    #fraction, whole = math.modf(number)
+    #sign = "-" if whole < 0 else ""
+    #whole = "{0}".format(int(math.floor(abs(whole))))
+    #digits = []
+    #for i, digit in enumerate(reversed(whole)):
+        #if i and i % 3 == 0:
+            #digits.insert(0, fmtOptions["thousandsseparator"])
+        #digits.insert(0, digit)
+    #if fmtOptions["decimalplaces"]:
+        #fraction = "{0:.7f}".format(abs(fraction))
+        #fraction = (fmtOptions["decimalmarker"] +
+                #fraction[2:fmtOptions["decimalplaces"] + 2])
+    #else:
+        #fraction = ""
+    #text = "{0}{1}{2}".format(sign, "".join(digits), fraction)#
+    
+    #return text, sign
+
+def fmtNumber(number, optDict=None):
+    fmtOpt = dict(thousandsseparator=",",
+                    decimalmarker=".",
+                    decimalplaces=2)
+    if optDict:
+        for item in fmtOpt:
+            if item in optDict:
+                fmtOpt[item] = optDict[item] if optDict[item] != '' else None
+
+    if fmtOpt['thousandsseparator'] and fmtOpt['decimalmarker'] == fmtOpt['thousandsseparator']:
+        fmtOpt['thousandsseparator'] = '.' if fmtOpt['decimalmarker'] == ',' else ','
+
+    
+    formatter = '{{:{}{}{}{}}}'.format(',' if fmtOpt['thousandsseparator'] else '',
+                                     '.' if fmtOpt['decimalplaces'] else '',
+                                     fmtOpt['decimalplaces'] if fmtOpt['decimalplaces'] else '',
+                                     'f' if fmtOpt['decimalplaces'] else '',)
+    cadena = formatter.format(number)
+    if fmtOpt['thousandsseparator'] not in (',','.'):
+        cadena = cadena.replace(',',fmtOpt['thousandsseparator'])
+    if fmtOpt['decimalmarker'] not in ('.',','):
+        cadena = cadena.replace('.',fmtOpt['decimalmarker'])
+    elif fmtOpt['thousandsseparator'] == '.' and fmtOpt['decimalmarker'] == ',':
+        cadena = cadena.replace('.','@').replace(',','.').replace('@',',')
+    sign = '-' if number < 0 else ''
+    return cadena,sign
+    
+
 def is_number(s):
     try:
         n=str(float(s))

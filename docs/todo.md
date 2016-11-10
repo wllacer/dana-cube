@@ -39,12 +39,12 @@
     * __DONE__ en campos sin tipò (sqlite) no ignorar como hasta ahora. Default type es TEXT
     * __DONE__ Funcion cambiar nombre de la conexión 
     * Caso de relaciones por mas de un campo. Desde definición a explotacion
-    * Consulta recursiva de FKs
+    * __DONE__ Consulta recursiva de FKs
     * Consulta inversa por FK
     * Sustituir pantalla partida por pestañas
     * Cada pestaña thread distinto
     * __DONE__ Limit en las queries neutral (1000 como defecto)
-    * hide columnas
+    * __DONE__ hide columnas
     * En cubebrowse, edicion se chequea el tipo 2 veces
     
     
@@ -53,15 +53,15 @@
   *__DONE__ heavy simplification of core codepaths, and several internal structures.(6/4/16)
   *__DONE__ handling of date indexes. I devolved to a simple structure, each date format must be defined explicitly
   *__DONE__ Adapt GUI to new internal structures
-  * name of elements in hierarchy YML
+  *__DONE__ name of elements in hierarchy YML 
 
 * BUG errror en sql acaba en cualquier sitio (tiene que ver con waiting_functions)
 * Simplificar la sintaxis del cubo para los casos mas sencillos
-* Cubo como parametro de arranque
+* __DONE__ Cubo como parametro de arranque
 * BUG En gran total: el problema es que existen ENUMS u los datos son recuperados por orden de ENUM. No orden natural
 * __DONE__ fechas con datetime como objeto
 * Time como objetos
-* Procesar vistas
+* __DONE__ Procesar vistas
 * BUG Cursor se desmanda
 * __DONE__ Categorizacion de trimestres / cuatrimestres independiente del gestor
 * __DONE__ Generalizacion codigo de trimestralización hasta lo mas posible
@@ -90,8 +90,8 @@
     * Calculated  
     * Presentation 
     * _HOLD_ functionally not its place (now in view should be in model)
-  * Dynamic Filter
-        * _WIP_ rough UI is in place (propertySheetEditor)
+  * __DONE__Dynamic Filter
+        * rough UI is in place (propertySheetEditor)
 
  
  
@@ -103,7 +103,7 @@
   * General
     * Login screen for DB that need it
     * _WIP_ Favorites function (definitions in new configuration)
-    * Preset time intervals as general option in cube (this,(N) period (today backwards),(N) last (not including))x(week,month,year)
+    * __DONE__ Preset time intervals as general option in cube (this,(N) period (today backwards),(N) last (not including))x(week,month,year)
     * basic source a query instead of a table
     * more than one measure
     * __DONE__ function: recode (partially solved with categories/ user functions)
@@ -116,8 +116,8 @@
   * Configuration
     * create from directory entry
     * ready made entries
-  * Context menu https://wiki.python.org/moin/PyQt/Creating%20a%20context%20menu%20for%20a%20tree%20view
-  * __HOLD__ (configuration) Preset time intervals as general option in cube (this,(N) period (today backwards),(N) last (not including))x(week,month,year) 
+  * __DONE__ Context menu https://wiki.python.org/moin/PyQt/Creating%20a%20context%20menu%20for%20a%20tree%20view
+  * __DONE__ (configuration) Preset time intervals as general option in cube (this,(N) period (today backwards),(N) last (not including))x(week,month,year) 
   * Traspose on actual data not view base data
   * Replayable log (w || w&o parameters ?)
 
@@ -131,7 +131,7 @@
   * Integration of dates and categories in hierarchies (casi irresoluble, penaliza gravemente el rendimiento)
   * KABOOM on cube change -> cancel
   * tamaño de algun elemento de la lista
-  * Alchemy no carga en Python3
+  * __DONE__ Alchemy no carga en Python3
   * Cabeceras de columnas con GRAND_TOTAL one off
   * en el WPowerWidget separar configuracion de datos para poder usar tuplas
   * RED NEGATIVE NUMBERS no funciona correctamente

@@ -25,7 +25,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QTableView, QSplitter, QM
 
 from datalayer.query_constructor import *
 from dialogs import dataEntrySheetDlg
-from models import fmtNumber               
+from util.numbers import fmtNumber               
 from cubemgmt.cubeTypes import LOGICAL_OPERATOR
 from filterDlg import filterDialog
 

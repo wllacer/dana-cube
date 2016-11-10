@@ -17,7 +17,7 @@ We have created an environment where you can run an -almost- arbitrary aggregate
 
 ![Screenshot](docs/screenshot.png "Title")
 
-This is __not an end user tool__ , rather it is designed to be used for knowledgable users (DBAs, developers, data owners) or as a ready made __API__ cum sample tool to be integrated in other's people work (as it still is in heavy development, _Caveat emptor_ ).
+This is __not designed as an end user tool__ , rather it is designed to be used for knowledgable users (DBAs, developers, data owners) or as a ready made __API__ cum sample tool to be integrated in other's people work (as it still is in heavy development, _Caveat emptor_ ).
 
 
 Each instance of the application runs against what we call a Cube. This is the view of a data table (or table-like DB object -a view, a select statement, ...) and the definition of the potential indexes over which to search. This indexes can be scalar fields or hierarchical structures. If the index is a date field; we automatically provide (for SQLITE, MySQL, PostGreSQL and Oracle, atm) for several subindexes (years, years-month, ...) The definition of the Cube is a simple text (Json) file like this
@@ -73,22 +73,33 @@ in Master
 
 ## Dependencies
 
-Besides PyQt, we use  [SqlAlchemy](http://www.sqlalchemy.org/) as a data backend (only core functionality). If you don't 
+Besides PyQt, we use:
+
+* [SqlAlchemy](http://www.sqlalchemy.org/) as a data backend (only core functionality). If you don't 
 want it, can be made to fallback to plain PyQt/QtSql (by hand, actually, and only for the cube viewer)
+* [DateUtil](https://pypi.python.org/pypi/python-dateutil/2.6.0) for some date related functions
+* [SqlParse](https://pypi.python.org/pypi/sqlparse/0.2.2) ( _Optional_ ) for some trace outputs
+* [XlsxWriter](https://pypi.python.org/pypi/XlsxWriter) Guess it ...
 
 ## License
 
-For my part, while I (Werner Llácer Viciano) retain all ownership of the code, you can use it as you see fit.
+For my part, while I (Werner Llácer Viciano) retain all ownership of the code, this is an open source product.
 
-Good policy would be to, at least, acknowledge my autorship of this piece of code and, even better, to send upstream all corrections and enhancements to the original functionality.
+__Best policy__ would be to comply to the terms of the __LGPL__ license family (I find it the most honest license both for the authors and the users)
 
-PyQt licensing might impose other restrictions, please keep an eye on it (AFAIK it is __GPL__ licensed)
+__a good enough policy__ would be to acknowledge my autorship of this piece of code and to send upstream all corrections and enhancements to the original functionality.
+
+If in doubt, or your legal overlords demand some clear answer, then, my code is __LGPL v2 and/or greater than__ licensed.
+Two _caveats_ :
+* IIRC, the *GPL licenses demand that the code must be made available by the distributor. I think that linking where the source of Danacube resides covers it. Although it might be, from the practical POV a bad idea: repositories may move, version changes could be destructive, and any private enhancement could get lost, ...
+* I'm not into legal hairsplitting, so just to avoid confusion, I don't mind if the code is used in/distributed with products under other open source license in the broad sense, as long as they honor my licensing for my code
+
+Qt, PyQt -and the additional libraries-, licensing might impose other restrictions, please keep an eye on it (AFAIK PyQt is/was __GPL__ licensed)
 
 
 ## Actual Status
 
-__MASTER works__ but some pieces are lacking (Above all documentation). The latest __release__ has still not converted
-to the new code. 
+__MASTER works__ but some pieces are lacking (Above all documentation). The latest __release__ is a good preview
 
 _Update XXIII ordinary sunday (vesper of S. Raphael Archangel 2016_ . For the first time, the code has all the main components in place. A release will be tagged during the day
 Of course there are still lots of bugs or areas with a minimal implementation, but the tool is usable on its full life cycle, so real debugging, -and fleshing- can start

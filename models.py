@@ -19,28 +19,10 @@ from PyQt5.QtGui import QColor
 
 from core import Cubo,Vista
 from util.tree import *
-from util.fivenumbers import isOutlier
+from util.numbers import isOutlier,fmtNumber
 
 
-def fmtNumber(number, fmtOptions):
-    """ taken from Rapid development with PyQT book (chapter 5) """
-    fraction, whole = math.modf(number)
-    sign = "-" if whole < 0 else ""
-    whole = "{0}".format(int(math.floor(abs(whole))))
-    digits = []
-    for i, digit in enumerate(reversed(whole)):
-        if i and i % 3 == 0:
-            digits.insert(0, fmtOptions["thousandsseparator"])
-        digits.insert(0, digit)
-    if fmtOptions["decimalplaces"]:
-        fraction = "{0:.7f}".format(abs(fraction))
-        fraction = (fmtOptions["decimalmarker"] +
-                fraction[2:fmtOptions["decimalplaces"] + 2])
-    else:
-        fraction = ""
-    text = "{0}{1}{2}".format(sign, "".join(digits), fraction)#
-    
-    return text, sign
+
 
 class TreeModel(QAbstractItemModel):
     def __init__(self, datos, parent=None):
@@ -86,7 +68,7 @@ class TreeModel(QAbstractItemModel):
         else:
             if role == Qt.DisplayRole:
                 text, sign = fmtNumber(item.data(index.column()),self.datos.format)
-                return '{}{}'.format(sign,text)
+                return text #'{}{}'.format(sign,text)
             else:
                 return item.data(index.column())
                 #return text

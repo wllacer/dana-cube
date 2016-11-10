@@ -28,7 +28,7 @@ from datalayer.access_layer import dbDict2Url
 from tablebrowse import *
 from datemgr import genTrimestreCode
 from util.jsonmgr import *
-from util.fivenumbers import is_number
+from util.numbers import is_number
 from dialogs import propertySheetDlg
 
 from cubemgmt.cubetree import *

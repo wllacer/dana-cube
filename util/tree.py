@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 
 from pprint import pprint
 
-from util.fivenumbers import stats
+from util.numbers import stats
 
 (_ROOT, _DEPTH, _BREADTH) = range(3)
 DELIMITER=':'
@@ -201,6 +201,7 @@ class TreeItem(object):
         return 'TreeItem({},{},{})'.format(self.key,self.ord,self.desc)
 
 class TreeDict(object):
+    
     def __init__(self):
         self.content={}
         self.rootItemKey="/"
