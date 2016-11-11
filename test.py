@@ -19,9 +19,17 @@ from operator import attrgetter,methodcaller
 from pprint import pprint
 
 from  PyQt5.QtWidgets import QApplication
-from exportWizard import miniWizard
-from util.numbers import fmtNumber
 
+
+import exportWizard as eW
+from util.numbers import fmtNumber
+from util.jsonmgr import dump_structure
+try:
+    import xlsxwriter
+    XLSOUTPUT = True
+except ImportError:
+    XLSOUTPUT = False
+    
 (_ROOT, _DEPTH, _BREADTH) = range(3)
 
 def presentaIndice(cubo,num):
@@ -32,59 +40,15 @@ def presentaIndice(cubo,num):
         print (ind,key,elem.ord,elem.desc,elem.parentItem.key)
         ind += 1
 
-def __getHeader(header_tree,dim,sparse,content):
-    tabla = list()
-    for key in header_tree.traverse(mode=1):
-        entry = ['' for k in range(dim) ]
-        elem = header_tree[key]
-        if content == 'branch' and elem.isLeaf() and dim > 1:
-            continue
-        if content == 'leaf' and not elem.isLeaf():
-            continue
-        
-        desc = elem.getFullDesc() 
-        if sparse:
-            entry[elem.depth() -1] = desc[-1]
-        else:
-            for k in range(desc):
-                entry[k] = desc[k]
-                
-        if content == 'branch' and dim > 1:
-            del entry[dim -1 ]
-        elif content == 'leaf' :
-            while len(entry) > 1:
-                del entry[0]
-                
-        entry.append(elem.ord)
-        tabla.append(entry)
-    return tabla  
-
 def export(vista,parms,selArea=None):
-    """
-        parms['file']
-        parms['type'] = ('csv','xls','json','html')
-        *parms['csvProp']['fldSep'] 
-        *parms['csvProp']['decChar']
-        *parms['csvProp']['txtSep'] 
-        *parms['NumFormat'] 
-        parms['filter']['scope'] = ('all','visible,'select') 
-        *parms['filter']['content'] = ('full','branch','leaf')
-        parms['filter']['totals'] 
-        *parms['filter']['horSparse'] 
-        *parms['filter']['verSparse']
-
-    """
-    contentFilter = parms['filter']['content']
-    row_sparse = parms['filter']['horSparse']
-    col_sparse = parms['filter']['verSparse']
-    translated = parms['NumFormat']
+    file = parms['file']
+    type = parms['type']
+    if type == 'xls' and not XLSOUTPUT:
+        type = 'csv'
+        print('Xls writer no disponible, pasamos a csv')
     fldSep  = parms['csvProp']['fldSep']
-    txtSep = parms['csvProp']['txtSep']                       
-    numFmt = parms['NumFormat']
-    decChar = parms['csvProp']['decChar']
-    
-    ind = 1
-    
+    txtSep = parms['csvProp']['txtSep'] 
+
     def csvFormatString(cadena):
         if fldSep in cadena:
             if txtSep in cadena:
@@ -93,52 +57,44 @@ def export(vista,parms,selArea=None):
         else:
             return cadena
 
-    def num2text(number):
-        if numFmt:
-            return fmtNumber(number,{'decimalmarker':decChar})[0]
-        elif decChar != '.':
-            return '{}'.format(number).replace('.',decChar)
-        else:
-            return str(number)
-    
-    dim_row = vista.dim_row
-    dim_col = vista.dim_col
-        
-    row_hdr = __getHeader(vista.row_hdr_idx,dim_row,row_sparse,contentFilter)
-    col_hdr = __getHeader(vista.col_hdr_idx,dim_col,col_sparse,contentFilter)
-    
-    num_rows = len(row_hdr)
-    num_cols = len(col_hdr)
-    
-    dim_row = len(row_hdr[0]) -1
-    dim_col = len(col_hdr[0]) -1
-    
-    ctable = [ ['' for k in range(num_cols + dim_row)] 
-                            for j in range(num_rows +dim_col) ]
+    ctable,dim_row,dim_col = vista.getExportData(parms,selArea=None)
+    if type == 'csv':
+        with open(parms['file'],'w') as f:
+            for row in ctable:
+                csvrow = [ csvFormatString(item) for item in row ]
+                f.write(fldSep.join(csvrow) + '\n')
+        f.closed
+    elif type == 'json':
+        dump_structure(ctable,parms['file'])
+    elif type == 'html':
+        fldSep = '</td><td>'
+        hdrSep = '</th><th>'
+        with open(parms['file'],'w') as f:
+            f.write('<table>\n')
+            f.write('<head>\n')
+            cont = 0
+            for row in ctable:
+                htmrow = [item.strip() for item in row ]
+                if cont < dim_col:
+                    f.write('<tr><th>'+hdrSep.join(htmrow) + '</th></tr>\n')
+                    cont +=1
+                elif cont == dim_col:
+                    f.write('</thead>\n')
+                    f.write('<tr><td>'+fldSep.join(htmrow) + '</td></tr>\n')
+                    cont += 1
+                else:
+                    f.write('<tr><td>'+fldSep.join(htmrow) + '</td></tr>\n')
+            f.write('</body>\n')
+            f.write('</table>\n')
+        f.closed
 
-    for i in range(num_cols):
-        for j,colItem in enumerate(col_hdr[i]):
-            if j >= dim_col:
-                break
-            ctable[j][i + dim_row]=colItem
-            
-    for i in range(num_rows):
-        for j,rowItem in enumerate(row_hdr[i]):
-            if j >= dim_row:
-                break
-            ctable[i + dim_col][j]=rowItem
-    table = vista.toTable()
-    
-    for i in range(num_rows):
-        x = row_hdr[i][-1]
-        for j in range(num_cols):
-            y = col_hdr[j][-1]
-            ctable[i + dim_col][j + dim_row] = num2text(table[x][y]) if table[x][y] else ''  #TODO aqui es el sito de formatear numeros
-            
-    with open(parms['file'],'w') as f:
-        for row in ctable:
-            f.write(fldSep.join(row) + '\n')
-    f.closed
+    elif type == 'xls':
+        workbook = xlsxwriter.Workbook(parms['file'])
+        worksheet = workbook.add_worksheet()
+        for i,entry in enumerate(ctable):
+            for j,item in enumerate(entry):
+                worksheet.write(i, j,item.strip())
+        workbook.close()
     #return lineas
 
 
@@ -153,11 +109,16 @@ def experimental():
     ind=2
     #pprint(cubo.lista_guias[4])
     #cubo.fillGuia(ind)
-    vista=Vista(cubo,5,1,'sum','votes_percent')
-    convertParms = miniWizard()
-    print(convertParms)
+
+    parms = eW.exportWizard()
+    if not parms.get('file'):
+        exit()
+    print(parms)
+    
+    vista=Vista(cubo,5,1,'sum','votes_presential',totalizado=True)
+    #pprint(vista.toTable())
     #resultado=toCsvOrig(vista,col_sparse=True)
-    resultado = export(vista,convertParms)
+    resultado = export(vista,parms)
     #for entrada in resultado:
         #print(entrada)
     #for elem in (sorted(guia.content,key=methodcaller('childCount'),reverse=True)):

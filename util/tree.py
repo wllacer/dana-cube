@@ -209,13 +209,14 @@ class TreeDict(object):
 
 
     def rebaseTree(self):
-        self.content['//']=self.rootItem
-        self.content['//'].key = '//'
-        self.content['//'].desc= "Grand Total"
-        newRoot=TreeItem(self.rootItemKey,-1,"RootNode")
-        newRoot.appendChild(self.rootItem)
-        self.rootItem.parentItem = newRoot
-        self.rootItem = newRoot
+        if not self.exists('//'):
+            self.content['//']=self.rootItem
+            self.content['//'].key = '//'
+            self.content['//'].desc= "Grand Total"
+            newRoot=TreeItem(self.rootItemKey,-1,"RootNode")
+            newRoot.appendChild(self.rootItem)
+            self.rootItem.parentItem = newRoot
+            self.rootItem = newRoot
        
         
     def __append(self,node):
@@ -253,12 +254,13 @@ class TreeDict(object):
     def __getitem__(self, key):
         return self.content[key]
     
-
+    def exists(self,key):
+        item = self.content.get(key,None)
+        if item:
+            return True
+        else:
+            return False
     def display(self, key=None, depth=_ROOT):
-        # Obtenido de
-        # Brett Kromkamp (brett@perfectlearn.com)
-        # You Programming (http://www.youprogramming.com)
-        # May 03, 2014, que afirma
         if key is None:
             children = self.rootItem.childItems
         else:

@@ -660,8 +660,23 @@ class Vista:
                 self.array +=getCursor(self.cubo.db,sqlstring,regTree,**lista_compra)
                 if DEBUG:
                     print(time.time(),'Datos ',queryFormat(sqlstring))
-    
-    def grandTotal(self):
+                #self.dataDict = dict()
+                #for item in self.array:
+                    ##if item[0] not in self.dataDict:
+                        ##self.dataDict[item[0]] = dict()
+                    #try:
+                        #self.dataDict[item[0]][item[1]]=item[2]
+                    #except KeyError:
+                        #self.dataDict[item[0]] = dict()
+                        #self.dataDict[item[0]][item[1]]=item[2]
+            if self.totalizado:
+                self.row_hdr_idx.rebaseTree()
+                tabla = self.__grandTotal()
+                for item in tabla:
+                    item.insert(0,self.row_hdr_idx['//'])
+                self.array += tabla
+                
+    def __grandTotal(self):
         array = []
         for j in range(0,self.dim_col):
             sqlDef=dict()
@@ -697,7 +712,7 @@ class Vista:
             group_col = self.cubo.lista_guias[self.col_id]['rules'][j]['elem']
             sqlDef['group']= group_col
             #sqlDef['having']=None
-            #sqlDef['order']=None
+            sqlDef['order'] = [ str(x + 1) for x in range(len(sqlDef['fields']) -1)]
             sqlstring=queryConstructor(**sqlDef)
             
             #
@@ -713,7 +728,9 @@ class Vista:
         return array
         
     def toTable(self):
-
+        """
+           convertir los datos en una tabla normal y corriente
+        """
         table = [ [None for k in range(self.col_hdr_idx.count())] for j in range(self.row_hdr_idx.count())]
         for record in self.array:
             try:
@@ -728,109 +745,109 @@ class Vista:
             print(time.time(),'table ',len(table),self.row_hdr_idx.count(),len(table[0])) 
         return table
 
-    def toKeyedTable(self):
-        ktable = [ [None for k in range(self.col_hdr_idx.count()+1)] for j in range(self.row_hdr_idx.count()+1)]
-        ktable[0][0] = None
-        ind = 1
-        for key in self.col_hdr_idx.traverse(mode=1):
-            elem = self.col_hdr_idx[key]
-            ktable[0][elem.ord +1] = key
-            ind += 1
-        ind = 1
-        for key in self.row_hdr_idx.traverse(mode=1):
-            elem = self.row_hdr_idx[key]
-            ktable[elem.ord +1][0] = key
-            ind += 1
+    #def toKeyedTable(self):
+        #ktable = [ [None for k in range(self.col_hdr_idx.count()+1)] for j in range(self.row_hdr_idx.count()+1)]
+        #ktable[0][0] = None
+        #ind = 1
+        #for key in self.col_hdr_idx.traverse(mode=1):
+            #elem = self.col_hdr_idx[key]
+            #ktable[0][elem.ord +1] = key
+            #ind += 1
+        #ind = 1
+        #for key in self.row_hdr_idx.traverse(mode=1):
+            #elem = self.row_hdr_idx[key]
+            #ktable[elem.ord +1][0] = key
+            #ind += 1
 
-        table = self.toTable()
-        ind = 0
-        for elem in ktable:
-           if ind == 0:
-               ind += 1
-               continue
-
-           elem[1:] = table[ind][:]
-        return ktable
-    
-    def toCsv(self,row_sparse=True,col_sparse=False,translated=True,separator=';',string_sep="'"):
-        ctable = [ ['' for k in range(self.col_hdr_idx.count()+self.dim_row)] 
-                             for j in range(self.row_hdr_idx.count()+self.dim_col) ]
-     
-        ind = 1
-        def csvFormatString(cadena):
-            if separator in cadena:
-                return string_sep + cadena + string_sep
-            else:
-                return cadena
-        for key in self.col_hdr_idx.traverse(mode=1):
-            elem = self.col_hdr_idx[key]
-            desc = elem.getFullDesc()   
-            if col_sparse:
-                k = len(desc) -1
-                ctable[k][elem.ord +self.dim_row] = csvFormatString(desc[k])
-            else:
-                for k in range(len(desc)):
-                    ctable[k][elem.ord +self.dim_row] = csvFormatString(desc[k])
-
-            
-        for key in self.row_hdr_idx.traverse(mode=1):
-            elem = self.row_hdr_idx[key]
-            desc = elem.getFullDesc()   
-            if row_sparse:
-                k = len(desc) -1
-                ctable[elem.ord + self.dim_col][k]=csvFormatString(desc[k])
-            else:
-                for k in range(len(desc)):
-                    ctable[elem.ord + self.dim_col][k]=csvFormatString(desc[k])
-        table = self.toTable()
-        # probablemente este paso intermedio es innecesario
-        ind = 0
-        for elem in ctable[self.dim_col : ]:
-           elem[self.dim_row:] = [str(dato) if dato is not None else '' for dato in table[ind] ]
-           ind += 1
-        lineas=[]
-        for row in ctable:
-            lineas.append(separator.join(row))
-            
-        return lineas
-    
-    def toNamedTable(self):
-        ntable = [ [ None for k in range(self.col_hdr_idx.count()+1)] for j in range(self.row_hdr_idx.count()+1)]
-        ntable[0][0] = None
-        ind = 1
-        for key in self.col_hdr_idx.traverse(mode=1):
-            elem = self.col_hdr_idx[key]
-            ntable[0][elem.ord +1] = getOrderedText(elem.getFullDesc(),sparse=False,separator='\n')
-            ind += 1
-        ind = 1
-        for key in self.row_hdr_idx.traverse(mode=1):
-            elem = self.row_hdr_idx[key]
-            ntable[elem.ord +1][0] = getOrderedText(elem.getFullDesc(),sparse=True,separator='\t')
-            ind += 1
-
-        table = self.toTable()
-        ind = 0
-        for elem in ntable:
-           if ind == 0:
-               ind += 1
-               continue
-
-           elem[1:] = table[ind][:]
-        return ntable
+        #table = self.toTable()
+        #ind = 0
         #for elem in ktable:
-            #print(elem)
+           #if ind == 0:
+               #ind += 1
+               #continue
+
+           #elem[1:] = table[ind][:]
+        #return ktable
+    
+    #def toCsv(self,row_sparse=True,col_sparse=False,translated=True,separator=';',string_sep="'"):
+        #ctable = [ ['' for k in range(self.col_hdr_idx.count()+self.dim_row)] 
+                             #for j in range(self.row_hdr_idx.count()+self.dim_col) ]
+     
+        #ind = 1
+        #def csvFormatString(cadena):
+            #if separator in cadena:
+                #return string_sep + cadena + string_sep
+            #else:
+                #return cadena
+        #for key in self.col_hdr_idx.traverse(mode=1):
+            #elem = self.col_hdr_idx[key]
+            #desc = elem.getFullDesc()   
+            #if col_sparse:
+                #k = len(desc) -1
+                #ctable[k][elem.ord +self.dim_row] = csvFormatString(desc[k])
+            #else:
+                #for k in range(len(desc)):
+                    #ctable[k][elem.ord +self.dim_row] = csvFormatString(desc[k])
+
             
-    def toTree(self):
-        array = self.toTable()
-        for key in self.row_hdr_idx.traverse(mode=1):
-            elem = self.row_hdr_idx[key]
-            datos = [ getOrderedText(elem.getFullDesc(),sparse=True,separator=''),] +\
-                    array[elem.ord][:]
-            elem.setData(datos)
-            if self.stats:
-                elem.setStatistics()
-        if DEBUG:
-            print(time.time(),'Tree ',len(array),self.row_hdr_idx.count())  
+        #for key in self.row_hdr_idx.traverse(mode=1):
+            #elem = self.row_hdr_idx[key]
+            #desc = elem.getFullDesc()   
+            #if row_sparse:
+                #k = len(desc) -1
+                #ctable[elem.ord + self.dim_col][k]=csvFormatString(desc[k])
+            #else:
+                #for k in range(len(desc)):
+                    #ctable[elem.ord + self.dim_col][k]=csvFormatString(desc[k])
+        #table = self.toTable()
+        ## probablemente este paso intermedio es innecesario
+        #ind = 0
+        #for elem in ctable[self.dim_col : ]:
+           #elem[self.dim_row:] = [str(dato) if dato is not None else '' for dato in table[ind] ]
+           #ind += 1
+        #lineas=[]
+        #for row in ctable:
+            #lineas.append(separator.join(row))
+            
+        #return lineas
+    
+    #def toNamedTable(self):
+        #ntable = [ [ None for k in range(self.col_hdr_idx.count()+1)] for j in range(self.row_hdr_idx.count()+1)]
+        #ntable[0][0] = None
+        #ind = 1
+        #for key in self.col_hdr_idx.traverse(mode=1):
+            #elem = self.col_hdr_idx[key]
+            #ntable[0][elem.ord +1] = getOrderedText(elem.getFullDesc(),sparse=False,separator='\n')
+            #ind += 1
+        #ind = 1
+        #for key in self.row_hdr_idx.traverse(mode=1):
+            #elem = self.row_hdr_idx[key]
+            #ntable[elem.ord +1][0] = getOrderedText(elem.getFullDesc(),sparse=True,separator='\t')
+            #ind += 1
+
+        #table = self.toTable()
+        #ind = 0
+        #for elem in ntable:
+           #if ind == 0:
+               #ind += 1
+               #continue
+
+           #elem[1:] = table[ind][:]
+        #return ntable
+        ##for elem in ktable:
+            ##print(elem)
+            
+    #def toTree(self):
+        #array = self.toTable()
+        #for key in self.row_hdr_idx.traverse(mode=1):
+            #elem = self.row_hdr_idx[key]
+            #datos = [ getOrderedText(elem.getFullDesc(),sparse=True,separator=''),] +\
+                    #array[elem.ord][:]
+            #elem.setData(datos)
+            #if self.stats:
+                #elem.setStatistics()
+        #if DEBUG:
+            #print(time.time(),'Tree ',len(array),self.row_hdr_idx.count())  
 
     def toTree2D(self):
         array = self.toTable()
@@ -849,14 +866,14 @@ class Vista:
             if self.stats:
                 elem.setStatistics()
 
-        if self.totalizado:
-            self.row_hdr_idx.rebaseTree()
-            tabla = self.grandTotal()
-            datos =['Gran Total',]+[elem[1] for elem in tabla]
-            elem = self.row_hdr_idx['//']
-            elem.setData(datos)
-            if self.stats:
-                elem.setStatistics()
+        #if self.totalizado:
+            #self.row_hdr_idx.rebaseTree()
+            #tabla = self.__grandTotal()
+            #datos =['Gran Total',]+[elem[1] for elem in tabla]
+            #elem = self.row_hdr_idx['//']
+            #elem.setData(datos)
+            #if self.stats:
+                #elem.setStatistics()
 
                     
         if DEBUG:       
@@ -973,6 +990,104 @@ class Vista:
             # chapuzilla por ver si las fechas pueden modificarse
             cab_col[idx+1]= texto if not sparse else desc[-1]
         return cab_col
+
+    def __getHeader(self,header_tree,dim,sparse,content):
+        tabla = list()
+        for key in header_tree.traverse(mode=1):
+            entry = ['' for k in range(dim) ]
+            elem = header_tree[key]
+            if content == 'branch' and elem.isLeaf() and dim > 1:
+                continue
+            if content == 'leaf' and not elem.isLeaf():
+                continue
+            
+            desc = elem.getFullDesc() 
+            if sparse:
+                entry[elem.depth() -1] = desc[-1]
+            else:
+                for k in range(desc):
+                    entry[k] = desc[k]
+                    
+            if content == 'branch' and dim > 1:
+                del entry[dim -1 ]
+            elif content == 'leaf' :
+                while len(entry) > 1:
+                    del entry[0]
+                    
+            entry.append(elem)
+            entry.append(elem.ord)
+            tabla.append(entry)
+        return tabla  
+
+    def getExportData(self,parms,selArea=None):
+        """
+            *parms['file']
+            *parms['type'] = ('csv','xls','json','html')
+            *parms['csvProp']['fldSep'] 
+            *parms['csvProp']['decChar']
+            *parms['csvProp']['txtSep'] 
+            *parms['NumFormat'] 
+            parms['filter']['scope'] = ('all','visible,'select') 
+            *parms['filter']['content'] = ('full','branch','leaf')
+            parms['filter']['totals'] 
+            *parms['filter']['horSparse'] 
+            *parms['filter']['verSparse']
+
+        """
+        contentFilter = parms['filter']['content']
+        row_sparse = parms['filter']['horSparse']
+        col_sparse = parms['filter']['verSparse']
+        translated = parms['NumFormat']
+        numFmt = parms['NumFormat']
+        decChar = parms['csvProp']['decChar']
+
+        
+        ind = 1
+        
+
+        def num2text(number):
+            if numFmt:
+                return fmtNumber(number,{'decimalmarker':decChar})[0]
+            elif decChar != '.':
+                return '{}'.format(number).replace('.',decChar)
+            else:
+                return str(number)
+        
+        dim_row = self.dim_row if not self.totalizado else self.dim_row + 1
+        dim_col = self.dim_col
+            
+        row_hdr = self.__getHeader(self.row_hdr_idx,dim_row,row_sparse,contentFilter)
+        col_hdr = self.__getHeader(self.col_hdr_idx,dim_col,col_sparse,contentFilter)
+        
+        num_rows = len(row_hdr)
+        num_cols = len(col_hdr)
+        
+        dim_row = len(row_hdr[0]) -2
+        dim_col = len(col_hdr[0]) -2
+        
+        ctable = [ ['' for k in range(num_cols + dim_row)] 
+                                for j in range(num_rows +dim_col) ]
+
+        for i in range(num_cols):
+            for j,colItem in enumerate(col_hdr[i]):
+                if j >= dim_col:
+                    break
+                ctable[j][i + dim_row]=colItem
+                
+        for i in range(num_rows):
+            for j,rowItem in enumerate(row_hdr[i]):
+                if j >= dim_row:
+                    break
+                ctable[i + dim_col][j]=rowItem
+                
+        table = self.toTable()
+        
+        for i in range(num_rows):
+            x = row_hdr[i][-1]
+            for j in range(num_cols):
+                y = col_hdr[j][-1]
+                ctable[i + dim_col][j + dim_row] = num2text(table[x][y]) if table[x][y] else ''  #TODO aqui es el sito de formatear numeros
+        return ctable,dim_row,dim_col
 
 
 def experimental():

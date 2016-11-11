@@ -108,8 +108,8 @@ class WzDestination(QWizardPage):
         filename,filter = QFileDialog.getSaveFileName(self,
                                                   caption="Nombre del fichero",
                                                   directory="datos",
-                                                  filter = "CSV (*.txt,*.csv);; Excel (*.xlsx, *.xls);; Json (*.json) ;; HTML (*.html*.htm)",
-                                                  initialFilter="CSV (*.txt,*.csv)",
+                                                  filter = "CSV (*.csv);; Excel (*.xlsx);; Json (*.json) ;; HTML (*.html)",
+                                                  initialFilter="CSV (*.csv)",
                                                   )
         if filename:
             self.nomFichero.setText(filename)
@@ -142,9 +142,12 @@ class WzFilter(QWizardPage):
         self.fullRB = QRadioButton("&Todo")
         self.branchRB = QRadioButton("Sólo &Ramas")
         self.leavesRB = QRadioButton("Sólo &hojas")
-
         self.leavesRB.setChecked(True)
-
+        
+        self.fullRB.clicked.connect(self.controlTotal)
+        self.branchRB.clicked.connect(self.controlTotal)
+        self.leavesRB.clicked.connect(self.controlTotal)
+        
         detailBoxLayout = QHBoxLayout()
         detailBoxLayout.addWidget(self.fullRB)
         detailBoxLayout.addWidget(self.branchRB)
@@ -154,6 +157,7 @@ class WzFilter(QWizardPage):
         detailBox.setAlignment(Qt.AlignHCenter)
         
         self.totalCB = QCheckBox("Con Totales")
+        self.totalCB.setEnabled(False)
         self.vertHdrCB = QCheckBox("Con cabeceras horizontales sin duplicados")
         self.horHdrCB = QCheckBox("Con cabeceras verticales  sin duplicados")
         self.vertHdrCB.setChecked(True)
@@ -166,7 +170,13 @@ class WzFilter(QWizardPage):
         mainLayout.addWidget(self.vertHdrCB)
         mainLayout.addWidget(self.horHdrCB)
         self.setLayout(mainLayout)
-
+    
+    def controlTotal(self,enabled):
+        if self.fullRB.isChecked():
+            self.totalCB.setEnabled(True)
+        else:
+            self.totalCB.setChecked(False)
+            self.totalCB.setEnabled(False)
 
 class WzGraph(QWizardPage):
     def __init__(self,parent=None):
@@ -183,7 +193,7 @@ class WzGraph(QWizardPage):
     
 
 
-def miniWizard():
+def exportWizard():
     parms = dict()
     wizard = ExportWizard()        
     if wizard.exec_() :
@@ -233,4 +243,4 @@ if __name__ == '__main__':
 
     app = QApplication(sys.argv)
     #miniCube()
-    miniWizard()
+    exportWizard()
