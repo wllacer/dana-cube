@@ -73,7 +73,6 @@ class TreeItem(object):
         return len(self.itemData)
 
     def data(self, column):
-
         try:
             return self.itemData[column]
         except IndexError:

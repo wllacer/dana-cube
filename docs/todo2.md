@@ -144,6 +144,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 
 * Juraria que habia implementado el ocultar columnas (a lo peor copiar de tablebrowse)
 * Revisar la implementacion de las fechas (funciona, pero no se porqué)
+* __DONE__ al fin fechas formateadas algo decentemente
 
  ### tablebrowse 
  

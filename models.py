@@ -61,8 +61,7 @@ class TreeModel(QAbstractItemModel):
             return None
             
         if index.column() == 0:
-            #TODO hay que reformatear fechas
-            return item.data(0)
+            return item.data(0).split(DELIMITER)[-1]
         elif item.data(index.column()) is None:
             return None
         else:
@@ -85,13 +84,20 @@ class TreeModel(QAbstractItemModel):
         if role == Qt.DisplayRole:
             if orientation == Qt.Horizontal:
                 if section == 0:
-                    return ""
+                    texto = ''
                 else:
-                    return self.colHdr[section]
-            elif orientation == Qt.Vertical:
-                #chapuza para solo coger parte de las fechas
-                #return self.rowHdr[section].split(DELIMITER)[-1]
-                return self.rowHdr[section]
+                    texto = self.colHdr[section]
+            else:
+                texto = self.rowHdr[section]
+            if texto:
+                ktexto = texto.split('\n')
+                ktexto[-1] = ktexto[-1].split(DELIMITER)[-1]
+                texto = '\n'.join(ktexto)
+            else:
+                texto = ''
+            return texto
+        elif role == Qt.TextAlignmentRole:
+            return Qt.AlignCenter
         return None
 
     def index(self, row, column, parent):
