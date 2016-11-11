@@ -16,7 +16,8 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
     
 * __DONE__ Incluir vistas en el cubo (2º escalon)
 
-* __NOW__ Incluir extraccion de datos en cubo e interfaz con MatPlotLib  (critica para usuarios pero no tecnicamente)
+* __DONE__ Incluir extraccion de datos en cubo
+* __NOW__ interfaz con MatPlotLib  (critica para usuarios pero no tecnicamente)
 * __NOW__ Filtros de entrada en el cubo
     ** __DONE__ interfaz de usuario con guias
     ** __DONE__ Integracion en Danacube
@@ -25,9 +26,9 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * __NOW__ Filtros previos por tiempo ( campo + periodo (dia, ...). 
     ** __DONE__ Interfaz de usuario. __FALTA__ el caso especial que no existan campos fecha
     ** __DONE__ Integracion en Danacube. __FALTA__ Debe integrarse en cubebrowse, mejor
-    ** __HOLD__ Serializacion. Hata integrar en cubebrowse
+    ** __DONE__ Serializacion.
 * __NOW__ Claves multicampo
-* __NOW__ BUG Grandes totales desordenados.
+* __DONE__ BUG Grandes totales desordenados.
     ** ENUMS (film cualquiera con rating)
     ** Primer caso. Es un off by one. -(datos light 6,0)En este caso es porque la primera columna es nula. Ademas hay un pequeño problema de calidad de datos, pero no parece ser de interes ahora
     ** Con fillGuias al inicializar el cubo, volver a ejecutar la vista genera otra entrada en los totale
@@ -48,7 +49,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
     ** __DONE__ eliminar la cabecera en WPropertySheet
 * Eliminar sinonimos de variables en inicializaciones (p.e en danacube y DataDict)
 * __DONE__ Filtrado en tablebrowse
-* Filtrado en DanaCube
+* __DONE__ Filtrado en DanaCube
 * Parametrizar ficheros de configuracion
 * Uso de formateo en tablebrowse y en danacube debe unificarse y flexibilizarse
 * El sistema de generacion de query admite mejoras (limit) y falta comprobar con claves compuestas
@@ -117,7 +118,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * __WISH__ Salvar el fichero de configuración solo si se han producido cambios (no se si merece la pena) 
 * __DONE__ Presentar en las guias de defecto el numero de valores distintos para la guia (hecho en DanaBrowse) 
 * __DONE__ que los distintos atributos se presenten siempre en el mismo orden en un arbol del cubo, creo
-* ¿Realmente necesito el diccionario completo en todos los casos?
+* __DONE__ ¿Realmente necesito el diccionario completo en todos los casos?
 * ![cube bugs]docs/cube_todo.txt
 * (BUG) Borrar default no funciona 
 * __DONE__ (BUG) source no esta especializado. Se me habia olvidado que ahora es domain

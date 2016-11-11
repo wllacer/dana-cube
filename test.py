@@ -110,15 +110,16 @@ def experimental():
     #pprint(cubo.lista_guias[4])
     #cubo.fillGuia(ind)
 
-    parms = eW.exportWizard()
-    if not parms.get('file'):
-        exit()
-    print(parms)
+    #parms = eW.exportWizard()
+    #if not parms.get('file'):
+        #exit()
+    #print(parms)
     
     vista=Vista(cubo,5,1,'sum','votes_presential',totalizado=True)
+    pprint(vista.toTable())
     #pprint(vista.toTable())
     #resultado=toCsvOrig(vista,col_sparse=True)
-    resultado = export(vista,parms)
+    #resultado = export(vista,parms)
     #for entrada in resultado:
         #print(entrada)
     #for elem in (sorted(guia.content,key=methodcaller('childCount'),reverse=True)):
