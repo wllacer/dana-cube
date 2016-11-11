@@ -26,7 +26,7 @@
         * Claves, donde no existen
         * Campos descripcion
         * Asociaciones virtuales
-        * Filtros, tanto en tabla como en asociacion
+        * __DONE__ Filtros, tanto en tabla como en asociacion
         
 
     * En el caso de SQLite deberia llamarse a un buscador de ficheros
@@ -58,7 +58,7 @@
 * BUG errror en sql acaba en cualquier sitio (tiene que ver con waiting_functions)
 * Simplificar la sintaxis del cubo para los casos mas sencillos
 * __DONE__ Cubo como parametro de arranque
-* BUG En gran total: el problema es que existen ENUMS u los datos son recuperados por orden de ENUM. No orden natural
+* __DONE__ BUG En gran total: el problema es que existen ENUMS u los datos son recuperados por orden de ENUM. No orden natural
 * __DONE__ fechas con datetime como objeto
 * Time como objetos
 * __DONE__ Procesar vistas
@@ -84,10 +84,10 @@
         * _TODO_ fumctions and hidden columns
         * _TODO_ Provide a consistent API
   * Charting output (use of matplotlib (https://www.boxcontrol.net/embedding-matplotlib-plot-on-pyqt5-gui.html)
-  * Export infraestructure
+  * __DONE__ Export infraestructure
   * __DONE__ Grand Total (only row)
     * From cube  (__DONE__)
-    * Calculated  
+    * __DONE__ Calculated  
     * Presentation 
     * _HOLD_ functionally not its place (now in view should be in model)
   * __DONE__Dynamic Filter
@@ -107,7 +107,7 @@
     * basic source a query instead of a table
     * more than one measure
     * __DONE__ function: recode (partially solved with categories/ user functions)
-    * Data export (see below)
+    * __DONE__ Data export (see below)
     * include Time as valid format
     * __DONE__ programatically predesigned case
   * Presentation
@@ -124,15 +124,15 @@
 * bugs
   * __DONE__ Kdevelop editor defaults is undermining Py 3 compatibility. Need to think about it (just better parametrization)
   * __DONE__ fivepoints metric 
-  * Normalize definition.prod.elem as list
+  * __DONE__ Normalize definition.prod.elem as list
   * _WIP_ Filters in guides pose some functional problems
   * Dates as guides generate a lot of invalid dates (out of range, inexistent)
-  * Dates as headers must be reformated
+  * __DONE__ Dates as headers must be reformated
   * Integration of dates and categories in hierarchies (casi irresoluble, penaliza gravemente el rendimiento)
   * KABOOM on cube change -> cancel
   * tamaño de algun elemento de la lista
   * __DONE__ Alchemy no carga en Python3
-  * Cabeceras de columnas con GRAND_TOTAL one off
+  * __DONE__ Cabeceras de columnas con GRAND_TOTAL one off
   * en el WPowerWidget separar configuracion de datos para poder usar tuplas
   * RED NEGATIVE NUMBERS no funciona correctamente
   * en WPropertySheet que ocurre si context != data
@@ -157,20 +157,20 @@
 
 
 * Other output formats 
-    * JSON
-    * _WIP_ CSV  (? direct invocation of spreadsheet)
+    * __DONE__ JSON
+    * __DONE__  CSV  (? direct invocation of spreadsheet)
     *    Hidden/Shown rows/columns
     * __DONE__Raw Array. In fact almost new default
-    * HTML table
-    * Printing
+    * __DONE__ HTML table
+    * __NOOOR__ Printing
     * ? graphical frontend as d3.js
     
 * SQL error handling
 
 * Database testing in other environmentes. First 3 are available to me
-    * MySQL/ MariaDB
-    * PostGreSQL
-    * DB2
+    * __DONE__ MySQL/ MariaDB
+    * __DONE__ PostGreSQL
+    * DB2 (uninstalled)
     * Oracle  (not available locally)
     * SQLServer (not available locally)
 
@@ -183,7 +183,7 @@
     * __DONE__ GUI refactoring based on Model-View (excluding new functionality)
     * _WIP_ GUI for definition. Browse Ok Edit Haaard   (__HP__ showstopper for release)
  
-* _WIP_ : use SqlAlchemy as data background, so dependencies on PyQt would only be on the presentation level
+* __DONE__ : use SqlAlchemy as data background, so dependencies on PyQt would only be on the presentation level
     * integration __DONE__. Now selectable by (internal) parameter. ¿Faster?
     * Date Management into alchemy
     * Cube/Rollp

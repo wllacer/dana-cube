@@ -28,6 +28,8 @@ from dictmgmt.datadict import DataDict
 from cubemgmt.cubetree import traverseTree
 from datalayer.query_constructor import searchConstructor
 
+import exportWizard as eW
+
 #FIXED 1 zoom view breaks. Some variables weren't available
 #     FIXME zoom doesn't trigger any action with the new interface
 #FIXED 1 config view doesn't fire. Definition too early
@@ -71,23 +73,25 @@ class DanaCube(QMainWindow):
         self.fileMenu.addSeparator()
         self.fileMenu.addAction("E&xit", self.close, "Ctrl+Q")
         
-        self.optionsMenu = self.menuBar().addMenu("&Opciones")
+        self.filtersMenu = self.menuBar().addMenu("&Usar Filtros")
         #TODO skipped has to be retougth with the new interface
         #self.optionsMenu.addAction("&Zoom View ...", self.zoomData, "Ctrl+Z")
         self.filterActions = dict()
-        self.filterActions['create'] = self.optionsMenu.addAction('Editar &Filtro',self.setFilter,"Ctrl+K")
-        self.filterActions['drop'] = self.optionsMenu.addAction('Borrar &Filtros',self.dropFilter,"Ctrl+K")
-        self.filterActions['save'] = self.optionsMenu.addAction('Guardar &Filtros permanentemente',self.saveFilter,"Ctrl+K")
+        self.filterActions['create'] = self.filtersMenu.addAction('Editar &Filtro',self.setFilter,"Ctrl+K")
+        self.filterActions['drop'] = self.filtersMenu.addAction('Borrar &Filtros',self.dropFilter,"Ctrl+K")
+        self.filterActions['save'] = self.filtersMenu.addAction('Guardar &Filtros permanentemente',self.saveFilter,"Ctrl+K")
         self.filterActions['drop'].setEnabled(False)
         self.filterActions['save'].setEnabled(False)
-        self.optionsMenu.addSeparator()
+        self.filtersMenu.addSeparator()
         self.dateRangeActions = dict()
-        self.dateRangeActions['dates'] = self.optionsMenu.addAction('Editar &Rango fechas',self.setRange,"Ctrl+K")
-        self.dateRangeActions['drop'] = self.optionsMenu.addAction('Borrar &Rango fechas',self.dropRange,"Ctrl+K")
-        self.dateRangeActions['save'] = self.optionsMenu.addAction('Salvar &Rango fechas',self.saveRange,"Ctrl+K")
+        self.dateRangeActions['dates'] = self.filtersMenu.addAction('Editar &Rango fechas',self.setRange,"Ctrl+K")
+        self.dateRangeActions['drop'] = self.filtersMenu.addAction('Borrar &Rango fechas',self.dropRange,"Ctrl+K")
+        self.dateRangeActions['save'] = self.filtersMenu.addAction('Salvar &Rango fechas',self.saveRange,"Ctrl+K")
         self.dateRangeActions['drop'].setEnabled(False)
         self.dateRangeActions['save'].setEnabled(False)
  
+        self.optionsMenu = self.menuBar().addMenu("&Opciones")
+        self.optionsMenu.addAction("&Exportar datos ...",self.export,"CtrlT")
         self.optionsMenu.addAction("&Trasponer datos",self.traspose,"CtrlT")
         self.optionsMenu.addAction("&Presentacion ...",self.setNumberFormat,"Ctrl+F")
         #
@@ -471,6 +475,14 @@ class DanaCube(QMainWindow):
                 gotcha = 'True'
         return result
     
+    def export(self):
+        parms = eW.exportWizard()
+        selArea = None
+        if not parms.get('file'):
+            return
+        resultado = self.vista.export(parms,selArea)
+
+        
 if __name__ == '__main__':
 
     import sys

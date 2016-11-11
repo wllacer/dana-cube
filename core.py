@@ -31,12 +31,19 @@ from util.fechas import *
 from datalayer.access_layer import *
 from datalayer.query_constructor import *
 
-from util.numbers import stats
+from util.numbers import stats,num2text
 
 from datemgr import getDateIndex,getDateEntry
 from pprint import *
 
 import time
+
+from util.jsonmgr import dump_structure
+try:
+    import xlsxwriter
+    XLSOUTPUT = True
+except ImportError:
+    XLSOUTPUT = False
 
 
 def mergeString(string1,string2,connector):
@@ -991,10 +998,16 @@ class Vista:
             cab_col[idx+1]= texto if not sparse else desc[-1]
         return cab_col
 
-    def __getHeader(self,header_tree,dim,sparse,content):
-        tabla = list()
+    def __getHeader(self,tipo,header_tree,dim,sparse,content):
+        if tipo.lower() == 'list':
+            tabla = list()
+        elif tipo.lower() == 'dict':
+            tabla = dict()
+        else:
+            return None
+        ind = 0
         for key in header_tree.traverse(mode=1):
-            entry = ['' for k in range(dim) ]
+            entrada = ['' for k in range(dim) ]
             elem = header_tree[key]
             if content == 'branch' and elem.isLeaf() and dim > 1:
                 continue
@@ -1003,23 +1016,31 @@ class Vista:
             
             desc = elem.getFullDesc() 
             if sparse:
-                entry[elem.depth() -1] = desc[-1]
+                entrada[elem.depth() -1] = desc[-1].replace(':','-')
             else:
                 for k in range(desc):
-                    entry[k] = desc[k]
+                    entrada[k] = desc[k].replace(':','-')
                     
             if content == 'branch' and dim > 1:
-                del entry[dim -1 ]
+                del entrada[dim -1 ]
             elif content == 'leaf' :
-                while len(entry) > 1:
-                    del entry[0]
+                while len(entrada) > 1:
+                    del entrada[0]
                     
-            entry.append(elem)
-            entry.append(elem.ord)
-            tabla.append(entry)
-        return tabla  
+            entrada.append(elem)
+            if tipo.lower() == 'list':
+                entrada.append(elem.ord)
+                tabla.append(entrada)
+            else:
+                entrada.append(ind)
+                tabla[elem.ord] = entrada
+            ind += 1
+            
 
-    def getExportData(self,parms,selArea=None):
+        return tabla 
+    
+
+    def getExportDataArray(self,parms,selArea=None):
         """
             *parms['file']
             *parms['type'] = ('csv','xls','json','html')
@@ -1043,21 +1064,12 @@ class Vista:
 
         
         ind = 1
-        
-
-        def num2text(number):
-            if numFmt:
-                return fmtNumber(number,{'decimalmarker':decChar})[0]
-            elif decChar != '.':
-                return '{}'.format(number).replace('.',decChar)
-            else:
-                return str(number)
-        
+                
         dim_row = self.dim_row if not self.totalizado else self.dim_row + 1
         dim_col = self.dim_col
             
-        row_hdr = self.__getHeader(self.row_hdr_idx,dim_row,row_sparse,contentFilter)
-        col_hdr = self.__getHeader(self.col_hdr_idx,dim_col,col_sparse,contentFilter)
+        row_hdr = self.__getHeader('List',self.row_hdr_idx,dim_row,row_sparse,contentFilter)
+        col_hdr = self.__getHeader('List',self.col_hdr_idx,dim_col,col_sparse,contentFilter)
         
         num_rows = len(row_hdr)
         num_cols = len(col_hdr)
@@ -1089,6 +1101,130 @@ class Vista:
                 ctable[i + dim_col][j + dim_row] = num2text(table[x][y]) if table[x][y] else ''  #TODO aqui es el sito de formatear numeros
         return ctable,dim_row,dim_col
 
+    def getExportData(self,parms,selArea=None):
+        """
+            *parms['file']
+            *parms['type'] = ('csv','xls','json','html')
+            *parms['csvProp']['fldSep'] 
+            *parms['csvProp']['decChar']
+            *parms['csvProp']['txtSep'] 
+            *parms['NumFormat'] 
+            parms['filter']['scope'] = ('all','visible,'select') 
+            *parms['filter']['content'] = ('full','branch','leaf')
+            parms['filter']['totals'] 
+            *parms['filter']['horSparse'] 
+            *parms['filter']['verSparse']
+
+        """
+        scope = parms['filter']['scope']
+        contentFilter = parms['filter']['content']
+        row_sparse = parms['filter']['horSparse']
+        col_sparse = parms['filter']['verSparse']
+        translated = parms['NumFormat']
+        numFmt = parms['NumFormat']
+        decChar = parms['csvProp']['decChar']
+
+        
+        ind = 1
+                
+        dim_row = self.dim_row if not self.totalizado else self.dim_row + 1
+        dim_col = self.dim_col
+            
+        row_hdr = self.__getHeader('List',self.row_hdr_idx,dim_row,row_sparse,contentFilter)
+        col_hdr = self.__getHeader('Dict',self.col_hdr_idx,dim_col,col_sparse,contentFilter)
+        
+        num_rows = len(row_hdr)
+        num_cols = len(col_hdr)
+        
+        dim_row = len(row_hdr[0]) -2
+        dim_col = len(col_hdr[next(iter(col_hdr))]) -2 #este horror es para obtener un elemento al azar 
+        
+        ctable = [ ['' for k in range(num_cols + dim_row)] 
+                                for j in range(num_rows +dim_col) ]
+
+        for item in col_hdr:
+            entrada = col_hdr[item]
+            i = entrada[-1]
+            for j,colItem in enumerate(entrada):
+                if j >= dim_col:
+                    break
+                ctable[j][i + dim_row]=colItem
+                
+        for i in range(num_rows):
+            for j,rowItem in enumerate(row_hdr[i]):
+                if j >= dim_row:
+                    break
+                ctable[i + dim_col][j]=rowItem
+                    
+        for i,item  in enumerate(row_hdr):
+            datos = item[-2].getPayload()
+            if scope == 'all': #no necesito parafernalia
+                ctable[i + dim_col][dim_row:] = [num2text(elem) for elem in datos ]
+            else:
+                for k in range(len(datos)):
+                    donde = col_hdr.get(k)
+                    if donde:
+                        ctable[i + dim_col][donde[-1] + dim_row] = num2text(datos[k])
+        return ctable,dim_row,dim_col
+
+    def export(self,parms,selArea=None):
+        file = parms['file']
+        type = parms['type']
+        if type == 'xls' and not XLSOUTPUT:
+            type = 'csv'
+            print('Xls writer no disponible, pasamos a csv')
+        fldSep  = parms['csvProp']['fldSep']
+        txtSep = parms['csvProp']['txtSep'] 
+
+        def csvFormatString(cadena):
+            if fldSep in cadena:
+                if txtSep in cadena:
+                    cadena = cadena.replace(txtSep,txtSep+txtSep)
+                return '{0}{1}{0}'.format(txtSep,cadena)
+            else:
+                return cadena
+        if parms.get('source') == 'array':
+            ctable,dim_row,dim_col = self.getExportDataArray(parms,selArea=None)
+        else:
+            ctable,dim_row,dim_col = self.getExportData(parms,selArea=None)
+        if type == 'csv':
+            with open(parms['file'],'w') as f:
+                for row in ctable:
+                    csvrow = [ csvFormatString(item) for item in row ]
+                    f.write(fldSep.join(csvrow) + '\n')
+            f.closed
+        elif type == 'json':
+            dump_structure(ctable,parms['file'])
+        elif type == 'html':
+            fldSep = '</td><td>'
+            hdrSep = '</th><th>'
+            with open(parms['file'],'w') as f:
+                f.write('<table>\n')
+                f.write('<head>\n')
+                cont = 0
+                for row in ctable:
+                    htmrow = [item.strip() for item in row ]
+                    if cont < dim_col:
+                        f.write('<tr><th>'+hdrSep.join(htmrow) + '</th></tr>\n')
+                        cont +=1
+                    elif cont == dim_col:
+                        f.write('</thead>\n')
+                        f.write('<tr><td>'+fldSep.join(htmrow) + '</td></tr>\n')
+                        cont += 1
+                    else:
+                        f.write('<tr><td>'+fldSep.join(htmrow) + '</td></tr>\n')
+                f.write('</body>\n')
+                f.write('</table>\n')
+            f.closed
+
+        elif type == 'xls':
+            workbook = xlsxwriter.Workbook(parms['file'])
+            worksheet = workbook.add_worksheet()
+            for i,entrada in enumerate(ctable):
+                for j,item in enumerate(entrada):
+                    worksheet.write(i, j,item.strip())
+            workbook.close()
+    #return lineas
 
 def experimental():
     from util.jsonmgr import load_cubo

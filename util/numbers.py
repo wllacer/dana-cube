@@ -32,6 +32,16 @@ import math
     
     #return text, sign
 
+def num2text(number,numFmt=False,decChar= '.'):
+    if not number:
+        return ''
+    if numFmt:
+        return fmtNumber(number,{'decimalmarker':decChar})[0]
+    elif decChar != '.':
+        return '{}'.format(number).replace('.',decChar)
+    else:
+        return str(number)
+
 def fmtNumber(number, optDict=None):
     fmtOpt = dict(thousandsseparator=",",
                     decimalmarker=".",

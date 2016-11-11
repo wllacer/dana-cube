@@ -128,7 +128,10 @@ class WzFilter(QWizardPage):
         self.selectRB = QRadioButton("Sólo el área seleccionada")
 
         self.allRB.setChecked(True)
-
+        #TEMPORAL init
+        #self.visibleRB.setEnabled(False)
+        self.selectRB.setEnabled(False)
+        #TEMPORAL end
         extentBoxLayout = QHBoxLayout()
         extentBoxLayout.addWidget(self.allRB)
         extentBoxLayout.addWidget(self.visibleRB)
