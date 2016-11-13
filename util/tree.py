@@ -93,6 +93,12 @@ class TreeItem(object):
         else:
             return self.itemData[0]
     
+    def hasChildren(self):
+        if len(self.childItems) >0:
+            return True
+        else:
+            return False
+        
     def isLeaf(self):
         if len(self.childItems) == 0:
             return True
@@ -250,6 +256,9 @@ class TreeDict(object):
                node.parentItem = self.rootItem
         self.__add(node)
         
+    def item(self,key):
+        return self.__getitem__(key)
+    
     def __getitem__(self, key):
         return self.content[key]
     

@@ -21,6 +21,11 @@ from core import Cubo,Vista
 from util.tree import *
 from util.numbers import isOutlier,fmtNumber
 
+""" lo dejo como documentacion
+print(trueIndex.internalPointer())
+print(type(index.model()),index.row(),index.column(),index.parent(),index.internalId(),index.data())
+print(index.sibling(index.row(),0).data())
+"""
 
 
 
@@ -34,15 +39,16 @@ class TreeModel(QAbstractItemModel):
         self.getHeaders()
         #self.setupModelData(datos, self.rootItem)
         
-    def columnCount(self, parent):
+    def columnCount(self, parent=None):
         return self.datos.col_hdr_idx.count() + 1
 
+    def count(self):
+        return self.datos.row_hdr_idx.count()
+            
     def data(self, index, role):
-
         if not index.isValid():
             return None
         item = index.internalPointer()
-        
         if role == Qt.TextAlignmentRole:
             if index.column() != 0:
                 return Qt.AlignRight| Qt.AlignVCenter
@@ -59,7 +65,7 @@ class TreeModel(QAbstractItemModel):
                
         elif role not in (Qt.DisplayRole,33,):
             return None
-            
+        
         if index.column() == 0:
             return item.data(0).split(DELIMITER)[-1]
         elif item.data(index.column()) is None:
@@ -100,15 +106,15 @@ class TreeModel(QAbstractItemModel):
             return Qt.AlignCenter
         return None
 
-    def index(self, row, column, parent):
+    def index(self, row, column, parentIdx):
         
-        if not self.hasIndex(row, column, parent):
+        if not self.hasIndex(row, column, parentIdx):
             return QModelIndex()
 
-        if not parent.isValid():
+        if not parentIdx.isValid():
             parentItem = self.rootItem
         else:
-            parentItem = parent.internalPointer()
+            parentItem = parentIdx.internalPointer()
 
         childItem = parentItem.child(row)
         if childItem:
@@ -116,6 +122,31 @@ class TreeModel(QAbstractItemModel):
         else:
             return QModelIndex()
 
+    def item(self,selector):
+        """
+            Esta funcion esta sobrecargada. Admite dos tipos de parametros:
+                QModelIndex o
+                Clave del arbol
+            En el caso de QModelIndex comprobamos que el indice se refiera a esta clase o
+            si pertenece a un QSortFilterProxyModel, porque en este caso hay que retocarlo.
+            Chequear esto me permite simplificar el codigo en donde le llame y evitar los problemas del uso
+            de QSortFilterProxyModel (que no es transparente, vaya)
+        """
+        if isinstance(selector,QModelIndex):
+            if isinstance(selector.model(),QSortFilterProxyModel):
+                index = selector.model().mapToSource(selector)
+            if isinstance(selector.model(),TreeModel):
+                index = selector
+            else:
+                return None
+            if index.isValid():
+                return index.internalPointer()
+            else:
+                return None
+            pass
+        else:
+            return self.datos.row_hdr_idx.item(selector)
+        
     def parent(self, index):
         if not index.isValid():
             return QModelIndex()
@@ -128,14 +159,14 @@ class TreeModel(QAbstractItemModel):
 
         return self.createIndex(parentItem.row(), 0, parentItem)
 
-    def rowCount(self, parent):
-        if parent.column() > 0:
-            return 0
-
-        if not parent.isValid():
+    def rowCount(self, parentIdx):
+        if not parentIdx.isValid():
             parentItem = self.rootItem
         else:
-            parentItem = parent.internalPointer()
+            parentItem = parentIdx.internalPointer()
+
+        if parentIdx.column() > 0:
+            return 0
 
         return parentItem.childCount()
     

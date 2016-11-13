@@ -742,7 +742,7 @@ class Vista:
         for record in self.array:
             try:
                 ind_1 = record[0].ord
-                ind_2 = record[1].ord
+                ind_2 = record[1].ord  
                 table[ind_1][ind_2]=record[-1]
             except KeyError:
                 continue
@@ -986,7 +986,7 @@ class Vista:
             idx = indice[key].ord
             desc = indice[key].getFullDesc()
             cur_level = indice[key].getLevel() #getLevel(key)
-            if cur_level >= max_level:  #odio los indices en 0. siempre off by one 
+            if cur_level > max_level:  #odio los indices en 0. siempre off by one 
                 continue
             if rango is not None:
                 if rango[0] <= idx <= rango[1]:

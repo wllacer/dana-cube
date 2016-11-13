@@ -80,6 +80,7 @@ want it, can be made to fallback to plain PyQt/QtSql (by hand, actually, and onl
 * [DateUtil](https://pypi.python.org/pypi/python-dateutil/2.6.0) for some date related functions
 * [SqlParse](https://pypi.python.org/pypi/sqlparse/0.2.2) ( _Optional_ ) for some trace outputs
 * [XlsxWriter](https://pypi.python.org/pypi/XlsxWriter) Guess it ...
+* [Matplotlib](http://matplotlib.org/)
 
 ## License
 

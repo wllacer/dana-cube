@@ -118,12 +118,17 @@ class DanaCube(QMainWindow):
         self.filtroCampos = ''
         self.filtroFechas = ''
 
-        #TODO como crear menu de contexto https://wiki.python.org/moin/PyQt/Creating%20a%20context%20menu%20for%20a%20tree%20view
         
         self.view.setSortingEnabled(True)
         #self.view.setRootIsDecorated(False)
         self.view.setAlternatingRowColors(True)
         self.view.sortByColumn(0, Qt.AscendingOrder)
+        #
+        self.view.header().setContextMenuPolicy(Qt.CustomContextMenu)
+        self.view.header().customContextMenuRequested.connect(self.openHeaderContextMenu)
+        self.view.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.view.customContextMenuRequested.connect(self.openContextMenu)
+
         #ALERT
         self.initCube()
 
@@ -476,15 +481,80 @@ class DanaCube(QMainWindow):
         return result
     
     def export(self):
+        #TODO 
+        #rowHidden = [ None  for k in range (self.baseModel.count()) ]
+        #def getHiddenRows(baseElem,rowHidden):
+            #for k,item in enumerate(baseElem.childItems) :                
+        #getHiddenRows(self.baseModel.rootItem,rowHidden)
+        #print(rowHidden)
         parms = eW.exportWizard()
-        selArea = None
+        selArea = dict()
+        if parms['scope']['visible']:
+            # probar con self.view.isColumnHidden(x)
+            selArea['hiddenColumn'] = [ self.view.header().isSectionHidden(k) for k in range(self.view.header().count())]
+            # is self.view.isRowHidden(x,parent)
+            selArea['hiddenRow'] = []
+        del selArea['hiddenColumn'][0] #no me interesa el estado de los titulos
+        
         if not parms.get('file'):
             return
         resultado = self.vista.export(parms,selArea)
 
+    def openHeaderContextMenu(self,position):
+        indexes = self.view.selectedIndexes()
+        if len(indexes) > 0:
+            index = indexes[0]
+        menu = QMenu()
+        self.ctxMenuHdr = []
+        self.ctxMenuHdr.append(menu.addAction("Ocultar Columna",lambda :self.execHeaderAction("hide",position)))
+        columna=self.view.header().logicalIndexAt(position)
+        if self.view.header().isSectionHidden(columna -1):
+            self.ctxMenuHdr.append(menu.addAction("Mostrar Columna oculta",lambda :self.execHeaderAction("unhide",position)))
+        self.ctxMenuHdr.append(menu.addAction("Gráfico de la columna",lambda :self.execHeaderAction("graph",position)))
+        #self.ctxMenu.append(menu.addAction("Exportar seleccion",lambda :self.execAction("export",position)))
+        action = menu.exec_(self.view.viewport().mapToGlobal(position))
+    
+    def execHeaderAction(self,function,position):
+        columna=self.view.header().logicalIndexAt(position)
+        if function == 'hide':
+                self.view.setColumnHidden(columna,True)
+        elif function == 'unhide':
+            ## eso me interesa para otras cosas
+            #for k in range(self.view.header().count()):
+                #print(columna,k,self.view.header().isSectionHidden(k))
+            #if self.view.header().isSectionHidden(columna -1):
+            self.view.setColumnHidden(columna -1,False)
+        elif function == 'graph':
+            self.drawGraph('col',columna)
+
+    def openContextMenu(self,position):
+        menu = QMenu()
+        self.ctxMenu = []
+        self.ctxMenu.append(menu.addAction("Gráfico de la fila",lambda :self.execAction("graph",position)))
+        action = menu.exec_(self.view.viewport().mapToGlobal(position))
+        
+    def execAction(self,function,position):
+        print(position)
+        indexes = self.view.selectedIndexes()
+        if len(indexes) > 0:
+            index = indexes[0]
+            self.drawGraph('row',index)
+        
+    def drawGraph(self,source,id):
+        if source == 'row':
+            item = self.baseModel.item(id)
+            titulo = item['key']
+            datos = item.getPayload()
+            etiquetas = self.baseModel.colHdr[1:]
+        elif source == 'col':
+            titulo = self.baseModel.colHdr[id]
+            datos = []
+            for key in self.vista.row_hdr_idx.traverse(mode=1):
+                datos.append(self.vista.row_hdr_idx[key].gpi(id -1))
+            etiquetas = self.baseModel.rowHdr[1:]
+        print(source,titulo,datos,etiquetas)
         
 if __name__ == '__main__':
-
     import sys
     # con utf-8, no lo recomiendan pero me funciona
     #print(sys,version_info)

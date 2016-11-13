@@ -129,7 +129,7 @@ class WzFilter(QWizardPage):
 
         self.allRB.setChecked(True)
         #TEMPORAL init
-        #self.visibleRB.setEnabled(False)
+        self.visibleRB.setEnabled(False)
         self.selectRB.setEnabled(False)
         #TEMPORAL end
         extentBoxLayout = QHBoxLayout()
