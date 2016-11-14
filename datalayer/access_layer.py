@@ -1,12 +1,13 @@
-# -*- coding=utf -*-
+## -*- coding=utf -*-
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
 BACKEND = 'Alchemy' #'Alchemy' #or 'QtSql'
-DRIVERS = ('sqlite','mysql','postgresql','oracle') #('db2','odbc') todavia no implementadas
+DRIVERS = ('sqlite','mysql','postgresql','oracle','db2','odbc') #todavia no implementadas las dos ultimas
 AGR_LIST = ('count', 'max', 'min', 'avg', 'sum')
+CURR_HANDLERS = {'sqlite':'sqlite','mysql':'mysqlconnector','postgresql':'psycopg2','oracle':'cx_oracle','db2':None,'odbc':None}
 '''
 Documentation, License etc.
 
@@ -62,24 +63,37 @@ def driver2Qt(pdriver):
     driver = pdriver.lower()
     if driver in ('sqlite','qsqlite'): #solo compatibilidad codigo actural
         return 'QSQLITE'
-    elif driver in ('mysql','mariadb','mysqldb','msyqlconnector'):
+    elif driver in ('mysql',):
+    #elif driver in ('mysql','mariadb','mysqldb','msyqlconnector'):
         return 'QMYSQL'
-    elif driver ('postgresql','postgres','pg','psycopg2'):
+    elif driver ('postgresql',):
+    #elif driver ('postgresql','postgres','pg','psycopg2'):
         return 'QPSQL'
     elif driver == 'oracle':
         return 'QOCI'
     else:
         return driver
       
+def internal2genericDriver(pdriver):
+    if not pdriver:
+        return None
+    for external in CURR_HANDLERS:
+        if CURR_HANDLERS[external] == pdriver:
+            return external
+            break #innecesario pero clarificador
+    return None
+
 def driver2Alch(pdriver):
     driver = pdriver.lower()
     if driver in ('sqlite','qsqlite'):
         return 'sqlite'
-    elif driver in ('mysql','mysqlconnector','mariadb'):
+    #elif driver in ('mysql','mysqlconnector','mariadb'):  #FIXME
+    elif driver in ('mysql',):  #FIXME
         return 'mysql+mysqlconnector'
-    elif driver in ('mysqldb',):
-        return 'mysql+mysqldb'
-    elif driver in ('postgresql','postgres','pg','psycopg2'):
+    #elif driver in ('mysqldb',):
+        #return 'mysql+mysqldb'
+    #elif driver in ('postgresql','postgres','pg','psycopg2'): #FIXME
+    elif driver in ('postgresql',): #FIXME
         return 'postgresql+psycopg2'
     elif driver == 'oracle':
         return 'oracle+cx_oracle'

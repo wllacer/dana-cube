@@ -122,7 +122,8 @@ def getDateEntry(psource, fmt, driver='QSQLITE'):
         marker["d"] = '%d'
         marker["w"] = '%w'
         marker["J"] = '%J'
-    elif driver in ('mysql','mariadb','mysqldb','mysqlconnector'):  #GENERADOR
+    #elif driver in ('mysql','mariadb','mysqldb','mysqlconnector'):  #GENERADOR
+    elif driver in ('mysql',):  #GENERADOR
         function = 'DATE_FORMAT' 
         marker["Y"] = '%Y'
         marker["m"]= '%m'
@@ -130,7 +131,8 @@ def getDateEntry(psource, fmt, driver='QSQLITE'):
         marker["d"] = '%d'
         marker["w"] = '%w'
         marker["J"] = '%j'
-    elif driver in ('postgresql','postgres','pg','psycopg2','oracle'):
+    #elif driver in ('postgresql','postgres','pg','psycopg2','oracle'):
+    elif driver in ('postgresql','oracle'):
         function = 'to_char'   
         marker["Y"] =  'YYYY'
         marker["m"]= 'MM'
@@ -215,13 +217,15 @@ def genTrimestreCode(fieldname,driver='QSQLITE'):
         year_marker='%Y'
         month_marker = '%m'
         cat_stmt = "{} || '{}' "
-    elif driver in ('mysql','mariadb','mysqldb','mysqlconnector'):  #GENERADOR
+    #elif driver in ('mysql','mariadb','mysqldb','mysqlconnector'):  #GENERADOR
+    elif driver in ('mysql',):
         function = 'DATE_FORMAT'
         function_mask ="{0}({1},'{2}')"
         year_marker='%Y'
         month_marker = '%m'
         cat_stmt = "concat({},'{}')"
-    elif driver in ('postgresql','postgres','pg','psycopg2','oracle'):
+    #elif driver in ('postgresql','postgres','pg','psycopg2','oracle'):
+    elif driver in ('postgresql','oracle'):
         function = 'TO_CHAR'
         function_mask ="{0}({1},'{2}')"
         year_marker='YYYY'

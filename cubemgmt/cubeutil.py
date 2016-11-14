@@ -24,7 +24,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QSplitter, QMe
 
 from dictmgmt.datadict import *    
 from datalayer.query_constructor import *
-from datalayer.access_layer import dbDict2Url
+from datalayer.access_layer import dbDict2Url,internal2genericDriver
 from tablebrowse import *
 from datemgr import genTrimestreCode
 from util.jsonmgr import *
@@ -61,10 +61,10 @@ def info2cube(dataDict,confName,schema,table,maxlevel=1):
     entrada['connect']=dict()
     conn = dataDict.getConnByName(confName).data().engine
     
-    print('Conexion ',conn.url,conn.driver)
+    print('Conexion ',conn.url,conn.driver,internal2genericDriver(conn.driver))  #TODO borrar
     entrada['connect']["dbuser"] = None 
     entrada['connect']["dbhost"] =  None
-    entrada['connect']["driver"] =  conn.driver
+    entrada['connect']["driver"] =  internal2genericDriver(conn.driver)
     entrada['connect']["dbname"] =  str(conn.url) #"/home/werner/projects/dana-cube.git/ejemplo_dana.db"
     entrada['connect']["dbpass"] =  None
     
@@ -233,14 +233,14 @@ def dbUrlSplit(url):
 
     if fullinterface is not None:
         agay = fullinterface.split('+')
-        dialect = agay[0]
+        driver = agay[0]
         if len(agay) == 2:
-            driver = agay[1]
+            sqlaDriver = agay[1]
         else:
-            driver = None
+            sqlaDriver = None
     else:
-        dialect = None
-        driver  = None
+        driver = None
+        sqlaDriver  = None
             
 
     agay = resto.split('@')
@@ -269,7 +269,7 @@ def dbUrlSplit(url):
             host= None
             dbref = reference
     #print('{:20}{:20} {:20} {:20} {}'.format(dialect,driver,login,host,dbref)
-    return dialect,driver,login,host,dbref
+    return driver,sqlaDriver,login,host,dbref
 
 def getOpenConnections(dataDict):
     conns = childItems(dataDict.hiddenRoot)

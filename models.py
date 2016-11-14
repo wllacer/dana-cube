@@ -133,13 +133,13 @@ class TreeModel(QAbstractItemModel):
             de QSortFilterProxyModel (que no es transparente, vaya)
         """
         if isinstance(selector,QModelIndex):
-            if isinstance(selector.model(),QSortFilterProxyModel):
-                index = selector.model().mapToSource(selector)
-            if isinstance(selector.model(),TreeModel):
-                index = selector
-            else:
-                return None
-            if index.isValid():
+            if selector.isValid():
+                if isinstance(selector.model(),TreeModel):
+                    index = selector
+                elif isinstance(selector.model(),QSortFilterProxyModel):
+                    index = selector.model().mapToSource(selector)
+                else:
+                    return None
                 return index.internalPointer()
             else:
                 return None
