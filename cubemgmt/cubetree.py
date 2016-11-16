@@ -26,7 +26,7 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem
 #from datalayer.query_constructor import *
 #from datalayer.access_layer import DRIVERS, AGR_LIST, dbDict2Url
 #from tablebrowse import *
-#from datemgr import genTrimestreCode
+#from datalayer.datemgr import genTrimestreCode
 #from util.jsonmgr import *
 #from util.numbers import is_number
 #from dialogs import propertySheetDlg

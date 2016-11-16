@@ -124,6 +124,8 @@ class DanaCube(QMainWindow):
         self.view.setAlternatingRowColors(True)
         self.view.sortByColumn(0, Qt.AscendingOrder)
         #
+        #self.view.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.view.setSelectionBehavior(QAbstractItemView.SelectColumns)
         self.view.header().setContextMenuPolicy(Qt.CustomContextMenu)
         self.view.header().customContextMenuRequested.connect(self.openHeaderContextMenu)
         self.view.setContextMenuPolicy(Qt.CustomContextMenu)

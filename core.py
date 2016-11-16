@@ -33,7 +33,7 @@ from datalayer.query_constructor import *
 
 from util.numbers import stats,num2text
 
-from datemgr import getDateIndex,getDateEntry
+from datalayer.datemgr import getDateIndex,getDateEntry
 from pprint import *
 
 import time

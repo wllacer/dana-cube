@@ -40,7 +40,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * Ocultar las claves en las cadenas importantes
 
 ## Pequeños TODO
-
+ 
 * Sesiones salvables
 * Repaso de bugs (iniciar en danabrowse -> cubebrowse -> danacube)
 * Unficar el tratamiento de arboles en la medida de lo posible

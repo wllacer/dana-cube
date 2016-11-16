@@ -26,7 +26,7 @@ from dictmgmt.datadict import *
 from datalayer.query_constructor import *
 from datalayer.access_layer import dbDict2Url,internal2genericDriver
 from tablebrowse import *
-from datemgr import genTrimestreCode
+from datalayer.datemgr import genTrimestreCode
 from util.jsonmgr import *
 from util.numbers import is_number
 from dialogs import propertySheetDlg

@@ -9,29 +9,32 @@ from pprint import pprint
 from util.numbers import stats
 
 (_ROOT, _DEPTH, _BREADTH) = range(3)
+(_KEY,_ITEM) = range(2)
+
 DELIMITER=':'
 
 def traverse(tree, key=None, mode=1):
+    return tree.traverse(key,mode,output = _ITEM)
     """
         variante de TreeDict.traverse().
         En lugar de las claves devuelve el item
         TODO deberia normalizar todos los traverses
         
-    """
-    if key is not None:
-        yield tree.content[key]
-        queue = tree.content[key].childItems
-    else:
-        queue = tree.rootItem.childItems
-        #print(queue)
-        #print('')
-    while queue:
-        yield queue[0] 
-        expansion = queue[0].childItems
-        if mode == _DEPTH:
-            queue = expansion + queue[1:]  # depth-first
-        elif mode == _BREADTH:
-            queue = queue[1:] + expansion  # width-first
+    #"""
+    #if key is not None:
+        #yield tree.content[key]
+        #queue = tree.content[key].childItems
+    #else:
+        #queue = tree.rootItem.childItems
+        ##print(queue)
+        ##print('')
+    #while queue:
+        #yield queue[0] 
+        #expansion = queue[0].childItems
+        #if mode == _DEPTH:
+            #queue = expansion + queue[1:]  # depth-first
+        #elif mode == _BREADTH:
+            #queue = queue[1:] + expansion  # width-first
 
 class TreeItem(object):
     
@@ -282,7 +285,7 @@ class TreeDict(object):
         for child in children:
             self.display(child.key, depth)  # recursive call
 
-    def traverse(self, key=None, mode=_DEPTH):
+    def traverse(self, key=None, mode=_DEPTH, output = _KEY):
         # Obtenido de
         # Brett Kromkamp (brett@perfectlearn.com)
         # You Programming (http://www.youprogramming.com)
@@ -294,13 +297,14 @@ class TreeDict(object):
             #yield self.rootItem.childItems[0].key
             #queue = self.rootItem.childItems[1:]
         #else:
+            
         if key is not None:
-            yield key
-            queue = self.content[key].childItems
+            yield self.item(key) if output == _ITEM else key
+            queue = self.item(key).childItems
         else:
             queue = self.rootItem.childItems
         while queue:
-            yield queue[0].key
+            yield queue[0] if output == _ITEM else queue[0].key
             expansion = queue[0].childItems
             if mode == _DEPTH:
                 queue = expansion + queue[1:]  # depth-first

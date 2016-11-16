@@ -21,9 +21,6 @@ from widgets import *
   DEBUG DATA start
 """
 cubo = None
-from core import Cubo, Vista
-from util.jsonmgr import load_cubo
-from datalayer.directory import camposDeTipo
 
         
 class propertySheetDlg(QDialog):
@@ -473,31 +470,35 @@ def mainNF():
         print('a la vuelta de publicidad',cdata)
         sys.exit()
 
+#OJO requiere de una funcion que ya no existe camposDeTipo. Encontrar en backup/datalayer/directory.py
+#from core import Cubo, Vista
+#from util.jsonmgr import load_cubo
+#from datalayer.directory import camposDeTipo
 
-def dateFilter():
-    from core import Cubo
-    from util.jsonmgr import load_cubo
+#def dateFilter():
+    #from core import Cubo
+    #from util.jsonmgr import load_cubo
     
-    app = QApplication(sys.argv)
-    parametros = [ 1, 0, 2,3, False, False ]
-    mis_cubos = load_cubo()
-    cubo = Cubo(mis_cubos['film'])
-    vista=Vista(cubo,1,0,'sum','sakila.film.film_id')
-    descriptores = camposDeTipo("fecha",vista.cubo.db,vista.cubo.definition['table'])
-    form = dateFilterDlg(descriptores)
-    #form.show()
-    if form.exec_():
-        #cdata = [form.context[k][1] for k in range(len(parametros))]
-        #print('a la vuelta de publicidad',cdata)
-        sqlGrp = []
-        #OJO form.result lleva los indices desplazados respecto de form.data
-        for entry in form.result:
-            if entry[1] != 0:
-                intervalo = dateRange(entry[1],entry[2],periodo=entry[3])
-                sqlGrp.append((entry[0],'BETWEEN',intervalo))
-        if len(sqlGrp) > 0:
-            print(searchConstructor('where',{'where':sqlGrp}))
-        sys.exit()
+    #app = QApplication(sys.argv)
+    #parametros = [ 1, 0, 2,3, False, False ]
+    #mis_cubos = load_cubo()
+    #cubo = Cubo(mis_cubos['film'])
+    #vista=Vista(cubo,1,0,'sum','sakila.film.film_id')
+    #descriptores = camposDeTipo("fecha",vista.cubo.db,vista.cubo.definition['table'])
+    #form = dateFilterDlg(descriptores)
+    ##form.show()
+    #if form.exec_():
+        ##cdata = [form.context[k][1] for k in range(len(parametros))]
+        ##print('a la vuelta de publicidad',cdata)
+        #sqlGrp = []
+        ##OJO form.result lleva los indices desplazados respecto de form.data
+        #for entry in form.result:
+            #if entry[1] != 0:
+                #intervalo = dateRange(entry[1],entry[2],periodo=entry[3])
+                #sqlGrp.append((entry[0],'BETWEEN',intervalo))
+        #if len(sqlGrp) > 0:
+            #print(searchConstructor('where',{'where':sqlGrp}))
+        #sys.exit()
 
 
 if __name__ == '__main__':
@@ -506,5 +507,6 @@ if __name__ == '__main__':
         reload(sys)
         sys.setdefaultencoding('utf-8')
     #app = QApplication(sys.argv)
-    dateFilter()
+    #dateFilter()
+    mainNF()
 
