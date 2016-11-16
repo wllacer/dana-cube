@@ -24,6 +24,8 @@ def norm2List(entrada):
     """
     if isinstance(entrada,(list,tuple)):
        return entrada
+    elif ',' in entrada:
+        return entrada.split(',')
     else:
        return [entrada ,]
       

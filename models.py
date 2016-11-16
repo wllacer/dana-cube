@@ -40,10 +40,10 @@ class TreeModel(QAbstractItemModel):
         #self.setupModelData(datos, self.rootItem)
         
     def columnCount(self, parent=None):
-        return self.datos.col_hdr_idx.count() + 1
+        return self.datos.col_hdr_idx.len() + 1
 
     def count(self):
-        return self.datos.row_hdr_idx.count()
+        return self.datos.row_hdr_idx.len()
             
     def data(self, index, role):
         if not index.isValid():

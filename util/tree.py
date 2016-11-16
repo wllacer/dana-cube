@@ -192,15 +192,25 @@ class TreeItem(object):
             papi = papi.parentItem
         return fullDesc
     
-    def __getitem__(self,key):
-        if key == 'key':
-            return self.key
-        elif key == 'desc':
+    def getRoot(self):
+        item = self
+        while item.parentItem:
+            item = item.parentItem
+        return item
+
+    def model(self):
+        rootItem = self.getRoot()
+        return rootItem.modelID
+    
+    def __getitem__(self,campo):
+        if campo == 'campo':
+            return self.campo
+        elif campo == 'desc':
             return self.desc
-        elif key == 'ord':
+        elif campo == 'ord':
             return self.ord
         else:
-            return self.itemData[key]
+            return self.itemData[campo]
         
     def __str__(self): 
         return '{}->{}'.format(self.key,self.desc)
@@ -214,6 +224,7 @@ class TreeDict(object):
         self.content={}
         self.rootItemKey="/"
         self.rootItem=TreeItem(self.rootItemKey,-1,"RootNode")
+        self.rootItem.modelID = self
 
 
     def rebaseTree(self):
@@ -225,8 +236,9 @@ class TreeDict(object):
             newRoot.appendChild(self.rootItem)
             self.rootItem.parentItem = newRoot
             self.rootItem = newRoot
+            self.rootItem.modelID = self
+
        
-        
     def __append(self,node):
         if node.parentItem == None:
             node.parentItem = self.rootItem
@@ -250,6 +262,17 @@ class TreeDict(object):
     def count(self):
         return len(self.content)
     
+    def __lenIter(self,elem):
+
+        has = elem.childCount()
+        if has != 0:
+            for item in elem.childItems:
+                has += self.__lenIter(item)
+        return has
+        
+    def len(self):
+        return self.__lenIter(self.rootItem)
+
     def queryAdd(self,node):
         if node.parentItem != None :
             pass

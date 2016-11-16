@@ -185,7 +185,7 @@ class Cubo:
               sqlDef['fields'] += norm2List(entrada['domain']['grouped by'])
           if len(fields) > 0:
               sqlDef['fields'] += fields[:]
-
+            
           sqlDef['fields'] += norm2List(entrada['domain']['code'])
           
             
@@ -200,8 +200,8 @@ class Cubo:
              
           sqlDef['fields'] = norm2List(entrada['elem'])
           
-        code_fld = len(sqlDef['fields']) - desc_fld  
         
+        code_fld = len(sqlDef['fields']) - desc_fld  
         sqlDef['order'] = [ str(x + 1) for x in range(code_fld)]
         
         sqlDef['select_modifier']='DISTINCT'
@@ -738,7 +738,7 @@ class Vista:
         """
            convertir los datos en una tabla normal y corriente
         """
-        table = [ [None for k in range(self.col_hdr_idx.count())] for j in range(self.row_hdr_idx.count())]
+        table = [ [None for k in range(self.col_hdr_idx.len())] for j in range(self.row_hdr_idx.len())]
         for record in self.array:
             try:
                 ind_1 = record[0].ord
@@ -749,11 +749,11 @@ class Vista:
             except IndexError:
                 print('{} o {} fuera de rango'.format(ind_1,ind_2))
         if DEBUG:
-            print(time.time(),'table ',len(table),self.row_hdr_idx.count(),len(table[0])) 
+            print(time.time(),'table ',len(table),self.row_hdr_idx.len(),len(table[0])) 
         return table
 
     #def toKeyedTable(self):
-        #ktable = [ [None for k in range(self.col_hdr_idx.count()+1)] for j in range(self.row_hdr_idx.count()+1)]
+        #ktable = [ [None for k in range(self.col_hdr_idx.len()+1)] for j in range(self.row_hdr_idx.len()+1)]
         #ktable[0][0] = None
         #ind = 1
         #for key in self.col_hdr_idx.traverse(mode=1):
@@ -777,8 +777,8 @@ class Vista:
         #return ktable
     
     #def toCsv(self,row_sparse=True,col_sparse=False,translated=True,separator=';',string_sep="'"):
-        #ctable = [ ['' for k in range(self.col_hdr_idx.count()+self.dim_row)] 
-                             #for j in range(self.row_hdr_idx.count()+self.dim_col) ]
+        #ctable = [ ['' for k in range(self.col_hdr_idx.len()+self.dim_row)] 
+                             #for j in range(self.row_hdr_idx.len()+self.dim_col) ]
      
         #ind = 1
         #def csvFormatString(cadena):
@@ -819,7 +819,7 @@ class Vista:
         #return lineas
     
     #def toNamedTable(self):
-        #ntable = [ [ None for k in range(self.col_hdr_idx.count()+1)] for j in range(self.row_hdr_idx.count()+1)]
+        #ntable = [ [ None for k in range(self.col_hdr_idx.len()+1)] for j in range(self.row_hdr_idx.len()+1)]
         #ntable[0][0] = None
         #ind = 1
         #for key in self.col_hdr_idx.traverse(mode=1):
@@ -854,7 +854,7 @@ class Vista:
             #if self.stats:
                 #elem.setStatistics()
         #if DEBUG:
-            #print(time.time(),'Tree ',len(array),self.row_hdr_idx.count())  
+            #print(time.time(),'Tree ',len(array),self.row_hdr_idx.len())  
 
     def toTree2D(self):
         array = self.toTable()
@@ -868,7 +868,7 @@ class Vista:
         for key in self.col_hdr_idx.traverse(mode=1):
             elem = self.col_hdr_idx[key]
             datos = [ getOrderedText(elem.getFullDesc(),sparse=True,separator=''),] +\
-                    [ array[ind][elem.ord] for ind in range(self.row_hdr_idx.count()) ]
+                    [ array[ind][elem.ord] for ind in range(self.row_hdr_idx.len()) ]
             elem.setData(datos)
             if self.stats:
                 elem.setStatistics()
@@ -884,7 +884,7 @@ class Vista:
 
                     
         if DEBUG:       
-            print(time.time(),'Tree ',len(array),self.row_hdr_idx.count())  
+            print(time.time(),'Tree ',len(array),self.row_hdr_idx.len())  
 
     def recalcGrandTotal(self):
         def cargaAcumuladores():
@@ -907,7 +907,7 @@ class Vista:
 
         
         arbol = self.row_hdr_idx
-        numcol = self.col_hdr_idx.count()
+        numcol = self.col_hdr_idx.len()
         padres = []
         acumuladores = []
         for key in arbol.traverse(mode=1):
@@ -1237,7 +1237,7 @@ def experimental():
             ind += 1
     vista = None
     mis_cubos = load_cubo()
-    cubo = Cubo(mis_cubos['experimento'])
+    cubo = Cubo(mis_cubos['datos locales'])
     #pprint(cubo.definition)
     #pprint(cubo.definition)
     #pprint(cubo.lista_funciones)
@@ -1264,11 +1264,18 @@ def experimental():
         #print (ind,key,elem.ord,elem.desc)
         #ind += 1
 
-    vista=Vista(cubo,3,0,'sum','votes_presential')
+    vista=Vista(cubo,6,0,'sum','votes_presential')
+    arbol = vista.row_hdr_idx
+    #raiz = arbol.rootItem
+    for item in arbol.traverse(output=1):
+        print(item.key,item)
+        #print(item,item.getRoot(),item.model())
+    print(arbol.count())
+    print(arbol.len())
     #pprint(vista.grandTotal())
     #tabla = vista.toKeyedTable()
-    vista.toTree2D()
-    vista.recalcGrandTotal()
+    #vista.toTree2D()
+    #vista.recalcGrandTotal()
     #col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
     #print(col_hdr)
     #for key in vista.row_hdr_idx.content:
@@ -1280,7 +1287,7 @@ def experimental():
     #for key in vista.row_hdr_idx.content:
         #elem = vista.row_hdr_idx[key]
         #pprint(elem)
-    #print(vista.row_hdr_idx.count())
+    #print(vista.row_hdr_idx.len())
     #presenta(vista)
     #print(vista.dim_row)
     #vista.row_hdr_idx.rebaseTree()

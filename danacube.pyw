@@ -125,7 +125,7 @@ class DanaCube(QMainWindow):
         self.view.sortByColumn(0, Qt.AscendingOrder)
         #
         #self.view.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.view.setSelectionBehavior(QAbstractItemView.SelectColumns)
+        #self.view.setSelectionBehavior(QAbstractItemView.SelectColumns)
         self.view.header().setContextMenuPolicy(Qt.CustomContextMenu)
         self.view.header().customContextMenuRequested.connect(self.openHeaderContextMenu)
         self.view.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -155,8 +155,8 @@ class DanaCube(QMainWindow):
         # para que aparezcan colapsados los indices jerarquicos
         self.max_row_level = self.vista.dim_row
         self.max_col_level  = self.vista.dim_col
-        self.row_range = [0, self.vista.row_hdr_idx.count() -1]
-        self.col_range = [0, self.vista.col_hdr_idx.count() -1]
+        self.row_range = [0, self.vista.row_hdr_idx.len() -1]
+        self.col_range = [0, self.vista.col_hdr_idx.len() -1]
         
     @waiting_effects
     def autoCarga(self,my_cubos):
