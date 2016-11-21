@@ -491,13 +491,14 @@ class DanaCube(QMainWindow):
         #print(rowHidden)
         parms = eW.exportWizard()
         selArea = dict()
-        if parms['scope']['visible']:
-            # probar con self.view.isColumnHidden(x)
-            selArea['hiddenColumn'] = [ self.view.header().isSectionHidden(k) for k in range(self.view.header().count())]
-            # is self.view.isRowHidden(x,parent)
-            selArea['hiddenRow'] = []
-        del selArea['hiddenColumn'][0] #no me interesa el estado de los titulos
-        
+        #TEMPORAL init
+        #if parms['scope']['visible']:
+            ## probar con self.view.isColumnHidden(x)
+            #selArea['hiddenColumn'] = [ self.view.header().isSectionHidden(k) for k in range(self.view.header().count())]
+            ## is self.view.isRowHidden(x,parent)
+            #selArea['hiddenRow'] = []
+            #del selArea['hiddenColumn'][0] #no me interesa el estado de los titulos
+        #TEMPORAL end
         if not parms.get('file'):
             return
         resultado = self.vista.export(parms,selArea)

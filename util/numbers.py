@@ -118,8 +118,11 @@ def std(tabla):
  
 def stats(plista):
     res=dict()
-    datos = [item for item in plista if item is not None ]
-    res['count']=len(datos)
+    if plista:
+        datos = [item for item in plista if item is not None ]
+        res['count']=len(datos)
+    else:
+        datos = []
     if len(datos) > 1:
         res['avg']=avg(datos)
         res['std']=std(datos)

@@ -14,7 +14,7 @@ from pprint import pprint
 def dhont(escanos,data):
     
   res = [0 for i in range(len(data))]
-  tempd = data [:]
+  tempd = [entry if entry else -float('Inf') for entry in data ] #data[:] compatiblidad v3
   
   for i in range(0,escanos):
     maxResto = max(tempd)
@@ -23,7 +23,7 @@ def dhont(escanos,data):
     tempd[elem] = data[elem]/(res[elem] +1)
   # ajuste para nulos
   for i in range(len(data)):
-     if data[i] is None:
+     if data[i] == -float('Inf'): #is None:
          res[i] = None
          
   return res
@@ -96,23 +96,26 @@ def porcentaje(row):
     return list(map(lambda item: item*100/suma if item is not None else None,row))
 
 def ordinal(item):
-    tmp = item.getPayload()
+    """
+        para ser compatible con python3 he tenido que sustituir los nulos por -Inf
+    """
+    tmp = [entry if entry else -float('Inf') for entry in item.getPayload() ]  #compatibilidad python 3
     ordtmp = [ None for k in range(item.lenPayload())]
     round = 1
     while round <= item.lenPayload():
         maximo = max(tmp)
-        if maximo is None:
+        if maximo == -float('Inf'): #is None:
             break
         else:
             donde = tmp.index(maximo)
             ordtmp[donde]=round
-            tmp[donde] = None
+            tmp[donde] = -float('Inf') #None
             round += 1
     item.setPayload(ordtmp)
 
 def senado(item):
     prov = item['key'].split(':')[-1]
-    tmp = item.getPayload()
+    tmp = [entry if entry else -float('Inf') for entry in item.getPayload() ] 
     ordtmp = [ None for k in range(item.lenPayload())]
     maximo = max(tmp)
     donde = tmp.index(maximo)
@@ -120,11 +123,11 @@ def senado(item):
         ordtmp[donde]=1
     else:
         ordtmp[donde]=3
-        tmp[donde] = None
+        tmp[donde] = -float('Inf')
         maximo = max(tmp)
         donde = tmp.index(maximo)
         ordtmp[donde]=1
-        tmp[donde] = None
+        tmp[donde] = -float('Inf')
 
     item.setPayload(ordtmp)
             
@@ -269,5 +272,5 @@ data = [33.03,
 #2.01,
 #1.2,
 ]
-escanos = 350
-print(dhont(escanos,data))
+totescanos = 350
+print(dhont(totescanos,data))

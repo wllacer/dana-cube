@@ -445,7 +445,7 @@ class NumberFormatDlg(QDialog):
                 self.sheet.get(3,0))
 
         self.callback()
-
+                
 def mainNF():
     app = QApplication(sys.argv)
 
