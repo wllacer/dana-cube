@@ -26,6 +26,8 @@ print(trueIndex.internalPointer())
 print(type(index.model()),index.row(),index.column(),index.parent(),index.internalId(),index.data())
 print(index.sibling(index.row(),0).data())
 """
+(_ROOT, _DEPTH, _BREADTH) = range(3)
+(_KEY,_ITEM) = range(2)
 
 
 
@@ -180,3 +182,23 @@ class TreeModel(QAbstractItemModel):
     def emitDataChanged(self):
         print('entro')
         self.dataChanged.emit(QModelIndex(),QModelIndex())
+        
+    def traverse(self, key=None, mode=_DEPTH, output = _KEY):
+        """
+         Adaptado de You Programming (http://www.youprogramming.com) Brett Kromkamp (brett@perfectlearn.com) May 03, 2014, que afirma
+        <cite>
+         Python generator. Loosly based on an algorithm from  'Essential LISP' by John R. Anderson, Albert T. Corbett, and Brian J. Reiser, page 239-241
+        </cite>    
+        """
+        if key is not None:
+            yield self.item(key) if output == _ITEM else key
+            queue = self.item(key).childItems
+        else:
+            queue = self.rootItem.childItems
+        while queue:
+            yield queue[0] if output == _ITEM else queue[0].key
+            expansion = queue[0].childItems
+            if mode == _DEPTH:
+                queue = expansion + queue[1:]  # depth-first
+            elif mode == _BREADTH:
+                queue = queue[1:] + expansion  # width-first

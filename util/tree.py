@@ -186,7 +186,7 @@ class TreeItem(object):
         fullDesc.append(self.desc)
         papi = self.parentItem
         while papi is not None:
-            if papi.parentItem is None:  #FIXME esto es un chapu
+            if papi.parentItem is None or papi.key == '//':  #FIXME esto es un chapu
                 break
             fullDesc.insert(0,papi.desc) #Ojo insert, o sea al principio
             papi = papi.parentItem
@@ -209,8 +209,12 @@ class TreeItem(object):
             return self.desc
         elif campo == 'ord':
             return self.ord
-        else:
+        elif campo == 'key':
+            return self.key
+        elif isinstance(campo,int):
             return self.itemData[campo]
+        else:
+            return None
         
     def __str__(self): 
         return '{}->{}'.format(self.key,self.desc)
@@ -225,7 +229,7 @@ class TreeDict(object):
         self.rootItemKey="/"
         self.rootItem=TreeItem(self.rootItemKey,-1,"RootNode")
         self.rootItem.modelID = self
-
+        self.name = None
 
     def rebaseTree(self):
         if not self.exists('//'):
@@ -354,6 +358,27 @@ class TreeDict(object):
                 queue = expansion + queue[1:]  # depth-first
             elif mode == _BREADTH:
                 queue = queue[1:] + expansion  # width-first
+
+    def setHeader(self):
+        header = [None for k in range(self.count())]
+        for item in self.traverse(output = _ITEM):
+            clave = item.getFullDesc()
+            try:
+                header[item.ord]=clave
+            except IndexError:
+                print('Canturriazo',self.count(),item,item.ord)
+                exit()
+        return header
+
+    def getHeader(self,tipo='row',separador='\n',sparse=True):
+        if sparse:
+            cabecera = [ item[-1].replace(DELIMITER,'-') for item in self.setHeader() ]
+        else:
+            cabecera = [ separador.join([ entry.replace(DELIMITER,'-') for entry in item]) for item in self.setHeader()]
+        if tipo == 'row':
+            return cabecera
+        else:
+            return ['',] + cabecera
 
 if __name__ == '__main__':
      item=TreeItem('alfa')

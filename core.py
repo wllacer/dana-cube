@@ -414,6 +414,7 @@ class Cubo:
                 print(time.time(),guiaId,idx,queryFormat(sqlString))
         cursor = sorted(cursor)
         tree=TreeDict()
+        tree.name = entrada['name']
         for entryNum,elem in enumerate(cursor):
             if componente['ndesc'] == 0:
                 desc=[elem[0],] 
@@ -518,74 +519,6 @@ class Vista:
         
             self.__setDataMatrix()
             
-    def  __setDataMatrixOrig(self):
-         #TODO clarificar el codigo
-         #REFINE solo esperamos un campo de datos. Hay que generalizarlo
-        #self.array = [ [None for k in range(len(self.col_hdr_idx))] for j in range(len(self.row_hdr_idx))]
-        self.array = []
-        VARIABLE_ELEMS = ('fields','join','group')
-        for i in range(0,self.dim_row):
-            # el group by en las categorias necesita codigo especial
-            if self.cubo.lista_guias[self.row_id]['rules'][i]['class'] == 'c':
-                group_row = [self.cubo.lista_guias[self.row_id]['rules'][i]['name'],]
-            else:
-                group_row = self.cubo.lista_guias[self.row_id]['rules'][i]['elem']
-            for j in range(0,self.dim_col):
-                sqlDef=dict()
-                sqlDef['tables']=self.cubo.definition['table']
-                #sqlDef['select_modifier']=None
-                sqlDef['fields']= self.cubo.lista_guias[self.row_id]['rules'][i]['elem'] + \
-                                  self.cubo.lista_guias[self.col_id]['rules'][j]['elem'] + \
-                                  [(self.campo,self.agregado)]
-                sqlDef['base_filter']=mergeString(self.filtro,self.cubo.definition['base filter'],'AND')
-                sqlDef['join']=[]
-                #TODO claro candidato a ser incluido en una funcion
-                if 'join' in self.cubo.lista_guias[self.row_id]['rules'][i]:
-                   row_join = self.cubo.lista_guias[self.row_id]['rules'][i]['join']
-                   for entry in row_join:
-                       join_entry = dict()
-                       join_entry['table'] = entry.get('table')
-                       join_entry['join_filter'] = entry.get('filter')
-                       join_entry['join_clause'] = []
-                       for clausula in entry['clause']:
-                           entrada = (clausula.get('rel_elem'),'=',clausula.get('base_elem'))
-                           join_entry['join_clause'].append(entrada)
-                       sqlDef['join'].append(join_entry)
-                if 'join' in self.cubo.lista_guias[self.col_id]['rules'][j]:
-                   col_join = self.cubo.lista_guias[self.col_id]['rules'][j]['join']
-                   for entry in col_join:
-                       join_entry = dict()
-                       join_entry['table'] = entry.get('table')
-                       join_entry['join_filter'] = entry.get('filter')
-                       join_entry['join_clause'] = []
-                       for clausula in entry['clause']:
-                           entrada = (clausula.get('rel_elem'),'=',clausula.get('base_elem'))
-                           join_entry['join_clause'].append(entrada)
-                       sqlDef['join'].append(join_entry)
-                # esta desviacion es por las categorias
-                if self.cubo.lista_guias[self.col_id]['rules'][j]['class'] == 'c':
-                    group_col = [self.cubo.lista_guias[self.col_id]['rules'][j]['name'],]
-                else:
-                    group_col = self.cubo.lista_guias[self.col_id]['rules'][j]['elem']
-                #sqlDef['group']=self.cubo.lista_guias[self.row_id]['rules'][i]['elem'] + \
-                                  #self.cubo.lista_guias[self.col_id]['rules'][j]['elem']
-                sqlDef['group']= group_row + group_col
-                #sqlDef['having']=None
-                #sqlDef['order']=None
-                sqlstring=queryConstructor(**sqlDef)
-                
-                #
-                lista_compra={'row':{'nkeys':len(self.cubo.lista_guias[self.row_id]['rules'][i]['elem']),},
-                              'rdir':self.row_hdr_idx,
-                              'col':{'nkeys':len(self.cubo.lista_guias[self.col_id]['rules'][j]['elem']),
-                                     'init':-1-len(self.cubo.lista_guias[self.col_id]['rules'][j]['elem']),},
-                              'cdir':self.col_hdr_idx
-                              }
-                
-                #cursor_data=getCursor(self.cubo.db,sqlstring,regHasher2D,**lista_compra)
-                self.array +=getCursor(self.cubo.db,sqlstring,regTree,**lista_compra)
-                if DEBUG:
-                    print(time.time(),'Datos ',queryFormat(sqlstring))
 
     def  __setDataMatrix(self):
          #TODO clarificar el codigo
@@ -932,7 +865,7 @@ class Vista:
                 #else:
                     #print('nuevo padre')
                     #padres.append(elem.parentItem)
-                print('para atras')
+                #print('para atras')
         else:
             while padres[-1].parent() is not None:
                 procesa()
