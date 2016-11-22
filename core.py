@@ -354,8 +354,8 @@ class Cubo:
                     guia['rules'][-1]['fmt']=componente['fmt']
                 
     def fillGuias(self):
-        for k in range(len(self.lista_guias)):
-            self.fillGuia(k)
+        for k,entrada in enumerate(self.lista_guias):
+            entrada['dir_row']=self.fillGuia(k)
             
     def fillGuia(self,guiaId):
         # TODO documentar y probablemente separar en funciones
@@ -426,7 +426,8 @@ class Cubo:
             
         if DEBUG:              
             print(time.time(),guiaId,idx,'creada')
-        entrada['dir_row']=tree
+        #entrada['dir_row']=tree
+        return tree
             
                 #print(time.strftime("%H:%M:%S"),dir_row[0])
                 #print(time.strftime("%H:%M:%S"),dir_row[0])
@@ -507,15 +508,12 @@ class Vista:
             
             self.dim_row = len(self.cubo.lista_guias[row]['rules'])
             self.dim_col = len(self.cubo.lista_guias[col]['rules'])
-            for guia in self.cubo.lista_guias:
-                if 'dir_row' in guia:
-                    del guia['dir_row']
-                    
-            self.cubo.fillGuia(row)
-            self.cubo.fillGuia(col)
-
-            self.row_hdr_idx = self.cubo.lista_guias[row]['dir_row']
-            self.col_hdr_idx = self.cubo.lista_guias[col]['dir_row']
+            #for guia in self.cubo.lista_guias:
+                #if 'dir_row' in guia:
+                    #del guia['dir_row']
+                
+            self.row_hdr_idx = self.cubo.fillGuia(row) #self.cubo.lista_guias[row]['dir_row']
+            self.col_hdr_idx = self.cubo.fillGuia(col) #self.cubo.lista_guias[col]['dir_row']
         
             self.__setDataMatrix()
             
@@ -882,16 +880,18 @@ class Vista:
         self.dim_row = len(self.cubo.lista_guias[self.row_id]['rules'])
         self.dim_col = len(self.cubo.lista_guias[self.col_id]['rules'])
 
-        self.row_hdr_idx = self.cubo.lista_guias[self.row_id]['dir_row']
-        self.col_hdr_idx = self.cubo.lista_guias[self.col_id]['dir_row']
+        rtmp = self.row_hdr_idx
+        ctmp = self.col_hdr_idx
+        self.row_hdr_idx = ctmp  #self.cubo.lista_guias[self.row_id]['dir_row']
+        self.col_hdr_idx = rtmp  #self.cubo.lista_guias[self.col_id]['dir_row']
 
         
-    def fmtHeader(self,dimension, separador='\t', sparse=False, rango= None,  max_level=None):
+    def fmtHeader(self,dimension, separador='\n', sparse=False): #, rango= None,  max_level=None):
         '''
-
+           honradamente, creo que esta obsoleto
            TODO documentar
            TODO en el caso de fechas debe formatearse a algo presentable
-           TODO some codepaths are not executed by now
+           TODO some codepaths are not executed by now. Rango y max_level NO SE USAN
         '''
         #print(dimension, separador, sparse, rango,  max_level)
 
@@ -900,38 +900,14 @@ class Vista:
            (funcionalidad abreviada)
         """
         if dimension == 'row':
-            indice = self.cubo.lista_guias[self.row_id]['dir_row']
-            id=self.row_id
-            if max_level is None:
-                max_level = self.dim_row
+            return self.row_hdr_idx.getHeader('row',separador,sparse)
         elif dimension == 'col':
-            indice = self.cubo.lista_guias[self.col_id]['dir_row']
-            id=self.col_id
-            if max_level is None:
-                max_level = self.dim_col
+            return self.col_hdr_idx.getHeader('col',separador,sparse)
         else:
             print('Piden formatear la cabecera >{}< no implementada'.format(dimension))
-            exit(-1)
-
-        cab_col = [None for k in range(indice.count() +1)]
-
-        for key in indice.traverse(None,1):
-            idx = indice[key].ord
-            desc = indice[key].getFullDesc()
-            cur_level = indice[key].getLevel() #getLevel(key)
-            if cur_level > max_level:  #odio los indices en 0. siempre off by one 
-                continue
-            if rango is not None:
-                if rango[0] <= idx <= rango[1]:
-                    pass
-                else:
-                    continue
-            texto=getOrderedText(desc,sparse,separador)
-            # chapuzilla por ver si las fechas pueden modificarse
-            cab_col[idx+1]= texto if not sparse else desc[-1]
-        return cab_col
-
-    def __getHeader(self,tipo,header_tree,dim,sparse,content):
+            return None
+    
+    def __exportHeaders(self,tipo,header_tree,dim,sparse,content):
         if tipo.lower() == 'list':
             tabla = list()
         elif tipo.lower() == 'dict':
@@ -939,9 +915,8 @@ class Vista:
         else:
             return None
         ind = 0
-        for key in header_tree.traverse(mode=1):
+        for elem in header_tree.traverse(mode=1,output=1):
             entrada = ['' for k in range(dim) ]
-            elem = header_tree[key]
             if content == 'branch' and elem.isLeaf() and dim > 1:
                 continue
             if content == 'leaf' and not elem.isLeaf():
@@ -1001,8 +976,8 @@ class Vista:
         dim_row = self.dim_row if not self.totalizado else self.dim_row + 1
         dim_col = self.dim_col
             
-        row_hdr = self.__getHeader('List',self.row_hdr_idx,dim_row,row_sparse,contentFilter)
-        col_hdr = self.__getHeader('List',self.col_hdr_idx,dim_col,col_sparse,contentFilter)
+        row_hdr = self.__exportHeaders('List',self.row_hdr_idx,dim_row,row_sparse,contentFilter)
+        col_hdr = self.__exportHeaders('List',self.col_hdr_idx,dim_col,col_sparse,contentFilter)
         
         num_rows = len(row_hdr)
         num_cols = len(col_hdr)
@@ -1063,8 +1038,8 @@ class Vista:
         dim_row = self.dim_row if not self.totalizado else self.dim_row + 1
         dim_col = self.dim_col
             
-        row_hdr = self.__getHeader('List',self.row_hdr_idx,dim_row,row_sparse,contentFilter)
-        col_hdr = self.__getHeader('Dict',self.col_hdr_idx,dim_col,col_sparse,contentFilter)
+        row_hdr = self.__exportHeaders('List',self.row_hdr_idx,dim_row,row_sparse,contentFilter)
+        col_hdr = self.__exportHeaders('Dict',self.col_hdr_idx,dim_col,col_sparse,contentFilter)
         
         num_rows = len(row_hdr)
         num_cols = len(col_hdr)
