@@ -12,7 +12,7 @@ from pprint import pprint
 
 from PyQt5.QtCore import Qt,QSortFilterProxyModel
 from PyQt5.QtGui import QCursor
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView , QTabWidget
 
 from core import Cubo,Vista, mergeString
 from dialogs import *
@@ -20,7 +20,7 @@ from util.jsonmgr import *
 from models import *
 
 from user_functions import *
-from util.decorators import waiting_effects 
+from util.decorators import *
 
 #from util.tree import traverse
 from filterDlg import filterDialog
@@ -30,6 +30,7 @@ from datalayer.query_constructor import searchConstructor
 
 import exportWizard as eW
 
+from util.treestate import *
 #FIXED 1 zoom view breaks. Some variables weren't available
 #     FIXME zoom doesn't trigger any action with the new interface
 #FIXED 1 config view doesn't fire. Definition too early
@@ -63,88 +64,119 @@ import exportWizard as eW
 class DanaCubeWindow(QMainWindow):
     def __init__(self):
         super(DanaCubeWindow, self).__init__()
-        self.view = DanaCube(self)
-        self.setCentralWidget(self.view)
-        self.view.showMaximized()
-        #CHANGE here
-        self.fileMenu = self.menuBar().addMenu("&Cubo")
-        self.fileMenu.addAction("&Open Cube ...", self.view.initData, "Ctrl+O")
-        self.fileMenu.addAction("C&hange View ...", self.view.changeVista, "Ctrl+H")
-        self.fileMenu.addSeparator()
-        self.fileMenu.addAction("Convertir vista actual a defecto", self.view.defaultVista, "Ctrl+H")
-        self.fileMenu.addSeparator()
-        self.fileMenu.addAction("E&xit", self.close, "Ctrl+Q")
-
-        self.filtersMenu = self.menuBar().addMenu("&Usar Filtros")
-        #TODO skipped has to be retougth with the new interface
-        #self.optionsMenu.addAction("&Zoom View ...", self.zoomData, "Ctrl+Z")
+        #
+        # movidas aqui por colisiones con checkChanges
+        #
         self.filterActions = dict()
-        self.filterActions['create'] = self.filtersMenu.addAction('Editar &Filtro',self.view.setFilter,"Ctrl+K")
-        self.filterActions['drop'] = self.filtersMenu.addAction('Borrar &Filtros',self.view.dropFilter,"Ctrl+K")
-        self.filterActions['save'] = self.filtersMenu.addAction('Guardar &Filtros permanentemente',self.view.saveFilter,"Ctrl+K")
+        self.dateRangeActions = dict()
+        self.restorator = None
+        
+        self.tabulatura	= QTabWidget()
+        self.tabulatura.currentChanged[int].connect(self.checkChanges)
+
+        self.views = list()
+        self.selectCube(True)
+        
+        #CHANGE here. En este caso defino el menu tras los widgets porque si no no compila
+        self.cubeMenu = self.menuBar().addMenu("&Cubo")
+        self.cubeMenu.addAction("Abrir Cubo ...", self.selectCube, "Ctrl+O")
+        self.cubeMenu.addSeparator()
+        self.cubeMenu.addAction("Convertir vista actual a defecto", self.defaultVista, "Ctrl+H")
+
+        self.viewMenu = self.menuBar().addMenu("&Vista")
+        self.viewMenu.addAction("&Abrir Vista ...",lambda a='new': self.openView(a), "Ctrl+O")
+        self.viewMenu.addAction("Cambiar vista actual", lambda a='active': self.openView(a), "Ctrl+H")     
+        self.viewMenu.addAction("Cerrar vista actual", self.closeView, "Ctrl+H")     
+ 
+        self.filtersMenu = self.menuBar().addMenu("&Usar Filtros")
+
+        self.filterActions['create'] = self.filtersMenu.addAction('Editar &Filtro',
+                                    self.tabulatura.currentWidget().setFilter,
+                                    "Ctrl+K")
+        self.filterActions['drop'] = self.filtersMenu.addAction('Borrar &Filtros',
+                                    self.tabulatura.currentWidget().dropFilter,
+                                    "Ctrl+K")
+        self.filterActions['save'] = self.cubeMenu.addAction('Guardar &Filtros permanentemente',
+                                    self.tabulatura.currentWidget().saveFilter,
+                                    "Ctrl+K")
         self.filterActions['drop'].setEnabled(False)
         self.filterActions['save'].setEnabled(False)
         self.filtersMenu.addSeparator()
-        self.dateRangeActions = dict()
-        self.dateRangeActions['dates'] = self.filtersMenu.addAction('Editar &Rango fechas',self.view.setRange,"Ctrl+K")
-        self.dateRangeActions['drop'] = self.filtersMenu.addAction('Borrar &Rango fechas',self.view.dropRange,"Ctrl+K")
-        self.dateRangeActions['save'] = self.filtersMenu.addAction('Salvar &Rango fechas',self.view.saveRange,"Ctrl+K")
+        
+        self.dateRangeActions['dates'] = self.filtersMenu.addAction('Editar &Rango fechas',
+                                    self.tabulatura.currentWidget().setRange,
+                                    "Ctrl+K")
+        self.dateRangeActions['drop'] = self.filtersMenu.addAction('Borrar &Rango fechas',
+                                    self.tabulatura.currentWidget().dropRange,
+                                    "Ctrl+K")
+        self.dateRangeActions['save'] = self.cubeMenu.addAction('Salvar &Rango fechas',
+                                    self.tabulatura.currentWidget().saveRange,
+                                    "Ctrl+K")
         self.dateRangeActions['drop'].setEnabled(False)
         self.dateRangeActions['save'].setEnabled(False)
  
         self.optionsMenu = self.menuBar().addMenu("&Opciones")
-        self.optionsMenu.addAction("&Exportar datos ...",self.view.export,"CtrlT")
-        self.optionsMenu.addAction("&Trasponer datos",self.view.traspose,"CtrlT")
-        self.optionsMenu.addAction("&Presentacion ...",self.view.setNumberFormat,"Ctrl+F")
-        #
+        self.optionsMenu.addAction("&Exportar datos ...",
+                                   self.tabulatura.currentWidget().export,
+                                   "CtrlT")
+        self.optionsMenu.addAction("&Trasponer datos",
+                                   self.tabulatura.currentWidget().traspose,
+                                   "CtrlT")
+        self.optionsMenu.addAction("&Presentacion ...",
+                                   self.tabulatura.currentWidget().setNumberFormat,
+                                   "Ctrl+F")
+
+        ##
         
         self.userFunctionsMenu = self.menuBar().addMenu("&Funciones de usuario")
-        self.restorator = self.userFunctionsMenu.addAction("&Restaurar valores originales",self.view.restoreData,"Ctrl+R")
+        self.restorator = self.userFunctionsMenu.addAction("&Restaurar valores originales"
+            ,self.tabulatura.currentWidget().restoreData,"Ctrl+R")
         self.restorator.setEnabled(False)
         self.userFunctionsMenu.addSeparator()
         
         for ind,item in enumerate(USER_FUNCTION_LIST):
-             self.userFunctionsMenu.addAction(USER_FUNCTION_LIST[ind][0],lambda  idx=ind: self.view.dispatch(idx))        
-
-        #self.optionsMenu = self.menuBar().addMenu("&Opciones")
-        #self.optionsMenu.addAction("&Trasponer datos",self.view.traspose,"CtrlT")
-        #self.optionsMenu.addAction("&Presentacion ...",self.view.setNumberFormat,"Ctrl+F")
+             self.userFunctionsMenu.addAction(USER_FUNCTION_LIST[ind][0],
+                                              lambda  idx=ind: self.tabulatura.currentWidget().dispatch(idx))        
 
         
-class DanaCube(QTreeView):    
-    def __init__(self,parent):
-        super(DanaCube, self).__init__()
+        # esto al final para que las distintas opciones raras que van al menu de cubos vayan en su sitio
+        self.cubeMenu.addSeparator()
+        self.cubeMenu.addAction("E&xit", self.close, "Ctrl+Q")
+
+
+        self.setCentralWidget(self.tabulatura)
+      
+    def checkChanges(self,destino):
+        tabWgt = self.tabulatura.currentWidget()
+        if not self.filterActions or not self.dateRangeActions or not self.restorator:
+            return
+        if not tabWgt:
+            self.filterActions['drop'].setEnabled(False)
+            self.filterActions['save'].setEnabled(False)
+            self.restorator.setEnabled(False)
+            return 
         
-        self.format = dict(thousandsseparator=".",
-                                    decimalmarker=",",
-                                    decimalplaces=2,
-                                    rednegatives=False,
-                                    yellowoutliers=True)
+        if tabWgt.filtroCampos != '':
+            self.filterActions['drop'].setEnabled(True)
+            self.filterActions['save'].setEnabled(True)
+        else:
+            self.filterActions['drop'].setEnabled(False)
+            self.filterActions['save'].setEnabled(False)
+            
 
-        self.vista = None
-        self.baseModel = None
-        self.cubo =  None
-        self.filtro = ''
-        self.filtroCampos = ''
-        self.filtroFechas = ''
-        self.parent= parent  #la ventana en la que esta. Lo necesito para los cambios de título
-        self.view = self #esto es un por si acaso
-        #
-        self.initData(True)
-        #self.defineModel()            
-        #self = QTreeView(self)
-        #self.setModel(modeloActivo)
-        
-        self.expandToDepth(2)
-        self.setSortingEnabled(True)
-        #self.setRootIsDecorated(False)
-        self.setAlternatingRowColors(True)
-        self.sortByColumn(0, Qt.AscendingOrder)
+        if tabWgt.filtroFechas != '':
+            self.dateRangeActions['drop'].setEnabled(True)
+            self.dateRangeActions['save'].setEnabled(True)
+        else:
+            self.dateRangeActions['drop'].setEnabled(False)
+            self.dateRangeActions['save'].setEnabled(False)
 
+        if tabWgt.isModified:
+            self.restorator.setEnabled(True)
+        else:
+            self.restorator.setEnabled(False)
 
-
-        
-    def initData(self,inicial=False):
+    def selectCube(self,inicial=False):
         #FIXME casi funciona ... vuelve a leer el fichero cada vez. NO es especialmente malo
         my_cubos = load_cubo()
         viewData =dict()
@@ -166,38 +198,108 @@ class DanaCube(QTreeView):
             elif inicial:
                 exit()
             else:
-                return
+                return None
         self.setupCubo(my_cubos,self.cubeName)
-        if defaultViewData:
-            pass
+        if not inicial:
+            self.reinitialize()
+            return None
+            pass #crea primer tab con los datos de la ventana
         else:
-            viewData = self.requestVista()
-        if not viewData:
-            exit()
-        self.cargaVista(viewData['row'], viewData['col'], viewData['agregado'], viewData['campo'], total=viewData['totalizado'], estad=viewData['stats'])
-        
-        self.parent.setWindowTitle("Cubo {}: {} frente a {}".format(self.cubeName,self.vista.row_hdr_idx.name,self.vista.col_hdr_idx.name))
-        
-        self.setModel(self.defineModel())
+            self.addView(**viewData)
+            
+    def reinitialize(self):
+        for k in range(len(self.views)):
+            self.tabulatura.removeTab(self.tabulatura.indexOf(self.views[k]))
+            self.views[k].close()
+        del self.views[:]
+        self.addView()
 
+
+    def addView(self,**viewData):
+        if viewData:  #¿Es realmente necesario ?
+            self.views.append(DanaCube(self,**viewData))
+        else:
+            self.views.append(DanaCube(self))
+        idx = self.tabulatura.addTab(self.views[-1],self.views[-1].getTitleText())
+        self.tabulatura.setCurrentIndex(idx)
+        
     def setupCubo(self,my_cubos,seleccion):
         self.cubo = Cubo(my_cubos[seleccion])
         self.cubo.nombre = seleccion #FIXME es que no tengo sitio en Cubo para definirlo
-        self.filtro = ''
-        self.vista = None
-        self.filterValues = None
-        self.recordStructure = self.summaryGuia()
+        self.cubo.recordStructure = self.summaryGuia()
+        self.setWindowTitle(self.cubo.nombre)
+    
+    @waiting_effects
+    def summaryGuia(self):
+        result = []
+        #self.cubo.fillGuias()
+        for k,guia in enumerate(self.cubo.lista_guias):
+            arbolGuia = self.cubo.fillGuia(k)
+            dataGuia = []
+            for item in arbolGuia.traverse(mode=1,output=1):
+                dataGuia.append((item.key,item.desc))
+            result.append({'name':guia['name'],'format':guia.get('fmt','texto'),
+                                'source':guia['elem'] if guia['class'] != 'c' else guia['name'] ,
+                                'values':dataGuia,
+                                'class':guia['class']}
+                                )
+            
+        confData = self.cubo.definition['connect']
+        confName = '$$TEMP'
+        (schema,table) = self.cubo.definition['table'].split('.')
+        if table == None:
+            table = schema
+            schema = ''  #definitivamente necesito el esquema de defecto
+        iters = 0
+        dict = DataDict(conn=confName,schema=schema,table=table,iters=iters,confData=confData) #iters todavia no procesamos
+        tabInfo = []
+        gotcha = False
+        for item in traverseTree(dict.hiddenRoot):
+            if item == dict.hiddenRoot:
+                continue
+            if gotcha:
+                if item.isAuxiliar():
+                    gotcha = False
+                    break
+                else:
+                    result.append({'name':item.fqn(),'format':item.getColumnData(1),})
+            if item.isAuxiliar():
+                gotcha = 'True'
+        return result
 
-    def requestVista(self):
+    def defaultVista(self):
+        entrada = self.tabulatura.currentWidget()
+        datos_defecto = {}
+        datos_defecto["cubo"] =  self.cubo.nombre
+        datos_defecto["vista"] = {
+            "elemento": entrada.vista.campo,
+            "agregado": entrada.vista.agregado,
+            "row": entrada.vista.row_id,
+            "col": entrada.vista.col_id
+            }
+        if entrada.filtroCampos != '':  #NO los rangos de fecha que son por naturaleza variables
+            datos_defecto["vista"]["filter"] = entrada.filtroCampos
+        my_cubos = load_cubo()
+        my_cubos['default'] = datos_defecto
+        dump_structure(my_cubos)
+        
+    def closeView(self):
+        tabId = self.tabulatura.currentIndex()
+        self.tabulatura.removeTab(tabId)
+        self.views[tabId].close()
+        del self.views[tabId]
+
+        
+    def requestVista(self,vista=None):
         parametros = [None for k in range(6)]
         viewData = dict()
-        if self.vista is not  None:
-            parametros[0]=self.vista.row_id
-            parametros[1]=self.vista.col_id
-            parametros[2]=self.cubo.getFunctions().index(self.vista.agregado)
-            parametros[3]=self.cubo.getFields().index(self.vista.campo)
-            parametros[4]=self.vista.totalizado
-            parametros[5]=self.vista.stats
+        if vista is not  None:
+            parametros[0]=vista.row_id
+            parametros[1]=vista.col_id
+            parametros[2]=self.cubo.getFunctions().index(vista.agregado)
+            parametros[3]=self.cubo.getFields().index(vista.campo)
+            parametros[4]=vista.totalizado
+            parametros[5]=vista.stats
         
         vistaDlg = VistaDlg(self.cubo,parametros, self)
             
@@ -211,6 +313,112 @@ class DanaCube(QTreeView):
             viewData['stats'] = parametros[5]
         
         return viewData
+    
+    def openView(self,action):
+        tabWgt = self.tabulatura.currentWidget()
+        viewData = self.requestVista(tabWgt.vista if tabWgt else None)
+        if not viewData:
+            return
+        if action == 'new':
+            self.addView(**viewData)
+        elif action == 'active':
+            tabWgt.cargaVista(viewData['row'], viewData['col'], viewData['agregado'], viewData['campo'], total=viewData['totalizado'], estad=viewData['stats'])
+        else:
+            return
+        
+        
+class DanaCube(QTreeView):    
+    def __init__(self,parent,**kwargs):
+        super(DanaCube, self).__init__()
+        
+        self.format = dict(thousandsseparator=".",
+                                    decimalmarker=",",
+                                    decimalplaces=2,
+                                    rednegatives=False,
+                                    yellowoutliers=True)
+
+        self.vista = None
+        self.baseModel = None
+        self.parent= parent  #la aplicacion en la que esta. Lo necesito para los cambios de título
+        self.cubo =  self.parent.cubo
+        self.setupFilters()
+        #self.filtro = ''
+        #self.filtroCampos = ''
+        #self.filtroFechas = ''
+
+        self.view = self #esto es un por si acaso
+        #
+        self.initData(True,**kwargs)
+        #self.defineModel()            
+        #self = QTreeView(self)
+        #self.setModel(modeloActivo)
+        
+        self.expandToDepth(2)
+        self.setSortingEnabled(True)
+        #self.setRootIsDecorated(False)
+        self.setAlternatingRowColors(True)
+        self.sortByColumn(0, Qt.AscendingOrder)
+
+
+
+        
+    def initData(self,inicial=False,**viewData):
+        #FIXME casi funciona ... vuelve a leer el fichero cada vez. NO es especialmente malo
+        #my_cubos = load_cubo()
+        #viewData =dict()
+        #defaultViewData = None
+        #if 'default' in my_cubos and inicial:
+            #defaultViewData = my_cubos['default']
+            #self.cubo.nombre=defaultViewData['cubo']
+            #viewData['row'] = int(defaultViewData['vista']['row'])
+            #viewData['col'] = int(defaultViewData['vista']['col'])
+            #viewData['agregado'] = defaultViewData['vista']['agregado']
+            #viewData['campo'] = defaultViewData['vista']['elemento']
+            #viewData['totalizado'] = True
+            #viewData['stats'] = True
+            ##del my_cubos['default']
+        #else:
+            #dialog = CuboDlg(my_cubos, self)
+            #if dialog.exec_():
+                #self.cubo.nombre = str(dialog.cuboCB.currentText())
+            #elif inicial:
+                #exit()
+            #else:
+                #return
+        #self.setupFilters(my_cubos,self.cubo.nombre)
+        if viewData:
+            pass
+        else:
+            viewData = self.parent.requestVista()
+        #if not viewData:
+        self.cargaVista(viewData['row'], viewData['col'], viewData['agregado'], viewData['campo'], total=viewData['totalizado'], estad=viewData['stats'])
+        
+        #self.setTitle() debe hacerse fuera para evitar colocarlo en el sitio equivocado
+        
+        self.setModel(self.defineModel())
+
+    def getTitleText(self):
+        return "{} X {} : {}({})".format(
+                    self.vista.row_hdr_idx.name.split('.')[-1],
+                    self.vista.col_hdr_idx.name.split('.')[-1],
+                    self.vista.agregado,
+                    self.vista.campo.split('.')[-1]
+                    )
+    def setTitle(self):
+        tabId = self.parent.tabulatura.currentIndex()
+        self.parent.tabulatura.setTabText(tabId,self.getTitleText())
+            
+    def setupFilters(self): #,my_cubos,seleccion):
+        #self.cubo = Cubo(my_cubos[seleccion])
+        #self.cubo.nombre = seleccion #FIXME es que no tengo sitio en Cubo para definirlo
+        self.filtro = ''
+        self.filtroCampos = ''
+        self.filtroFechas = ''
+        #self.vista = None
+        self.filterValues = None
+        self.isModified = False
+        #self.cubo.recordStructure = self.summaryGuia()
+
             #self.cargaVista(row,col,agregado,campo,totalizado,stats)
 
     @waiting_effects
@@ -218,20 +426,21 @@ class DanaCube(QTreeView):
         if self.vista is None:
             self.vista = Vista(self.cubo, row, col, agregado, campo, totalizado=total, stats=estad,filtro=self.filtro)
             self.vista.toTree2D()
-            #self.vista.format = self.format
-            #self.defineModel()
+            self.expandToDepth(2)
         else:
             self.changeView(row, col, agregado, campo, total,estad)
             #self.refreshTable()
         self.vista.format = self.format
-        
+     
+    @waiting_effects
     def changeView(self,row, col, agregado, campo, total=True, estad=True):
         self.vista.setNewView(row, col, agregado, campo, totalizado=total, stats=estad,filtro=self.filtro)
         self.vista.toTree2D()
         #
         self.setModel(self.defineModel())  #esto no deberia ser asi, sino dinámico, pero no lo he conseguido
         self.expandToDepth(2)
-        self.parent.setWindowTitle("Cubo {}: {} frente a {}".format(self.cubeName,self.vista.row_hdr_idx.name,self.vista.col_hdr_idx.name))
+        
+        self.setTitle()
         
     def defineModel(self):
         """
@@ -263,20 +472,19 @@ class DanaCube(QTreeView):
             return
         self.cargaVista(viewData['row'], viewData['col'], viewData['agregado'], viewData['campo'], total=viewData['totalizado'], estad=viewData['stats'])
         
-        self.parent.setWindowTitle("Cubo {}: {} frente a {}".format(self.cubeName,self.vista.row_hdr_idx.name,self.vista.col_hdr_idx.name))
-
+        self.setTitle()
         
     @waiting_effects
+    @reset_model_dec
     def traspose(self):
-        self.baseModel.beginResetModel()
+        #self.baseModel.beginResetModel()
         self.vista.traspose()
         self.baseModel.getHeaders()
         self.baseModel.rootItem = self.vista.row_hdr_idx.rootItem
-        self.baseModel.endResetModel()
+        #self.baseModel.endResetModel()
         self.expandToDepth(2)
 
-        self.parent.setWindowTitle("Cubo {}: {} frente a {}".format(self.cubeName,self.vista.row_hdr_idx.name,self.vista.col_hdr_idx.name))
-
+        self.setTitle()
 
     def refreshTable(self):
         """
@@ -295,20 +503,25 @@ class DanaCube(QTreeView):
         self.numberFormatDlg.raise_()
         self.numberFormatDlg.activateWindow()
         #self.refreshTable()  #creo que es innecesario
-
+    
+    @keep_position_dec
     @waiting_effects
+    @reset_model_dec
     def restoreData(self):
         #app.setOverrideCursor(QCursor(Qt.WaitCursor))
-        self.baseModel.beginResetModel()
+        #expList = saveExpandedState(self)
+        #self.baseModel.beginResetModel()
         for item in self.baseModel.traverse(mode=1,output=1):
             item.restoreBackup()
             if self.vista.stats :
                item.setStatistics()
 
         #self.baseModel.rootItem = self.vista.row_hdr_idx.rootItem    
-        self.baseModel.endResetModel()
-        self.expandToDepth(2)
+        #self.baseModel.endResetModel()
+        #restoreExpandedState(expList,self)
+        #self.expandToDepth(2)
         #app.restoreOverrideCursor()
+        self.isModified = False
         self.parent.restorator.setEnabled(False)
 
     def requestFunctionParms(self,spec,values):
@@ -363,32 +576,28 @@ class DanaCube(QTreeView):
             if self.vista.stats :
                item.setStatistics()
                
-             
-    @waiting_effects    
+    @keep_position_dec         
+    @waiting_effects
+    @reset_model_dec
     def dispatch(self,ind):
         #TODO reducir el numero de arrays temporales
-
-        self.parent.restorator.setEnabled(True)
-        self.baseModel.beginResetModel()
-
+        #self.baseModel.beginResetModel()
         for elem in USER_FUNCTION_LIST[ind][1]:
             self.funDispatch(elem,ind)
             if len(elem) > 2: 
                 if elem[2] == 'leaf':
                     self.vista.recalcGrandTotal()
-        self.baseModel.endResetModel()
-        self.expandToDepth(2)
+        #self.baseModel.endResetModel()
+        self.isModified = True
+        self.parent.restorator.setEnabled(True)
+        #self.expandToDepth(2)
 
-                
-        
-    def refreshTable(self):
-        self.baseModel.emitModelReset()
         
     def setFilter(self):
         #self.areFiltered = True
-        #self.recordStructure = self.summaryGuia()
+        #self.cubo.recordStructure = self.summaryGuia()
         
-        filterDlg = filterDialog(self.recordStructure,self)
+        filterDlg = filterDialog(self.cubo.recordStructure,self)
         if self.filterValues :
             for k in range(len(self.filterValues)):
                 filterDlg.sheet.set(k,2,self.filterValues[k][0])
@@ -402,8 +611,8 @@ class DanaCube(QTreeView):
             self.cargaVista(self.vista.row_id,self.vista.col_id,
                             self.vista.agregado,self.vista.campo,
                             self.vista.totalizado,self.vista.stats) #__WIP__ evidentemente aqui faltan todos los parametros
-            self.filterActions['drop'].setEnabled(True)
-            self.filterActions['save'].setEnabled(True)
+            self.parent.filterActions['drop'].setEnabled(True)
+            self.parent.filterActions['save'].setEnabled(True)
 
 
     def dropFilter(self):
@@ -413,8 +622,8 @@ class DanaCube(QTreeView):
         self.cargaVista(self.vista.row_id,self.vista.col_id,
                         self.vista.agregado,self.vista.campo,
                         self.vista.totalizado,self.vista.stats) #__WIP__ evidentemente aqui     def saveFilter(self):
-        self.filterActions['drop'].setEnabled(False)
-        self.filterActions['save'].setEnabled(False)
+        self.parent.filterActions['drop'].setEnabled(False)
+        self.parent.filterActions['save'].setEnabled(False)
 
     
     def saveFilter(self):
@@ -422,26 +631,12 @@ class DanaCube(QTreeView):
         my_cubos = load_cubo()
         my_cubos[self.cubo.nombre]['base filter'] = nuevo_filtro
         dump_structure(my_cubos)
-        self.filterActions['drop'].setEnabled(False)
-        self.filterActions['save'].setEnabled(False)
+        self.parent.filterActions['drop'].setEnabled(False)
+        self.parent.filterActions['save'].setEnabled(False)
 
-    def defaultVista(self):
-        datos_defecto = {}
-        datos_defecto["cubo"] =  self.cubo.nombre
-        datos_defecto["vista"] = {
-            "elemento": self.vista.campo,
-            "agregado": self.vista.agregado,
-            "row": self.vista.row_id,
-            "col": self.vista.col_id
-            }
-        if self.filtroCampos != '':  #NO los rangos de fecha que son por naturaleza variables
-            datos_defecto["vista"]["filter"] = self.filtroCampos
-        my_cubos = load_cubo()
-        my_cubos['default'] = datos_defecto
-        dump_structure(my_cubos)
         
     def setRange(self):
-        descriptores = [ item['name'] for item in self.recordStructure if item['format'] == 'fecha' ]
+        descriptores = [ item['name'] for item in self.cubo.recordStructure if item['format'] == 'fecha' ]
         if len(descriptores) == 0:
             #TODO que hago con Sqlite
             return
@@ -459,8 +654,8 @@ class DanaCube(QTreeView):
                             self.vista.agregado,self.vista.campo,
                             self.vista.totalizado,self.vista.stats) #__WIP__ evidentemente aqui faltan todos los parametros
 
-                self.dateRangeActions['drop'].setEnabled(False)
-                #self.dateRangeActions['save'].setEnabled(False)
+                self.parent.dateRangeActions['drop'].setEnabled(False)
+                #self.parent.dateRangeActions['save'].setEnabled(False)
             
     def dropRange(self):
         self.filtroFechas=''
@@ -468,47 +663,12 @@ class DanaCube(QTreeView):
         self.cargaVista(self.vista.row_id,self.vista.col_id,
                         self.vista.agregado,self.vista.campo,
                         self.vista.totalizado,self.vista.stats) #__WIP__ evidentemente aqui     def saveFilter(self):
-        self.dateRangeActions['drop'].setEnabled(False)
-        #self.dateRangeActions['save'].setEnabled(False)
+        self.parent.dateRangeActions['drop'].setEnabled(False)
+        #self.parent.dateRangeActions['save'].setEnabled(False)
 
     def saveRange(self):
         pass
     
-    def summaryGuia(self):
-        result = []
-        self.cubo.fillGuias()
-        for k,guia in enumerate(self.cubo.lista_guias):
-            dataGuia = []
-            for item in traverse(guia['dir_row']):
-                dataGuia.append((item.key,item.desc))
-            result.append({'name':guia['name'],'format':guia.get('fmt','texto'),
-                                'source':guia['elem'] if guia['class'] != 'c' else guia['name'] ,
-                                'values':dataGuia,
-                                'class':guia['class']}
-                                )
-        
-        confData = self.cubo.definition['connect']
-        confName = '$$TEMP'
-        (schema,table) = self.cubo.definition['table'].split('.')
-        if table == None:
-            table = schema
-            schema = ''  #definitivamente necesito el esquema de defecto
-        iters = 0
-        dict = DataDict(conn=confName,schema=schema,table=table,iters=iters,confData=confData) #iters todavia no procesamos
-        tabInfo = []
-        gotcha = False
-        for item in traverseTree(dict.hiddenRoot):
-            if item == dict.hiddenRoot:
-                continue
-            if gotcha:
-                if item.isAuxiliar():
-                    gotcha = False
-                    break
-                else:
-                    result.append({'name':item.fqn(),'format':item.getColumnData(1),})
-            if item.isAuxiliar():
-                gotcha = 'True'
-        return result
     
     def export(self):
         #TODO 

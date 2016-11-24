@@ -841,8 +841,7 @@ class Vista:
         numcol = self.col_hdr_idx.len()
         padres = []
         acumuladores = []
-        for key in arbol.traverse(mode=1):
-            elem = arbol[key]
+        for elem in arbol.traverse(mode=1,output=1):
             prof = elem.depth()
             if len(padres) < prof:
                 padres.append(elem.parentItem)

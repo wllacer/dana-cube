@@ -14,13 +14,14 @@ Documentation, License etc.
 @package estimaciones
 '''
 import sys
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QSortFilterProxyModel
 from PyQt5.QtGui import QCursor
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView
-
-
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QMessageBox
 
 from pprint import *
+
+from util.treestate import *
+DEBUG = True
 
 def waiting_effects(function):
     """
@@ -30,37 +31,88 @@ def waiting_effects(function):
       TODO unificar en un solo sitio
       
     """
-    def new_function(*args, **kwargs):
+    def cursor_busy(*args, **kwargs):
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
         try:
             return function(*args, **kwargs)
         except Exception as e:
-            raise e
             QMessageBox.warning(self,
                             "Warning",
                             "Error {}".format(e.args[0]))
             if DEBUG:
                 print("Error {}".format(e.args[0]))
+            raise e
         finally:
             QApplication.restoreOverrideCursor()
-    return new_function
+    return cursor_busy
 
-#def cursor_busy(f):
-    #QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-    #salida = f(*args,**kwargs)
-    #QApplication.restoreOverrideCursor()
-    #return salida
+def reset_model_dec(function):
+    def reset_model(*args, **kwargs):
+        cls = args[0]
+        model = cls.model()
+        if isinstance(model,QSortFilterProxyModel):
+            model = model.sourceModel()
+        try:
+            model.beginResetModel()
+            return function(*args, **kwargs)
+        except Exception as e:
+            QMessageBox.warning(self,
+                            "Warning",
+                            "Error {}".format(e.args[0]))
+            if DEBUG:
+                print("Error {}".format(e.args[0]))
+            raise e
+        finally:
+            model.endResetModel()
+    return reset_model
 
-#@cursor_busy
-#def tarugo():
-    #for k in range(1000):
-        #paco = sum([m for m in range(k-1)])
+def keep_position_dec(function):
+    def keep_position(*args, **kwargs):
+        cls = args[0]
+        try:
+            expList = saveExpandedState(cls)
+            return function(*args, **kwargs)
+        except Exception as e:
+            QMessageBox.warning(self,
+                            "Warning",
+                            "Error {}".format(e.args[0]))
+            if DEBUG:
+                print("Error {}".format(e.args[0]))
+            raise e
+        finally:
+            restoreExpandedState(expList,cls)
+    return keep_position
+
+def model_update_dec(function):
+    def model_update_keep_position(*args, **kwargs):
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+        cls = args[0]
+        model = cls.model()
+        if isinstance(model,QSortFilterProxyModel):
+            model = model.sourceModel()
+        try:
+            expList = saveExpandedState(cls)
+            cls.model.beginResetModel()
+            return function(*args, **kwargs)
+        except Exception as e:
+            QMessageBox.warning(self,
+                            "Warning",
+                            "Error {}".format(e.args[0]))
+            if DEBUG:
+                print("Error {}".format(e.args[0]))
+            raise e
+        finally:
+            cls.model.endResetModel()
+            restoreExpandedState(expList,cls)
+            QApplication.restoreOverrideCursor()
+    return model_update_keep_position
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    window = QMainWindow()
-    window.show()
-    tarugo()
-    sys.exit(app.exec_())
+    pass
+    #app = QApplication(sys.argv)
+    #window = QMainWindow()
+    #window.show()
+    #tarugo()
+    #sys.exit(app.exec_())
     
     

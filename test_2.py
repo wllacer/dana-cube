@@ -47,13 +47,15 @@ def experimental():
         #print(ind,guia['name'])
 
     ind=2
+    pprint(cubo.definition)
+    exit()
     #pprint(cubo.lista_guias[4])
     #cubo.fillGuia(ind)
 
-    parms = eW.exportWizard()
-    if not parms.get('file'):
-        exit()
-    print(parms)
+    #parms = eW.exportWizard()
+    #if not parms.get('file'):
+        #exit()
+    #print(parms)
     
     vista=Vista(cubo,5,1,'sum','votes_presential',totalizado=True)
     k=vista.toTree2D()
