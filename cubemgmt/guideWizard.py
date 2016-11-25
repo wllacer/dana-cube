@@ -31,7 +31,6 @@ def guideWizard(exec_object,obj):
     isDate = False
     isLink = False
     hasJoin = False
-   
     wizard = CubeWizard(exec_object,obj)        
     if wizard.exec_() :
         guide = dict()
@@ -99,6 +98,8 @@ class CubeWizard(QWizard):
         self.modelo = obj.model() # es necesario para que el delete no pierda la localizacion
         self.tipo = obj.type()
         self.jerarquia = obj.typeHierarchy()
+        self.base = tree2dict(self.obj,isDictionaryEntry)
+        
         if not self.tipo:   
             print('NO tiene tipo',obj.getDataList())
 

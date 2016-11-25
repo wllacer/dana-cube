@@ -475,7 +475,7 @@ class DanaCube(QTreeView):
         self.setTitle()
         
     @waiting_effects
-    @reset_model_dec
+    @model_change_control()
     def traspose(self):
         #self.baseModel.beginResetModel()
         self.vista.traspose()
@@ -504,9 +504,9 @@ class DanaCube(QTreeView):
         self.numberFormatDlg.activateWindow()
         #self.refreshTable()  #creo que es innecesario
     
-    @keep_position_dec
+    @keep_tree_layout()
     @waiting_effects
-    @reset_model_dec
+    @model_change_control()
     def restoreData(self):
         #app.setOverrideCursor(QCursor(Qt.WaitCursor))
         #expList = saveExpandedState(self)
@@ -576,9 +576,9 @@ class DanaCube(QTreeView):
             if self.vista.stats :
                item.setStatistics()
                
-    @keep_position_dec         
+    @keep_tree_layout()         
     @waiting_effects
-    @reset_model_dec
+    @model_change_control()
     def dispatch(self,ind):
         #TODO reducir el numero de arrays temporales
         #self.baseModel.beginResetModel()

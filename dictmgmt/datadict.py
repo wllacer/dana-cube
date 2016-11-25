@@ -32,6 +32,7 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem
 #from datalayer.access_layer import *
 #from util.record_functions import norm2String,dict2row, row2dict
 from util.jsonmgr import *
+from util.decorators import *
 #from widgets import WPropertySheet
 
 #from  sqlalchemy import create_engine,inspect,MetaData, types
@@ -134,9 +135,10 @@ class DataDict():
         #else: #probablemente innecesario
             #curConnection.refresh()
     
+    @model_change_control()
     def dropConnection(self,confName):
     
-        self.baseModel.beginResetModel()
+        #self.baseModel.beginResetModel()
         # limpio el arbol (podia usar findItem, pero no se, no se ...)
         k = self.getConnNr(confName)
         if not k:
@@ -147,16 +149,17 @@ class DataDict():
             self.hiddenRoot.removeRow(k)
         del self.configData['Conexiones'][confName]
         del self.conn[confName]
-        self.baseModel.endResetModel()
+        #self.baseModel.endResetModel()
         
     def changeConnection(self,padre,confName,conf):
         self.configData['Conexiones'][confName] = conf
         self.updateModel(self,confName)
     
+    @model_change_control()
     def updateModel(self,confName=None):
         """
         """
-        self.baseModel.beginResetModel()       
+        #self.baseModel.beginResetModel()       
         if confName is None:
             self.baseModel.clear()
             self.hiddenRoot = self.baseModel.invisibleRootItem()
@@ -181,5 +184,5 @@ class DataDict():
             
             self.appendConnection(confName,pos=k)
 
-        self.baseModel.endResetModel()
+        #self.baseModel.endResetModel()
 

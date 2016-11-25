@@ -10,6 +10,7 @@ from cubemgmt.cubeTypes import *
 from cubemgmt.cubeutil  import *
 from cubemgmt.guideWizard import *
 
+from util.decorators import *
 
 from widgets import WDataSheet
 from dialogs import propertySheetDlg
@@ -344,19 +345,21 @@ def insertInList(obj,tipo,value):
         obj.appendRow((CubeItem(None),CubeItem(str(value)),CubeItem(tipo)))
         obj.setColumnData(1,None,Qt.EditRole)
         pass
-
+    
+@keep_tree_layout(0)
+@model_change_control(1)
 def execAction(exec_object,obj,action):
     #TODO listas editables en casi todos los elementos
     if action is None:
         return
     
-    modelo = obj.model() # es necesario para que el delete no pierda la localizacion
+    #modelo = obj.model() # es necesario para que el delete no pierda la localizacion
     tipo = obj.type()
     jerarquia = obj.typeHierarchy()
     if not tipo:
         print('NO tiene tipo',obj.getDataList())
         
-    modelo.beginResetModel()
+    #modelo.beginResetModel()
     if action in ('add','edit'):
         result = None
         if tipo in TYPE_LEAF:
@@ -460,5 +463,5 @@ def execAction(exec_object,obj,action):
         pass
     else:
         pass
-    modelo.endResetModel()
+    #modelo.endResetModel()
  

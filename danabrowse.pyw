@@ -31,7 +31,7 @@ from dictmgmt.datadict import *
 from tablebrowse import *
 from cubemgmt.cubeutil import info2cube
 from cubebrowse import CubeMgr
-from util.decorators import waiting_effects 
+from util.decorators import *
 DEBUG = True
 
 class SelectConnectionDlg(QDialog):

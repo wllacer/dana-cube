@@ -299,12 +299,13 @@ class TableBrowser(QTableView):
   
     
     @waiting_effects
+    @model_change_control()
     def loadData(self, pconfName=None,pschema=None,ptable=None,pdataDict=None,piters=1,pFilter=None):
         (dataDict,confName,schema,table,iters) = defaultFromContext(self.localContext,*(pdataDict,pconfName,pschema,ptable,piters))
-        self.baseModel.beginResetModel()
+        #self.baseModel.beginResetModel()
         self.baseModel.clear()
         self.setupModel(confName,schema,table,dataDict,iters,pFilter)
-        self.baseModel.endResetModel()
+        #self.baseModel.endResetModel()
         for m in range(self.baseModel.columnCount()):
             self.resizeColumnToContents(m)
     

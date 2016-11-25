@@ -29,6 +29,8 @@ from tablebrowse import *
 from datalayer.datemgr import genTrimestreCode
 from util.jsonmgr import *
 from util.numbers import is_number
+from util.decorators import *
+
 from dialogs import propertySheetDlg
 
 from cubemgmt.cubetree import *
@@ -208,15 +210,17 @@ class CubeMgr(QTreeView):
                 # con los borrados hay un problema. La unica opcion que he encotrado es borrar si esta vacia
             dump_structure(baseCubo,self.configFile)
 
+    @waiting_effects
+    @model_change_control()
     def restoreConfigFile(self):
-        self.baseModel.beginResetModel()
+        #self.baseModel.beginResetModel()
         self.baseModel.clear()
         if self.particular:
             self.setupModel(*self.particularContext)
         else:
             self.setupModel()
         self.setupView()
-        self.baseModel.endResetModel()
+        #self.baseModel.endResetModel()
     
     def test(self):
         return

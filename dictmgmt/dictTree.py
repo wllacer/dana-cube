@@ -24,6 +24,7 @@ from datalayer.access_layer import *
 from datalayer.query_constructor import queryFormat
 #from cubebrowse import *
 from util.record_functions import norm2String,dict2row, row2dict
+from util.decorators import *
 #from util.jsonmgr import *
 #from widgets import WPropertySheet
 
@@ -410,6 +411,7 @@ class ConnectionTreeItem(BaseTreeItem):
         else:
             self.menuActions.append(menu.addAction("Connect",lambda:self.execAction(context,"switch")))
 
+    @keep_tree_layout(1)
     def execAction(self,context,action):
         
         if action == "refresh" :
