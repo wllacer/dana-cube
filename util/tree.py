@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 
 from pprint import pprint
 
-from util.numbers import stats
+from util.numeros import stats
 
 (_ROOT, _DEPTH, _BREADTH) = range(3)
 (_KEY,_ITEM) = range(2)

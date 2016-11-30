@@ -28,7 +28,7 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem
 #from tablebrowse import *
 #from datalayer.datemgr import genTrimestreCode
 #from util.jsonmgr import *
-#from util.numbers import is_number
+#from util.numeros import is_number
 #from dialogs import propertySheetDlg
 
 (_ROOT, _DEPTH, _BREADTH) = range(3)

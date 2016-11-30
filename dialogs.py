@@ -377,7 +377,7 @@ class NumberFormatDlg(QDialog):
                             {"setRange":(0,6)},
                             None,
                         ),
-                        ("Red negative numbers",
+                        ("Red negative numeros",
                             QCheckBox,
                             None,
                             None,

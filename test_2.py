@@ -22,7 +22,7 @@ from  PyQt5.QtWidgets import QApplication
 
 
 import exportWizard as eW
-from util.numbers import fmtNumber
+from util.numeros import fmtNumber
 from util.jsonmgr import dump_structure
     
 (_ROOT, _DEPTH, _BREADTH) = range(3)

@@ -31,7 +31,7 @@ from util.fechas import *
 from datalayer.access_layer import *
 from datalayer.query_constructor import *
 
-from util.numbers import stats,num2text
+from util.numeros import stats,num2text
 
 from datalayer.datemgr import getDateIndex,getDateEntry
 from pprint import *
