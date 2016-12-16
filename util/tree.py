@@ -198,6 +198,34 @@ class TreeItem(object):
             item = item.parentItem
         return item
 
+    def simplify(self):
+        npay = list()
+        ncab = list()
+        for k,value in enumerate(self.getPayload()):
+            if not value:
+                continue
+            npay.append(value)
+            ncab.append(k +1)
+        return npay,ncab
+
+    def simplifyHierarchical(self):
+        profundidad = self.depth()
+        tmppay = list()
+        ncab = list()
+        kitem = self
+        while kitem.parent():
+            tmppay.insert(0,kitem.getPayload())
+            kitem = kitem.parent()
+            
+        npay = [list() for k in range(profundidad) ]    
+        for k,value in enumerate(self.getPayload()):
+            if not value:
+                continue
+            for j in range(profundidad):
+                npay[j].append(tmppay[j][k])
+            ncab.append(k +1)
+        return npay,ncab
+
     def model(self):
         rootItem = self.getRoot()
         return rootItem.modelID

@@ -33,12 +33,17 @@ class MultiChart(FigureCanvas):
         
         pos_list = np.arange(len(self.x))
         numBars = len(y)
-        width   = 1/(numBars +1)
+        if numBars > 1:
+            width   = 1/(numBars +1)
+        else:
+            width = 1
         rects = list()
         for k in range(numBars):
             rects.append(self.ax.bar(pos_list +width*k, self.y[k], width, color=self.color_list[k]))
-
-        self.ax.set_xticks(pos_list + width)
+        if numBars > 1:
+            self.ax.set_xticks(pos_list + width)
+        else:
+            self.ax.set_xticks(pos_list)
         self.ax.set_xticklabels(self.x)
 
         self.ax.legend([item[0] for item in rects], args[6])
@@ -78,12 +83,15 @@ class SimpleChart(FigureCanvas):
             self.axes.bar(pos_list,self.y)
         elif tipo == 'multibar':
             numBars = len(self.y)
-            width   = 1/(numBars +1)
             rects = list()
-            for k in range(numBars):
-                rects.append(self.axes.bar(pos_list +width*k, self.y[k], width, color=self.color_list[k]))
-
-            self.axes.set_xticks(pos_list + width)
+            if numBars > 1:
+                width   = 1/(numBars +1)
+                for k in range(numBars):
+                    rects.append(self.axes.bar(pos_list +width*k, self.y[k], width, color=self.color_list[k]))
+                self.axes.set_xticks(pos_list + width)
+            else:
+                rects.append(self.axes.bar(pos_list, self.y[0],1, color=self.color_list[0]))
+                self.axes.set_xticks(pos_list)
             self.axes.set_xticklabels(self.x)
             if len(args) >= 6:
                 if len(args[6]) < numBars:
