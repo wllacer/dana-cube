@@ -34,6 +34,11 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
     ** Con fillGuias al inicializar el cubo, volver a ejecutar la vista genera otra entrada en los totale
 * __NOW__ documentacion preliminar
 * __NOW__ Como hacer que los arboles no se cierren y abran aleatoriamente
+    * funciona salvo un problema en borrados
+
+*  Terrible rendimiento (al menos en MySQL) en dictmgmt/dictree.getValueSpread() (select count(*) from (select distinct field from table) as base). Es una funcionalidad utilisima; ahora mismo la he desconectado
+    * He modificado la query a select count(distinct campo) from file.  Parece mejorar algo el rendimiento
+    * He desactivado de momento esto como opcion directa y lo sustituire por una accion indivudual sobre los campos
 
 * Traduccion
 * Finalizar la gestion CRUD de cubos

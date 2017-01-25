@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 BACKEND = 'Alchemy' #'Alchemy' #or 'QtSql'
 DRIVERS = ('sqlite','mysql','postgresql','oracle','db2','odbc') #todavia no implementadas las dos ultimas
 AGR_LIST = ('count', 'max', 'min', 'avg', 'sum')
-CURR_HANDLERS = {'sqlite':'sqlite','mysql':'mysqlconnector','postgresql':'psycopg2','oracle':'cx_oracle','db2':None,'odbc':None}
+CURR_HANDLERS = {'sqlite':'pysqlite','mysql':'mysqlconnector','postgresql':'psycopg2','oracle':'cx_oracle','db2':None,'odbc':None}
 '''
 Documentation, License etc.
 
@@ -83,20 +83,38 @@ def internal2genericDriver(pdriver):
             break #innecesario pero clarificador
     return None
 
+def setLimitString(string,db,**kwargs):
+    lim = kwargs.get('LIMIT')
+    off = kwargs.get('OFFSET')
+    if lim:
+        driver = db.dialect.name
+        tmpstring = ''
+        if driver in ('sqlite','mysql','postgresql'):
+            tmpstring= ' LIMIT {} '.format(lim)
+            if off:
+                tmpstring = tmpstring + ' OFFSET {}'.format(off)
+        else:
+            #TODO
+            pass
+        return tmpstring
+    return ''
+
 def driver2Alch(pdriver):
     driver = pdriver.lower()
     if driver in ('sqlite','qsqlite'):
         return 'sqlite'
     #elif driver in ('mysql','mysqlconnector','mariadb'):  #FIXME
-    elif driver in ('mysql',):  #FIXME
-        return 'mysql+mysqlconnector'
-    #elif driver in ('mysqldb',):
-        #return 'mysql+mysqldb'
-    #elif driver in ('postgresql','postgres','pg','psycopg2'): #FIXME
-    elif driver in ('postgresql',): #FIXME
-        return 'postgresql+psycopg2'
-    elif driver == 'oracle':
-        return 'oracle+cx_oracle'
+    elif driver in ('mysql','postgresql','oracle'):
+        return driver + '+' + CURR_HANDLERS[driver]
+    #elif driver in ('mysql',):  #FIXME
+        #return 'mysql+mysqlconnector'
+    ##elif driver in ('mysqldb',):
+        ##return 'mysql+mysqldb'
+    ##elif driver in ('postgresql','postgres','pg','psycopg2'): #FIXME
+    #elif driver in ('postgresql',): #FIXME
+        #return 'postgresql+psycopg2'
+    #elif driver == 'oracle':
+        #return 'oracle+cx_oracle'
     else:
         return driver
 
@@ -197,12 +215,9 @@ def getCursorAlch(db, sql_string,funcion=None,**kwargs):
     if sql_string is None or sql_string.strip() == '':
         return None
       
-    sqlString=text(sql_string)
+    sqlString=text(sql_string + setLimitString(sql_string,db,**kwargs) )
     cursor= []
-    #TODO buscar una alternativa mas potable para el limite
-    lim = kwargs.get('LIMIT')
-    if lim:
-        cont = 0
+
     resultCursor = db.execute(sqlString)
     for row in resultCursor:
         trow = list(row) #viene en tupla y no me conviene
@@ -210,11 +225,11 @@ def getCursorAlch(db, sql_string,funcion=None,**kwargs):
             funcion(trow,**kwargs)
         if trow != []:
             cursor.append(trow)
-        if lim:
-            if cont < lim:
-                cont += 1
-            else:
-                break
+        #if lim:
+            #if cont < lim:
+                #cont += 1
+            #else:
+                #break
     return cursor
 
 def XgetCursor(db, sql_string,funcion=None,**kwargs):
@@ -287,3 +302,16 @@ def getAgrFunctions(db,plista = None):
         lista_funciones = plista[ : ]
     #TODO include functions which depend on DB driver
     return lista_funciones
+
+
+if __name__ == '__main__':
+    definition1={'driver':'sqlite','dbname': '/home/werner/projects/scifi/scifi.db',
+                'dbhost':None,'dbuser':None,'dbpass':None,'debug':False } 
+    definition2={'driver':'mysql','dbname': 'sakila',
+                'dbhost':'localhost','dbuser':'root','dbpass':'toor','debug':False } 
+
+    
+    conn = dbConnect(definition1)
+    cursor = getCursor(conn,'select * from city')
+    pprint(cursor)
+    

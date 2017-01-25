@@ -269,7 +269,7 @@ class TableBrowser(QTableView):
         cabeceras = [ fld for fld in sqlContext['fields']]
         self.baseModel.setHorizontalHeaderLabels(cabeceras)
 
-        cursor = getCursor(dataDict.conn[confName],sqls,LIMIT=10000)
+        cursor = getCursor(dataDict.conn[confName],sqls,LIMIT=1000)
         for row in cursor:
             modelRow = [ CursorItem(str(fld)) for fld in row ]
             self.baseModel.appendRow(modelRow)

@@ -97,8 +97,23 @@ Two _caveats_ :
 
 Qt, PyQt -and the additional libraries-, licensing might impose other restrictions, please keep an eye on it (AFAIK PyQt is/was __GPL__ licensed)
 
+## DANACUBE enters __ALPHA__
 
+With today's release (version 0.10), we enter alpha. What does it means?
+
+* We deem that we have achieved a functional 'completeness' of the cube tool (_danacube.pyw_) , so it should be useful for valiant user; but that it still lacks proper outside testing (so, for sure, many bugs ahead) and  documentation (hope to solve it soon)
+
+* What we know it's missing:
+    * Unknown bugs all around (i know i'm not perfect)
+    * The user interface is implemented just for my needs and lacks internationalization (worse still, it's now a mix of english and spanish)
+    * It's reasonably well tested with Sqlite, MySQL and PostgreSQL; but i haven't had the chance to adapt/test it against DB2, MSSQL Server or Oracle ¿Any volunteer?
+    * Nor performance, neither security have been, till now, top priority goals. _You've been warned_
+    * The way User functions have been implemented is a 'hack'. Working on a better solution
+    * The administrative interface (_danabrowse.pyw_) and support, is still not 100% functional (but as the administrative files are pure JSON, this is not a showstopper)
+    
 ## Actual Status
+
+_Update on the day of the Conversion of the Apostol Paul 2017_ As of today we enter __ALPHA__ status (see above for what it means)
 
 __MASTER works__ but some pieces are lacking (Above all documentation). The latest __release__ is a good preview
 

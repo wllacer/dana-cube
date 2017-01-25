@@ -104,7 +104,9 @@ class BaseTreeItem(QStandardItem):
             conn = self.getConnection().data().engine
             schema = self.getSchema().text()
             table = self.getTable().text()
-            sqlq = 'select count(*) from (select distinct {} from {}.{}) as base'.format(self.text(),schema,table)
+            #sqlq = 'select count(*) from (select distinct {} from {}.{}) as base'.format(self.text(),schema,table)
+            # el cambio de sentencia mejora el rendimiento
+            sqlq = 'select count(distinct {}) from {}.{}'.format(self.text(),schema,table)
             result = getCursor(conn,sqlq)
             self.setColumnData(2,result[0][0],Qt.EditRole)
         else:
@@ -535,7 +537,8 @@ class TableTreeItem(BaseTreeItem):
                     name = BaseTreeItem(column['name'])
                     tipo = BaseTreeItem(typeHandler(column.get('type','TEXT')))
                     curTableFields.appendRow((name,tipo))
-                    curTableFields.lastChild().getValueSpread()
+                    #FIXME el rendimiento es intolerable para poer hacerlo para todas las columnas
+                    #curTableFields.lastChild().getValueSpread()
                 except CompileError: 
                 #except CompileError:
                     if DEBUG:

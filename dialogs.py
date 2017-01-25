@@ -258,7 +258,43 @@ class CuboDlg(QDialog):
         buttonBox.accepted.connect(self.accept)
         buttonBox.rejected.connect(self.reject)
         
+class GraphDlg(QDialog):
+    def __init__(self, currValue, parent=None):
+        super(GraphDlg, self).__init__(parent)
+        self.tiposGraficos = ( (None,'Ninguno'),
+                          ('scatter','Grafico de puntos'),
+                          ('bar','Grafico de barras'),
+                          ('barh',' idm. vertical'),
+                          ('multibar',' idm. comparado a superiores en jerarquia'),
+                          ('pie','Gráfico en forma de tarta'),
+                          ('boxplot','Boxplot'),
+                          )
+        InicioLabel = QLabel("Seleccione el formato grafico que desea")
+        cuboLbl = QLabel("&Cubo")
+        self.cuboCB = QComboBox()
+        self.cuboCB.addItems([item[1] for item in self.tiposGraficos])
+        self.cuboCB.setCurrentIndex([item[0] for item in self.tiposGraficos].index(currValue))
+        cuboLbl.setBuddy(self.cuboCB)
+ 
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|
+                                                        QDialogButtonBox.Cancel)
 
+        grid = QGridLayout()
+        grid.addWidget(InicioLabel, 0, 0)
+        grid.addWidget(cuboLbl, 1, 0)
+        grid.addWidget(self.cuboCB, 1, 1)
+        grid.addWidget(buttonBox, 4, 0, 1, 2)
+
+
+        self.setLayout(grid)
+        
+        buttonBox.accepted.connect(self.accept)
+        buttonBox.rejected.connect(self.reject)
+        
+    def accept(self):
+        self.result = self.tiposGraficos[self.cuboCB.currentIndex()][0]
+        QDialog.accept(self)
+        
 class VistaDlg(propertySheetDlg):
     def __init__(self, cubo,parametros,parent=None):
         title = 'Eliga los parametros de la vista'

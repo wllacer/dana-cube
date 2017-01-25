@@ -28,6 +28,8 @@ from dictmgmt.datadict import DataDict
 from cubemgmt.cubetree import traverseTree
 from datalayer.query_constructor import searchConstructor
 
+from util.mplwidget import SimpleChart
+
 import exportWizard as eW
 
 from util.treestate import *
@@ -91,46 +93,47 @@ class DanaCubeWindow(QMainWindow):
         self.filtersMenu = self.menuBar().addMenu("&Usar Filtros")
 
         self.filterActions['create'] = self.filtersMenu.addAction('Editar &Filtro',
-                                    self.tabulatura.currentWidget().setFilter,
+                                    self.tabulatura.currentWidget().tree.setFilter,
                                     "Ctrl+K")
         self.filterActions['drop'] = self.filtersMenu.addAction('Borrar &Filtros',
-                                    self.tabulatura.currentWidget().dropFilter,
+                                    self.tabulatura.currentWidget().tree.dropFilter,
                                     "Ctrl+K")
         self.filterActions['save'] = self.cubeMenu.addAction('Guardar &Filtros permanentemente',
-                                    self.tabulatura.currentWidget().saveFilter,
+                                    self.tabulatura.currentWidget().tree.saveFilter,
                                     "Ctrl+K")
         self.filterActions['drop'].setEnabled(False)
         self.filterActions['save'].setEnabled(False)
         self.filtersMenu.addSeparator()
         
         self.dateRangeActions['dates'] = self.filtersMenu.addAction('Editar &Rango fechas',
-                                    self.tabulatura.currentWidget().setRange,
+                                    self.tabulatura.currentWidget().tree.setRange,
                                     "Ctrl+K")
         self.dateRangeActions['drop'] = self.filtersMenu.addAction('Borrar &Rango fechas',
-                                    self.tabulatura.currentWidget().dropRange,
+                                    self.tabulatura.currentWidget().tree.dropRange,
                                     "Ctrl+K")
         self.dateRangeActions['save'] = self.cubeMenu.addAction('Salvar &Rango fechas',
-                                    self.tabulatura.currentWidget().saveRange,
+                                    self.tabulatura.currentWidget().tree.saveRange,
                                     "Ctrl+K")
         self.dateRangeActions['drop'].setEnabled(False)
         self.dateRangeActions['save'].setEnabled(False)
  
         self.optionsMenu = self.menuBar().addMenu("&Opciones")
         self.optionsMenu.addAction("&Exportar datos ...",
-                                   self.tabulatura.currentWidget().export,
+                                   self.tabulatura.currentWidget().tree.export,
                                    "CtrlT")
         self.optionsMenu.addAction("&Trasponer datos",
-                                   self.tabulatura.currentWidget().traspose,
+                                   self.tabulatura.currentWidget().tree.traspose,
                                    "CtrlT")
         self.optionsMenu.addAction("&Presentacion ...",
-                                   self.tabulatura.currentWidget().setNumberFormat,
+                                   self.tabulatura.currentWidget().tree.setNumberFormat,
                                    "Ctrl+F")
-
+        self.optionsMenu.addSeparator()
+        self.optionsMenu.addAction("&Graficos",self.tabulatura.currentWidget().setGraph,"Ctrl+G")
         ##
         
         self.userFunctionsMenu = self.menuBar().addMenu("&Funciones de usuario")
         self.restorator = self.userFunctionsMenu.addAction("&Restaurar valores originales"
-            ,self.tabulatura.currentWidget().restoreData,"Ctrl+R")
+            ,self.tabulatura.currentWidget().tree.restoreData,"Ctrl+R")
         self.restorator.setEnabled(False)
         self.userFunctionsMenu.addSeparator()
         
@@ -147,7 +150,7 @@ class DanaCubeWindow(QMainWindow):
         self.setCentralWidget(self.tabulatura)
       
     def checkChanges(self,destino):
-        tabWgt = self.tabulatura.currentWidget()
+        tabWgt = self.tabulatura.currentWidget().tree
         if not self.filterActions or not self.dateRangeActions or not self.restorator:
             return
         if not tabWgt:
@@ -214,14 +217,6 @@ class DanaCubeWindow(QMainWindow):
         del self.views[:]
         self.addView()
 
-
-    def addView(self,**viewData):
-        if viewData:  #¿Es realmente necesario ?
-            self.views.append(DanaCube(self,**viewData))
-        else:
-            self.views.append(DanaCube(self))
-        idx = self.tabulatura.addTab(self.views[-1],self.views[-1].getTitleText())
-        self.tabulatura.setCurrentIndex(idx)
         
     def setupCubo(self,my_cubos,seleccion):
         self.cubo = Cubo(my_cubos[seleccion])
@@ -283,12 +278,6 @@ class DanaCubeWindow(QMainWindow):
         my_cubos['default'] = datos_defecto
         dump_structure(my_cubos)
         
-    def closeView(self):
-        tabId = self.tabulatura.currentIndex()
-        self.tabulatura.removeTab(tabId)
-        self.views[tabId].close()
-        del self.views[tabId]
-
         
     def requestVista(self,vista=None):
         parametros = [None for k in range(6)]
@@ -313,10 +302,25 @@ class DanaCubeWindow(QMainWindow):
             viewData['stats'] = parametros[5]
         
         return viewData
+
+    def addView(self,**viewData):
+        if viewData:  #¿Es realmente necesario ?
+            self.views.append(TabMgr(self,**viewData))
+        else:
+            self.views.append(TabMgr(self))
+        idx = self.tabulatura.addTab(self.views[-1],self.views[-1].getTitleText())
+        self.tabulatura.setCurrentIndex(idx)
+
     
+    def closeView(self):
+        tabId = self.tabulatura.currentIndex()
+        self.tabulatura.removeTab(tabId)
+        self.views[tabId].close()
+        del self.views[tabId]
+
     def openView(self,action):
-        tabWgt = self.tabulatura.currentWidget()
-        viewData = self.requestVista(tabWgt.vista if tabWgt else None)
+        tabWgt = self.tabulatura.currentWidget().tree
+        viewData = self.requestVista(tabWgt.tree.vista if tabWgt else None)
         if not viewData:
             return
         if action == 'new':
@@ -326,6 +330,73 @@ class DanaCubeWindow(QMainWindow):
         else:
             return
         
+class TabMgr(QWidget):
+    def __init__(self,parent,**kwargs):
+        super(TabMgr,self).__init__()
+        lay = QGridLayout()
+        self.setLayout(lay)
+        self.tree = DanaCube(parent,**kwargs)
+        self.chart = SimpleChart()
+        self.chartType = None #'barh'
+        self.lastItemUsed = None
+        self.tree.clicked.connect(self.drawChart)
+        
+        lay.addWidget(self.tree,0,0,1,1)
+        lay.addWidget(self.chart,0,1,1,4)
+
+        self.drawChart(None)
+    
+    def setGraph(self):
+        dialog = GraphDlg(self.chartType, self)
+        if dialog.exec_():
+            self.chartType = dialog.result
+        self.drawChart()
+    
+    def getTitleText(self):
+        return self.tree.getTitleText()
+    
+    def dispatch(self,FcnIdx):
+        self.tree.dispatch(FcnIdx)
+        self.drawChart()
+        
+    def drawChart(self,index=None):
+        if self.chartType:
+            self.processChartItem(index,tipo=self.chartType)
+        else:
+            self.chart.hide()
+    
+    def processChartItem(self,index=None,tipo='bar'):
+        if index:
+            if index.isValid():
+                item = self.tree.baseModel.item(index)
+            else:
+                return
+        elif self.lastItemUsed:
+            item = self.lastItemUsed
+        else:
+            item = self.tree.baseModel.item('//')
+        self.lastItemUsed = item
+        #textos_col = ytree.getHeader('col')
+        #textos_row = xtree.getHeader('row')
+        #line = 0
+        #col  = 0
+        titulo = self.tree.baseModel.datos.row_hdr_idx.name+'> '+item.getFullDesc()[-1] +  '\n' + \
+            '{}({})'.format(self.tree.baseModel.datos.agregado,self.tree.baseModel.datos.campo) 
+        x_text = self.tree.baseModel.datos.col_hdr_idx.name
+        y_text = ''
+        
+        if tipo == 'multibar': 
+            datos,kcabeceras = item.simplifyHierarchical() #msimplify(mdatos,self.textos_col)
+        else:
+            datos,kcabeceras = item.simplify() #item.getPayload(),self.textos_col)
+        cabeceras = [ self.tree.baseModel.colHdr[k] for k in kcabeceras ]
+
+        if len(datos) == 0:
+            self.chart.axes.cla()
+        else:
+            self.chart.loadData(tipo,cabeceras,datos,titulo,x_text,y_text,item.getFullDesc())  
+        self.chart.draw()
+        self.chart.show()
         
 class DanaCube(QTreeView):    
     def __init__(self,parent,**kwargs):

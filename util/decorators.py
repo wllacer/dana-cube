@@ -50,7 +50,7 @@ def waiting_effects(function):
         try:
             return function(*args, **kwargs)
         except Exception as e:
-            QMessageBox.warning(self,
+            QMessageBox.warning(QApplication.activeWindow(),
                             "Warning",
                             "Error {}".format(e.args[0]))
             if DEBUG:
@@ -77,7 +77,7 @@ def model_change_control(clas_pos=0):
                 model.beginResetModel()
                 return function(*args, **kwargs)
             except Exception as e:
-                QMessageBox.warning(self,
+                QMessageBox.warning(QApplication.activeWindow(),
                                 "Warning",
                                 "Error {}".format(e.args[0]))
                 if DEBUG:
@@ -102,7 +102,7 @@ def keep_tree_layout(clas_pos=0):
                 expList = saveExpandedState(cls)
                 return function(*args, **kwargs)
             except Exception as e:
-                QMessageBox.warning(self,
+                QMessageBox.warning(QApplication.activeWindow(),
                                 "Warning",
                                 "Error {}".format(e.args[0]))
                 if DEBUG:
@@ -132,7 +132,7 @@ def model_update_dec(function):
             cls.model.beginResetModel()
             return function(*args, **kwargs)
         except Exception as e:
-            QMessageBox.warning(self,
+            QMessageBox.warning(QApplication.activeWindow(),
                             "Warning",
                             "Error {}".format(e.args[0]))
             if DEBUG:
