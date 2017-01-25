@@ -109,13 +109,13 @@ With today's release (version 0.10), we enter alpha. What does it means?
     * It's reasonably well tested with Sqlite, MySQL and PostgreSQL; but i haven't had the chance to adapt/test it against DB2, MSSQL Server or Oracle ¿Any volunteer?
     * Nor performance, neither security have been, till now, top priority goals. _You've been warned_
     * The way User functions have been implemented is a 'hack'. Working on a better solution
-    * The administrative interface (_danabrowse.pyw_) and support, is still not 100% functional (but as the administrative files are pure JSON, this is not a showstopper)
+    * The administrative interface (_danabrowse.pyw_) and support, is still not 100% functional (but as the administrativefiles are pure JSON, this is not a showstopper)
+    
+    * Legalese is missing in code (copyrights, licence specs, and so on)
     
 ## Actual Status
 
 _Update on the day of the Conversion of the Apostol Paul 2017_ As of today we enter __ALPHA__ status (see above for what it means)
-
-__MASTER works__ but some pieces are lacking (Above all documentation). The latest __release__ is a good preview
 
 _Update XXIII ordinary sunday (vesper of S. Raphael Archangel 2016_ . For the first time, the code has all the main components in place. A release will be tagged during the day
 Of course there are still lots of bugs or areas with a minimal implementation, but the tool is usable on its full life cycle, so real debugging, -and fleshing- can start
