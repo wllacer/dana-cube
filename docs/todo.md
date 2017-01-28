@@ -171,7 +171,10 @@
     * __DONE__ MySQL/ MariaDB
     * __DONE__ PostGreSQL
     * DB2 (uninstalled)
-    * Oracle  (not available locally)
+    * __WIP__ Oracle. Issues detected
+        * Extremely slow in my setup (with system)
+        * What does it reads in danabrowse for a simple user? Fails with privileges
+        * synonim handling
     * SQLServer (not available locally)
 
 * Use of CUBE / ROLLUP sintax where available

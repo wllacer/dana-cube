@@ -245,7 +245,7 @@ sqlCase(datos,table='votos_provincia')
 
     """
     # pequeña rutina de traduccion necesaria para el nombre de los formatos
-    fmtTrans = {'txt':'t','num':'n','date':'f'}
+    fmtTrans = {'txt':'t','t':'t','num':'n','n':'n','date':'f','d':'f'}
     #pprint(datos)
     entrada =  datos
     enum = entrada['categories']

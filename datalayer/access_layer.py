@@ -308,8 +308,10 @@ if __name__ == '__main__':
     definition1={'driver':'sqlite','dbname': '/home/werner/projects/scifi/scifi.db',
                 'dbhost':None,'dbuser':None,'dbpass':None,'debug':False } 
     definition2={'driver':'mysql','dbname': 'sakila',
-                'dbhost':'localhost','dbuser':'root','dbpass':'toor','debug':False } 
+                'dbhost':'localhost','dbuser':'root','dbpass':'***','debug':False } 
 
+    definition3={'driver':'oracle','dbname': 'EX',
+                'dbhost':'localhost','dbuser':'demo','dbpass':'***','debug':True } 
     
     conn = dbConnect(definition1)
     cursor = getCursor(conn,'select * from city')

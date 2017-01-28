@@ -150,16 +150,16 @@ class DanaCubeWindow(QMainWindow):
         self.setCentralWidget(self.tabulatura)
       
     def checkChanges(self,destino):
-        tabWgt = self.tabulatura.currentWidget().tree
+        currentWidget = self.tabulatura.currentWidget()   #.tree
         if not self.filterActions or not self.dateRangeActions or not self.restorator:
             return
-        if not tabWgt:
+        if not currentWidget:
             self.filterActions['drop'].setEnabled(False)
             self.filterActions['save'].setEnabled(False)
             self.restorator.setEnabled(False)
             return 
         
-        if tabWgt.filtroCampos != '':
+        if currentWidget.tree.filtroCampos != '':
             self.filterActions['drop'].setEnabled(True)
             self.filterActions['save'].setEnabled(True)
         else:
@@ -167,14 +167,14 @@ class DanaCubeWindow(QMainWindow):
             self.filterActions['save'].setEnabled(False)
             
 
-        if tabWgt.filtroFechas != '':
+        if currentWidget.tree.filtroFechas != '':
             self.dateRangeActions['drop'].setEnabled(True)
             self.dateRangeActions['save'].setEnabled(True)
         else:
             self.dateRangeActions['drop'].setEnabled(False)
             self.dateRangeActions['save'].setEnabled(False)
 
-        if tabWgt.isModified:
+        if currentWidget.tree.isModified:
             self.restorator.setEnabled(True)
         else:
             self.restorator.setEnabled(False)
@@ -319,14 +319,14 @@ class DanaCubeWindow(QMainWindow):
         del self.views[tabId]
 
     def openView(self,action):
-        tabWgt = self.tabulatura.currentWidget().tree
-        viewData = self.requestVista(tabWgt.tree.vista if tabWgt else None)
+        currentWgt = self.tabulatura.currentWidget()
+        viewData = self.requestVista(currentWgt.tree.vista if currentWgt else None)
         if not viewData:
             return
         if action == 'new':
             self.addView(**viewData)
         elif action == 'active':
-            tabWgt.cargaVista(viewData['row'], viewData['col'], viewData['agregado'], viewData['campo'], total=viewData['totalizado'], estad=viewData['stats'])
+            currentWgt.tree.cargaVista(viewData['row'], viewData['col'], viewData['agregado'], viewData['campo'], total=viewData['totalizado'], estad=viewData['stats'])
         else:
             return
         
