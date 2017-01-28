@@ -10,6 +10,8 @@ Documentation, License etc.
 @package estimaciones
 '''
 import math
+
+# import decimal
 # import random
 
 #def fmtNumber(number, fmtOptions):
@@ -157,13 +159,22 @@ def isOutlier(item,stats_dict):
 def fivesummary(plista, nan=False):
 
     t_lista = [] 
-    if nan:
-        for i in range(0, len(plista)):
-            if is_number(plista[i]):
-                t_lista.append(plista[i])
-    else:
-        t_lista = list(plista)
+    #if nan:
+        #for i in range(0, len(plista)):
+            #if is_number(plista[i]):
+                #t_lista.append(plista[i])
+    #else:
+        #t_lista = list(plista)
+    #FIXIT 
+    #para operar con decimales de la base de datos los convertimos a float. NO es la mejor opcion
+    for item in plista:
+        if not item and not nan:
+            t_lista.append(item)
+        elif is_number(item):
+            t_lista.append(float(item))
         
+            
+    
     t_lista.sort()
     
     mediana = median(t_lista)

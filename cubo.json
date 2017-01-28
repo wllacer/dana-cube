@@ -1,13 +1,13 @@
 {
     "datos provincia": {
-        "table": "main.votos_provincia",
+        "table": "dana_sample.votos_provincia",
         "base filter": "",
         "connect": {
-            "driver": "QSQLITE",
-            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
-            "dbhost": null,
-            "dbuser": null,
-            "dbpass": null
+            "driver": "mysql",
+            "dbname": "dana_sample",
+            "dbhost": "localhost",
+            "dbuser": "demo",
+            "dbpass": "demo123"
         },
         "fields": [
             "votes_presential",
@@ -24,7 +24,7 @@
                         "fmt": "txt",
                         "elem": "partido_id",
                         "domain": {
-                            "table": "main.partidos",
+                            "table": "dana_sample.partidos",
                             "desc": "acronym",
                             "filter": "",
                             "code": "code"
@@ -40,7 +40,7 @@
                         "fmt": "txt",
                         "elem": "region",
                         "domain": {
-                            "table": "main.localidades",
+                            "table": "dana_sample.localidades",
                             "desc": "nombre",
                             "filter": "provincia = ''",
                             "code": "region"
@@ -56,7 +56,7 @@
                         "fmt": "txt",
                         "elem": "provincia",
                         "domain": {
-                            "table": "main.localidades",
+                            "table": "dana_sample.localidades",
                             "desc": "nombre",
                             "filter": "provincia <> '' and municipio = '' and isla = ''",
                             "code": "provincia"
@@ -73,7 +73,7 @@
                         "fmt": "txt",
                         "elem": "region",
                         "domain": {
-                            "table": "main.localidades",
+                            "table": "dana_sample.localidades",
                             "desc": "nombre",
                             "filter": "provincia = ''",
                             "code": "region"
@@ -84,7 +84,7 @@
                         "fmt": "txt",
                         "elem": "provincia",
                         "domain": {
-                            "table": "main.localidades",
+                            "table": "dana_sample.localidades",
                             "desc": "nombre",
                             "filter": "provincia <> '' and municipio = '' and isla = ''",
                             "code": "provincia",
@@ -101,7 +101,7 @@
                         "fmt": "txt",
                         "elem": "partido_id",
                         "domain": {
-                            "table": "main.partidos",
+                            "table": "dana_sample.partidos",
                             "desc": "acronym",
                             "filter": "code in (select distinct partido_id from votos_provincia where votes_percent >= 3)",
                             "code": "code"
@@ -112,14 +112,14 @@
         ]
     },
     "experimento": {
-        "table": "main.votos_provincia",
+        "table": "dana_sample.votos_provincia",
         "base filter": "",
         "connect": {
-            "driver": "QSQLITE",
-            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
-            "dbhost": null,
-            "dbuser": null,
-            "dbpass": null
+            "driver": "mysql",
+            "dbname": "dana_sample",
+            "dbhost": "localhost",
+            "dbuser": "demo",
+            "dbpass": "demo123"
         },
         "fields": [
             "votes_presential",
@@ -136,7 +136,7 @@
                         "fmt": "txt",
                         "elem": "partido_id",
                         "domain": {
-                            "table": "main.partidos",
+                            "table": "dana_sample.partidos",
                             "desc": "acronym",
                             "filter": "code in (select distinct partido_id from votos_provincia where votes_percent >= 3)",
                             "code": "code"
@@ -152,7 +152,7 @@
                         "fmt": "txt",
                         "elem": "provincia",
                         "domain": {
-                            "table": "main.localidades",
+                            "table": "dana_sample.localidades",
                             "desc": "nombre",
                             "filter": "provincia <> '' and municipio = '' and isla = ''",
                             "code": "provincia"
@@ -231,454 +231,24 @@
             }
         ]
     },
-    "pagos": {
-        "table": "sakila.payment",
-        "base filter": "",
-        "connect": {
-            "driver": "mysql",
-            "dbname": "mysql+mysqlconnector://demo:demo123@localhost/mysql",
-            "dbhost": null,
-            "dbuser": null,
-            "dbpass": null
-        },
-        "fields": [
-            "sakila.payment.payment_id",
-            "sakila.payment.customer_id",
-            "sakila.payment.staff_id",
-            "sakila.payment.rental_id",
-            "sakila.payment.amount"
-        ],
-        "guides": [
-            {
-                "name": "sakila.payment.payment_date",
-                "class": "d",
-                "type": "Ym",
-                "prod": [
-                    {
-                        "fmt": "date",
-                        "elem": "sakila.payment.payment_date"
-                    }
-                ]
-            },
-            {
-                "name": "sakila.payment.payment_date_trimestre",
-                "class": "h",
-                "prod": [
-                    {
-                        "name": "año",
-                        "class": "o",
-                        "elem": "DATE_FORMAT(sakila.payment.payment_date,'%Y')"
-                    },
-                    {
-                        "case_sql": [
-                            "case",
-                            "when DATE_FORMAT($$1,'%m') in ('01','02','03') then concat(DATE_FORMAT($$1,'%Y'),'\\:1')",
-                            "when DATE_FORMAT($$1,'%m') in ('04','05','06') then concat(DATE_FORMAT($$1,'%Y'),'\\:2')",
-                            "when DATE_FORMAT($$1,'%m') in ('07','08','09') then concat(DATE_FORMAT($$1,'%Y'),'\\:3')",
-                            "when DATE_FORMAT($$1,'%m') in ('10','11','12') then concat(DATE_FORMAT($$1,'%Y'),'\\:4')",
-                            "end as $$2"
-                        ],
-                        "class": "c",
-                        "name": "trimestre",
-                        "elem": "sakila.payment.payment_date"
-                    }
-                ]
-            },
-            {
-                "name": "sakila.payment.last_update",
-                "class": "d",
-                "type": "Ymd",
-                "prod": [
-                    {
-                        "fmt": "date",
-                        "elem": "sakila.payment.last_update"
-                    }
-                ]
-            },
-            {
-                "name": "sakila.payment.last_update_trimestre",
-                "class": "h",
-                "prod": [
-                    {
-                        "name": "año",
-                        "class": "o",
-                        "elem": "DATE_FORMAT(sakila.payment.last_update,'%Y')"
-                    },
-                    {
-                        "case_sql": [
-                            "case",
-                            "when DATE_FORMAT($$1,'%m') in ('01','02','03') then concat(DATE_FORMAT($$1,'%Y'),'\\:1')",
-                            "when DATE_FORMAT($$1,'%m') in ('04','05','06') then concat(DATE_FORMAT($$1,'%Y'),'\\:2')",
-                            "when DATE_FORMAT($$1,'%m') in ('07','08','09') then concat(DATE_FORMAT($$1,'%Y'),'\\:3')",
-                            "when DATE_FORMAT($$1,'%m') in ('10','11','12') then concat(DATE_FORMAT($$1,'%Y'),'\\:4')",
-                            "end as $$2"
-                        ],
-                        "class": "c",
-                        "name": "trimestre",
-                        "elem": "sakila.payment.last_update"
-                    }
-                ]
-            },
-            {
-                "name": "fk_payment_customer",
-                "class": "o",
-                "prod": [
-                    {
-                        "elem": "sakila.payment.customer_id",
-                        "domain": {
-                            "table": "sakila.customer",
-                            "desc": [
-                                "sakila.customer.first_name",
-                                "sakila.customer.last_name",
-                                "sakila.customer.email"
-                            ],
-                            "filter": "",
-                            "code": "sakila.customer.customer_id"
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "fk_customer_address@fk_payment_customer",
-                "class": "o",
-                "prod": [
-                    {
-                        "link via": [
-                            {
-                                "table": "sakila.customer",
-                                "clause": [
-                                    {
-                                        "rel_elem": "sakila.customer.customer_id",
-                                        "base_elem": "sakila.payment.customer_id"
-                                    }
-                                ],
-                                "filter": ""
-                            }
-                        ],
-                        "elem": "sakila.customer.address_id",
-                        "domain": {
-                            "table": "sakila.address",
-                            "desc": [
-                                "sakila.address.address",
-                                "sakila.address.address2",
-                                "sakila.address.district",
-                                "sakila.address.postal_code",
-                                "sakila.address.phone"
-                            ],
-                            "filter": "",
-                            "code": "sakila.address.address_id"
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "fk_customer_store@fk_payment_customer",
-                "class": "o",
-                "prod": [
-                    {
-                        "link via": [
-                            {
-                                "table": "sakila.customer",
-                                "clause": [
-                                    {
-                                        "rel_elem": "sakila.customer.customer_id",
-                                        "base_elem": "sakila.payment.customer_id"
-                                    }
-                                ],
-                                "filter": ""
-                            }
-                        ],
-                        "elem": "sakila.customer.store_id",
-                        "domain": {
-                            "table": "sakila.store",
-                            "desc": "sakila.store.store_id",
-                            "filter": "",
-                            "code": "sakila.store.store_id"
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "fk_payment_rental",
-                "class": "o",
-                "prod": [
-                    {
-                        "elem": "sakila.payment.rental_id",
-                        "domain": {
-                            "table": "sakila.rental",
-                            "desc": "sakila.rental.rental_id",
-                            "filter": "",
-                            "code": "sakila.rental.rental_id"
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "fk_rental_customer@fk_payment_rental",
-                "class": "o",
-                "prod": [
-                    {
-                        "link via": [
-                            {
-                                "table": "sakila.rental",
-                                "clause": [
-                                    {
-                                        "rel_elem": "sakila.rental.rental_id",
-                                        "base_elem": "sakila.payment.rental_id"
-                                    }
-                                ],
-                                "filter": ""
-                            }
-                        ],
-                        "elem": "sakila.rental.customer_id",
-                        "domain": {
-                            "table": "sakila.customer",
-                            "desc": [
-                                "sakila.customer.first_name",
-                                "sakila.customer.last_name",
-                                "sakila.customer.email"
-                            ],
-                            "filter": "",
-                            "code": "sakila.customer.customer_id"
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "fk_rental_inventory@fk_payment_rental",
-                "class": "o",
-                "prod": [
-                    {
-                        "link via": [
-                            {
-                                "table": "sakila.rental",
-                                "clause": [
-                                    {
-                                        "rel_elem": "sakila.rental.rental_id",
-                                        "base_elem": "sakila.payment.rental_id"
-                                    }
-                                ],
-                                "filter": ""
-                            }
-                        ],
-                        "elem": "sakila.rental.inventory_id",
-                        "domain": {
-                            "table": "sakila.inventory",
-                            "desc": "sakila.inventory.inventory_id",
-                            "filter": "",
-                            "code": "sakila.inventory.inventory_id"
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "fk_rental_staff@fk_payment_rental",
-                "class": "o",
-                "prod": [
-                    {
-                        "link via": [
-                            {
-                                "table": "sakila.rental",
-                                "clause": [
-                                    {
-                                        "rel_elem": "sakila.rental.rental_id",
-                                        "base_elem": "sakila.payment.rental_id"
-                                    }
-                                ],
-                                "filter": ""
-                            }
-                        ],
-                        "elem": "sakila.rental.staff_id",
-                        "domain": {
-                            "table": "sakila.staff",
-                            "desc": [
-                                "sakila.staff.first_name",
-                                "sakila.staff.last_name",
-                                "sakila.staff.email",
-                                "sakila.staff.username",
-                                "sakila.staff.password"
-                            ],
-                            "filter": "",
-                            "code": "sakila.staff.staff_id"
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "fk_payment_staff",
-                "class": "o",
-                "prod": [
-                    {
-                        "elem": "sakila.payment.staff_id",
-                        "domain": {
-                            "table": "sakila.staff",
-                            "desc": [
-                                "sakila.staff.first_name",
-                                "sakila.staff.last_name",
-                                "sakila.staff.email",
-                                "sakila.staff.username",
-                                "sakila.staff.password"
-                            ],
-                            "filter": "",
-                            "code": "sakila.staff.staff_id"
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "fk_staff_address@fk_payment_staff",
-                "class": "o",
-                "prod": [
-                    {
-                        "link via": [
-                            {
-                                "table": "sakila.staff",
-                                "clause": [
-                                    {
-                                        "rel_elem": "sakila.staff.staff_id",
-                                        "base_elem": "sakila.payment.staff_id"
-                                    }
-                                ],
-                                "filter": ""
-                            }
-                        ],
-                        "elem": "sakila.staff.address_id",
-                        "domain": {
-                            "table": "sakila.address",
-                            "desc": [
-                                "sakila.address.address",
-                                "sakila.address.address2",
-                                "sakila.address.district",
-                                "sakila.address.postal_code",
-                                "sakila.address.phone"
-                            ],
-                            "filter": "",
-                            "code": "sakila.address.address_id"
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "fk_staff_store@fk_payment_staff",
-                "class": "o",
-                "prod": [
-                    {
-                        "link via": [
-                            {
-                                "table": "sakila.staff",
-                                "clause": [
-                                    {
-                                        "rel_elem": "sakila.staff.staff_id",
-                                        "base_elem": "sakila.payment.staff_id"
-                                    }
-                                ],
-                                "filter": ""
-                            }
-                        ],
-                        "elem": "sakila.staff.store_id",
-                        "domain": {
-                            "table": "sakila.store",
-                            "desc": "sakila.store.store_id",
-                            "filter": "",
-                            "code": "sakila.store.store_id"
-                        }
-                    }
-                ]
-            }
-        ]
-    },
-    "film": {
-        "table": "sakila.film",
-        "date filter": [
-            {
-                "date period": "11",
-                "date class": "2",
-                "date range": "0",
-                "elem": "sakila.film.last_update"
-            }
-        ],
-        "connect": {
-            "driver": "mysql",
-            "dbname": "mysql+mysqlconnector://demo:demo123@localhost/mysql",
-            "dbhost": null,
-            "dbuser": null,
-            "dbpass": null
-        },
-        "fields": [
-            "sakila.film.film_id",
-            "sakila.film.rental_rate",
-            "sakila.film.replacement_cost"
-        ],
-        "base filter": "",
-        "guides": [
-            {
-                "name": "sakila.film.release_year",
-                "class": "o",
-                "prod": [
-                    {
-                        "elem": "sakila.film.release_year"
-                    }
-                ]
-            },
-            {
-                "name": "sakila.film.rating",
-                "class": "o",
-                "prod": [
-                    {
-                        "elem": "sakila.film.rating"
-                    }
-                ]
-            },
-            {
-                "name": "fk_film_language",
-                "class": "o",
-                "prod": [
-                    {
-                        "elem": "sakila.film.language_id",
-                        "domain": {
-                            "table": "sakila.language",
-                            "desc": "sakila.language.name",
-                            "filter": "",
-                            "code": "sakila.language.language_id"
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "fk_film_language_original",
-                "class": "o",
-                "prod": [
-                    {
-                        "elem": "sakila.film.original_language_id",
-                        "domain": {
-                            "table": "sakila.language",
-                            "desc": "sakila.language.name",
-                            "filter": "",
-                            "code": "sakila.language.language_id"
-                        }
-                    }
-                ]
-            }
-        ]
-    },
     "default": {
-        "cubo": "datos provincia",
+        "cubo": "datos locales",
         "vista": {
-            "col": 4,
             "elemento": "votes_presential",
-            "row": 3,
-            "agregado": "sum"
+            "agregado": "sum",
+            "row": 6,
+            "col": 1
         }
     },
     "datos light": {
-        "table": "main.votos_locales",
+        "table": "dana_sample.votos_locales",
         "base filter": "",
         "connect": {
-            "driver": "QSQLITE",
-            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
-            "dbhost": null,
-            "dbuser": null,
-            "dbpass": null
+            "driver": "mysql",
+            "dbname": "dana_sample",
+            "dbhost": "localhost",
+            "dbuser": "demo",
+            "dbpass": "demo123"
         },
         "fields": [
             "votes_presential",
@@ -694,7 +264,7 @@
                         "fmt": "txt",
                         "elem": "partido_id",
                         "domain": {
-                            "table": "main.partidos",
+                            "table": "dana_sample.partidos",
                             "desc": "acronym",
                             "filter": "",
                             "code": "code"
@@ -710,7 +280,7 @@
                         "fmt": "txt",
                         "elem": "partido_id",
                         "domain": {
-                            "table": "main.partidos",
+                            "table": "dana_sample.partidos",
                             "desc": "acronym",
                             "filter": "code in (select distinct partido_id from votos_provincia where votes_percent >= 3)",
                             "code": "code"
@@ -726,7 +296,7 @@
                         "fmt": "txt",
                         "elem": "region",
                         "domain": {
-                            "table": "main.localidades",
+                            "table": "dana_sample.localidades",
                             "desc": "nombre",
                             "filter": "provincia = ''",
                             "code": "region"
@@ -742,7 +312,7 @@
                         "fmt": "txt",
                         "elem": "provincia",
                         "domain": {
-                            "table": "main.localidades",
+                            "table": "dana_sample.localidades",
                             "desc": "nombre",
                             "filter": "provincia <> '' and municipio = '' and isla = ''",
                             "code": "provincia"
@@ -758,7 +328,7 @@
                         "fmt": "txt",
                         "elem": "municipio",
                         "domain": {
-                            "table": "main.localidades",
+                            "table": "dana_sample.localidades",
                             "desc": "nombre",
                             "filter": "municipio <> '' ",
                             "code": "municipio"
@@ -775,7 +345,7 @@
                         "fmt": "txt",
                         "elem": "region",
                         "domain": {
-                            "table": "main.localidades",
+                            "table": "dana_sample.localidades",
                             "desc": "nombre",
                             "filter": "provincia = ''",
                             "code": "region"
@@ -786,7 +356,7 @@
                         "fmt": "txt",
                         "elem": "provincia",
                         "domain": {
-                            "table": "main.localidades",
+                            "table": "dana_sample.localidades",
                             "desc": "nombre",
                             "filter": "provincia <> '' and municipio = '' and isla = ''",
                             "code": "provincia",
@@ -807,305 +377,15 @@
             }
         ]
     },
-    "rental": {
-        "table": "sakila.rental",
+    "datos locales": {
+        "table": "dana_sample.votos_locales",
         "base filter": "",
         "connect": {
             "driver": "mysql",
-            "dbname": "mysql+mysqlconnector://demo:demo123@localhost/mysql",
-            "dbhost": null,
-            "dbuser": null,
-            "dbpass": null
-        },
-        "fields": [
-            "sakila.rental.rental_id",
-            "sakila.rental.inventory_id",
-            "sakila.rental.customer_id",
-            "sakila.rental.staff_id"
-        ],
-        "guides": [
-            {
-                "name": "sakila.rental.rental_date",
-                "class": "d",
-                "type": "Ymd",
-                "prod": [
-                    {
-                        "fmt": "date",
-                        "elem": "sakila.rental.rental_date"
-                    }
-                ]
-            },
-            {
-                "name": "sakila.rental.rental_date_trimestre",
-                "class": "h",
-                "prod": [
-                    {
-                        "name": "año",
-                        "class": "o",
-                        "elem": "DATE_FORMAT(sakila.rental.rental_date,'%Y')"
-                    },
-                    {
-                        "case_sql": [
-                            "case",
-                            "when DATE_FORMAT($$1,'%m') in ('01','02','03') then concat(DATE_FORMAT($$1,'%Y'),'\\:1')",
-                            "when DATE_FORMAT($$1,'%m') in ('04','05','06') then concat(DATE_FORMAT($$1,'%Y'),'\\:2')",
-                            "when DATE_FORMAT($$1,'%m') in ('07','08','09') then concat(DATE_FORMAT($$1,'%Y'),'\\:3')",
-                            "when DATE_FORMAT($$1,'%m') in ('10','11','12') then concat(DATE_FORMAT($$1,'%Y'),'\\:4')",
-                            "end as $$2"
-                        ],
-                        "class": "c",
-                        "name": "trimestre",
-                        "elem": "sakila.rental.rental_date"
-                    }
-                ]
-            },
-            {
-                "name": "sakila.rental.return_date",
-                "class": "d",
-                "type": "Ymd",
-                "prod": [
-                    {
-                        "fmt": "date",
-                        "elem": "sakila.rental.return_date"
-                    }
-                ]
-            },
-            {
-                "name": "sakila.rental.return_date_trimestre",
-                "class": "h",
-                "prod": [
-                    {
-                        "name": "año",
-                        "class": "o",
-                        "elem": "DATE_FORMAT(sakila.rental.return_date,'%Y')"
-                    },
-                    {
-                        "case_sql": [
-                            "case",
-                            "when DATE_FORMAT($$1,'%m') in ('01','02','03') then concat(DATE_FORMAT($$1,'%Y'),'\\:1')",
-                            "when DATE_FORMAT($$1,'%m') in ('04','05','06') then concat(DATE_FORMAT($$1,'%Y'),'\\:2')",
-                            "when DATE_FORMAT($$1,'%m') in ('07','08','09') then concat(DATE_FORMAT($$1,'%Y'),'\\:3')",
-                            "when DATE_FORMAT($$1,'%m') in ('10','11','12') then concat(DATE_FORMAT($$1,'%Y'),'\\:4')",
-                            "end as $$2"
-                        ],
-                        "class": "c",
-                        "name": "trimestre",
-                        "elem": "sakila.rental.return_date"
-                    }
-                ]
-            },
-            {
-                "name": "fk_rental_customer",
-                "class": "o",
-                "prod": [
-                    {
-                        "elem": "sakila.rental.customer_id",
-                        "domain": {
-                            "table": "sakila.customer",
-                            "desc": [
-                                "sakila.customer.first_name",
-                                "sakila.customer.last_name",
-                                "sakila.customer.email"
-                            ],
-                            "filter": "",
-                            "code": "sakila.customer.customer_id"
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "fk_customer_store@fk_rental_customer",
-                "class": "o",
-                "prod": [
-                    {
-                        "link via": [
-                            {
-                                "table": "sakila.customer",
-                                "clause": [
-                                    {
-                                        "rel_elem": "sakila.customer.customer_id",
-                                        "base_elem": "sakila.rental.customer_id"
-                                    }
-                                ],
-                                "filter": ""
-                            }
-                        ],
-                        "elem": "sakila.customer.store_id",
-                        "domain": {
-                            "table": "sakila.store",
-                            "desc": "sakila.store.store_id",
-                            "filter": "",
-                            "code": "sakila.store.store_id"
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "fk_rental_inventory",
-                "class": "o",
-                "prod": [
-                    {
-                        "elem": "sakila.rental.inventory_id",
-                        "domain": {
-                            "table": "sakila.inventory",
-                            "desc": "sakila.inventory.inventory_id",
-                            "filter": "",
-                            "code": "sakila.inventory.inventory_id"
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "fk_inventory_film@fk_rental_inventory",
-                "class": "o",
-                "prod": [
-                    {
-                        "link via": [
-                            {
-                                "table": "sakila.inventory",
-                                "clause": [
-                                    {
-                                        "rel_elem": "sakila.inventory.inventory_id",
-                                        "base_elem": "sakila.rental.inventory_id"
-                                    }
-                                ],
-                                "filter": ""
-                            }
-                        ],
-                        "elem": "sakila.inventory.film_id",
-                        "domain": {
-                            "table": "sakila.film",
-                            "desc": [
-                                "sakila.film.title",
-                                "sakila.film.description",
-                                "sakila.film.rating",
-                                "sakila.film.special_features"
-                            ],
-                            "filter": "",
-                            "code": "sakila.film.film_id"
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "fk_inventory_store@fk_rental_inventory",
-                "class": "o",
-                "prod": [
-                    {
-                        "link via": [
-                            {
-                                "table": "sakila.inventory",
-                                "clause": [
-                                    {
-                                        "rel_elem": "sakila.inventory.inventory_id",
-                                        "base_elem": "sakila.rental.inventory_id"
-                                    }
-                                ],
-                                "filter": ""
-                            }
-                        ],
-                        "elem": "sakila.inventory.store_id",
-                        "domain": {
-                            "table": "sakila.store",
-                            "desc": "sakila.store.store_id",
-                            "filter": "",
-                            "code": "sakila.store.store_id"
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "fk_rental_staff",
-                "class": "o",
-                "prod": [
-                    {
-                        "elem": "sakila.rental.staff_id",
-                        "domain": {
-                            "table": "sakila.staff",
-                            "desc": [
-                                "sakila.staff.first_name",
-                                "sakila.staff.last_name",
-                                "sakila.staff.email",
-                                "sakila.staff.username",
-                                "sakila.staff.password"
-                            ],
-                            "filter": "",
-                            "code": "sakila.staff.staff_id"
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "fk_staff_address@fk_rental_staff",
-                "class": "o",
-                "prod": [
-                    {
-                        "link via": [
-                            {
-                                "table": "sakila.staff",
-                                "clause": [
-                                    {
-                                        "rel_elem": "sakila.staff.staff_id",
-                                        "base_elem": "sakila.rental.staff_id"
-                                    }
-                                ],
-                                "filter": ""
-                            }
-                        ],
-                        "elem": "sakila.staff.address_id",
-                        "domain": {
-                            "table": "sakila.address",
-                            "desc": [
-                                "sakila.address.address",
-                                "sakila.address.address2",
-                                "sakila.address.district",
-                                "sakila.address.postal_code",
-                                "sakila.address.phone"
-                            ],
-                            "filter": "",
-                            "code": "sakila.address.address_id"
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "fk_staff_store@fk_rental_staff",
-                "class": "o",
-                "prod": [
-                    {
-                        "link via": [
-                            {
-                                "table": "sakila.staff",
-                                "clause": [
-                                    {
-                                        "rel_elem": "sakila.staff.staff_id",
-                                        "base_elem": "sakila.rental.staff_id"
-                                    }
-                                ],
-                                "filter": ""
-                            }
-                        ],
-                        "elem": "sakila.staff.store_id",
-                        "domain": {
-                            "table": "sakila.store",
-                            "desc": "sakila.store.store_id",
-                            "filter": "",
-                            "code": "sakila.store.store_id"
-                        }
-                    }
-                ]
-            }
-        ]
-    },
-    "datos locales": {
-        "table": "main.votos_locales",
-        "base filter": "",
-        "connect": {
-            "driver": "QSQLITE",
-            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
-            "dbhost": null,
-            "dbuser": null,
-            "dbpass": null
+            "dbname": "dana_sample",
+            "dbhost": "localhost",
+            "dbuser": "demo",
+            "dbpass": "demo123"
         },
         "fields": [
             "votes_presential",
@@ -1121,7 +401,7 @@
                         "fmt": "txt",
                         "elem": "partido_id",
                         "domain": {
-                            "table": "main.partidos",
+                            "table": "dana_sample.partidos",
                             "desc": "acronym",
                             "filter": "",
                             "code": "code"
@@ -1137,7 +417,7 @@
                         "fmt": "txt",
                         "elem": "partido_id",
                         "domain": {
-                            "table": "main.partidos",
+                            "table": "dana_sample.partidos",
                             "desc": "acronym",
                             "filter": "code in (select distinct partido_id from votos_provincia where votes_percent >= 3)",
                             "code": "code"
@@ -1153,9 +433,9 @@
                         "fmt": "txt",
                         "elem": "region",
                         "domain": {
-                            "table": "main.localidades",
+                            "table": "dana_sample.localidades",
                             "desc": "nombre",
-                            "filter": "provincia = ''",
+                            "filter": "region <> ''  and provincia = ''",
                             "code": "region"
                         }
                     }
@@ -1169,26 +449,10 @@
                         "fmt": "txt",
                         "elem": "provincia",
                         "domain": {
-                            "table": "main.localidades",
+                            "table": "dana_sample.localidades",
                             "desc": "nombre",
                             "filter": "provincia <> '' and municipio = '' and isla = ''",
                             "code": "provincia"
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "municipio",
-                "class": "o",
-                "prod": [
-                    {
-                        "fmt": "txt",
-                        "elem": "municipio",
-                        "domain": {
-                            "table": "main.localidades",
-                            "desc": "nombre",
-                            "filter": "municipio <> '' ",
-                            "code": "municipio"
                         }
                     }
                 ]
@@ -1202,9 +466,9 @@
                         "fmt": "txt",
                         "elem": "region",
                         "domain": {
-                            "table": "main.localidades",
+                            "table": "dana_sample.localidades",
                             "desc": "nombre",
-                            "filter": "provincia = ''",
+                            "filter": "region <> '' and provincia = ''",
                             "code": "region"
                         }
                     },
@@ -1213,7 +477,7 @@
                         "fmt": "txt",
                         "elem": "provincia",
                         "domain": {
-                            "table": "main.localidades",
+                            "table": "dana_sample.localidades",
                             "desc": "nombre",
                             "filter": "provincia <> '' and municipio = '' and isla = ''",
                             "code": "provincia",
@@ -1231,7 +495,7 @@
                         "fmt": "txt",
                         "elem": "region",
                         "domain": {
-                            "table": "main.localidades",
+                            "table": "dana_sample.localidades",
                             "desc": "nombre",
                             "filter": "provincia = ''  and region != ''",
                             "code": "region"
@@ -1242,23 +506,11 @@
                         "fmt": "txt",
                         "elem": "provincia",
                         "domain": {
-                            "table": "main.localidades",
+                            "table": "dana_sample.localidades",
                             "desc": "nombre",
                             "filter": "region = 'CA01' and provincia <> '' and municipio = '' and isla = ''",
                             "code": "provincia",
                             "grouped by": "region"
-                        }
-                    },
-                    {
-                        "name": "municipio",
-                        "fmt": "txt",
-                        "elem": "municipio",
-                        "domain": {
-                            "table": "main.localidades",
-                            "desc": "nombre",
-                            "filter": "region = 'CA01' and municipio <> '' and isla = ''",
-                            "code": "municipio",
-                            "grouped by": "region,provincia"
                         }
                     }
                 ]
@@ -1270,6 +522,30 @@
                     {
                         "fmt": "date",
                         "elem": "fakedate"
+                    }
+                ]
+            },
+            {
+                "name": "cuatrimestre",
+                "class": "h",
+                "prod": [
+                    {
+                        "elem": "DATE_FORMAT(fakedate,'%Y')",
+                        "name": "año",
+                        "class": "o"
+                    },
+                    {
+                        "elem": "fakedate",
+                        "case_sql": [
+                            "case",
+                            "when DATE_FORMAT($$1,'%m') in ('01','02','03')  then DATE_FORMAT($$1,'%Y')||'\\:1'",
+                            "when DATE_FORMAT($$1,'%m') in ('04','05','06')  then DATE_FORMAT($$1,'%Y')||'\\:2'" ,
+                            "when DATE_FORMAT($$1,'%m') in ('07','08','09') then DATE_FORMAT($$1,'%Y')||'\\:3'" ,
+                            "when DATE_FORMAT($$1,'%m') in ('10','11','12') then DATE_FORMAT($$1,'%Y')||'\\:4'",
+                            "end as $$2"
+                        ],
+                        "name": "trimestre",
+                        "class": "c"
                     }
                 ]
             }

@@ -478,7 +478,7 @@ class SchemaTreeItem(BaseTreeItem):
                         curTable = hermano.lastChild()
                         curTable.refresh()
                     else:
-                        conexion = self.getParent()
+                        conexion = self.parent() #self.getParent()
                         conexion.appendRow(SchemaTreeItem(kschema))  
                         curSchema = conexion.lastChild()
                         curSchema.refresh(table=ktable,iters=0)
