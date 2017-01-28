@@ -263,7 +263,7 @@ class DanaCubeWindow(QMainWindow):
         return result
 
     def defaultVista(self):
-        entrada = self.tabulatura.currentWidget()
+        entrada = self.tabulatura.currentWidget().tree
         datos_defecto = {}
         datos_defecto["cubo"] =  self.cubo.nombre
         datos_defecto["vista"] = {

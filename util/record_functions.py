@@ -11,6 +11,7 @@ Documentation, License etc.
 
 @package estimaciones
 '''
+import re
 
 from pprint import *
 from copy import deepcopy
@@ -20,14 +21,18 @@ DELIMITER=':'
 def norm2List(entrada):
     """
        devuelve una entrada que puede ser una lista o un escalar como lista siempre
+       Solucion para los parentesis obtenida gracias a
+       stackoverflow.com/questions/1648537/how-to-split-a-string-by-commas-positioned-outside-of-parenthesis
+       Falla con parentesis dentro de parentesis.
        
     """
     if isinstance(entrada,(list,tuple)):
        return entrada
-    elif ',' in entrada:
-        return entrada.split(',')
+    elif '(' in entrada:
+        return re.split(r',\s*(?=[^)]*(?:\(|$))', entrada)
+
     else:
-       return [entrada ,]
+       return entrada.split(',')
       
 def norm2String(entrada,separador=', '):
     """

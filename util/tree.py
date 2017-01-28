@@ -388,13 +388,13 @@ class TreeDict(object):
                 queue = queue[1:] + expansion  # width-first
 
     def setHeader(self):
-        header = [None for k in range(self.count())]
+        header = [None for k in range(self.count())] 
         for item in self.traverse(output = _ITEM):
             clave = item.getFullDesc()
             try:
                 header[item.ord]=clave
             except IndexError:
-                print('Canturriazo',self.count(),item,item.ord)
+                print('Canturriazo',self.count(),item,item.ord,item.model().name)
                 exit()
         return header
 
