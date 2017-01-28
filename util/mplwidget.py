@@ -147,7 +147,7 @@ if __name__ == '__main__':
     y_text = 'partidos importantes '
 
     app = QApplication(sys.argv)
-    tipo = 'barh' #'bar' #'scatter'
+    tipo = 'bar' #'bar' #'scatter'
     aw = ApplicationWindow()#tipo,x,y,'Fresquito de la Base de Datos','Una dimension','La otra')
     aw.setWindowTitle("PyQt5 Matplot Example")
     aw.main_widget.loadData(tipo,x,y,titulo,x_text,y_text,('Ejemplo',))
