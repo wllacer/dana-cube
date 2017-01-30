@@ -770,7 +770,10 @@ class TableTreeItem(BaseTreeItem):
             conn = self.getConnection().data().engine
             schema = self.getSchema().text()
             table = self.text()
-            sqlq = 'select count(*) from {}.{} '.format(schema,table)
+            if schema is  None or schema == '' or schema == 'None' : #cubriendo todas las bases
+                sqlq = 'select count(*) from {} '.format(table)
+            else:
+                 sqlq = 'select count(*) from {}.{} '.format(schema,table)
             result = getCursor(conn,sqlq)
             self.setColumnData(1,result[0][0],Qt.EditRole)
         else:
