@@ -1,13 +1,13 @@
 {
     "datos provincia": {
-        "table": "dana_sample.votos_provincia",
+        "table": "main.votos_provincia",
         "base filter": "",
         "connect": {
-            "driver": "mysql",
-            "dbname": "dana_sample",
-            "dbhost": "localhost",
-            "dbuser": "demo",
-            "dbpass": "demo123"
+            "driver": "QSQLITE",
+            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
+            "dbhost": null,
+            "dbuser": null,
+            "dbpass": null
         },
         "fields": [
             "votes_presential",
@@ -24,7 +24,7 @@
                         "fmt": "txt",
                         "elem": "partido_id",
                         "domain": {
-                            "table": "dana_sample.partidos",
+                            "table": "main.partidos",
                             "desc": "acronym",
                             "filter": "",
                             "code": "code"
@@ -40,7 +40,7 @@
                         "fmt": "txt",
                         "elem": "region",
                         "domain": {
-                            "table": "dana_sample.localidades",
+                            "table": "main.localidades",
                             "desc": "nombre",
                             "filter": "provincia = ''",
                             "code": "region"
@@ -56,7 +56,7 @@
                         "fmt": "txt",
                         "elem": "provincia",
                         "domain": {
-                            "table": "dana_sample.localidades",
+                            "table": "main.localidades",
                             "desc": "nombre",
                             "filter": "provincia <> '' and municipio = '' and isla = ''",
                             "code": "provincia"
@@ -73,7 +73,7 @@
                         "fmt": "txt",
                         "elem": "region",
                         "domain": {
-                            "table": "dana_sample.localidades",
+                            "table": "main.localidades",
                             "desc": "nombre",
                             "filter": "provincia = ''",
                             "code": "region"
@@ -84,7 +84,7 @@
                         "fmt": "txt",
                         "elem": "provincia",
                         "domain": {
-                            "table": "dana_sample.localidades",
+                            "table": "main.localidades",
                             "desc": "nombre",
                             "filter": "provincia <> '' and municipio = '' and isla = ''",
                             "code": "provincia",
@@ -101,7 +101,7 @@
                         "fmt": "txt",
                         "elem": "partido_id",
                         "domain": {
-                            "table": "dana_sample.partidos",
+                            "table": "main.partidos",
                             "desc": "acronym",
                             "filter": "code in (select distinct partido_id from votos_provincia where votes_percent >= 3)",
                             "code": "code"
@@ -112,14 +112,14 @@
         ]
     },
     "experimento": {
-        "table": "dana_sample.votos_provincia",
+        "table": "main.votos_provincia",
         "base filter": "",
         "connect": {
-            "driver": "mysql",
-            "dbname": "dana_sample",
-            "dbhost": "localhost",
-            "dbuser": "demo",
-            "dbpass": "demo123"
+            "driver": "QSQLITE",
+            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
+            "dbhost": null,
+            "dbuser": null,
+            "dbpass": null
         },
         "fields": [
             "votes_presential",
@@ -136,7 +136,7 @@
                         "fmt": "txt",
                         "elem": "partido_id",
                         "domain": {
-                            "table": "dana_sample.partidos",
+                            "table": "main.partidos",
                             "desc": "acronym",
                             "filter": "code in (select distinct partido_id from votos_provincia where votes_percent >= 3)",
                             "code": "code"
@@ -152,7 +152,7 @@
                         "fmt": "txt",
                         "elem": "provincia",
                         "domain": {
-                            "table": "dana_sample.localidades",
+                            "table": "main.localidades",
                             "desc": "nombre",
                             "filter": "provincia <> '' and municipio = '' and isla = ''",
                             "code": "provincia"
@@ -241,14 +241,14 @@
         }
     },
     "datos light": {
-        "table": "dana_sample.votos_locales",
+        "table": "main.votos_locales",
         "base filter": "",
         "connect": {
-            "driver": "mysql",
-            "dbname": "dana_sample",
-            "dbhost": "localhost",
-            "dbuser": "demo",
-            "dbpass": "demo123"
+            "driver": "QSQLITE",
+            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
+            "dbhost": null,
+            "dbuser": null,
+            "dbpass": null
         },
         "fields": [
             "votes_presential",
@@ -264,7 +264,7 @@
                         "fmt": "txt",
                         "elem": "partido_id",
                         "domain": {
-                            "table": "dana_sample.partidos",
+                            "table": "main.partidos",
                             "desc": "acronym",
                             "filter": "",
                             "code": "code"
@@ -280,7 +280,7 @@
                         "fmt": "txt",
                         "elem": "partido_id",
                         "domain": {
-                            "table": "dana_sample.partidos",
+                            "table": "main.partidos",
                             "desc": "acronym",
                             "filter": "code in (select distinct partido_id from votos_provincia where votes_percent >= 3)",
                             "code": "code"
@@ -296,7 +296,7 @@
                         "fmt": "txt",
                         "elem": "region",
                         "domain": {
-                            "table": "dana_sample.localidades",
+                            "table": "main.localidades",
                             "desc": "nombre",
                             "filter": "provincia = ''",
                             "code": "region"
@@ -312,7 +312,7 @@
                         "fmt": "txt",
                         "elem": "provincia",
                         "domain": {
-                            "table": "dana_sample.localidades",
+                            "table": "main.localidades",
                             "desc": "nombre",
                             "filter": "provincia <> '' and municipio = '' and isla = ''",
                             "code": "provincia"
@@ -328,9 +328,9 @@
                         "fmt": "txt",
                         "elem": "municipio",
                         "domain": {
-                            "table": "dana_sample.localidades",
+                            "table": "main.localidades",
                             "desc": "nombre",
-                            "filter": "municipio <> '' ",
+                            "filter": "municipio <> '' and isla = '' ",
                             "code": "municipio"
                         }
                     }
@@ -345,7 +345,7 @@
                         "fmt": "txt",
                         "elem": "region",
                         "domain": {
-                            "table": "dana_sample.localidades",
+                            "table": "main.localidades",
                             "desc": "nombre",
                             "filter": "provincia = ''",
                             "code": "region"
@@ -356,7 +356,7 @@
                         "fmt": "txt",
                         "elem": "provincia",
                         "domain": {
-                            "table": "dana_sample.localidades",
+                            "table": "main.localidades",
                             "desc": "nombre",
                             "filter": "provincia <> '' and municipio = '' and isla = ''",
                             "code": "provincia",
@@ -378,14 +378,14 @@
         ]
     },
     "datos locales": {
-        "table": "dana_sample.votos_locales",
+        "table": "main.votos_locales",
         "base filter": "",
         "connect": {
-            "driver": "mysql",
-            "dbname": "dana_sample",
-            "dbhost": "localhost",
-            "dbuser": "demo",
-            "dbpass": "demo123"
+            "driver": "QSQLITE",
+            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
+            "dbhost": null,
+            "dbuser": null,
+            "dbpass": null
         },
         "fields": [
             "votes_presential",
@@ -401,7 +401,7 @@
                         "fmt": "txt",
                         "elem": "partido_id",
                         "domain": {
-                            "table": "dana_sample.partidos",
+                            "table": "main.partidos",
                             "desc": "acronym",
                             "filter": "",
                             "code": "code"
@@ -417,7 +417,7 @@
                         "fmt": "txt",
                         "elem": "partido_id",
                         "domain": {
-                            "table": "dana_sample.partidos",
+                            "table": "main.partidos",
                             "desc": "acronym",
                             "filter": "code in (select distinct partido_id from votos_provincia where votes_percent >= 3)",
                             "code": "code"
@@ -433,7 +433,7 @@
                         "fmt": "txt",
                         "elem": "region",
                         "domain": {
-                            "table": "dana_sample.localidades",
+                            "table": "main.localidades",
                             "desc": "nombre",
                             "filter": "region <> ''  and provincia = ''",
                             "code": "region"
@@ -449,7 +449,7 @@
                         "fmt": "txt",
                         "elem": "provincia",
                         "domain": {
-                            "table": "dana_sample.localidades",
+                            "table": "main.localidades",
                             "desc": "nombre",
                             "filter": "provincia <> '' and municipio = '' and isla = ''",
                             "code": "provincia"
@@ -466,7 +466,7 @@
                         "fmt": "txt",
                         "elem": "region",
                         "domain": {
-                            "table": "dana_sample.localidades",
+                            "table": "main.localidades",
                             "desc": "nombre",
                             "filter": "region <> '' and provincia = ''",
                             "code": "region"
@@ -477,7 +477,7 @@
                         "fmt": "txt",
                         "elem": "provincia",
                         "domain": {
-                            "table": "dana_sample.localidades",
+                            "table": "main.localidades",
                             "desc": "nombre",
                             "filter": "provincia <> '' and municipio = '' and isla = ''",
                             "code": "provincia",
@@ -495,7 +495,7 @@
                         "fmt": "txt",
                         "elem": "region",
                         "domain": {
-                            "table": "dana_sample.localidades",
+                            "table": "main.localidades",
                             "desc": "nombre",
                             "filter": "provincia = ''  and region != ''",
                             "code": "region"
@@ -506,7 +506,7 @@
                         "fmt": "txt",
                         "elem": "provincia",
                         "domain": {
-                            "table": "dana_sample.localidades",
+                            "table": "main.localidades",
                             "desc": "nombre",
                             "filter": "region = 'CA01' and provincia <> '' and municipio = '' and isla = ''",
                             "code": "provincia",
@@ -530,7 +530,7 @@
                 "class": "h",
                 "prod": [
                     {
-                        "elem": "DATE_FORMAT(fakedate,'%Y')",
+                        "elem": "strftime('%Y',fakedate)",
                         "name": "año",
                         "class": "o"
                     },
@@ -538,10 +538,10 @@
                         "elem": "fakedate",
                         "case_sql": [
                             "case",
-                            "when DATE_FORMAT($$1,'%m') in ('01','02','03')  then DATE_FORMAT($$1,'%Y')||'\\:1'",
-                            "when DATE_FORMAT($$1,'%m') in ('04','05','06')  then DATE_FORMAT($$1,'%Y')||'\\:2'" ,
-                            "when DATE_FORMAT($$1,'%m') in ('07','08','09') then DATE_FORMAT($$1,'%Y')||'\\:3'" ,
-                            "when DATE_FORMAT($$1,'%m') in ('10','11','12') then DATE_FORMAT($$1,'%Y')||'\\:4'",
+                            "when strftime('%m',$$1) in ('01','02','03')  then strftime('%Y',$$1)||'\\:1'",
+                            "when strftime('%m',$$1) in ('04','05','06')  then strftime('%Y',$$1)||'\\:2'",
+                            "when strftime('%m',$$1) in ('07','08','09') then strftime('%Y',$$1)||'\\:3'",
+                            "when strftime('%m',$$1) in ('10','11','12') then strftime('%Y',$$1)||'\\:4'",
                             "end as $$2"
                         ],
                         "name": "trimestre",

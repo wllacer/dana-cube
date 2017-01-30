@@ -93,42 +93,43 @@ class DanaCubeWindow(QMainWindow):
         self.filtersMenu = self.menuBar().addMenu("&Usar Filtros")
 
         self.filterActions['create'] = self.filtersMenu.addAction('Editar &Filtro',
-                                    self.tabulatura.currentWidget().tree.setFilter,
+                                    self.setFilter,
                                     "Ctrl+K")
         self.filterActions['drop'] = self.filtersMenu.addAction('Borrar &Filtros',
-                                    self.tabulatura.currentWidget().tree.dropFilter,
+                                    self.dropFilter,
                                     "Ctrl+K")
         self.filterActions['save'] = self.cubeMenu.addAction('Guardar &Filtros permanentemente',
-                                    self.tabulatura.currentWidget().tree.saveFilter,
+                                    self.saveFilter,
                                     "Ctrl+K")
         self.filterActions['drop'].setEnabled(False)
         self.filterActions['save'].setEnabled(False)
         self.filtersMenu.addSeparator()
+
         
         self.dateRangeActions['dates'] = self.filtersMenu.addAction('Editar &Rango fechas',
-                                    self.tabulatura.currentWidget().tree.setRange,
+                                    self.setRange,
                                     "Ctrl+K")
         self.dateRangeActions['drop'] = self.filtersMenu.addAction('Borrar &Rango fechas',
-                                    self.tabulatura.currentWidget().tree.dropRange,
+                                    self.dropRange,
                                     "Ctrl+K")
         self.dateRangeActions['save'] = self.cubeMenu.addAction('Salvar &Rango fechas',
-                                    self.tabulatura.currentWidget().tree.saveRange,
+                                    self.saveRange,
                                     "Ctrl+K")
         self.dateRangeActions['drop'].setEnabled(False)
         self.dateRangeActions['save'].setEnabled(False)
- 
+
         self.optionsMenu = self.menuBar().addMenu("&Opciones")
         self.optionsMenu.addAction("&Exportar datos ...",
-                                   self.tabulatura.currentWidget().tree.export,
+                                   self.exportData,
                                    "CtrlT")
         self.optionsMenu.addAction("&Trasponer datos",
-                                   self.tabulatura.currentWidget().tree.traspose,
+                                   self.trasposeData,
                                    "CtrlT")
         self.optionsMenu.addAction("&Presentacion ...",
-                                   self.tabulatura.currentWidget().tree.setNumberFormat,
+                                   self.setNumberFormat,
                                    "Ctrl+F")
         self.optionsMenu.addSeparator()
-        self.optionsMenu.addAction("&Graficos",self.tabulatura.currentWidget().setGraph,"Ctrl+G")
+        self.optionsMenu.addAction("&Graficos",self.setGraph,"Ctrl+G")
         ##
         
         self.userFunctionsMenu = self.menuBar().addMenu("&Funciones de usuario")
@@ -139,7 +140,7 @@ class DanaCubeWindow(QMainWindow):
         
         for ind,item in enumerate(USER_FUNCTION_LIST):
              self.userFunctionsMenu.addAction(USER_FUNCTION_LIST[ind][0],
-                                              lambda  idx=ind: self.tabulatura.currentWidget().dispatch(idx))        
+                                              lambda  idx=ind: self.dispatch(idx))        
 
         
         # esto al final para que las distintas opciones raras que van al menu de cubos vayan en su sitio
@@ -329,6 +330,32 @@ class DanaCubeWindow(QMainWindow):
             currentWgt.tree.cargaVista(viewData['row'], viewData['col'], viewData['agregado'], viewData['campo'], total=viewData['totalizado'], estad=viewData['stats'])
         else:
             return
+
+    def setFilter(self):
+        self.tabulatura.currentWidget().tree.setFilter()
+    def dropFilter(self):
+        self.tabulatura.currentWidget().tree.dropFilter()
+    def saveFilter(self):
+        self.tabulatura.currentWidget().tree.saveFilter()
+
+    def setRange(self):
+        self.tabulatura.currentWidget().tree.setRange()
+    def dropRange(self):
+        self.tabulatura.currentWidget().tree.dropRange()
+    def saveRange(self):
+        self.tabulatura.currentWidget().tree.saveRange
+
+    def exportData(self):
+        self.tabulatura.currentWidget().tree.export()
+    def trasposeData(self):
+        self.tabulatura.currentWidget().tree.traspose()
+    def setNumberFormat(self):
+        self.tabulatura.currentWidget().tree.setNumberFormat()
+    def setGraph(self):
+        self.tabulatura.currentWidget().setGraph()
+       
+    def dispatch(self,FcnIdx):
+        self.tabulatura.currentWidget().dispatch(FcnIdx)
         
 class TabMgr(QWidget):
     def __init__(self,parent,**kwargs):
