@@ -378,7 +378,6 @@ class ConnectionTreeItem(BaseTreeItem):
                 schemata = [pSchema,]
             else:
                 schemata=inspector.get_schema_names()  #behaviour with default
-            
             for schema in schemata:
                 self.appendRow(SchemaTreeItem(schema))
                 curSchema = self.lastChild()
@@ -456,8 +455,10 @@ class SchemaTreeItem(BaseTreeItem):
         engine = self.getConnection().data().engine
         inspector = inspect(engine)
         schema = self.text() if self.text() != '' else None
-        if schema == inspector.default_schema_name:
-            schema = None
+        #no parece funcionar muy bien con el resto del codigo.
+        #TODO ver como funciona con los sinonimos en oracle
+        #if schema == inspector.default_schema_name:
+            #schema = None
 
         if pFile: 
             maxIter = kwargs.get('iters',1) # el defecto es un nivel de anidacion
