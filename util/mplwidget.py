@@ -59,7 +59,7 @@ class SimpleChart(FigureCanvas):
         self.setMinimumHeight(200)
         
     def loadData(self,*args,**kwargs):
-        
+
         self.axes.cla()
         tipo = args[0]
         self.x=args[1]
@@ -69,7 +69,7 @@ class SimpleChart(FigureCanvas):
         self.axes.set_ylabel(args[5])
         
         pos_list = np.arange(len(self.x))
-        if tipo not in ('barh'):
+        if tipo not in ('barh',):
             self.axes.xaxis.set_major_locator(ticker.FixedLocator((pos_list)))
             self.axes.xaxis.set_major_formatter(ticker.FixedFormatter((self.x)))            
         else:
