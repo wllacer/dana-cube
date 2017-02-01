@@ -99,6 +99,7 @@ Qt, PyQt -and the additional libraries-, licensing might impose other restrictio
 
 ## DANACUBE enters __ALPHA__
 
+__Update 2017/02/01__. New alpha release
 
 With today's release (version 0.10), we enter alpha. What does it means?
 
@@ -107,14 +108,14 @@ With today's release (version 0.10), we enter alpha. What does it means?
 * What we know it's missing:
     * Unknown bugs all around (i know i'm not perfect)
     * The user interface is implemented just for my needs and lacks internationalization (worse still, it's now a mix of english and spanish)
-    * It's reasonably well tested with Sqlite, MySQL and PostgreSQL; but i haven't had the chance to adapt/test it against DB2, MSSQL Server or Oracle ¿Any volunteer?
+    * It's reasonably well tested with __Sqlite__, __MySQL__ and __PostgreSQL__; __ORACLE__ has some issues (_see below_; but i haven't had the chance to adapt/test it against __DB2__ or __MSSQL Server__ ¿Any volunteer?
+    * As of today (2017/02/01) Oracle support is only partial, as it has issues regarding date filters and constructed statements for guides
     * Nor performance, neither security have been, till now, top priority goals. _You've been warned_
     * The way User functions have been implemented is a 'hack'. Working on a better solution
-    * The administrative interface (_danabrowse.pyw_) and support, is still not 100% functional (but as the administrativefiles are pure JSON, this is not a showstopper)
+    * The administrative interface (_danabrowse.pyw_) and support, is still not 100% functional (but as the administrative files are pure JSON, this is not a showstopper)
     
     * Legalese is missing in code (copyrights, licence specs, and so on)
 
-__UPDATE__
 I've changed my code management policy. and plan to upstream the changes to _Github_ ASAP, but only _weekly updates to the release code_, so if something crashes, pls. look at the commits at __master__ still not in the released code.
 
 I've been able to install __Oracle__ in my computer, and it seems that some changes are needed (specially in the administrative tools). Expect soon working code.
