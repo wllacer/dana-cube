@@ -99,6 +99,7 @@ Qt, PyQt -and the additional libraries-, licensing might impose other restrictio
 
 ## DANACUBE enters __ALPHA__
 
+
 With today's release (version 0.10), we enter alpha. What does it means?
 
 * We deem that we have achieved a functional 'completeness' of the cube tool (_danacube.pyw_) , so it should be useful for valiant user; but that it still lacks proper outside testing (so, for sure, many bugs ahead) and  documentation (hope to solve it soon)
@@ -112,7 +113,14 @@ With today's release (version 0.10), we enter alpha. What does it means?
     * The administrative interface (_danabrowse.pyw_) and support, is still not 100% functional (but as the administrativefiles are pure JSON, this is not a showstopper)
     
     * Legalese is missing in code (copyrights, licence specs, and so on)
-    
+
+__UPDATE__
+I've changed my code management policy. and plan to upstream the changes to _Github_ ASAP, but only _weekly updates to the release code_, so if something crashes, pls. look at the commits at __master__ still not in the released code.
+
+I've been able to install __Oracle__ in my computer, and it seems that some changes are needed (specially in the administrative tools). Expect soon working code.
+My computer is too weak to run MsSQL :-(
+
+
 ## Actual Status
 
 _Update on the day of the Conversion of the Apostol Paul 2017_ As of today we enter __ALPHA__ status (see above for what it means)

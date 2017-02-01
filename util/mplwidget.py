@@ -59,7 +59,7 @@ class SimpleChart(FigureCanvas):
         self.setMinimumHeight(200)
         
     def loadData(self,*args,**kwargs):
-        
+
         self.axes.cla()
         tipo = args[0]
         self.x=args[1]
@@ -69,7 +69,7 @@ class SimpleChart(FigureCanvas):
         self.axes.set_ylabel(args[5])
         
         pos_list = np.arange(len(self.x))
-        if tipo not in ('barh'):
+        if tipo not in ('barh',):
             self.axes.xaxis.set_major_locator(ticker.FixedLocator((pos_list)))
             self.axes.xaxis.set_major_formatter(ticker.FixedFormatter((self.x)))            
         else:
@@ -147,7 +147,7 @@ if __name__ == '__main__':
     y_text = 'partidos importantes '
 
     app = QApplication(sys.argv)
-    tipo = 'barh' #'bar' #'scatter'
+    tipo = 'bar' #'bar' #'scatter'
     aw = ApplicationWindow()#tipo,x,y,'Fresquito de la Base de Datos','Una dimension','La otra')
     aw.setWindowTitle("PyQt5 Matplot Example")
     aw.main_widget.loadData(tipo,x,y,titulo,x_text,y_text,('Ejemplo',))

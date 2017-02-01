@@ -12,7 +12,8 @@ Documentation, License etc.
 DELIMITER = ':'
 from decimal import *
 from pprint import *
-from datetime import *
+
+import datetime
 
 import time
 from util.record_functions import norm2List
@@ -47,11 +48,11 @@ def getDateIndexElement(max_date, min_date, char):
         format = '%02d'
     elif char == 'Y':
         # GENERADOR
-        if isinstance(min_date,datetime):
+        if isinstance(min_date,(datetime.time,datetime.date,)):
             min_rg = min_date.year
         else:
             min_rg=int(Decimal(str(min_date[0:4])))
-        if isinstance(max_date,datetime):
+        if isinstance(max_date,(datetime.time,datetime.date,)):
             max_rg = max_date.year + 1
         else:
             max_rg=int(Decimal(str(max_date[0:4])))+1
@@ -204,10 +205,10 @@ def genTrimestreCode(fieldname,driver='QSQLITE'):
 
     """
     trimarray = (
-            ("('01','02','03')",'\\:1'),
-            ("('04','05','06')",'\\:2'),
-            ("('07','08','09')",'\\:3'),
-            ("('10','11','12')",'\\:4'),
+            ("('01','02','03')",'1'),
+            ("('04','05','06')",'2'),
+            ("('07','08','09')",'3'),
+            ("('10','11','12')",'4'),
             )
     placeholder = '$$1'
     
@@ -216,21 +217,21 @@ def genTrimestreCode(fieldname,driver='QSQLITE'):
         function_mask ="{0}('{2}',{1})"
         year_marker='%Y'
         month_marker = '%m'
-        cat_stmt = "{} || '{}' "
+        cat_stmt = "{} ||:||'{}' "
     #elif driver in ('mysql','mariadb','mysqldb','mysqlconnector'):  #GENERADOR
     elif driver in ('mysql',):
         function = 'DATE_FORMAT'
         function_mask ="{0}({1},'{2}')"
         year_marker='%Y'
         month_marker = '%m'
-        cat_stmt = "concat({},'{}')"
+        cat_stmt = "CONCAT_WS(':',{},'{}')"
     #elif driver in ('postgresql','postgres','pg','psycopg2','oracle'):
     elif driver in ('postgresql','oracle'):
         function = 'TO_CHAR'
         function_mask ="{0}({1},'{2}')"
         year_marker='YYYY'
         month_marker = 'MM'
-        cat_stmt = "{} || '{}' "
+        cat_stmt = "{} ||:||'{}' "
     else:
         print('Date conversions for driver %s still not implemented'%driver)
         return None

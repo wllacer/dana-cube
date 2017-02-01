@@ -378,7 +378,6 @@ class ConnectionTreeItem(BaseTreeItem):
                 schemata = [pSchema,]
             else:
                 schemata=inspector.get_schema_names()  #behaviour with default
-            
             for schema in schemata:
                 self.appendRow(SchemaTreeItem(schema))
                 curSchema = self.lastChild()
@@ -456,8 +455,10 @@ class SchemaTreeItem(BaseTreeItem):
         engine = self.getConnection().data().engine
         inspector = inspect(engine)
         schema = self.text() if self.text() != '' else None
-        if schema == inspector.default_schema_name:
-            schema = None
+        #no parece funcionar muy bien con el resto del codigo.
+        #TODO ver como funciona con los sinonimos en oracle
+        #if schema == inspector.default_schema_name:
+            #schema = None
 
         if pFile: 
             maxIter = kwargs.get('iters',1) # el defecto es un nivel de anidacion
@@ -478,7 +479,7 @@ class SchemaTreeItem(BaseTreeItem):
                         curTable = hermano.lastChild()
                         curTable.refresh()
                     else:
-                        conexion = self.getParent()
+                        conexion = self.parent() #self.getParent()
                         conexion.appendRow(SchemaTreeItem(kschema))  
                         curSchema = conexion.lastChild()
                         curSchema.refresh(table=ktable,iters=0)
@@ -770,7 +771,10 @@ class TableTreeItem(BaseTreeItem):
             conn = self.getConnection().data().engine
             schema = self.getSchema().text()
             table = self.text()
-            sqlq = 'select count(*) from {}.{} '.format(schema,table)
+            if schema is  None or schema == '' or schema == 'None' : #cubriendo todas las bases
+                sqlq = 'select count(*) from {} '.format(table)
+            else:
+                 sqlq = 'select count(*) from {}.{} '.format(schema,table)
             result = getCursor(conn,sqlq)
             self.setColumnData(1,result[0][0],Qt.EditRole)
         else:
