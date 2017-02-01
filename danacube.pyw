@@ -744,7 +744,7 @@ class DanaCube(QTreeView):
             for entry in form.result:
                 if entry[1] != 0:
                     intervalo = dateRange(entry[1],entry[2],periodo=entry[3])
-                    sqlGrp.append((entry[0],'BETWEEN',intervalo))
+                    sqlGrp.append((entry[0],'BETWEEN',intervalo,'f'))
             if len(sqlGrp) > 0:
                 self.filtroFechas = searchConstructor('where',{'where':sqlGrp})
                 self.filtro = mergeString(self.filtroCampos,self.filtroFechas,'AND')
