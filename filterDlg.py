@@ -150,7 +150,7 @@ class filterDialogOld(QDialog):
                 elif formato in ('booleano',) and testElem not in ('true','false'):
                     errorTxt = 'Solo admintimos como booleanos: True y False'
                     fallo = True
-                elif formato in ('fecha','hora') and not isDate(testElem):
+                elif formato in ('fecha','fechahora','hora') and not isDate(testElem):
                     errorTxt = 'Formato o fecha incorrecta. Verifique que es del tipo AAAA-MM-DD HH:mm:SS'
                     fallo = True
                 else:
@@ -166,7 +166,7 @@ class filterDialogOld(QDialog):
             qfmt = 't'     
             if formato in ('entero','numerico'):
                 qfmt = 'n'
-            elif formato in ('fecha','hora'):
+            elif formato in ('fecha','fechahora','hora'):
                 qfmt = 'f'
             elif formato in ('booleano'):
                 qfmt = 'n' #me parece 
@@ -339,7 +339,7 @@ class filterDialog(QDialog):
                 elif formato in ('booleano',) and testElem not in ('true','false'):
                     errorTxt = 'Solo admitimos como booleanos: True y False'
                     fallo = True
-                elif formato in ('fecha','hora') and not isDate(testElem):
+                elif formato in ('fecha','fechahora','hora') and not isDate(testElem):
                     errorTxt = 'Formato o fecha incorrecta. Verifique que es del tipo AAAA-MM-DD HH:mm:SS'
                     fallo = True
                 else:
@@ -355,7 +355,7 @@ class filterDialog(QDialog):
             qfmt = 't'     
             if formato in ('entero','numerico'):
                 qfmt = 'n'
-            elif formato in ('fecha','hora'):
+            elif formato in ('fecha','fechahora','hora'):
                 qfmt = 'f'
             elif formato in ('booleano'):
                 qfmt = 'n' #me parece 

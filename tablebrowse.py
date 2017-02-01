@@ -378,7 +378,7 @@ class TableBrowser(QTableView):
         qfmt = 't'     
         if formato in ('entero','numerico'):
             qfmt = 'n'
-        elif formato in ('fecha','hora'):
+        elif formato in ('fecha','fechahora','hora'):
             qfmt = 'f'
         elif formato in ('booleano'):
             qfmt = 'n' #me parece 

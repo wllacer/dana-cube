@@ -73,7 +73,7 @@ def info2cube(dataDict,confName,schema,table,maxlevel=1):
     for fld in info['Fields']:
         if fld[1] in ('numerico','entero'):
             entrada['fields'].append(fld[0])
-        elif fld[1] in ('fecha'):
+        elif fld[1] in ('fecha','fechahora'):
             entrada['guides'].append({'name':fld[0],
                                       'class':'d',
                                       'type':'Ymd',

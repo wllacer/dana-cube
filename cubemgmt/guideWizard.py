@@ -224,7 +224,7 @@ class WzBase(QWizardPage):
     def campoElegido(self,ind):
         formato = self.fieldArray[ind - 1][2]
         print(self.fieldArray[ind -1][1],formato)
-        if formato == 'fecha':
+        if formato in ('fecha','fechahora'):
 #                self.dateCtorRB.setDisabled(False)
             self.dateCtorRB.setChecked(True)
         else:
@@ -321,7 +321,7 @@ class WzCategory(QWizardPage):
             print(campo,'==>',datosCampo)
             if formato in ('numerico','entero'):
                 self.catValueFormatCombo.setCurrentIndex(1) 
-            elif formato == 'fecha':
+            elif formato in ('fecha','fechahora'):
                 self.catValueFormatCombo.setCurrentIndex(2)
             else:
                 self.catValueFormatCombo.setCurrentIndex(0)

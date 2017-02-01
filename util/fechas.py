@@ -43,7 +43,7 @@ def ldm(anyo,mes):
            return 28
    
         
-def dateRange(clase_idx,range_idx,fecha=None,periodo=None):
+def dateRange(clase_idx,range_idx,fecha=None,periodo=None,fmt=None):
     if fecha is None:
         fecha = date.today()+relativedelta(days=-1)
     if periodo is None:
@@ -66,7 +66,17 @@ def dateRange(clase_idx,range_idx,fecha=None,periodo=None):
         intervalo = dateUltimoAbierto(range,fecha,periodo)
     elif  clase == CLASES_INTERVALO[4]:
         intervalo = dateUltimoCerrado(range,fecha,periodo)
-    return intervalo
+
+    if not fmt:
+        return intervalo
+    elif fmt == 'fecha':
+        return intervalo
+    elif fmt == 'fechahora':
+        dtintervalo = list(map(lambda d: datetime(d.year,d.month,d.day),intervalo))
+        dtintervalo[1]=dtintervalo[1]+relativedelta(hours=23,minutes=59,seconds=59)
+        return dtintervalo
+    else:
+        return intervalo
         
 def dateActual(flag,HOY,intervalo=None):
     # actual:
@@ -78,7 +88,7 @@ def dateActual(flag,HOY,intervalo=None):
     elif flag == TIPOS_INTERVALO[1]:
        if HOY.month in (1,2,3,4):
             DESDE = date(HOY.year,1,1)
-            HASTA = date(HOY,year,4,30)
+            HASTA = date(HOY.year,4,30)
        elif HOY.month in (5,6,7,8):
             DESDE = date(HOY.year,5,1)
             HASTA = date(HOY.year,8,31)
@@ -220,8 +230,8 @@ def test():
         
         intervalo = dateUltimoCerrado(flag,HOY,periodo)
         dtintervalo = list(map(lambda d: datetime(d.year,d.month,d.day),intervalo))
-#        print(intervalo,dtintervalo)
-        pprint (list(rrule(DAILY,dtstart=dtintervalo[0]).between(dtintervalo[0],dtintervalo[1],inc=True)))
+        print(intervalo,dtintervalo)
+        #pprint (list(rrule(DAILY,dtstart=dtintervalo[0]).between(dtintervalo[0],dtintervalo[1],inc=True)))
         
 if __name__ == '__main__':
 

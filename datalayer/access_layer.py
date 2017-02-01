@@ -40,8 +40,10 @@ def typeHandler(type):
           return 'binario'
     elif isinstance(type,types.Boolean):
           return 'booleano'
-    elif isinstance(type,(types.Date,types.DateTime)):
+    elif isinstance(type,types.Date):
           return 'fecha'
+    elif isinstance(type,types.DateTime):
+          return 'fechahora'
     elif isinstance(type,types.Time):
           return 'hora'
     else:

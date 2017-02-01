@@ -734,16 +734,18 @@ class DanaCube(QTreeView):
 
         
     def setRange(self):
-        descriptores = [ item['name'] for item in self.cubo.recordStructure if item['format'] == 'fecha' ]
-        if len(descriptores) == 0:
+        camposFecha= [ (item['name'],item['format']) for item in self.cubo.recordStructure if item['format'] in ('fecha','fechahora') ]
+        if len(camposFecha) == 0:
             #TODO que hago con Sqlite
             return
+        
+        descriptores = [ item[0] for item in camposFecha ]
         form = dateFilterDlg(descriptores)
         if form.exec_():
             sqlGrp = []
-            for entry in form.result:
+            for k,entry in enumerate(form.result):
                 if entry[1] != 0:
-                    intervalo = dateRange(entry[1],entry[2],periodo=entry[3])
+                    intervalo = dateRange(entry[1],entry[2],periodo=entry[3],fmt=camposFecha[k][1])
                     sqlGrp.append((entry[0],'BETWEEN',intervalo,'f'))
             if len(sqlGrp) > 0:
                 self.filtroFechas = searchConstructor('where',{'where':sqlGrp})
