@@ -544,11 +544,9 @@ class Vista:
         #sqlDef['order']=None
         
         for i in range(0,self.dim_row):
-            # el group by en las categorias necesita codigo especial
-            if self.cubo.lista_guias[self.row_id]['rules'][i]['class'] == 'c':
-                group_row = [self.cubo.lista_guias[self.row_id]['rules'][i]['name'],]
-            else:
-                group_row = self.cubo.lista_guias[self.row_id]['rules'][i]['elem']
+            # el group by en las categorias ya no necesita
+            group_row = self.cubo.lista_guias[self.row_id]['rules'][i]['elem']
+
             for j in range(0,self.dim_col):
 
                 sqlDef['fields']= self.cubo.lista_guias[self.row_id]['rules'][i]['elem'] + \
@@ -580,11 +578,8 @@ class Vista:
                            join_entry['join_clause'].append(entrada)
                        sqlDef['join'].append(join_entry)
 
-                # esta desviacion es por las categorias
-                if self.cubo.lista_guias[self.col_id]['rules'][j]['class'] == 'c':
-                    group_col = [self.cubo.lista_guias[self.col_id]['rules'][j]['name'],]
-                else:
-                    group_col = self.cubo.lista_guias[self.col_id]['rules'][j]['elem']
+                group_col = self.cubo.lista_guias[self.col_id]['rules'][j]['elem']
+
                 sqlDef['group']= group_row + group_col
                 sqlDef['driver'] = self.cubo.dbdriver
                 sqlstring=queryConstructor(**sqlDef)

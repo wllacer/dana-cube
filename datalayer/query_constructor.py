@@ -393,7 +393,7 @@ def _groupConstructor(**kwargs):
       # en el caso de las categorias se pasa el AS al group y eso no funciona y hay que quitarlo GENERADOR
       #FIXME no entiendo porque necesito renormalizar la cadena
       nelemento = norm2String(elemento)  
-      pos = nelemento.find(' AS ')
+      pos = nelemento.upper().find(' AS ')
       if pos > 0:
           kelemento = nelemento[0:pos]
       else:
