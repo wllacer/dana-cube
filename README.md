@@ -109,7 +109,7 @@ With today's release (version 0.10), we enter alpha. What does it means?
     * Unknown bugs all around (i know i'm not perfect)
     * The user interface is implemented just for my needs and lacks internationalization (worse still, it's now a mix of english and spanish)
     * It's reasonably well tested with __Sqlite__, __MySQL__ and __PostgreSQL__; __ORACLE__ has some issues (_see below_; but i haven't had the chance to adapt/test it against __DB2__ or __MSSQL Server__ ¿Any volunteer?
-    * As of today (2017/02/01) Oracle support is only partial, as it has issues regarding date filters and constructed statements for guides
+    * As of today (2017/02/02) Oracle support is only partial, as it has issues  constructed statements for guides
     * Nor performance, neither security have been, till now, top priority goals. _You've been warned_
     * The way User functions have been implemented is a 'hack'. Working on a better solution
     * The administrative interface (_danabrowse.pyw_) and support, is still not 100% functional (but as the administrative files are pure JSON, this is not a showstopper)
