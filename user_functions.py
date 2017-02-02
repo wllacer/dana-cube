@@ -261,16 +261,17 @@ USER_FUNCTION_LIST=( ('Porcentajes calculados en la fila',((porcentaje,'row',),)
               )
 KWARGS_LIST = { simula:(None,)}
     
-row=[15,26,74,66,None,24]
-print(USER_FUNCTION_LIST[0][1][0][0](row))
+if __name__ == '__main__':
+    row=[15,26,74,66,None,24]
+    print(USER_FUNCTION_LIST[0][1][0][0](row))
 
-data = [33.03,
-22.66,
-21.1,
-13.05,
-#2.63,
-#2.01,
-#1.2,
-]
-totescanos = 350
-print(dhont(totescanos,data))
+    data = [33.03,
+    22.66,
+    21.1,
+    13.05,
+    #2.63,
+    #2.01,
+    #1.2,
+    ]
+    totescanos = 350
+    print(dhont(totescanos,data))

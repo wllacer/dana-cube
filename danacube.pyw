@@ -8,7 +8,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from pprint import pprint
-
+import argparse
 
 from PyQt5.QtCore import Qt,QSortFilterProxyModel
 from PyQt5.QtGui import QCursor
@@ -62,14 +62,23 @@ from util.treestate import *
             #model.endResetModel()
     #return new_function
 
+def generaArgParser():
+    parser = argparse.ArgumentParser(description='Cubo de datos')
+    parser.add_argument('--cubeFile','--cubefile','-c',
+                        nargs='?',
+                        default='cubo.json',
+                        help='Nombre del fichero de configuración del cubo actual')    
+    
+    return parser
 
 class DanaCubeWindow(QMainWindow):
-    def __init__(self,cubeFile=None):
+    def __init__(self,args):
         super(DanaCubeWindow, self).__init__()
         #
         # movidas aqui por colisiones con checkChanges
         #
-        self.cubeFile = cubeFile
+
+        self.cubeFile = args.cubeFile
         self.filterActions = dict()
         self.dateRangeActions = dict()
         self.restorator = None
@@ -848,19 +857,18 @@ class DanaCube(QTreeView):
         
 if __name__ == '__main__':
     import sys
-    import argparse
+
     # con utf-8, no lo recomiendan pero me funciona
     #print(sys,version_info)
     if sys.version_info[0] < 3:
         reload(sys)
         sys.setdefaultencoding('utf-8')
-
-    parser = argparse.ArgumentParser(description='Cubo de datos')
-    parser.add_argument('--cubeFile','--cubefile','-c',nargs='?',default='cubo.json',help='Nombre del fichero de configuración del cubo actual')    
+    
+    parser = generaArgParser()
     args = parser.parse_args()
 
     app = QApplication(sys.argv)
-    window = DanaCubeWindow(args.cubeFile)
+    window = DanaCubeWindow(args)
     window.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
     window.show()
     sys.exit(app.exec_())
