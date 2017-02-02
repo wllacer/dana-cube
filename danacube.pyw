@@ -695,7 +695,7 @@ class DanaCube(QTreeView):
         #self.areFiltered = True
         #self.cubo.recordStructure = self.summaryGuia()
         
-        filterDlg = filterDialog(self.cubo.recordStructure,self)
+        filterDlg = filterDialog(self.cubo.recordStructure,self,driver=self.cubo.dbdriver)
         if self.filterValues :
             for k in range(len(self.filterValues)):
                 filterDlg.sheet.set(k,2,self.filterValues[k][0])
@@ -748,7 +748,7 @@ class DanaCube(QTreeView):
                     intervalo = dateRange(entry[1],entry[2],periodo=entry[3],fmt=camposFecha[k][1])
                     sqlGrp.append((entry[0],'BETWEEN',intervalo,'f'))
             if len(sqlGrp) > 0:
-                self.filtroFechas = searchConstructor('where',{'where':sqlGrp})
+                self.filtroFechas = searchConstructor('where',{'where':sqlGrp,'driver':self.cubo.dbdriver})
                 self.filtro = mergeString(self.filtroCampos,self.filtroFechas,'AND')
                 self.cargaVista(self.vista.row_id,self.vista.col_id,
                             self.vista.agregado,self.vista.campo,

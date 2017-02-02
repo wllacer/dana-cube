@@ -53,9 +53,9 @@ def typeHandler(type):
 
 def driver2if(driver):
     if   BACKEND == 'Alchemy':
-        return driver2Qt(driver.lower())
-    elif BACKEND == 'QtSql':
         return driver2Alch(driver.lower())
+    elif BACKEND == 'QtSql':
+        return driver2Qt(driver.lower())
     else:
         print('Not implemented')
         exit(-1)

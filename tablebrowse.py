@@ -141,6 +141,7 @@ def setLocalQuery(conn,info,iters=None):
         * __DONE__ sin FKs
         * con FKs recursivas
     """
+    
     if not iters:
         iteraciones = 0
     else:
@@ -201,9 +202,9 @@ def setLocalQuery(conn,info,iters=None):
         sqlContext['base_filter']=info['base_filter']
     sqlContext['fields'] = [ item[0] for item in dataspace ]
     sqlContext['formats'] = [ item[1] for item in dataspace ]
+    sqlContext['driver']=conn.dialect.name
     sqls = sqlContext['sqls'] = queryConstructor(**sqlContext)
     if DEBUG:
-        print('and the loser is')
         print(queryFormat(sqls))
     return sqlContext
 
@@ -351,8 +352,9 @@ class TableBrowser(QTableView):
     
 
     def filterQuery(self):
+        driver=self.localContext[0].conn[self.localContext[1]].dialect.name
         self.areFiltered = True
-        filterDlg = filterDialog(self.baseModel.recordStructure,self)
+        filterDlg = filterDialog(self.baseModel.recordStructure,self,driver=driver)
         if filterDlg.exec_():
             self.loadData(pFilter=filterDlg.result)
 

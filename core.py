@@ -205,6 +205,7 @@ class Cubo:
         sqlDef['order'] = [ str(x + 1) for x in range(code_fld)]
         
         sqlDef['select_modifier']='DISTINCT'
+        sqlDef['driver'] = self.dbdriver
         sqlString = queryConstructor(**sqlDef)
         return sqlString, code_fld,desc_fld 
     
@@ -217,6 +218,7 @@ class Cubo:
         sqlDef['fields'] = [[entrada['base_date'],'max'],
                             [entrada['base_date'],'min'],
                             ]
+        sqlDef['driver'] = self.dbdriver
         return queryConstructor(**sqlDef) 
 
     def __setGuias(self):
@@ -584,7 +586,7 @@ class Vista:
                 else:
                     group_col = self.cubo.lista_guias[self.col_id]['rules'][j]['elem']
                 sqlDef['group']= group_row + group_col
-
+                sqlDef['driver'] = self.cubo.dbdriver
                 sqlstring=queryConstructor(**sqlDef)
                 
                 #
@@ -653,6 +655,7 @@ class Vista:
             sqlDef['group']= group_col
             #sqlDef['having']=None
             sqlDef['order'] = [ str(x + 1) for x in range(len(sqlDef['fields']) -1)]
+            sqlDef['driver'] = self.cubo.dbdriver
             sqlstring=queryConstructor(**sqlDef)
             
             #

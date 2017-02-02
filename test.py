@@ -274,7 +274,14 @@ def datadict():
     fks =  inspector.get_foreign_keys(table,schema)
     print(fks)
     
+def fun1(kwargs):
+    print(kwargs)
+def fun2(**kwargs):
+    print(kwargs)
+    
 if __name__ == '__main__':
+    import datalayer.datemgr as datemgr
+    import datetime
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
     import sys
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
@@ -297,4 +304,10 @@ if __name__ == '__main__':
     #print(norm2string('funsion(Uno,dos,tres),cuatro'))
     #print(norm2string('cuatro,funsion(Uno,dos,tres)'))
     #print(norm2string('funsion(Uno,dos,(tres,cuatro))'))
-    datadict()
+    fecha1 = '2015-12-11'
+    fecha2 =  datetime.datetime(2015,11,11,11,11)
+    fecha3 = '2015-12-11 23:16:17'
+    print(datemgr.oracleDateString(fecha1))
+    print(datemgr.oracleDateString(fecha2))
+    print(datemgr.oracleDateString(fecha3))
+    #datadict()
