@@ -102,7 +102,7 @@ class Cubo:
         self.lista_funciones = []
         self.lista_campos = []
         
-        self.dbdriver = self.definition['connect']['driver']
+        self.dbdriver = self.db.dialect.name #self.definition['connect']['driver']
         
         self.__setGuias()
         

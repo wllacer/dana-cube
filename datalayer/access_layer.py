@@ -29,6 +29,16 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from pprint import pprint
 import datetime 
 
+def qtSqlDeprecated():
+    msg = QMessageBox()
+    msg.setIcon(QMessageBox.Warning)
+
+    msg.setText("El Backend QtSql ha sido deprecado")
+    msg.setWindowTitle("Backend incorrecto")
+    msg.setDetailedText(""" Ya no ofrecemos la opcion de utilizar QtSql como gestor de accesos a las bases de datos. se activa automaticamente SqlAlchemy """)
+    msg.setStandardButtons(QMessageBox.Ok)                
+    retval = msg.exec_()
+
 def typeHandler(type):
     if  isinstance(type,(types.Numeric)):
           return 'numerico'
@@ -131,10 +141,13 @@ def dbConnect(constring):
           dbuser
           dbpass
     """
+    if BACKEND == 'QtSql':
+        qtSqlDeprecated()
+        BACKEND = 'Alchemy'
+        #return dbConnectQt(constring)
+
     if BACKEND == 'Alchemy':
         return dbConnectAlch(constring)
-    elif BACKEND == 'QtSql':
-        return dbConnectQt(constring)
     else:
         print('Not implemented')
         exit(-1)

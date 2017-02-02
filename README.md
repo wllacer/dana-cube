@@ -1,10 +1,13 @@
 # dana-cube
 
-Dana-cube is a tool to automate the design, execution and visualization of cross reference queries, aka pivot tables aka multidimensional aggregate queries.
+Dana-cube is a tool to automate the design, execution and visualization of __cross reference queries__, aka __pivot tables__ aka __multidimensional aggregate queries__.
 
 ## What's the problem:
 
 A common problem an SQL database users is to solve the need to resolve an aggregate (sum, aver,...) by two or more parameters, f.i. Give me the sum of sales per country and per line of product The, very simple, SQL query gives a tabular result (country,line,sum(sales)) but the normal way we want to is as a spreadsheet (countries as rows, lines as columns) but this is NOT usually available in most data query programs.
+
+Some DB products (fi. Oracle and MSSQL) offer their own private means of generate such queries, but they're not always availabe in general query tools
+
 Resourceful users can use MS Access cross reference queries to get this or use Pivot Tables available in several spreadsheet programs, but the cost -and most ofter the unwieldness- of linking REAL databases to this products do not make them really sustainable options in the long run.
 
 At the other end of the spectrum, very expensive (in more senses than cost) OLAP products tend to serve the same end, but are usually an overkill; and for various reasons distribution in an organization is restricted, lowering its impact
@@ -65,18 +68,18 @@ Why a text file for definition? To avoid a dependency to a concrete DB Manager o
 We provide a tool to manage these definitions, and another to generate directly from the database a basic outline
 (screenshots should follow)
 
-The tool is programmed in python2 + PyQt5?, but we test it also under python3.
+The tool is programmed in python3 + PyQt5, but we test it also under python2
 
 ## Sample Data
-Since September 2016, we are using the Sakila/Pagila database as sample target (first in MySQL, the latter in PostGreSQL)
-in Master
+We will provide a test database (with results of the Spanish General Election in 2015) for several supported databases, with minimal changes between them (_still not_ in the repositories_)
+
+As a matter of fact, the tool grew analizing those data
 
 ## Dependencies
 
 Besides PyQt, we use:
 
-* [SqlAlchemy](http://www.sqlalchemy.org/) as a data backend (only core functionality). If you don't 
-want it, can be made to fallback to plain PyQt/QtSql (by hand, actually, and only for the cube viewer)
+* [SqlAlchemy](http://www.sqlalchemy.org/) as a data backend (only core functionality).Main reason is transparent access to the catalogs
 * [DateUtil](https://pypi.python.org/pypi/python-dateutil/2.6.0) for some date related functions
 * [SqlParse](https://pypi.python.org/pypi/sqlparse/0.2.2) ( _Optional_ ) for some trace outputs
 * [XlsxWriter](https://pypi.python.org/pypi/XlsxWriter) Guess it ...
@@ -108,8 +111,8 @@ With today's release (version 0.10), we enter alpha. What does it means?
 * What we know it's missing:
     * Unknown bugs all around (i know i'm not perfect)
     * The user interface is implemented just for my needs and lacks internationalization (worse still, it's now a mix of english and spanish)
-    * It's reasonably well tested with __Sqlite__, __MySQL__ and __PostgreSQL__; __ORACLE__ has some issues (_see below_; but i haven't had the chance to adapt/test it against __DB2__ or __MSSQL Server__ ¿Any volunteer?
-    * As of today (2017/02/02) Oracle support is only partial, as it has issues  constructed statements for guides
+    * It's reasonably well tested with __Sqlite__, __MySQL__, __PostgreSQL__, and  __ORACLE__ ; but i haven't had the chance to adapt/test it against __DB2__ or __MSSQL Server__ ¿Any volunteer?
+    * As of today (2017/02/02) Oracle support is only at the level of the cube tool, not its administrative appendages.
     * Nor performance, neither security have been, till now, top priority goals. _You've been warned_
     * The way User functions have been implemented is a 'hack'. Working on a better solution
     * The administrative interface (_danabrowse.pyw_) and support, is still not 100% functional (but as the administrative files are pure JSON, this is not a showstopper)
