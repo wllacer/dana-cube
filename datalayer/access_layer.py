@@ -141,10 +141,11 @@ def dbConnect(constring):
           dbuser
           dbpass
     """
+    global BACKEND
     if BACKEND == 'QtSql':
         qtSqlDeprecated()
         BACKEND = 'Alchemy'
-        #return dbConnectQt(constring)
+        return dbConnectQt(constring)
 
     if BACKEND == 'Alchemy':
         return dbConnectAlch(constring)

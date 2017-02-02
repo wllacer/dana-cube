@@ -64,11 +64,12 @@ from util.treestate import *
 
 
 class DanaCubeWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self,cubeFile=None):
         super(DanaCubeWindow, self).__init__()
         #
         # movidas aqui por colisiones con checkChanges
         #
+        self.cubeFile = cubeFile
         self.filterActions = dict()
         self.dateRangeActions = dict()
         self.restorator = None
@@ -182,7 +183,7 @@ class DanaCubeWindow(QMainWindow):
 
     def selectCube(self,inicial=False):
         #FIXME casi funciona ... vuelve a leer el fichero cada vez. NO es especialmente malo
-        my_cubos = load_cubo()
+        my_cubos = load_cubo(self.cubeFile)
         viewData =dict()
         defaultViewData = None
         if 'default' in my_cubos and inicial:
@@ -275,9 +276,9 @@ class DanaCubeWindow(QMainWindow):
             }
         if entrada.filtroCampos != '':  #NO los rangos de fecha que son por naturaleza variables
             datos_defecto["vista"]["filter"] = entrada.filtroCampos
-        my_cubos = load_cubo()
+        my_cubos = load_cubo(self.cubeFile)
         my_cubos['default'] = datos_defecto
-        dump_structure(my_cubos)
+        dump_structure(my_cubos,self.cubeFile)
         
         
     def requestVista(self,vista=None):
@@ -728,7 +729,7 @@ class DanaCube(QTreeView):
         nuevo_filtro = mergeString(self.filtroCampos,self.cubo.definition['base filter'],'AND')
         my_cubos = load_cubo()
         my_cubos[self.cubo.nombre]['base filter'] = nuevo_filtro
-        dump_structure(my_cubos)
+        dump_structure(my_cubos,self.parent.cubeFile)
         self.parent.filterActions['drop'].setEnabled(False)
         self.parent.filterActions['save'].setEnabled(False)
 
@@ -847,14 +848,19 @@ class DanaCube(QTreeView):
         
 if __name__ == '__main__':
     import sys
+    import argparse
     # con utf-8, no lo recomiendan pero me funciona
     #print(sys,version_info)
     if sys.version_info[0] < 3:
         reload(sys)
         sys.setdefaultencoding('utf-8')
 
+    parser = argparse.ArgumentParser(description='Cubo de datos')
+    parser.add_argument('--cubeFile','--cubefile','-c',nargs='?',default='cubo.json',help='Nombre del fichero de configuración del cubo actual')    
+    args = parser.parse_args()
+
     app = QApplication(sys.argv)
-    window = DanaCubeWindow()
+    window = DanaCubeWindow(args.cubeFile)
     window.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
     window.show()
     sys.exit(app.exec_())
