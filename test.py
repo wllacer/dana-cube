@@ -304,10 +304,16 @@ if __name__ == '__main__':
     #print(norm2string('funsion(Uno,dos,tres),cuatro'))
     #print(norm2string('cuatro,funsion(Uno,dos,tres)'))
     #print(norm2string('funsion(Uno,dos,(tres,cuatro))'))
-    fecha1 = '2015-12-11'
-    fecha2 =  datetime.datetime(2015,11,11,11,11)
-    fecha3 = '2015-12-11 23:16:17'
-    print(datemgr.oracleDateString(fecha1))
-    print(datemgr.oracleDateString(fecha2))
-    print(datemgr.oracleDateString(fecha3))
+    #fecha1 = '2015-12-11'
+    #fecha2 =  datetime.datetime(2015,11,11,11,11)
+    #fecha3 = '2015-12-11 23:16:17'
+    #print(datemgr.oracleDateString(fecha1))
+    #print(datemgr.oracleDateString(fecha2))
+    #print(datemgr.oracleDateString(fecha3))
     #datadict()
+    clave=['Uno',]
+    clave[:-1] = None
+    print(clave)
+    clave2=['Dos','Tres',]
+    clave2[:-1]=None
+    print(clave2)

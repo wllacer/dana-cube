@@ -950,6 +950,8 @@ class Vista:
 
     def getExportDataArray(self,parms,selArea=None):
         """
+            Parece obsoleta ... deberia adaptarse a lo de la de abajo (sin array)
+            
             *parms['file']
             *parms['type'] = ('csv','xls','json','html')
             *parms['csvProp']['fldSep'] 
@@ -1009,6 +1011,7 @@ class Vista:
                 ctable[i + dim_col][j + dim_row] = num2text(table[x][y]) if table[x][y] else ''  #TODO aqui es el sito de formatear numeros
         return ctable,dim_row,dim_col
 
+    
     def getExportData(self,parms,selArea=None):
         """
             *parms['file']
@@ -1025,57 +1028,68 @@ class Vista:
 
         """
         scope = parms['filter']['scope']
-        contentFilter = parms['filter']['content']
+        contentFilterR = contentFilterC = parms['filter']['content']
+        total = parms['filter']['totals'] 
         row_sparse = parms['filter']['horSparse']
         col_sparse = parms['filter']['verSparse']
         translated = parms['NumFormat']
         numFmt = parms['NumFormat']
         decChar = parms['csvProp']['decChar']
-        
-        print(row_sparse,col_sparse)
-        
-        ind = 1
-                
-        dim_row = self.dim_row if not self.totalizado else self.dim_row + 1
-        dim_col = self.dim_col
+ 
+        # filterCumHeader(self,total=True,branch=True,leaf=True,separador='\n',sparse=True):
+        if contentFilterR == 'full':
+            branchR = True
+            leafR = True
+        elif contentFilterR == 'branch' and self.dim_row > 1:
+            branchR = True
+            leafR = False
+        else: #if contentFilter == 'leaf':
+            branchR = False
+            leafR = True
+
+        if contentFilterC == 'full':
+            branchC = True
+            leafC = True
+        elif contentFilterC == 'branch' and self.dim_col > 1:
+            branchC = True
+            leafC = False
+        else: #if contentFilter == 'leaf':
+            branchC = False
+            leafC = True
             
-        row_hdr = self.__exportHeaders('List',self.row_hdr_idx,dim_row,row_sparse,contentFilter)
-        col_hdr = self.__exportHeaders('Dict',self.col_hdr_idx,dim_col,col_sparse,contentFilter)
+        rows=self.row_hdr_idx.filterCumHeader(sparse=row_sparse,branch=branchR,leaf=leafR,total=total)
+        cols=self.col_hdr_idx.filterCumHeader(sparse=col_sparse,branch=branchC,leaf=leafC,total=total)
         
-        num_rows = len(row_hdr)
-        num_cols = len(col_hdr)
-        
-        dim_row = len(row_hdr[0]) -2
-        dim_col = len(col_hdr[next(iter(col_hdr))]) -2 #este horror es para obtener un elemento al azar 
+        dim_row = max([ len(item[1]) for item in rows])
+        dim_col = max([ len(item[1]) for item in cols])
+
+        num_rows = len(rows)
+        num_cols = len(cols)
         
         ctable = [ ['' for k in range(num_cols + dim_row)] 
                                 for j in range(num_rows +dim_col) ]
 
-        for item in col_hdr:
-            entrada = col_hdr[item]
-            i = entrada[-1]
-            for j,colItem in enumerate(entrada):
-                if j >= dim_col:
-                    break
-                ctable[j][i + dim_row]=colItem
+        columns = [item[0].ord for item in cols ]
+        #def extract(self,filter,crossFilter):
+            #result = []
+            #columns = [item[0].ord for item in crossFilter ]
+            #for item in filter:
+                #payload = item.getPayload()
+                #result.append([payload[k] for k in columns])
+            #return result
+        
+        for ind in range(dim_col):
+            ctable[ind][dim_row:]=[item[1][ind] if ind <len(item[1]) else '' for item in cols  ]
+        ind = dim_col
+        for entrada in rows:
+            for k,valor in enumerate(entrada[1]): #cabeceras
+                ctable[ind][k]=valor
+            payload = entrada[0].getPayload()
+            ctable[ind][dim_row:] = [  num2text(payload[k]) for k in columns]
                 
-        for i in range(num_rows):
-            for j,rowItem in enumerate(row_hdr[i]):
-                if j >= dim_row:
-                    break
-                ctable[i + dim_col][j]=rowItem
-                    
-        for i,item  in enumerate(row_hdr):
-            datos = item[-2].getPayload()
-            if scope == 'all': #no necesito parafernalia
-                ctable[i + dim_col][dim_row:] = [num2text(elem) for elem in datos ]
-            else:
-                for k in range(len(datos)):
-                    donde = col_hdr.get(k)
-                    if donde:
-                        ctable[i + dim_col][donde[-1] + dim_row] = num2text(datos[k])
+            ind +=1
         return ctable,dim_row,dim_col
-
+    
     def export(self,parms,selArea=None):
         file = parms['file']
         type = parms['type']
