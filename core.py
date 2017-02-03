@@ -886,17 +886,10 @@ class Vista:
 
         
     def fmtHeader(self,dimension, separador='\n', sparse=False): #, rango= None,  max_level=None):
-        '''
-           honradamente, creo que esta obsoleto
-           TODO documentar
-           TODO en el caso de fechas debe formatearse a algo presentable
-           TODO some codepaths are not executed by now. Rango y max_level NO SE USAN
-        '''
-        #print(dimension, separador, sparse, rango,  max_level)
-
         """
            begin new code
            (funcionalidad abreviada)
+           Probablemente obsoleto
         """
         if dimension == 'row':
             return self.row_hdr_idx.getHeader('row',separador,sparse)
@@ -906,6 +899,7 @@ class Vista:
             print('Piden formatear la cabecera >{}< no implementada'.format(dimension))
             return None
     
+    
     def __exportHeaders(self,tipo,header_tree,dim,sparse,content):
         if tipo.lower() == 'list':
             tabla = list()
@@ -914,6 +908,7 @@ class Vista:
         else:
             return None
         ind = 0
+        
         for elem in header_tree.traverse(mode=1,output=1):
             entrada = ['' for k in range(dim) ]
             if content == 'branch' and elem.isLeaf() and dim > 1:
@@ -921,13 +916,18 @@ class Vista:
             if content == 'leaf' and not elem.isLeaf():
                 continue
             
-            desc = elem.getFullDesc() 
+            desc = elem.getFullDesc()
+            depth = elem.depth()
+            
             if sparse:
-                entrada[elem.depth() -1] = desc[-1].replace(':','-')
+                #entrada[depth -1] = desc[-1].replace(':','-')
+                entrada[depth -1] = desc[-1].replace(':','-')
             else:
-                for k in range(desc):
+                for k in range(len(desc)):
                     entrada[k] = desc[k].replace(':','-')
-                    
+            
+            #print(desc,depth,len(desc),entrada)
+            
             if content == 'branch' and dim > 1:
                 del entrada[dim -1 ]
             elif content == 'leaf' :
@@ -935,6 +935,7 @@ class Vista:
                     del entrada[0]
                     
             entrada.append(elem)
+            
             if tipo.lower() == 'list':
                 entrada.append(elem.ord)
                 tabla.append(entrada)
@@ -1030,7 +1031,8 @@ class Vista:
         translated = parms['NumFormat']
         numFmt = parms['NumFormat']
         decChar = parms['csvProp']['decChar']
-
+        
+        print(row_sparse,col_sparse)
         
         ind = 1
                 
@@ -1090,10 +1092,12 @@ class Vista:
                 return '{0}{1}{0}'.format(txtSep,cadena)
             else:
                 return cadena
+            
         if parms.get('source') == 'array':
             ctable,dim_row,dim_col = self.getExportDataArray(parms,selArea=None)
         else:
             ctable,dim_row,dim_col = self.getExportData(parms,selArea=None)
+            
         if type == 'csv':
             with open(parms['file'],'w') as f:
                 for row in ctable:
