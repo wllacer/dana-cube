@@ -12,7 +12,7 @@ import argparse
 
 from PyQt5.QtCore import Qt,QSortFilterProxyModel
 from PyQt5.QtGui import QCursor
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView , QTabWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView , QTabWidget, QSplitter
 
 from core import Cubo,Vista, mergeString
 from dialogs import *
@@ -370,16 +370,20 @@ class DanaCubeWindow(QMainWindow):
 class TabMgr(QWidget):
     def __init__(self,parent,**kwargs):
         super(TabMgr,self).__init__()
+        split = QSplitter(Qt.Vertical,self)
         lay = QGridLayout()
         self.setLayout(lay)
+        
         self.tree = DanaCube(parent,**kwargs)
         self.chart = SimpleChart()
         self.chartType = None #'barh'
         self.lastItemUsed = None
         self.tree.clicked.connect(self.drawChart)
         
-        lay.addWidget(self.tree,0,0,1,1)
-        lay.addWidget(self.chart,0,1,1,4)
+        split.addWidget(self.tree)
+        split.addWidget(self.chart)
+        
+        lay.addWidget(split,0,0)
 
         self.drawChart(None)
     
