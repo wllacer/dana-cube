@@ -90,7 +90,7 @@ class CubeBrowserWin(QMainWindow):
 class CubeMgr(QTreeView):
     def __init__(self,parent=None,confName=None,schema=None,table=None,pdataDict=None,configFile=None,rawCube=None):
         super(CubeMgr, self).__init__(parent)
-        
+        self.parentWindow = parent
         if not configFile:
             self.configFile = 'cubo.json' #DEVELOP
         else:
@@ -197,23 +197,13 @@ class CubeMgr(QTreeView):
     def saveConfigFile(self):
         if self.saveDialog():
             print('Voy a salvar el fichero')
-        
-            baseCubo=load_cubo(self.configFile)
             newcubeStruct = tree2dict(self.hiddenRoot,isDictionaryEntry)
-            #no grabo si no hay cambios
-            if baseCubo == newcubeStruct:
-                return
+            if isinstance(self.parentWindow,CubeBrowserWin):
+                total=True
+            else:
+                total = False
+            dump_structure(newcubeStruct,self.configFile,total=total)
             
-            dump_structure(baseCubo,'{}.{}'.format(self.configFile,datetime.datetime.now().strftime("%Y%m%d-%H%M%S")))
-            
-            newcubeStruct = tree2dict(self.hiddenRoot,isDictionaryEntry)
-            for entrada in newcubeStruct:
-                if newcubeStruct[entrada]:
-                    baseCubo[entrada] = newcubeStruct[entrada]
-                else:
-                    del baseCubo[entrada]
-                # con los borrados hay un problema. La unica opcion que he encotrado es borrar si esta vacia
-            dump_structure(baseCubo,self.configFile)
 
     @waiting_effects
     @model_change_control()

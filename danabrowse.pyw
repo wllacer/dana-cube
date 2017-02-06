@@ -303,7 +303,7 @@ class MainWindow(QMainWindow):
             self.close()
             
     def saveConfigFile(self):
-        dump_structure(self.configData,getConfigFileName())
+        dump_json(self.configData,getConfigFileName()) #TODO de momento
     
     def closeEvent(self, event):
         self.close()
