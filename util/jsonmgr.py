@@ -31,7 +31,7 @@ def dump_json(data, fichero="cubo.json"):
     
 def dump_structure(new_data, fichero="cubo.json",**flags):
     total = flags.get('total',True)
-    secure = flags.get('secure',False)
+    secure = flags.get('secure',False) 
     """
     new_data = tree2dict(self.hiddenRoot,isDictionaryEntry)
     """
@@ -53,12 +53,12 @@ def dump_structure(new_data, fichero="cubo.json",**flags):
             if new_data[entry]:
                 k_new_data[entry] = new_data[entry]
     if secure:
-        # proceso datos de seguridad (elimino dbpass)
+        # proceso datos de seguridad (lo dejo como estaba. asi puedo usarlo con y sin)
         for entry in k_new_data:
             if not isinstance(k_new_data[entry],dict):
                 continue
             if k_new_data[entry].get('connect'):
-                k_new_data[entry]['connect']['dbpass'] = None
+                k_new_data[entry]['connect'] = baseCubo[entry]['connect']
 
     if baseCubo == k_new_data:
         return

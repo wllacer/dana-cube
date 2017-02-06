@@ -172,7 +172,13 @@ def getCursor(db, sql_string,funcion=None,**kwargs):
         exit(-1)
     
 def dbDict2Url(conDict):
-    pprint(conDict)
+    if conDict.get('debug',False):
+        print ('Parametros de conexion:')
+        for entry in conDict:
+            if entry == 'dbpass':
+                continue
+            print('{}:{}'.format(entry,conDict[entry]))
+            
     driver = driver2Alch(conDict['driver'])
     if 'debug' in conDict:
         debug=conDict['debug']

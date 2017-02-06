@@ -1020,18 +1020,20 @@ class Vista:
             *parms['csvProp']['decChar']
             *parms['csvProp']['txtSep'] 
             *parms['NumFormat'] 
-            parms['filter']['scope'] = ('all','visible,'select') 
-            *parms['filter']['content'] = ('full','branch','leaf')
-            parms['filter']['totals'] 
-            *parms['filter']['horSparse'] 
-            *parms['filter']['verSparse']
+            parms['filter']['scope'] = ('all') #,'visible,'select') 
+            *parms['filter']['row/col']['content'] = ('full','branch','leaf')
+            parms['filter']['row/col']['totals'] 
+            *parms['filter']['row/col']['Sparse'] 
+            
 
         """
         scope = parms['filter']['scope']
-        contentFilterR = contentFilterC = parms['filter']['content']
-        total = parms['filter']['totals'] 
-        row_sparse = parms['filter']['horSparse']
-        col_sparse = parms['filter']['verSparse']
+        contentFilterR = parms['filter']['row']['content']
+        contentFilterC = parms['filter']['col']['content']
+        totalR = parms['filter']['row']['totals'] 
+        totalC = parms['filter']['col']['totals'] 
+        row_sparse = parms['filter']['row']['Sparse']
+        col_sparse = parms['filter']['col']['Sparse']
         translated = parms['NumFormat']
         numFmt = parms['NumFormat']
         decChar = parms['csvProp']['decChar']
@@ -1057,8 +1059,8 @@ class Vista:
             branchC = False
             leafC = True
             
-        rows=self.row_hdr_idx.filterCumHeader(sparse=row_sparse,branch=branchR,leaf=leafR,total=total)
-        cols=self.col_hdr_idx.filterCumHeader(sparse=col_sparse,branch=branchC,leaf=leafC,total=total)
+        rows=self.row_hdr_idx.filterCumHeader(sparse=row_sparse,branch=branchR,leaf=leafR,total=totalR)
+        cols=self.col_hdr_idx.filterCumHeader(sparse=col_sparse,branch=branchC,leaf=leafC,total=totalC)
         
         dim_row = max([ len(item[1]) for item in rows])
         dim_col = max([ len(item[1]) for item in cols])

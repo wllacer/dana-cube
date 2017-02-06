@@ -68,7 +68,12 @@ def generaArgParser():
                         nargs='?',
                         default='cubo.json',
                         help='Nombre del fichero de configuración del cubo actual')    
-    
+    security_parser = parser.add_mutually_exclusive_group(required=False)
+    security_parser.add_argument('--secure','-s',dest='secure', action='store_true',
+                                 help='Solicita la clave de las conexiones de B.D.')
+    security_parser.add_argument('--no-secure','-ns', dest='secure', action='store_false')
+    parser.set_defaults(secure=False)
+
     return parser
 
 class DanaCubeWindow(QMainWindow):
@@ -79,6 +84,8 @@ class DanaCubeWindow(QMainWindow):
         #
 
         self.cubeFile = args.cubeFile
+        self.secure = args.secure
+
         self.filterActions = dict()
         self.dateRangeActions = dict()
         self.restorator = None
@@ -213,6 +220,8 @@ class DanaCubeWindow(QMainWindow):
                 exit()
             else:
                 return None
+        if not inicial:
+            self.cubo.db.close()
         self.setupCubo(my_cubos,self.cubeName)
         if not inicial:
             self.reinitialize()
@@ -230,6 +239,10 @@ class DanaCubeWindow(QMainWindow):
 
         
     def setupCubo(self,my_cubos,seleccion):
+        #ALPHA aqui es donde debo implementar el login seguro
+        #
+        if self.secure:
+            self.editConnection(my_cubos[seleccion],seleccion)
         self.cubo = Cubo(my_cubos[seleccion])
         self.cubo.nombre = seleccion #FIXME es que no tengo sitio en Cubo para definirlo
         self.cubo.recordStructure = self.summaryGuia()
@@ -285,7 +298,7 @@ class DanaCubeWindow(QMainWindow):
             }
         if entrada.filtroCampos != '':  #NO los rangos de fecha que son por naturaleza variables
             datos_defecto["vista"]["filter"] = entrada.filtroCampos
-        my_cubos = load_cubo(self.cubeFile)
+        my_cubos = load_cubo(self.cubeFile,secure=True)
         my_cubos['default'] = datos_defecto
         dump_structure(my_cubos,self.cubeFile)
         
@@ -366,7 +379,70 @@ class DanaCubeWindow(QMainWindow):
        
     def dispatch(self,FcnIdx):
         self.tabulatura.currentWidget().dispatch(FcnIdx)
+    
+    
+    def editConnection(self,configData,nombre=None): 
         
+        from util.record_functions import dict2row, row2dict
+        from datalayer.conn_dialogs import ConnectionSheetDlg
+        
+        attr_list =  ('driver','dbname','dbhost','dbuser','dbpass','dbport','debug')
+        if nombre is None:
+            datos = [None for k in range(len(attr_list) +1) ]
+        else:
+            datos = [nombre, ] + dict2row(configData['connect'],attr_list)
+        #contexto
+        context = (
+                ('Nombre',
+                    QLineEdit,
+                    {'setReadOnly':True},
+                    None,
+                ),
+                # driver
+                ("Driver ",
+                    QLineEdit,
+                    {'setReadOnly':True},
+                    None,
+                ),
+                ("DataBase Name",
+                    QLineEdit,
+                    None,
+                    None,
+                ),
+                ("Host",
+                    QLineEdit,
+                    None,
+                    None,
+                ),
+                ("User",
+                    QLineEdit,
+                    None,
+                    None,
+                ),
+                ("Password",
+                    QLineEdit,
+                    {'setEchoMode':QLineEdit.Password},
+                    None,
+                ),
+                ("Port",
+                    QLineEdit,
+                    None,
+                    None,
+                ),
+                ("Debug",
+                    QCheckBox,
+                    None,
+                    None,
+                )
+                
+                )
+        parmDialog = ConnectionSheetDlg('Edite la conexion',context,datos, self)
+        if parmDialog.exec_():
+            #TODO deberia verificar que se han cambiado los datos
+            configData['connect'] = row2dict(datos[1:],attr_list)
+            return datos[0]
+     
+
 class TabMgr(QWidget):
     def __init__(self,parent,**kwargs):
         super(TabMgr,self).__init__()
@@ -742,7 +818,7 @@ class DanaCube(QTreeView):
         nuevo_filtro = mergeString(self.filtroCampos,self.cubo.definition['base filter'],'AND')
         my_cubos = load_cubo()
         my_cubos[self.cubo.nombre]['base filter'] = nuevo_filtro
-        dump_structure(my_cubos,self.parent.cubeFile)
+        dump_structure(my_cubos,self.parent.cubeFile,secure=True)
         self.parent.filterActions['drop'].setEnabled(False)
         self.parent.filterActions['save'].setEnabled(False)
 
@@ -785,22 +861,9 @@ class DanaCube(QTreeView):
     
     
     def export(self):
-        #TODO 
-        #rowHidden = [ None  for k in range (self.baseModel.count()) ]
-        #def getHiddenRows(baseElem,rowHidden):
-            #for k,item in enumerate(baseElem.childItems) :                
-        #getHiddenRows(self.baseModel.rootItem,rowHidden)
-        #print(rowHidden)
+        #TODO poder hacer una seleccion de area
         parms = eW.exportWizard()
         selArea = dict()
-        #TEMPORAL init
-        #if parms['scope']['visible']:
-            ## probar con self.isColumnHidden(x)
-            #selArea['hiddenColumn'] = [ self.header().isSectionHidden(k) for k in range(self.header().count())]
-            ## is self.isRowHidden(x,parent)
-            #selArea['hiddenRow'] = []
-            #del selArea['hiddenColumn'][0] #no me interesa el estado de los titulos
-        #TEMPORAL end
         if not parms.get('file'):
             return
         resultado = self.vista.export(parms,selArea)

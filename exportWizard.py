@@ -18,7 +18,7 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem, QRegExpValidator
 from  PyQt5.QtWidgets import QApplication, QMainWindow, QWizard,QWizardPage,QLabel,QLineEdit,QComboBox,QGridLayout,QGroupBox,QRadioButton,QVBoxLayout,QGridLayout,QPlainTextEdit,QListWidget,QCheckBox, QFileDialog,QPushButton,QHBoxLayout
 
 
-(ixWDestination,ixWFilter,ixWGraph) = range(3)
+(ixWFilter,ixWDestination,ixWGraph) = range(3)
 
 
 class ExportWizard(QWizard):
@@ -121,57 +121,90 @@ class WzFilter(QWizardPage):
         self.setTitle("Contenido")
         self.setSubTitle(""" Seleccione que datos exactamente desea exportar """)
 
-        extentBox = QGroupBox("¿Qué desea exportar?")
+        #extentBox = QGroupBox("¿Qué desea exportar?")
 
-        self.allRB = QRadioButton("&Todo")
-        self.visibleRB = QRadioButton("Sólo las columnas visibles")
-        self.selectRB = QRadioButton("Sólo el área seleccionada")
+        #self.allRB = QRadioButton("&Todo")
+        #self.visibleRB = QRadioButton("Sólo las columnas visibles")
+        #self.selectRB = QRadioButton("Sólo el área seleccionada")
 
-        self.allRB.setChecked(True)
-        #TEMPORAL init
-        self.visibleRB.setEnabled(False)
-        self.selectRB.setEnabled(False)
-        #TEMPORAL end
-        extentBoxLayout = QHBoxLayout()
-        extentBoxLayout.addWidget(self.allRB)
-        extentBoxLayout.addWidget(self.visibleRB)
-        extentBoxLayout.addWidget(self.selectRB)
+        #self.allRB.setChecked(True)
+        ##TEMPORAL init
+        #self.visibleRB.setEnabled(False)
+        #self.selectRB.setEnabled(False)
+        ##TEMPORAL end
+        #extentBoxLayout = QHBoxLayout()
+        #extentBoxLayout.addWidget(self.allRB)
+        #extentBoxLayout.addWidget(self.visibleRB)
+        #extentBoxLayout.addWidget(self.selectRB)
 
-        extentBox.setLayout(extentBoxLayout)
-        extentBox.setAlignment(Qt.AlignHCenter)
+        #extentBox.setLayout(extentBoxLayout)
+        #extentBox.setAlignment(Qt.AlignHCenter)
+        RowBox = QGroupBox()
         
-        detailBox = QGroupBox("¿Qué información desea exportar?")
+        detailRowBox = QGroupBox("\t¿Qué filas desea exportar?")
 
-        self.fullRB = QRadioButton("&Todo")
-        self.branchRB = QRadioButton("Sólo &Ramas")
-        self.leavesRB = QRadioButton("Sólo &hojas")
-        self.leavesRB.setChecked(True)
+        self.RowFullRB = QRadioButton("&Todo")
+        self.RowBranchRB = QRadioButton("Sólo &Ramas")
+        self.RowLeavesRB = QRadioButton("Sólo &hojas")
+        self.RowLeavesRB.setChecked(True)
+                
+        detailRowBoxLayout = QHBoxLayout()
+        detailRowBoxLayout.addWidget(self.RowFullRB)
+        detailRowBoxLayout.addWidget(self.RowBranchRB)
+        detailRowBoxLayout.addWidget(self.RowLeavesRB)
+        detailRowBox.setLayout(detailRowBoxLayout)
+        detailRowBox.setAlignment(Qt.AlignHCenter)
         
-        self.fullRB.clicked.connect(self.controlTotal)
-        self.branchRB.clicked.connect(self.controlTotal)
-        self.leavesRB.clicked.connect(self.controlTotal)
+        addRowBoxLayout = QHBoxLayout()
+        self.totalRowCB = QCheckBox("Con Totales")
         
-        detailBoxLayout = QHBoxLayout()
-        detailBoxLayout.addWidget(self.fullRB)
-        detailBoxLayout.addWidget(self.branchRB)
-        detailBoxLayout.addWidget(self.leavesRB)
+        self.rowHdrCB = QCheckBox("Cabeceras sin duplicados")
+        self.rowHdrCB.setChecked(True)
+        
+        addRowBoxLayout.addWidget(self.totalRowCB)
+        addRowBoxLayout.addWidget(self.rowHdrCB)
+        
+        RowBoxLayout= QVBoxLayout()
+        RowBoxLayout.addWidget(detailRowBox)
+        RowBoxLayout.addLayout(addRowBoxLayout)
+        RowBox.setLayout(RowBoxLayout)
+        
+        ColBox = QGroupBox()
+        
+        detailColBox = QGroupBox("\t¿Qué columans desea exportar?")
 
-        detailBox.setLayout(detailBoxLayout)
-        detailBox.setAlignment(Qt.AlignHCenter)
+        self.ColFullRB = QRadioButton("&Todo")
+        self.ColBranchRB = QRadioButton("Sólo &Ramas")
+        self.ColLeavesRB = QRadioButton("Sólo &hojas")
+        self.ColLeavesRB.setChecked(True)
+                
+        detailColBoxLayout = QHBoxLayout()
+        detailColBoxLayout.addWidget(self.ColFullRB)
+        detailColBoxLayout.addWidget(self.ColBranchRB)
+        detailColBoxLayout.addWidget(self.ColLeavesRB)
+        detailColBox.setLayout(detailColBoxLayout)
+        detailColBox.setAlignment(Qt.AlignHCenter)
         
-        self.totalCB = QCheckBox("Con Totales")
-        self.totalCB.setEnabled(False)
-        self.vertHdrCB = QCheckBox("Con cabeceras horizontales sin duplicados")
-        self.horHdrCB = QCheckBox("Con cabeceras verticales  sin duplicados")
-        self.vertHdrCB.setChecked(True)
-        self.horHdrCB.setChecked(True)
+        addColBoxLayout = QHBoxLayout()
+        self.totalColCB = QCheckBox("Con Totales")
         
+        self.colHdrCB = QCheckBox("Cabeceras sin duplicados")
+        self.colHdrCB.setChecked(True)
+        
+        addColBoxLayout.addWidget(self.totalColCB)
+        addColBoxLayout.addWidget(self.colHdrCB)
+        
+        ColBoxLayout= QVBoxLayout()
+        ColBoxLayout.addWidget(detailColBox)
+        ColBoxLayout.addLayout(addColBoxLayout)
+        ColBox.setLayout(ColBoxLayout)
+
         mainLayout = QVBoxLayout()
-        mainLayout.addWidget(extentBox)
-        mainLayout.addWidget(detailBox)
-        mainLayout.addWidget(self.totalCB)
-        mainLayout.addWidget(self.vertHdrCB)
-        mainLayout.addWidget(self.horHdrCB)
+#        mainLayout.addWidget(extentBox)
+        mainLayout.addWidget(RowBox)
+        mainLayout.addWidget(ColBox)
+        #mainLayout.addWidget(self.totalCB)
+        #mainLayout.addWidget(self.horHdrCB)
         self.setLayout(mainLayout)
     
     def controlTotal(self,enabled):
@@ -208,21 +241,27 @@ def exportWizard():
         parms['csvProp']['txtSep'] = wizard.page(ixWDestination).separadorTextos.text()
         parms['NumFormat'] = wizard.page(ixWDestination).edicion.isChecked()
         parms['filter'] = dict()
-        if wizard.page(ixWFilter).allRB.isChecked():
-            parms['filter']['scope'] = 'all'
-        elif wizard.page(ixWFilter).visibleRB.isChecked():
-            parms['filter']['scope'] = 'visible'
-        elif wizard.page(ixWFilter).selectRB.isChecked():
-            parms['filter']['scope'] = 'select'
-        if wizard.page(ixWFilter).fullRB.isChecked():
-            parms['filter']['content'] = 'full'
-        elif wizard.page(ixWFilter).branchRB.isChecked():
-            parms['filter']['content'] = 'branch'
-        elif wizard.page(ixWFilter).leavesRB.isChecked():    
-            parms['filter']['content'] = 'leaf'
-        parms['filter']['totals'] = wizard.page(ixWFilter).totalCB.isChecked()
-        parms['filter']['horSparse'] = wizard.page(ixWFilter).horHdrCB.isChecked()
-        parms['filter']['verSparse']= wizard.page(ixWFilter).vertHdrCB.isChecked()
+        parms['filter']['scope'] = 'all'
+        parms['filter']['row'] = dict()
+        parms['filter']['col'] = dict()
+        if wizard.page(ixWFilter).RowFullRB.isChecked():
+            parms['filter']['row']['content'] = 'full'
+        elif wizard.page(ixWFilter).RowBranchRB.isChecked():
+            parms['filter']['row']['content'] = 'branch'
+        elif wizard.page(ixWFilter).RowLeavesRB.isChecked():    
+            parms['filter']['row']['content'] = 'leaf'
+        parms['filter']['row']['totals'] = wizard.page(ixWFilter).totalRowCB.isChecked()
+        parms['filter']['row']['Sparse'] = wizard.page(ixWFilter).rowHdrCB.isChecked()
+
+        if wizard.page(ixWFilter).ColFullRB.isChecked():
+            parms['filter']['col']['content'] = 'full'
+        elif wizard.page(ixWFilter).ColBranchRB.isChecked():
+            parms['filter']['col']['content'] = 'branch'
+        elif wizard.page(ixWFilter).ColLeavesRB.isChecked():    
+            parms['filter']['col']['content'] = 'leaf'
+        parms['filter']['col']['totals'] = wizard.page(ixWFilter).totalColCB.isChecked()
+        parms['filter']['col']['Sparse'] = wizard.page(ixWFilter).colHdrCB.isChecked()
+
     return parms
 
 def tipoCorto(tipoLargo):
