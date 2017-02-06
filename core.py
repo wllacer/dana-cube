@@ -38,7 +38,7 @@ from pprint import *
 
 import time
 
-from util.jsonmgr import dump_structure
+from util.jsonmgr import dump_structure,dump_json
 try:
     import xlsxwriter
     XLSOUTPUT = True
@@ -1119,7 +1119,7 @@ class Vista:
                     f.write(fldSep.join(csvrow) + '\n')
             f.closed
         elif type == 'json':
-            dump_structure(ctable,parms['file'])
+            dump_json(ctable,parms['file'])
         elif type == 'html':
             fldSep = '</td><td>'
             hdrSep = '</th><th>'

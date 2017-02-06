@@ -199,6 +199,11 @@ class CubeMgr(QTreeView):
             print('Voy a salvar el fichero')
         
             baseCubo=load_cubo(self.configFile)
+            newcubeStruct = tree2dict(self.hiddenRoot,isDictionaryEntry)
+            #no grabo si no hay cambios
+            if baseCubo == newcubeStruct:
+                return
+            
             dump_structure(baseCubo,'{}.{}'.format(self.configFile,datetime.datetime.now().strftime("%Y%m%d-%H%M%S")))
             
             newcubeStruct = tree2dict(self.hiddenRoot,isDictionaryEntry)

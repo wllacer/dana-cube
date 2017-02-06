@@ -24,10 +24,13 @@ def load_cubo(fichero="cubo.json"):
         my_dict= None
     return my_dict
 
-def dump_structure(data, fichero="cubo.json"):
+def dump_json(data, fichero="cubo.json"):
     with open(fichero,'w') as outfile:
         json.dump(data,outfile, sort_keys=False,indent=4,ensure_ascii=False)
     
+def dump_structure(data, fichero="cubo.json"):
+    with open(fichero,'w') as outfile:
+        json.dump(data,outfile, sort_keys=False,indent=4,ensure_ascii=False)
 
 def getConfigFileName(pName=None):
             # Configuration file
