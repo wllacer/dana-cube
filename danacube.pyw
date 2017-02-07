@@ -366,7 +366,7 @@ class DanaCubeWindow(QMainWindow):
     def dropRange(self):
         self.tabulatura.currentWidget().tree.dropRange()
     def saveRange(self):
-        self.tabulatura.currentWidget().tree.saveRange
+        self.tabulatura.currentWidget().tree.saveRange()
 
     def exportData(self):
         self.tabulatura.currentWidget().tree.export()
@@ -816,7 +816,7 @@ class DanaCube(QTreeView):
     
     def saveFilter(self):
         nuevo_filtro = mergeString(self.filtroCampos,self.cubo.definition['base filter'],'AND')
-        my_cubos = load_cubo()
+        my_cubos = load_cubo(self.parent.cubeFile)
         my_cubos[self.cubo.nombre]['base filter'] = nuevo_filtro
         dump_structure(my_cubos,self.parent.cubeFile,secure=True)
         self.parent.filterActions['drop'].setEnabled(False)
@@ -824,6 +824,7 @@ class DanaCube(QTreeView):
 
         
     def setRange(self):
+        #FIXME ¿deberia incluir los filtros incluidos en la definicion ?
         camposFecha= [ (item['name'],item['format']) for item in self.cubo.recordStructure if item['format'] in ('fecha','fechahora') ]
         if len(camposFecha) == 0:
             #TODO que hago con Sqlite
@@ -833,8 +834,21 @@ class DanaCube(QTreeView):
         form = dateFilterDlg(descriptores)
         if form.exec_():
             sqlGrp = []
+            if 'date filter' in self.cubo.definition:
+                pass
+            else:
+                self.cubo.definition['date filter'] = []
             for k,entry in enumerate(form.result):
                 if entry[1] != 0:
+                    self.cubo.definition['date filter'].append({
+                                                'elem':entry[0],
+                                                'date class': CLASES_INTERVALO[entry[1]],
+                                                'date range': TIPOS_INTERVALO[entry[2]],
+                                                'date period': entry[3],
+                                                'date start': None,
+                                                'date end': None,
+                                                'date format': None
+                                                })
                     intervalo = dateRange(entry[1],entry[2],periodo=entry[3],fmt=camposFecha[k][1])
                     sqlGrp.append((entry[0],'BETWEEN',intervalo,'f'))
             if len(sqlGrp) > 0:
@@ -844,20 +858,30 @@ class DanaCube(QTreeView):
                             self.vista.agregado,self.vista.campo,
                             self.vista.totalizado,self.vista.stats) #__WIP__ evidentemente aqui faltan todos los parametros
 
-                self.parent.dateRangeActions['drop'].setEnabled(False)
-                #self.parent.dateRangeActions['save'].setEnabled(False)
+                self.parent.dateRangeActions['drop'].setEnabled(True)
+                self.parent.dateRangeActions['save'].setEnabled(True)
             
     def dropRange(self):
+        my_cubos = load_cubo(self.parent.cubeFile)
+        if my_cubos[self.cubo.nombre].get('date filter'):
+            self.cubo.definition['date filter'] = my_cubos[self.cubo.nombre]['date filter']  
+        else:
+            del self.cubo.definition['date filter']
         self.filtroFechas=''
         self.filtro = mergeString(self.filtroCampos,self.filtroFechas,'AND')
         self.cargaVista(self.vista.row_id,self.vista.col_id,
                         self.vista.agregado,self.vista.campo,
                         self.vista.totalizado,self.vista.stats) #__WIP__ evidentemente aqui     def saveFilter(self):
         self.parent.dateRangeActions['drop'].setEnabled(False)
-        #self.parent.dateRangeActions['save'].setEnabled(False)
+        self.parent.dateRangeActions['save'].setEnabled(False)
 
     def saveRange(self):
-        pass
+        my_cubos = load_cubo(self.parent.cubeFile)
+        my_cubos[self.cubo.nombre]['date filter'] = self.cubo.definition['date filter']
+        dump_structure(my_cubos,self.parent.cubeFile,secure=True)
+        self.parent.filterActions['drop'].setEnabled(False)
+        self.parent.filterActions['save'].setEnabled(False)
+
     
     
     def export(self):
