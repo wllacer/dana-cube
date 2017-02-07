@@ -51,6 +51,7 @@ class DataDict():
     iters profundidad de navegacion en claves extranjeras
     pos   posicion donde se añade la conexión
     conn  -> conexion viva (nuevo)
+    secure conexion obliga a login
     """
     def __init__(self,**kwargs):
         #FIXME eliminar parametros espureos
@@ -116,9 +117,10 @@ class DataDict():
             self.appendConnection(kwargs.get('conName'),**kwargs)
             return
         for confName in sorted(definition):
-            self.appendConnection(confName)  # aqui no tiene sentido filtrar
+            self.appendConnection(confName,**kwargs)  # aqui no tiene sentido filtrar
 
     def appendConnection(self,confName,**kwargs):
+
         padre = self.hiddenRoot
         if 'confData' in kwargs:
             conf = kwargs['confData']
@@ -135,6 +137,10 @@ class DataDict():
             if 'conn' in kwargs:
                 self.conn[confName] = kwargs['conn']
             else:
+                if kwargs.get('secure',False) and conf['driver'] not in ('sqlite','QSQLITE'):
+                    kconf = {'connect':conf}
+                    self.editConnection(kconf,confName)
+                    conf = kconf['connect']
                 self.conn[confName] = dbConnectAlch(conf)
             conexion = self.conn[confName]
             engine=conexion.engine 
@@ -203,4 +209,66 @@ class DataDict():
             self.appendConnection(confName,pos=k)
 
         #self.baseModel.endResetModel()
+    def editConnection(self,configData,nombre=None): 
+        
+        from PyQt5.QtWidgets import QDialog, QLineEdit,QLabel,QDialogButtonBox, QVBoxLayout, QHBoxLayout, QComboBox, QCheckBox, QPushButton, QMessageBox
 
+        from util.record_functions import dict2row, row2dict
+        from datalayer.conn_dialogs import ConnectionSheetDlg
+        
+        attr_list =  ('driver','dbname','dbhost','dbuser','dbpass','dbport','debug')
+        if nombre is None:
+            datos = [None for k in range(len(attr_list) +1) ]
+        else:
+            datos = [nombre, ] + dict2row(configData['connect'],attr_list)
+        #contexto
+        context = (
+                ('Nombre',
+                    QLineEdit,
+                    {'setReadOnly':True},
+                    None,
+                ),
+                # driver
+                ("Driver ",
+                    QLineEdit,
+                    {'setReadOnly':True},
+                    None,
+                ),
+                ("DataBase Name",
+                    QLineEdit,
+                    None,
+                    None,
+                ),
+                ("Host",
+                    QLineEdit,
+                    None,
+                    None,
+                ),
+                ("User",
+                    QLineEdit,
+                    None,
+                    None,
+                ),
+                ("Password",
+                    QLineEdit,
+                    {'setEchoMode':QLineEdit.Password},
+                    None,
+                ),
+                ("Port",
+                    QLineEdit,
+                    None,
+                    None,
+                ),
+                ("Debug",
+                    QCheckBox,
+                    None,
+                    None,
+                )
+                
+                )
+        parmDialog = ConnectionSheetDlg('Edite la conexion',context,datos, None)
+        if parmDialog.exec_():
+            #TODO deberia verificar que se han cambiado los datos
+            configData['connect'] = row2dict(datos[1:],attr_list)
+            return datos[0]
+     

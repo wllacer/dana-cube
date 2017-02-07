@@ -241,7 +241,7 @@ class DanaCubeWindow(QMainWindow):
     def setupCubo(self,my_cubos,seleccion):
         #ALPHA aqui es donde debo implementar el login seguro
         #
-        if self.secure:
+        if self.secure and my_cubos[seleccion]['connect']['driver'] not in ('sqlite','QSQLITE'):
             self.editConnection(my_cubos[seleccion],seleccion)
         self.cubo = Cubo(my_cubos[seleccion])
         self.cubo.nombre = seleccion #FIXME es que no tengo sitio en Cubo para definirlo

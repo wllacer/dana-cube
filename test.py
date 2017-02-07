@@ -29,7 +29,8 @@ from util.mplwidget import SimpleChart
 #import math
 #import matplotlib.pyplot as plt
 #import numpy as np
- 
+
+
 from PyQt5 import QtCore
 #from PyQt5.QtGui import QSizePolicy
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QGridLayout, QSizePolicy, QWidget, QTreeView, QHBoxLayout
@@ -37,6 +38,26 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QGridLayout, QSize
 from dictmgmt.datadict import DataDict
 
 (_ROOT, _DEPTH, _BREADTH) = range(3)
+
+def generaArgParser():
+    import argparse
+    parser = argparse.ArgumentParser(description='Cubo de datos')
+    parser.add_argument('--cubeFile','--cubefile','-c',
+                        nargs='?',
+                        default='cubo.json',
+                        help='Nombre del fichero de configuración del cubo actual')    
+    parser.add_argument('--configFile','--configfile','-cf',
+                        nargs='?',
+                        default='.danabrowse.json',
+                        help='Nombre del fichero de configuración del cubo actual')    
+
+    security_parser = parser.add_mutually_exclusive_group(required=False)
+    security_parser.add_argument('--secure','-s',dest='secure', action='store_true',
+                                 help='Solicita la clave de las conexiones de B.D.')
+    security_parser.add_argument('--no-secure','-ns', dest='secure', action='store_false')
+    parser.set_defaults(secure=False)
+
+    return parser
 
 def traverse(root,base=None):
     if base is not None:
@@ -54,7 +75,10 @@ def traverse(root,base=None):
         else:
             queue = expansion  + queue[1:]      
 def prueba():
-    dd = DataDict()
+    parser = generaArgParser()
+    args = parser.parse_args()
+    print(args)
+    dd = DataDict(defFile=args.configFile,secure=args.secure)
     # defFile
     # conName
     # schema
