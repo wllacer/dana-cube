@@ -744,7 +744,7 @@ class DanaCube(QTreeView):
               self.requestFunctionParms(a_spec,a_data)
               
         elif entry[1] in 'kwargs':
-              a_spec = [ [argumento,None,None] for argumento in USER_KWARGS_LIST[entry[0]]]
+              a_spec = [ [argumento,None,None] for argumento in KWARGS_LIST[entry[0]]]
               a_data = [ None for k in range(len(a_desc))]
               self.requestFunctionParms(a_spec,a_data)            
               
