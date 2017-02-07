@@ -35,156 +35,6 @@ from datalayer.query_constructor import *
 
 from util.record_functions import empalmador, hasContent 
 
-class filterDialogOld(QDialog):
-    """
-        version obsoleta. Sirve para los casos mas sencillos
-    """
-    def __init__(self,recordStructure,title,parent=None):
-        super(filterDialogOld, self).__init__(parent)
-        # cargando parametros de defecto
-        self.record = recordStructure
-        
-        self.context = []
-        self.context.append(('campo','formato','condicion','valores'))
-        self.context.append((QLineEdit,{'setEnabled':False},None))
-        self.context.append((QLineEdit,{'setEnabled':False},None))
-        self.context.append((QComboBox,None,tuple(LOGICAL_OPERATOR)))
-        self.context.append((QLineEdit,None,None))
-        
-        self.data = []
-        for item in recordStructure:
-            self.data.append([item['name'],item['format'],3,None,] ) 
-            
-        self.origMsg = 'Recuerde: en SQL el separador decimal es el punto "."'
-        # super(filterDialog,self).__init__('Defina el filtro',self.context,len(self.data),self.data,parent=parent) 
-
-        InicioLabel = QLabel(title)
-        #
-        self.sheet=WDataSheet(self.context,len(self.data))
-        self.sheet.fill(self.data)
-        
-        self.mensaje = QLineEdit('')
-        self.mensaje.setReadOnly(True)
-        
-        freeSqlLbl = QLabel('Texto Libre')
-        self.freeSql  = QLineEdit() #QPlainTextEdit()
-
-        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel,
-                                     Qt.Horizontal)
-
-        #formLayout = QHBoxLayout()
-        #self.meatLayout = QVBoxLayout()
-        self.meatLayout = QGridLayout()
-        buttonLayout = QHBoxLayout()
-        formLayout = QVBoxLayout()
-       
-        self.meatLayout.addWidget(InicioLabel,0,0)
-        self.meatLayout.addWidget(self.sheet,1,0,6,5)
-        self.meatLayout.addWidget(freeSqlLbl,8,0)
-        self.meatLayout.addWidget(self.freeSql,8,1,1,4)
-        self.meatLayout.addWidget(self.mensaje,10,0,1,4)
-        
-        buttonLayout.addWidget(buttonBox)
-        
-        formLayout.addLayout(self.meatLayout)        
-        formLayout.addLayout(buttonLayout)
-        
-        self.setLayout(formLayout)
-        self.setMinimumSize(QSize(480,480))
-        
-        buttonBox.accepted.connect(self.accept)
-        buttonBox.rejected.connect(self.reject)
-
-        self.setWindowTitle("Item editor")
-        
-
- 
- 
-        #--- end super
-        self.setMinimumSize(QSize(800,480))
-        
-        self.mensaje.setText(self.origMsg)
-        self.defaultBackground = self.mensaje.backgroundRole()
-        
-        for k in range(3):
-            self.sheet.resizeColumnToContents(k)
-        
-        #for k in range(self.sheet.rowCount()):
-            #self.sheet.cellWidget(k,2).textChanged['QString'].connect(lambda b,a=k:self.checkData(b,a))
-            
-    #def checkData(self,content,pos):
-    def accept(self):
-        self.mensaje.setText(self.origMsg)
-        fallo = False
-        errorTxt = ''
-        self.queryArray = []
-        for pos in range(self.sheet.rowCount()):
-            item = [self.sheet.get(pos,k) for k in range(4) ]
-            opcode = LOGICAL_OPERATOR[item[2]].lower()
-            if not item[3] or item[3] == '':  #Se nota que vengo de Oracle
-                continue
-            if opcode in ('is null','is not null'):
-                continue
-
-            #todo casos econtextiales Null, none, ''
-            aslist = item[3].split(',')
-            #primero comprobamos la cardinalidad. Ojo en sentencias separadas o el elif no funciona bien
-            if opcode in ('between','not between'): 
-                if len(aslist) != 2:
-                    errorTxt = 'La operacion between exige exactamente dos valores'
-                    fallo = True
-            elif opcode not in ('in','not in') :
-                if len(aslist) != 1:
-                    errorTxt = ' La operacion elegida exige un único valor'
-                    fallo = True
-            # chequeamos los formatos. Por comodidad solo el primer elemento de la lista. Los no reconocidos no chequeados
-            if not fallo:
-                testElem = aslist[0].lower().strip()
-                formato = item[1]
-                if formato in ('numerico','entero') and not is_number(testElem):
-                    # vago. no distingo entre ambos tipos numericos FIXME
-                    errorTxt = 'No contiene un valor numerico aceptable'
-                    fallo = True
-                #elif formato in ('texto','binario'):
-                    #pass
-                elif formato in ('booleano',) and testElem not in ('true','false'):
-                    errorTxt = 'Solo admintimos como booleanos: True y False'
-                    fallo = True
-                elif formato in ('fecha','hora') and not isDate(testElem):
-                    errorTxt = 'Formato o fecha incorrecta. Verifique que es del tipo AAAA-MM-DD HH:mm:SS'
-                    fallo = True
-                else:
-                    pass
-                
-                
-            if fallo:
-                self.mensaje.setText('ERROR @{}: {}'.format(item[0],errorTxt))
-                self.sheet.cellWidget(pos,3).selectAll()
-                self.sheet.cellWidget(pos,3).setFocus()
-                return
-
-            qfmt = 't'     
-            if formato in ('entero','numerico'):
-                qfmt = 'n'
-            elif formato in ('fecha','hora'):
-                qfmt = 'f'
-            elif formato in ('booleano'):
-                qfmt = 'n' #me parece 
-
-            self.queryArray.append((item[0],
-                                opcode.upper(),
-                                item[3] if len(aslist) == 1 else aslist,
-                                qfmt))
-
-        self.result = empalmador(searchConstructor('where',{'where':self.queryArray}),
-                                 self.freeSql.text(),'AND')
-        print(self.result)
-        tmp_data = self.sheet.values()
-        for x in range(self.sheet.rowCount()):
-            for y in range(self.sheet.columnCount()):
-                self.data[x][y] = tmp_data[x][y]
-                
-        QDialog.accept(self)
         
 class filterDialog(QDialog):
     """
@@ -192,11 +42,11 @@ class filterDialog(QDialog):
        TODO en el caso de tener una guia, no podemos, de momento, aceptar valores multiples, y si es una jerarquia sólo = o !=
        #TODO permitir formatos distintos para las entradas jerarquicas
     """
-    def __init__(self,recordStructure,title,parent=None):
+    def __init__(self,recordStructure,title,parent=None,driver=None):
         super(filterDialog, self).__init__(parent)
         # cargando parametros de defecto
         self.record = recordStructure
-        
+        self.driver = driver
         self.context = []
         self.context.append(('campo','formato','condicion','valores'))
         self.context.append((QLineEdit,{'setEnabled':False},None))
@@ -339,7 +189,7 @@ class filterDialog(QDialog):
                 elif formato in ('booleano',) and testElem not in ('true','false'):
                     errorTxt = 'Solo admitimos como booleanos: True y False'
                     fallo = True
-                elif formato in ('fecha','hora') and not isDate(testElem):
+                elif formato in ('fecha','fechahora','hora') and not isDate(testElem):
                     errorTxt = 'Formato o fecha incorrecta. Verifique que es del tipo AAAA-MM-DD HH:mm:SS'
                     fallo = True
                 else:
@@ -355,7 +205,7 @@ class filterDialog(QDialog):
             qfmt = 't'     
             if formato in ('entero','numerico'):
                 qfmt = 'n'
-            elif formato in ('fecha','hora'):
+            elif formato in ('fecha','fechahora','hora'):
                 qfmt = 'f'
             elif formato in ('booleano'):
                 qfmt = 'n' #me parece 
@@ -374,7 +224,7 @@ class filterDialog(QDialog):
                                     aslist[0] if len(aslist) == 1 else aslist,
                                     qfmt))
 
-        self.result = empalmador(searchConstructor('where',{'where':self.queryArray}),
+        self.result = empalmador(searchConstructor('where',{'where':self.queryArray,'driver':self.driver}),
                                  self.freeSql.text(),'AND')
         print(self.result)
         self.data = self.sheet.values()
@@ -403,7 +253,7 @@ def main():
                 {'format': 'texto', 'name': 'film.special_features'},
                 {'format': 'fecha', 'name': 'film.last_update'}]
 
-    form = filterDialog(record,'Version experimental')
+    form = filterDialog(record,'Version experimental',driver='oracle')
     form.show()
     if form.exec_():
         pprint(form.result)

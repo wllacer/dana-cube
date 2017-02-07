@@ -29,6 +29,16 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from pprint import pprint
 import datetime 
 
+def qtSqlDeprecated():
+    msg = QMessageBox()
+    msg.setIcon(QMessageBox.Warning)
+
+    msg.setText("El Backend QtSql ha sido deprecado")
+    msg.setWindowTitle("Backend incorrecto")
+    msg.setDetailedText(""" Ya no ofrecemos la opcion de utilizar QtSql como gestor de accesos a las bases de datos. se activa automaticamente SqlAlchemy """)
+    msg.setStandardButtons(QMessageBox.Ok)                
+    retval = msg.exec_()
+
 def typeHandler(type):
     if  isinstance(type,(types.Numeric)):
           return 'numerico'
@@ -40,8 +50,10 @@ def typeHandler(type):
           return 'binario'
     elif isinstance(type,types.Boolean):
           return 'booleano'
-    elif isinstance(type,(types.Date,types.DateTime)):
+    elif isinstance(type,types.Date):
           return 'fecha'
+    elif isinstance(type,types.DateTime):
+          return 'fechahora'
     elif isinstance(type,types.Time):
           return 'hora'
     else:
@@ -51,9 +63,9 @@ def typeHandler(type):
 
 def driver2if(driver):
     if   BACKEND == 'Alchemy':
-        return driver2Qt(driver.lower())
-    elif BACKEND == 'QtSql':
         return driver2Alch(driver.lower())
+    elif BACKEND == 'QtSql':
+        return driver2Qt(driver.lower())
     else:
         print('Not implemented')
         exit(-1)
@@ -129,10 +141,14 @@ def dbConnect(constring):
           dbuser
           dbpass
     """
+    global BACKEND
+    if BACKEND == 'QtSql':
+        qtSqlDeprecated()
+        BACKEND = 'Alchemy'
+        return dbConnectQt(constring)
+
     if BACKEND == 'Alchemy':
         return dbConnectAlch(constring)
-    elif BACKEND == 'QtSql':
-        return dbConnectQt(constring)
     else:
         print('Not implemented')
         exit(-1)
@@ -156,7 +172,13 @@ def getCursor(db, sql_string,funcion=None,**kwargs):
         exit(-1)
     
 def dbDict2Url(conDict):
-    pprint(conDict)
+    if conDict.get('debug',False):
+        print ('Parametros de conexion:')
+        for entry in conDict:
+            if entry == 'dbpass':
+                continue
+            print('{}:{}'.format(entry,conDict[entry]))
+            
     driver = driver2Alch(conDict['driver'])
     if 'debug' in conDict:
         debug=conDict['debug']

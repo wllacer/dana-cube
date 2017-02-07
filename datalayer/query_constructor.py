@@ -15,10 +15,11 @@ from util.record_functions import *
 from pprint import *
 from copy import deepcopy
 import datetime
+import datalayer.datemgr as datemgr
 
-CLAUSE_PARMS = ('type','ltype','rtype','table','ltable','rtable','side','warn')
+CLAUSE_PARMS = ('type','ltype','rtype','table','ltable','rtable','side','warn','driver')
 
-def getFmtArgs(kwargs):
+def _getFmtArgs(**kwargs):
     salida = dict()
     for ind in CLAUSE_PARMS:
        if ind in kwargs:
@@ -38,9 +39,8 @@ def queryFormat(sqlstring):
         cadena = cadena.replace(',',',\n\t')
         return cadena
     
-def sqlFmt(parametro,**kwargs):
-    """
-      Devuelve, de una entrada (parametro) la salida en un formato compatible con sqlClause
+def _sqlFmt(parametro,**kwargs):
+    """Devuelve, de una entrada (parametro) la salida en un formato compatible con sqlClause
       acepta uno de la lista siguiente de parametros.
       
       Sin parametros devuelve formateado para texto (entrecomillado simple o doble si contiene comillas simples) o numero,
@@ -116,8 +116,10 @@ def sqlFmt(parametro,**kwargs):
         warntype=True
         if isinstance(parametro,(int,float)):
             resultado="'{}'".format(parametro).strip()
-        if isinstance(parametro,(datetime.date,datetime.time,datetime.datetime)):
+        if isinstance(parametro,(datetime.date,datetime.time,datetime.datetime)) or type == 'f':
             resultado="'{}'".format(parametro).strip()
+            if kwargs.get('driver') == 'oracle':
+                resultado = datemgr.oracleDateString(parametro)
         elif  parametro.find("'") < 0 :
             resultado = "'{}'".format(parametro.strip())
         else:
@@ -133,9 +135,8 @@ def sqlFmt(parametro,**kwargs):
     else:
         return resultado
     
-def sqlClause(left,comparator,right=None,twarn=True,**kwargs):
-    """
-       Crea un operación logica con dos entradas (izquierda y derecha) con un operador de comparación
+def _sqlClause(left,comparator,right=None,twarn=True,**kwargs):
+    """Crea un operación logica con dos entradas (izquierda y derecha) con un operador de comparación
        
        kwargs procesados: (el resto pasa a sqlFmt)
        ltype tipo de formato  del elemento de la izquierda
@@ -170,13 +171,13 @@ def sqlClause(left,comparator,right=None,twarn=True,**kwargs):
     rwarntype=False
     operador = comparator.upper().strip()
     # argumento izquierda
-    izquierda,lwarntype = sqlFmt(left,side='L',warn=True,**kwargs)
+    izquierda,lwarntype = _sqlFmt(left,side='L',warn=True,**kwargs)
     
 
     # y el mas raro todavia del EXISTS
     if izquierda.strip() == '':
         if 'EXISTS' in operador:
-            return '{} {}'.format(operador,sqlFmt(right,type='q') )
+            return '{} {}'.format(operador,_sqlFmt(right,type='q') )
         else:
             print('El operador >{}< necesita un argumento izquierda'.format(operador))   
             return None
@@ -191,7 +192,7 @@ def sqlClause(left,comparator,right=None,twarn=True,**kwargs):
         if len(right) > 2 and operador in ('BETWEEN','NOT BETWEEN'):
             print('El operador >BETWEEN< necesita 2 valores sólo. Usando el 1 y último de la lista')
         rwarntype=True
-        listaD = [sqlFmt(entry,side='R',**kwargs) for entry in right ]
+        listaD = [_sqlFmt(entry,side='R',**kwargs) for entry in right ]
         if operador in ('IN','NOT IN'):
             derecha = ",".join(listaD)
             return '{} {} ({})'.format(izquierda,operador,derecha)
@@ -207,7 +208,7 @@ def sqlClause(left,comparator,right=None,twarn=True,**kwargs):
                 print('El operador >{}< necesita un argumento derecha'.format(operador))   
                 return None
 
-        derecha,rwarntype = sqlFmt(right,side='R',warn=True,**kwargs)
+        derecha,rwarntype = _sqlFmt(right,side='R',warn=True,**kwargs)
         #1610 print(derecha)
         # checkeo el caso raro del IS (NOT) (NULL/TRUE/FALSE) (realmente no es un operador, sino operador y valor)
     
@@ -241,7 +242,7 @@ def caseConstructor(name,datos=None,**kwargs):
                         }
                         ]
                 }
-sqlCase(datos,table='votos_provincia')
+    sqlCase(datos,table='votos_provincia')
 
     """
     # pequeña rutina de traduccion necesaria para el nombre de los formatos
@@ -263,11 +264,11 @@ sqlCase(datos,table='votos_provincia')
     for entry in enum:
 
         if 'default' in entry:
-            default=sqlFmt(entry['default'],type=fmt_res)
+            default=_sqlFmt(entry['default'],type=fmt_res)
             continue
         
-        condicion = sqlClause(elem,entry['condition'],entry['values'],rtype=fmt_val,twarn=False,ltable=table)
-        casetree.append('{} THEN {}'.format(condicion,sqlFmt(entry['result'],type=fmt_res)))
+        condicion = _sqlClause(elem,entry['condition'],entry['values'],rtype=fmt_val,twarn=False,ltable=table)
+        casetree.append('{} THEN {}'.format(condicion,_sqlFmt(entry['result'],type=fmt_res)))
     selector = ' WHEN '.join(casetree)
     #pprint(kwargs)
     if default != '':
@@ -275,7 +276,7 @@ sqlCase(datos,table='votos_provincia')
     clausula = 'CASE WHEN {} {} END AS {}'.format(selector,default,name)
     return clausula
 
-def selConstructor(kwargs):
+def _selConstructor(**kwargs):
     statement = 'SELECT '
     definicion = 'fields'
     if definicion not in kwargs:
@@ -309,8 +310,7 @@ def selConstructor(kwargs):
       ind += 1
     return statement
 
-def fromConstructor(kwargs):
-    
+def _fromConstructor(**kwargs):
     statement = 'FROM '
     definicion = 'tables'
     if definicion not in kwargs:
@@ -335,8 +335,7 @@ def fromConstructor(kwargs):
     statement += ', '.join(texto)
     return statement
     
-def whereConstructor(kwargs):
-  
+def _whereConstructor(kwargs):
     statement = 'WHERE '
     definicion = 'where'
     complemento = 'base_filter'
@@ -359,7 +358,7 @@ def whereConstructor(kwargs):
     else:
       return statement + ' ' + kstatement + ' '
       
-def withConstructor(kwargs):
+def _withConstructor(**kwargs):
     statement = 'WITH '
     definicion = 'with'
     if definicion not in kwargs:
@@ -377,7 +376,7 @@ def withConstructor(kwargs):
         
     statement += ', '.join(texto)
  
-def groupConstructor(kwargs):
+def _groupConstructor(**kwargs):
     statement = 'GROUP BY '
     definicion = 'group'
  
@@ -394,7 +393,7 @@ def groupConstructor(kwargs):
       # en el caso de las categorias se pasa el AS al group y eso no funciona y hay que quitarlo GENERADOR
       #FIXME no entiendo porque necesito renormalizar la cadena
       nelemento = norm2String(elemento)  
-      pos = nelemento.find(' AS ')
+      pos = nelemento.upper().find(' AS ')
       if pos > 0:
           kelemento = nelemento[0:pos]
       else:
@@ -413,7 +412,7 @@ def groupConstructor(kwargs):
     else:
        return ''
 
-def orderConstructor(kwargs):
+def _orderConstructor(**kwargs):
     statement = 'ORDER BY '
     definicion = 'order'
     if definicion not in kwargs:
@@ -426,7 +425,7 @@ def orderConstructor(kwargs):
     texto = []
     for kelem in entrada:
       elemento,adfijo=slicer(kelem)
-      texto.append('{} {}'.format(sqlFmt(elemento,side='l'),adfijo.strip()))
+      texto.append('{} {}'.format(_sqlFmt(elemento,side='l'),adfijo.strip()))
     statement += ', '.join(texto)
     return statement
     
@@ -447,7 +446,7 @@ def searchConstructor(definicion,kwargs):
         rtype=None
         #izquierda,comparador,derecha=slicer(kelem,3,None)   
         izquierda,comparador,derecha,fmt=slicer(kelem,4,None)   
-        gargs=getFmtArgs(kwargs)
+        gargs=_getFmtArgs(**kwargs)
         if fmt:
             gargs['rtype']=fmt
 
@@ -459,12 +458,11 @@ def searchConstructor(definicion,kwargs):
             args = deepcopy(derecha) # no quiero efectos secundarios
             derecha='({})'.format(searchConstructor(definicion,args)) 
             gargs['rtype']='q'  
-        texto.append(sqlClause(izquierda,comparador,derecha,**gargs))
+        texto.append(_sqlClause(izquierda,comparador,derecha,**gargs))
     statement = ' AND '.join(texto)
     return statement
   
-def joinConstructor(kwargs):
-    
+def _joinConstructor(**kwargs):
     definicion = 'join'
     if definicion not in kwargs:
         return ''
@@ -503,16 +501,16 @@ def queryConstructor(**kwargs):
        group
        having
        order
+       driver
     '''
-
 	 
-    with_statement = withConstructor(kwargs)+' '
-    select_statement = selConstructor(kwargs)+' '
-    from_statement = fromConstructor(kwargs)+' '
-    join_statement = joinConstructor(kwargs)+' '
-    where_statement = whereConstructor(kwargs)+' '
-    group_statement = groupConstructor(kwargs)+' '
-    order_statement = orderConstructor(kwargs)+' '
+    with_statement = _withConstructor(**kwargs)+' '
+    select_statement = _selConstructor(**kwargs)+' '
+    from_statement = _fromConstructor(**kwargs)+' '
+    join_statement = _joinConstructor(**kwargs)+' '
+    where_statement = _whereConstructor(kwargs)+' '
+    group_statement = _groupConstructor(**kwargs)+' '
+    order_statement = _orderConstructor(**kwargs)+' '
     
     '''
     with_statement

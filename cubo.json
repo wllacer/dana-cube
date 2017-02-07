@@ -236,7 +236,7 @@
         "vista": {
             "elemento": "votes_presential",
             "agregado": "sum",
-            "row": 6,
+            "row": 5,
             "col": 1
         }
     },

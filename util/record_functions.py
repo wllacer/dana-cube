@@ -316,7 +316,7 @@ def ker_trans(vector,regla):
       if isinstance(regla['d'],(int,long)):
         k_salida = (regla['d'],1.0)
       else :
-        k_salida = elem['d']
+        k_salida = regla['d']
 
       a_idx = k_salida[0]
       a_qty = de_qty * k_salida[1]

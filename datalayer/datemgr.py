@@ -268,3 +268,22 @@ def genTrimestreCode(fieldname,driver='QSQLITE'):
                 ]
             }
     return trimestre
+
+def oracleDateString(pcadena):
+    import re
+    delimitadores = ('YYYY','MM','DD','HH24','MI','SS')
+    cadena = '{}'.format(pcadena)
+    desguace = re.split('[ \-:]+',cadena)
+    salida = "TO_DATE('{}','".format(cadena)
+    for k in range(len(desguace)):
+        if k == 0:
+            salida = salida + delimitadores[k]
+        elif k < 3:
+            salida = '-'.join((salida,delimitadores[k]))
+        elif k == 3:
+            salida = ' '.join((salida,delimitadores[k]))
+        else:
+            salida = ':'.join((salida,delimitadores[k]))
+    return salida + "')"
+        
+                

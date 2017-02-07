@@ -38,7 +38,7 @@ from pprint import *
 
 import time
 
-from util.jsonmgr import dump_structure
+from util.jsonmgr import dump_structure,dump_json
 try:
     import xlsxwriter
     XLSOUTPUT = True
@@ -102,7 +102,7 @@ class Cubo:
         self.lista_funciones = []
         self.lista_campos = []
         
-        self.dbdriver = self.definition['connect']['driver']
+        self.dbdriver = self.db.dialect.name #self.definition['connect']['driver']
         
         self.__setGuias()
         
@@ -143,6 +143,18 @@ class Cubo:
             lista_campos = self.lista_campos [ : ]
         return lista_campos
 
+    def setDateFilter(self):
+        sqlClause = []
+        for item in  self.definition.get('date filter',[]) :
+            clase_intervalo = CLASES_INTERVALO.index(item['date class'])
+            tipo_intervalo = TIPOS_INTERVALO.index(item['date range'])
+            periodos = int(item['date period'])
+                
+            if item['date class']:
+                    intervalo = dateRange(clase_intervalo,tipo_intervalo,periodo=periodos,fmt=item.get('date format'))
+                    sqlClause.append((item['elem'],'BETWEEN',intervalo,'f'))
+        return sqlClause
+    
     def __setGuidesSqlStatement(self, entrada, fields):
         '''
           entrada es definition[guides][i][prod][j]: Contiene array
@@ -197,7 +209,8 @@ class Cubo:
           sqlDef['tables'] = self.definition['table']
           if len(self.definition['base filter'].strip()) > 0:
              sqlDef['base filter']=self.definition['base_filter']
-             
+          if self.definition.get('date filter'):
+             sqlDef['where'] = self.setDateFilter()
           sqlDef['fields'] = norm2List(entrada['elem'])
           
         
@@ -205,6 +218,7 @@ class Cubo:
         sqlDef['order'] = [ str(x + 1) for x in range(code_fld)]
         
         sqlDef['select_modifier']='DISTINCT'
+        sqlDef['driver'] = self.dbdriver
         sqlString = queryConstructor(**sqlDef)
         return sqlString, code_fld,desc_fld 
     
@@ -214,9 +228,14 @@ class Cubo:
         sqlDef['tables'] = self.definition['table']
         if len(self.definition['base filter'].strip()) > 0:
            sqlDef['base_filter']=self.definition['base filter']
+        
+        if self.definition.get('date filter'):
+             sqlDef['where'] = self.setDateFilter()
+
         sqlDef['fields'] = [[entrada['base_date'],'max'],
                             [entrada['base_date'],'min'],
                             ]
+        sqlDef['driver'] = self.dbdriver
         return queryConstructor(**sqlDef) 
 
     def __setGuias(self):
@@ -518,6 +537,9 @@ class Vista:
             self.__setDataMatrix()
             
 
+    def  __setDateFilter(self):
+        return self.cubo.setDateFilter()
+        
     def  __setDataMatrix(self):
          #TODO clarificar el codigo
          #REFINE solo esperamos un campo de datos. Hay que generalizarlo
@@ -528,24 +550,16 @@ class Vista:
         #sqlDef['select_modifier']=None
         sqlDef['base_filter']=mergeString(self.filtro,self.cubo.definition['base filter'],'AND')
         sqlDef['where'] = []
-        for item in  self.cubo.definition.get('date filter',[]) :
-            for entry in ('date class','date range','date period'): #necesito numerizarlo
-                item[entry] = int(item[entry])
-                
-            if item['date class'] != 0:
-                    intervalo = dateRange(item['date class'],item['date range'],periodo=item['date period'])
-                    sqlDef['where'].append((item['elem'],'BETWEEN',intervalo,'f'))
-
-            
+        
+        sqlDef['where'] += self.__setDateFilter()
+        
         #sqlDef['having']=None
         #sqlDef['order']=None
         
         for i in range(0,self.dim_row):
-            # el group by en las categorias necesita codigo especial
-            if self.cubo.lista_guias[self.row_id]['rules'][i]['class'] == 'c':
-                group_row = [self.cubo.lista_guias[self.row_id]['rules'][i]['name'],]
-            else:
-                group_row = self.cubo.lista_guias[self.row_id]['rules'][i]['elem']
+            # el group by en las categorias ya no necesita
+            group_row = self.cubo.lista_guias[self.row_id]['rules'][i]['elem']
+
             for j in range(0,self.dim_col):
 
                 sqlDef['fields']= self.cubo.lista_guias[self.row_id]['rules'][i]['elem'] + \
@@ -577,13 +591,10 @@ class Vista:
                            join_entry['join_clause'].append(entrada)
                        sqlDef['join'].append(join_entry)
 
-                # esta desviacion es por las categorias
-                if self.cubo.lista_guias[self.col_id]['rules'][j]['class'] == 'c':
-                    group_col = [self.cubo.lista_guias[self.col_id]['rules'][j]['name'],]
-                else:
-                    group_col = self.cubo.lista_guias[self.col_id]['rules'][j]['elem']
-                sqlDef['group']= group_row + group_col
+                group_col = self.cubo.lista_guias[self.col_id]['rules'][j]['elem']
 
+                sqlDef['group']= group_row + group_col
+                sqlDef['driver'] = self.cubo.dbdriver
                 sqlstring=queryConstructor(**sqlDef)
                 
                 #
@@ -625,14 +636,9 @@ class Vista:
             sqlDef['base_filter']=mergeString(self.filtro,self.cubo.definition['base filter'],'AND')
 
             sqlDef['where'] = []
-            for item in  self.cubo.definition.get('date filter',[]) :
-                if item['date class'] != 0:
-                        for entry in ('date class','date range','date period'): #necesito numerizarlo
-                            item[entry] = int(item[entry])
 
-                        intervalo = dateRange(item['date class'],item['date range'],periodo=item['date period'])
-                        sqlDef['where'].append((item['elem'],'BETWEEN',intervalo,'f'))
-
+            sqlDef['where'] += self.__setDateFilter()
+        
             sqlDef['join']=[]
             #TODO claro candidato a ser incluido en una funcion
             if 'join' in self.cubo.lista_guias[self.col_id]['rules'][j]:
@@ -651,6 +657,7 @@ class Vista:
             sqlDef['group']= group_col
             #sqlDef['having']=None
             sqlDef['order'] = [ str(x + 1) for x in range(len(sqlDef['fields']) -1)]
+            sqlDef['driver'] = self.cubo.dbdriver
             sqlstring=queryConstructor(**sqlDef)
             
             #
@@ -886,17 +893,10 @@ class Vista:
 
         
     def fmtHeader(self,dimension, separador='\n', sparse=False): #, rango= None,  max_level=None):
-        '''
-           honradamente, creo que esta obsoleto
-           TODO documentar
-           TODO en el caso de fechas debe formatearse a algo presentable
-           TODO some codepaths are not executed by now. Rango y max_level NO SE USAN
-        '''
-        #print(dimension, separador, sparse, rango,  max_level)
-
         """
            begin new code
            (funcionalidad abreviada)
+           Probablemente obsoleto
         """
         if dimension == 'row':
             return self.row_hdr_idx.getHeader('row',separador,sparse)
@@ -906,6 +906,7 @@ class Vista:
             print('Piden formatear la cabecera >{}< no implementada'.format(dimension))
             return None
     
+    
     def __exportHeaders(self,tipo,header_tree,dim,sparse,content):
         if tipo.lower() == 'list':
             tabla = list()
@@ -914,6 +915,7 @@ class Vista:
         else:
             return None
         ind = 0
+        
         for elem in header_tree.traverse(mode=1,output=1):
             entrada = ['' for k in range(dim) ]
             if content == 'branch' and elem.isLeaf() and dim > 1:
@@ -921,13 +923,18 @@ class Vista:
             if content == 'leaf' and not elem.isLeaf():
                 continue
             
-            desc = elem.getFullDesc() 
+            desc = elem.getFullDesc()
+            depth = elem.depth()
+            
             if sparse:
-                entrada[elem.depth() -1] = desc[-1].replace(':','-')
+                #entrada[depth -1] = desc[-1].replace(':','-')
+                entrada[depth -1] = desc[-1].replace(':','-')
             else:
-                for k in range(desc):
+                for k in range(len(desc)):
                     entrada[k] = desc[k].replace(':','-')
-                    
+            
+            #print(desc,depth,len(desc),entrada)
+            
             if content == 'branch' and dim > 1:
                 del entrada[dim -1 ]
             elif content == 'leaf' :
@@ -935,6 +942,7 @@ class Vista:
                     del entrada[0]
                     
             entrada.append(elem)
+            
             if tipo.lower() == 'list':
                 entrada.append(elem.ord)
                 tabla.append(entrada)
@@ -949,6 +957,8 @@ class Vista:
 
     def getExportDataArray(self,parms,selArea=None):
         """
+            Parece obsoleta ... deberia adaptarse a lo de la de abajo (sin array)
+            
             *parms['file']
             *parms['type'] = ('csv','xls','json','html')
             *parms['csvProp']['fldSep'] 
@@ -1008,6 +1018,7 @@ class Vista:
                 ctable[i + dim_col][j + dim_row] = num2text(table[x][y]) if table[x][y] else ''  #TODO aqui es el sito de formatear numeros
         return ctable,dim_row,dim_col
 
+    
     def getExportData(self,parms,selArea=None):
         """
             *parms['file']
@@ -1016,64 +1027,78 @@ class Vista:
             *parms['csvProp']['decChar']
             *parms['csvProp']['txtSep'] 
             *parms['NumFormat'] 
-            parms['filter']['scope'] = ('all','visible,'select') 
-            *parms['filter']['content'] = ('full','branch','leaf')
-            parms['filter']['totals'] 
-            *parms['filter']['horSparse'] 
-            *parms['filter']['verSparse']
+            parms['filter']['scope'] = ('all') #,'visible,'select') 
+            *parms['filter']['row/col']['content'] = ('full','branch','leaf')
+            parms['filter']['row/col']['totals'] 
+            *parms['filter']['row/col']['Sparse'] 
+            
 
         """
         scope = parms['filter']['scope']
-        contentFilter = parms['filter']['content']
-        row_sparse = parms['filter']['horSparse']
-        col_sparse = parms['filter']['verSparse']
+        contentFilterR = parms['filter']['row']['content']
+        contentFilterC = parms['filter']['col']['content']
+        totalR = parms['filter']['row']['totals'] 
+        totalC = parms['filter']['col']['totals'] 
+        row_sparse = parms['filter']['row']['Sparse']
+        col_sparse = parms['filter']['col']['Sparse']
         translated = parms['NumFormat']
         numFmt = parms['NumFormat']
         decChar = parms['csvProp']['decChar']
+ 
+        # filterCumHeader(self,total=True,branch=True,leaf=True,separador='\n',sparse=True):
+        if contentFilterR == 'full':
+            branchR = True
+            leafR = True
+        elif contentFilterR == 'branch' and self.dim_row > 1:
+            branchR = True
+            leafR = False
+        else: #if contentFilter == 'leaf':
+            branchR = False
+            leafR = True
 
-        
-        ind = 1
-                
-        dim_row = self.dim_row if not self.totalizado else self.dim_row + 1
-        dim_col = self.dim_col
+        if contentFilterC == 'full':
+            branchC = True
+            leafC = True
+        elif contentFilterC == 'branch' and self.dim_col > 1:
+            branchC = True
+            leafC = False
+        else: #if contentFilter == 'leaf':
+            branchC = False
+            leafC = True
             
-        row_hdr = self.__exportHeaders('List',self.row_hdr_idx,dim_row,row_sparse,contentFilter)
-        col_hdr = self.__exportHeaders('Dict',self.col_hdr_idx,dim_col,col_sparse,contentFilter)
+        rows=self.row_hdr_idx.filterCumHeader(sparse=row_sparse,branch=branchR,leaf=leafR,total=totalR)
+        cols=self.col_hdr_idx.filterCumHeader(sparse=col_sparse,branch=branchC,leaf=leafC,total=totalC)
         
-        num_rows = len(row_hdr)
-        num_cols = len(col_hdr)
-        
-        dim_row = len(row_hdr[0]) -2
-        dim_col = len(col_hdr[next(iter(col_hdr))]) -2 #este horror es para obtener un elemento al azar 
+        dim_row = max([ len(item[1]) for item in rows])
+        dim_col = max([ len(item[1]) for item in cols])
+
+        num_rows = len(rows)
+        num_cols = len(cols)
         
         ctable = [ ['' for k in range(num_cols + dim_row)] 
                                 for j in range(num_rows +dim_col) ]
 
-        for item in col_hdr:
-            entrada = col_hdr[item]
-            i = entrada[-1]
-            for j,colItem in enumerate(entrada):
-                if j >= dim_col:
-                    break
-                ctable[j][i + dim_row]=colItem
+        columns = [item[0].ord for item in cols ]
+        #def extract(self,filter,crossFilter):
+            #result = []
+            #columns = [item[0].ord for item in crossFilter ]
+            #for item in filter:
+                #payload = item.getPayload()
+                #result.append([payload[k] for k in columns])
+            #return result
+        
+        for ind in range(dim_col):
+            ctable[ind][dim_row:]=[item[1][ind] if ind <len(item[1]) else '' for item in cols  ]
+        ind = dim_col
+        for entrada in rows:
+            for k,valor in enumerate(entrada[1]): #cabeceras
+                ctable[ind][k]=valor
+            payload = entrada[0].getPayload()
+            ctable[ind][dim_row:] = [  num2text(payload[k]) for k in columns]
                 
-        for i in range(num_rows):
-            for j,rowItem in enumerate(row_hdr[i]):
-                if j >= dim_row:
-                    break
-                ctable[i + dim_col][j]=rowItem
-                    
-        for i,item  in enumerate(row_hdr):
-            datos = item[-2].getPayload()
-            if scope == 'all': #no necesito parafernalia
-                ctable[i + dim_col][dim_row:] = [num2text(elem) for elem in datos ]
-            else:
-                for k in range(len(datos)):
-                    donde = col_hdr.get(k)
-                    if donde:
-                        ctable[i + dim_col][donde[-1] + dim_row] = num2text(datos[k])
+            ind +=1
         return ctable,dim_row,dim_col
-
+    
     def export(self,parms,selArea=None):
         file = parms['file']
         type = parms['type']
@@ -1090,10 +1115,12 @@ class Vista:
                 return '{0}{1}{0}'.format(txtSep,cadena)
             else:
                 return cadena
+            
         if parms.get('source') == 'array':
             ctable,dim_row,dim_col = self.getExportDataArray(parms,selArea=None)
         else:
             ctable,dim_row,dim_col = self.getExportData(parms,selArea=None)
+            
         if type == 'csv':
             with open(parms['file'],'w') as f:
                 for row in ctable:
@@ -1101,7 +1128,7 @@ class Vista:
                     f.write(fldSep.join(csvrow) + '\n')
             f.closed
         elif type == 'json':
-            dump_structure(ctable,parms['file'])
+            dump_json(ctable,parms['file'])
         elif type == 'html':
             fldSep = '</td><td>'
             hdrSep = '</th><th>'

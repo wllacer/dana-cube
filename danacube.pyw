@@ -8,11 +8,11 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from pprint import pprint
-
+import argparse
 
 from PyQt5.QtCore import Qt,QSortFilterProxyModel
 from PyQt5.QtGui import QCursor
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView , QTabWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView , QTabWidget, QSplitter
 
 from core import Cubo,Vista, mergeString
 from dialogs import *
@@ -62,13 +62,30 @@ from util.treestate import *
             #model.endResetModel()
     #return new_function
 
+def generaArgParser():
+    parser = argparse.ArgumentParser(description='Cubo de datos')
+    parser.add_argument('--cubeFile','--cubefile','-c',
+                        nargs='?',
+                        default='cubo.json',
+                        help='Nombre del fichero de configuración del cubo actual')    
+    security_parser = parser.add_mutually_exclusive_group(required=False)
+    security_parser.add_argument('--secure','-s',dest='secure', action='store_true',
+                                 help='Solicita la clave de las conexiones de B.D.')
+    security_parser.add_argument('--no-secure','-ns', dest='secure', action='store_false')
+    parser.set_defaults(secure=False)
+
+    return parser
 
 class DanaCubeWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self,args):
         super(DanaCubeWindow, self).__init__()
         #
         # movidas aqui por colisiones con checkChanges
         #
+
+        self.cubeFile = args.cubeFile
+        self.secure = args.secure
+
         self.filterActions = dict()
         self.dateRangeActions = dict()
         self.restorator = None
@@ -182,7 +199,7 @@ class DanaCubeWindow(QMainWindow):
 
     def selectCube(self,inicial=False):
         #FIXME casi funciona ... vuelve a leer el fichero cada vez. NO es especialmente malo
-        my_cubos = load_cubo()
+        my_cubos = load_cubo(self.cubeFile)
         viewData =dict()
         defaultViewData = None
         if 'default' in my_cubos and inicial:
@@ -203,6 +220,8 @@ class DanaCubeWindow(QMainWindow):
                 exit()
             else:
                 return None
+        if not inicial:
+            self.cubo.db.close()
         self.setupCubo(my_cubos,self.cubeName)
         if not inicial:
             self.reinitialize()
@@ -220,6 +239,10 @@ class DanaCubeWindow(QMainWindow):
 
         
     def setupCubo(self,my_cubos,seleccion):
+        #ALPHA aqui es donde debo implementar el login seguro
+        #
+        if self.secure:
+            self.editConnection(my_cubos[seleccion],seleccion)
         self.cubo = Cubo(my_cubos[seleccion])
         self.cubo.nombre = seleccion #FIXME es que no tengo sitio en Cubo para definirlo
         self.cubo.recordStructure = self.summaryGuia()
@@ -275,9 +298,9 @@ class DanaCubeWindow(QMainWindow):
             }
         if entrada.filtroCampos != '':  #NO los rangos de fecha que son por naturaleza variables
             datos_defecto["vista"]["filter"] = entrada.filtroCampos
-        my_cubos = load_cubo()
+        my_cubos = load_cubo(self.cubeFile,secure=True)
         my_cubos['default'] = datos_defecto
-        dump_structure(my_cubos)
+        dump_structure(my_cubos,self.cubeFile)
         
         
     def requestVista(self,vista=None):
@@ -343,7 +366,7 @@ class DanaCubeWindow(QMainWindow):
     def dropRange(self):
         self.tabulatura.currentWidget().tree.dropRange()
     def saveRange(self):
-        self.tabulatura.currentWidget().tree.saveRange
+        self.tabulatura.currentWidget().tree.saveRange()
 
     def exportData(self):
         self.tabulatura.currentWidget().tree.export()
@@ -356,20 +379,87 @@ class DanaCubeWindow(QMainWindow):
        
     def dispatch(self,FcnIdx):
         self.tabulatura.currentWidget().dispatch(FcnIdx)
+    
+    
+    def editConnection(self,configData,nombre=None): 
         
+        from util.record_functions import dict2row, row2dict
+        from datalayer.conn_dialogs import ConnectionSheetDlg
+        
+        attr_list =  ('driver','dbname','dbhost','dbuser','dbpass','dbport','debug')
+        if nombre is None:
+            datos = [None for k in range(len(attr_list) +1) ]
+        else:
+            datos = [nombre, ] + dict2row(configData['connect'],attr_list)
+        #contexto
+        context = (
+                ('Nombre',
+                    QLineEdit,
+                    {'setReadOnly':True},
+                    None,
+                ),
+                # driver
+                ("Driver ",
+                    QLineEdit,
+                    {'setReadOnly':True},
+                    None,
+                ),
+                ("DataBase Name",
+                    QLineEdit,
+                    None,
+                    None,
+                ),
+                ("Host",
+                    QLineEdit,
+                    None,
+                    None,
+                ),
+                ("User",
+                    QLineEdit,
+                    None,
+                    None,
+                ),
+                ("Password",
+                    QLineEdit,
+                    {'setEchoMode':QLineEdit.Password},
+                    None,
+                ),
+                ("Port",
+                    QLineEdit,
+                    None,
+                    None,
+                ),
+                ("Debug",
+                    QCheckBox,
+                    None,
+                    None,
+                )
+                
+                )
+        parmDialog = ConnectionSheetDlg('Edite la conexion',context,datos, self)
+        if parmDialog.exec_():
+            #TODO deberia verificar que se han cambiado los datos
+            configData['connect'] = row2dict(datos[1:],attr_list)
+            return datos[0]
+     
+
 class TabMgr(QWidget):
     def __init__(self,parent,**kwargs):
         super(TabMgr,self).__init__()
+        split = QSplitter(Qt.Vertical,self)
         lay = QGridLayout()
         self.setLayout(lay)
+        
         self.tree = DanaCube(parent,**kwargs)
         self.chart = SimpleChart()
         self.chartType = None #'barh'
         self.lastItemUsed = None
         self.tree.clicked.connect(self.drawChart)
         
-        lay.addWidget(self.tree,0,0,1,1)
-        lay.addWidget(self.chart,0,1,1,4)
+        split.addWidget(self.tree)
+        split.addWidget(self.chart)
+        
+        lay.addWidget(split,0,0)
 
         self.drawChart(None)
     
@@ -654,7 +744,7 @@ class DanaCube(QTreeView):
               self.requestFunctionParms(a_spec,a_data)
               
         elif entry[1] in 'kwargs':
-              a_spec = [ [argumento,None,None] for argumento in USER_KWARGS_LIST[entry[0]]]
+              a_spec = [ [argumento,None,None] for argumento in KWARGS_LIST[entry[0]]]
               a_data = [ None for k in range(len(a_desc))]
               self.requestFunctionParms(a_spec,a_data)            
               
@@ -695,7 +785,7 @@ class DanaCube(QTreeView):
         #self.areFiltered = True
         #self.cubo.recordStructure = self.summaryGuia()
         
-        filterDlg = filterDialog(self.cubo.recordStructure,self)
+        filterDlg = filterDialog(self.cubo.recordStructure,self,driver=self.cubo.dbdriver)
         if self.filterValues :
             for k in range(len(self.filterValues)):
                 filterDlg.sheet.set(k,2,self.filterValues[k][0])
@@ -726,65 +816,78 @@ class DanaCube(QTreeView):
     
     def saveFilter(self):
         nuevo_filtro = mergeString(self.filtroCampos,self.cubo.definition['base filter'],'AND')
-        my_cubos = load_cubo()
+        my_cubos = load_cubo(self.parent.cubeFile)
         my_cubos[self.cubo.nombre]['base filter'] = nuevo_filtro
-        dump_structure(my_cubos)
+        dump_structure(my_cubos,self.parent.cubeFile,secure=True)
         self.parent.filterActions['drop'].setEnabled(False)
         self.parent.filterActions['save'].setEnabled(False)
 
         
     def setRange(self):
-        descriptores = [ item['name'] for item in self.cubo.recordStructure if item['format'] == 'fecha' ]
-        if len(descriptores) == 0:
+        #FIXME ¿deberia incluir los filtros incluidos en la definicion ?
+        camposFecha= [ (item['name'],item['format']) for item in self.cubo.recordStructure if item['format'] in ('fecha','fechahora') ]
+        if len(camposFecha) == 0:
             #TODO que hago con Sqlite
             return
+        
+        descriptores = [ item[0] for item in camposFecha ]
         form = dateFilterDlg(descriptores)
         if form.exec_():
             sqlGrp = []
-            for entry in form.result:
+            if 'date filter' in self.cubo.definition:
+                pass
+            else:
+                self.cubo.definition['date filter'] = []
+            for k,entry in enumerate(form.result):
                 if entry[1] != 0:
-                    intervalo = dateRange(entry[1],entry[2],periodo=entry[3])
+                    self.cubo.definition['date filter'].append({
+                                                'elem':entry[0],
+                                                'date class': CLASES_INTERVALO[entry[1]],
+                                                'date range': TIPOS_INTERVALO[entry[2]],
+                                                'date period': entry[3],
+                                                'date start': None,
+                                                'date end': None,
+                                                'date format': None
+                                                })
+                    intervalo = dateRange(entry[1],entry[2],periodo=entry[3],fmt=camposFecha[k][1])
                     sqlGrp.append((entry[0],'BETWEEN',intervalo,'f'))
             if len(sqlGrp) > 0:
-                self.filtroFechas = searchConstructor('where',{'where':sqlGrp})
+                self.filtroFechas = searchConstructor('where',{'where':sqlGrp,'driver':self.cubo.dbdriver})
                 self.filtro = mergeString(self.filtroCampos,self.filtroFechas,'AND')
                 self.cargaVista(self.vista.row_id,self.vista.col_id,
                             self.vista.agregado,self.vista.campo,
                             self.vista.totalizado,self.vista.stats) #__WIP__ evidentemente aqui faltan todos los parametros
 
-                self.parent.dateRangeActions['drop'].setEnabled(False)
-                #self.parent.dateRangeActions['save'].setEnabled(False)
+                self.parent.dateRangeActions['drop'].setEnabled(True)
+                self.parent.dateRangeActions['save'].setEnabled(True)
             
     def dropRange(self):
+        my_cubos = load_cubo(self.parent.cubeFile)
+        if my_cubos[self.cubo.nombre].get('date filter'):
+            self.cubo.definition['date filter'] = my_cubos[self.cubo.nombre]['date filter']  
+        else:
+            del self.cubo.definition['date filter']
         self.filtroFechas=''
         self.filtro = mergeString(self.filtroCampos,self.filtroFechas,'AND')
         self.cargaVista(self.vista.row_id,self.vista.col_id,
                         self.vista.agregado,self.vista.campo,
                         self.vista.totalizado,self.vista.stats) #__WIP__ evidentemente aqui     def saveFilter(self):
         self.parent.dateRangeActions['drop'].setEnabled(False)
-        #self.parent.dateRangeActions['save'].setEnabled(False)
+        self.parent.dateRangeActions['save'].setEnabled(False)
 
     def saveRange(self):
-        pass
+        my_cubos = load_cubo(self.parent.cubeFile)
+        my_cubos[self.cubo.nombre]['date filter'] = self.cubo.definition['date filter']
+        dump_structure(my_cubos,self.parent.cubeFile,secure=True)
+        self.parent.filterActions['drop'].setEnabled(False)
+        self.parent.filterActions['save'].setEnabled(False)
+
     
     
     def export(self):
-        #TODO 
-        #rowHidden = [ None  for k in range (self.baseModel.count()) ]
-        #def getHiddenRows(baseElem,rowHidden):
-            #for k,item in enumerate(baseElem.childItems) :                
-        #getHiddenRows(self.baseModel.rootItem,rowHidden)
-        #print(rowHidden)
+        #TODO poder hacer una seleccion de area
         parms = eW.exportWizard()
         selArea = dict()
-        #TEMPORAL init
-        #if parms['scope']['visible']:
-            ## probar con self.isColumnHidden(x)
-            #selArea['hiddenColumn'] = [ self.header().isSectionHidden(k) for k in range(self.header().count())]
-            ## is self.isRowHidden(x,parent)
-            #selArea['hiddenRow'] = []
-            #del selArea['hiddenColumn'][0] #no me interesa el estado de los titulos
-        #TEMPORAL end
         if not parms.get('file'):
             return
         resultado = self.vista.export(parms,selArea)
@@ -845,14 +948,18 @@ class DanaCube(QTreeView):
         
 if __name__ == '__main__':
     import sys
+
     # con utf-8, no lo recomiendan pero me funciona
     #print(sys,version_info)
     if sys.version_info[0] < 3:
         reload(sys)
         sys.setdefaultencoding('utf-8')
+    
+    parser = generaArgParser()
+    args = parser.parse_args()
 
     app = QApplication(sys.argv)
-    window = DanaCubeWindow()
+    window = DanaCubeWindow(args)
     window.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
     window.show()
     sys.exit(app.exec_())

@@ -493,8 +493,8 @@ def mainNF():
 
      
     #title = 'Hoja de seleccion de propiedades'
-    #ctexts = (u"C's", u'EH Bildu', u'EAJ-PNV', u'PP', u'PSOE', u'PODEMOS', u'GBAI', u'CCa-PNC', u'IU-UPeC', u'M\xc9S', u'DL', u'PODEMOS-COMPROM\xcdS', u'N\xd3S', u'EN COM\xda', u'PODEMOS-En Marea-ANOVA-EU', u'ERC-CATSI')
-    #context=[[ctexts[k],None] for k in range(len(ctexts))]
+    ctexts = (u"C's", u'EH Bildu', u'EAJ-PNV', u'PP', u'PSOE', u'PODEMOS', u'GBAI', u'CCa-PNC', u'IU-UPeC', u'M\xc9S', u'DL', u'PODEMOS-COMPROM\xcdS', u'N\xd3S', u'EN COM\xda', u'PODEMOS-En Marea-ANOVA-EU', u'ERC-CATSI')
+    context=[[ctexts[k],None] for k in range(len(ctexts))]
     #context[3][1]='oleole'
     #context[4][1]=5
     #form = propertySheetDlg(context)

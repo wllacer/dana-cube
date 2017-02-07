@@ -102,6 +102,18 @@ class TreeItem(object):
         else:
             return False
         
+    def isTotal(self):
+        if self.key == '//':
+            return True
+        else:
+            return False
+        
+    def isBranch(self):
+        if len(self.childItems) != 0 and not self.isTotal():
+            return True
+        else:
+            return False
+        
     def isLeaf(self):
         if len(self.childItems) == 0:
             return True
@@ -309,7 +321,7 @@ class TreeDict(object):
         if node.parentItem != None :
             pass
         else:
-           node.parentItem = self.searchNode(key)
+           node.parentItem = self.searchNode(node.key) #FIXME no tengo claro que esto sea lo que quiero
            if node.parentItem == None:
                node.parentItem = self.rootItem
         self.__add(node)
@@ -407,6 +419,27 @@ class TreeDict(object):
             return cabecera
         else:
             return ['',] + cabecera
+
+    def filterCumHeader(self,total=True,branch=True,leaf=True,separador='\n',sparse=True):
+        lista = []
+        for item in self.traverse(output = _ITEM):
+            if total and item.isTotal():
+                pass
+            elif branch and item.isBranch():
+                pass
+            elif leaf and item.isLeaf():
+                pass
+            else:
+                continue
+            
+            clave = item.getFullDesc()
+            if sparse:
+                for k in range(len(clave) -1):
+                    clave[k]=''
+            lista.append((item,clave,))
+        return lista
+            
+        
 
 if __name__ == '__main__':
      item=TreeItem('alfa')

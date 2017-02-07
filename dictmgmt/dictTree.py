@@ -20,6 +20,8 @@ from PyQt5.QtWidgets import QMessageBox
           #QPushButton, QMessageBox, \
           #QTableView
 
+from models import TreeModel
+
 from datalayer.access_layer import *
 from datalayer.query_constructor import queryFormat
 #from cubebrowse import *

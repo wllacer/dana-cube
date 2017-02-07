@@ -126,7 +126,7 @@ GUIDE_CLASS = (
     ('d','fecha',),
     );
 LOGICAL_OPERATOR = ('in','between','like','=','!=','<','>','>=','<=','not in','not between','not like','is null','is not null')
-ENUM_FORMAT = ( ('tXT','texto'),('num','numerico'),('date','fecha'))
+ENUM_FORMAT = ( ('txt','texto'),('num','numerico'),('date','fecha'))
 TIPO_FECHA = ('Ymd', 'Ym','Ymw','YWw') 
 FECHADOR = (('Y','Año'),('C','Cuatrimestre'),('Q','Trimestre'),('m','Mes'),('q','Quincena'),('W','Semana del Año'),('w','semana'),('d','Día'))
 
