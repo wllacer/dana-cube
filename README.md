@@ -71,7 +71,8 @@ We provide a tool to manage these definitions, and another to generate directly 
 The tool is programmed in python3 + PyQt5, but we test it also under python2
 
 ## Sample Data
-We will provide a test database (with results of the Spanish General Election in 2015) for several supported databases, with minimal changes between them (_still not_ in the repositories_)
+We will provide a test database (with results of the Spanish General Election in 2015) for several supported databases, with minimal changes between them.
+You will find both a _sample_data.zip_ and a _sample_data.tar.gz_ file in the root directory of the project, there you'll find both a cube definition file and a DB dump for the samples
 
 As a matter of fact, the tool grew analizing those data
 
@@ -102,6 +103,7 @@ Qt, PyQt -and the additional libraries-, licensing might impose other restrictio
 
 ## DANACUBE enters __ALPHA__
 
+__Update 2017/02/07__  New alpha release. With sample data. The __danacube.pyw__ (the basic tool) can be seen as pretty complete and (hope) stable
 __Update 2017/02/01__. New alpha release
 
 With today's release (version 0.10), we enter alpha. What does it means?
