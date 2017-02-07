@@ -8,6 +8,7 @@ from __future__ import unicode_literals
 
 from pprint import pprint
 import os
+import argparse
 
 from PyQt5.QtCore import Qt,QSortFilterProxyModel, QCoreApplication, QSize
 from PyQt5.QtGui import QCursor, QStandardItemModel, QStandardItem, QIcon
@@ -82,15 +83,34 @@ class GenerationSheetDlg(QDialog):
         self.data = self.sheet.values()
         QDialog.accept(self)
     
+def generaArgParser():
+    parser = argparse.ArgumentParser(description='Cubo de datos')
+    parser.add_argument('--cubeFile','--cubefile','-c',
+                        nargs='?',
+                        default='cubo.json',
+                        help='Nombre del fichero de configuración del cubo actual')    
+    parser.add_argument('--configFile','--configfile','-cf',
+                        nargs='?',
+                        default='.danabrowse.json',
+                        help='Nombre del fichero de configuración del cubo actual')    
 
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super(MainWindow, self).__init__()
+    security_parser = parser.add_mutually_exclusive_group(required=False)
+    security_parser.add_argument('--secure','-s',dest='secure', action='store_true',
+                                 help='Solicita la clave de las conexiones de B.D.')
+    security_parser.add_argument('--no-secure','-ns', dest='secure', action='store_false')
+    parser.set_defaults(secure=False)
+
+    return parser
+
+class DanaBrowseWindow(QMainWindow):
+    def __init__(self,args):
+        super(DanaBrowseWindow, self).__init__()
         #Leeo la configuracion
 
         self.maxlevel = 2  #para poder modificarlo luego
         self.dictionary = DataDict()
         #TODO variables asociadas del diccionario. Reevaluar al limpiar
+        
         self.baseModel = self.dictionary.baseModel
         self.configData = self.dictionary.configData
         self.conn = self.dictionary.conn
@@ -105,6 +125,7 @@ class MainWindow(QMainWindow):
         
          
         self.queryView = TableBrowser(pdataDict=self.dictionary)  #!!!!???? debe ir delante de la definicion de menu
+        
         self.dictMenu = self.menuBar().addMenu("&Conexiones")
         self.dictMenu.addAction("&New ...", self.newConnection, "Ctrl+N")
         self.dictMenu.addAction("&Modify ...", self.modConnection, "Ctrl+M")
@@ -362,7 +383,10 @@ if __name__ == '__main__':
         sys.setdefaultencoding('utf-8')
 
     app = QApplication(sys.argv)
-    window = MainWindow()
+    parser = generaArgParser()
+    args = parser.parse_args()
+
+    window = DanaBrowseWindow(args)
     window.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
     window.show()
     sys.exit(app.exec_())

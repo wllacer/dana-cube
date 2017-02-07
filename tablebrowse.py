@@ -254,7 +254,7 @@ class TableBrowser(QTableView):
         if isinstance(pdataDict,DataDict):
             dataDict = pdataDict
         else:
-            dataDict=DataDict(conn=confName,schema=schema,table=table,iters=iters) #iters todavia no procesamos
+            dataDict=DataDict(conName=confName,schema=schema,table=table,iters=iters) #iters todavia no procesamos
         self.localContext = (dataDict,confName,schema,table,iters)    
         if not confName or confName == '':
             return
