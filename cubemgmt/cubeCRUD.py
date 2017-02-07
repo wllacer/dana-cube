@@ -280,7 +280,7 @@ def action_class(obj):
         return 'dynamic combo'
     if tipo in TYPE_LEAF:  #temporal
         return 'input'
-    return none
+    return None
 
 def getDynamicArray(tipo,obj,exec_object):
     # los campos

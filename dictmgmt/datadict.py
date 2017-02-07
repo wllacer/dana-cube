@@ -36,7 +36,7 @@ from util.decorators import *
 #from widgets import WPropertySheet
 
 #from  sqlalchemy import create_engine,inspect,MetaData, types
-#from  sqlalchemy.exc import CompileError, OperationalError
+from  sqlalchemy.exc import CompileError, OperationalError, InterfaceError
 #from  sqlalchemy.sql import text
 
 

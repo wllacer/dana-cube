@@ -321,7 +321,7 @@ class TreeDict(object):
         if node.parentItem != None :
             pass
         else:
-           node.parentItem = self.searchNode(key)
+           node.parentItem = self.searchNode(node.key) #FIXME no tengo claro que esto sea lo que quiero
            if node.parentItem == None:
                node.parentItem = self.rootItem
         self.__add(node)

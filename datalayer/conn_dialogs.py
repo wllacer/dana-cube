@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QSplitter, QAb
           QPushButton, QMessageBox, \
           QTableView, QSpinBox
 
+from  sqlalchemy.exc import CompileError, OperationalError, ProgrammingError, InterfaceError
 
 from datalayer.access_layer import *
 from util.record_functions import norm2String,dict2row, row2dict
