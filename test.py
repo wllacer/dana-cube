@@ -68,10 +68,10 @@ def prueba():
     #print(dd.baseModel)
     pprint(dd.conn)
     #print(dd.hiddenRoot)
-    for entry in traverse(dd.hiddenRoot):
-        tabs = '\t'*entry.depth()
-        if not entry.isAuxiliar():
-            print(tabs,entry.fqn(),entry.getFullDesc(), entry.getRow(),entry.gpi()) #(tabs,entry) #entry.text(),'\t',entry.getRow())
+    #for entry in traverse(dd.hiddenRoot):
+        #tabs = '\t'*entry.depth()
+        #if not entry.isAuxiliar():
+            #print(tabs,entry.fqn(),entry.getFullDesc(), entry.getRow(),entry.gpi()) #(tabs,entry) #entry.text(),'\t',entry.getRow())
 
     #print(dd.isEmpty)
     

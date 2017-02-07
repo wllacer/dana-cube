@@ -270,7 +270,8 @@ class DanaCubeWindow(QMainWindow):
             table = schema
             schema = ''  #definitivamente necesito el esquema de defecto
         iters = 0
-        dict = DataDict(conName=confName,schema=schema,table=table,iters=iters,confData=confData) #iters todavia no procesamos
+        # dict = DataDict(conName=confName,schema=schema,table=table,iters=iters,confData=confData) #iters todavia no
+        dict = DataDict(conn=self.cubo.db,schema=schema,table=table,iters=iters) #,confData=confData) #iters todavia noprocesamos
         tabInfo = []
         gotcha = False
         for item in traverseTree(dict.hiddenRoot):

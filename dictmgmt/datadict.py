@@ -50,7 +50,7 @@ class DataDict():
     table
     iters profundidad de navegacion en claves extranjeras
     pos   posicion donde se añade la conexión
-
+    conn  -> conexion viva (nuevo)
     """
     def __init__(self,**kwargs):
         #FIXME eliminar parametros espureos
@@ -106,6 +106,10 @@ class DataDict():
             return True
         
     def _cargaModelo(self,**kwargs):
+        if 'conn' in kwargs:
+            self.appendConnection(kwargs.get('conName','$$TEMP'),**kwargs)
+            return
+
         if 'confData' not in kwargs:
             definition = self.configData.get('Conexiones')
         if 'conName' in kwargs:
@@ -128,7 +132,10 @@ class DataDict():
             pos = kwargs.get('pos')
             
         try:
-            self.conn[confName] = dbConnectAlch(conf)
+            if 'conn' in kwargs:
+                self.conn[confName] = kwargs['conn']
+            else:
+                self.conn[confName] = dbConnectAlch(conf)
             conexion = self.conn[confName]
             engine=conexion.engine 
             padre.insertRow(pos,(ConnectionTreeItem(confName,conexion),QStandardItem(str(engine))))
