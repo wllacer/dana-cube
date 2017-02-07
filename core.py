@@ -143,6 +143,18 @@ class Cubo:
             lista_campos = self.lista_campos [ : ]
         return lista_campos
 
+    def setDateFilter(self):
+        sqlClause = []
+        for item in  self.definition.get('date filter',[]) :
+            clase_intervalo = CLASES_INTERVALO.index(item['date class'])
+            tipo_intervalo = TIPOS_INTERVALO.index(item['date range'])
+            periodos = int(item['date period'])
+                
+            if item['date class']:
+                    intervalo = dateRange(clase_intervalo,tipo_intervalo,periodo=periodos,fmt=item.get('date format'))
+                    sqlClause.append((item['elem'],'BETWEEN',intervalo,'f'))
+        return sqlClause
+    
     def __setGuidesSqlStatement(self, entrada, fields):
         '''
           entrada es definition[guides][i][prod][j]: Contiene array
@@ -197,7 +209,8 @@ class Cubo:
           sqlDef['tables'] = self.definition['table']
           if len(self.definition['base filter'].strip()) > 0:
              sqlDef['base filter']=self.definition['base_filter']
-             
+          if self.definition.get('date filter'):
+             sqlDef['where'] = self.setDateFilter()
           sqlDef['fields'] = norm2List(entrada['elem'])
           
         
@@ -215,6 +228,10 @@ class Cubo:
         sqlDef['tables'] = self.definition['table']
         if len(self.definition['base filter'].strip()) > 0:
            sqlDef['base_filter']=self.definition['base filter']
+        
+        if self.definition.get('date filter'):
+             sqlDef['where'] = self.setDateFilter()
+
         sqlDef['fields'] = [[entrada['base_date'],'max'],
                             [entrada['base_date'],'min'],
                             ]
@@ -520,15 +537,8 @@ class Vista:
             self.__setDataMatrix()
             
 
-    def  __setDateFilter(self,sqlDef):
-        for item in  self.cubo.definition.get('date filter',[]) :
-            clase_intervalo = CLASES_INTERVALO.index(item['date class'])
-            tipo_intervalo = TIPOS_INTERVALO.index(item['date range'])
-            periodos = int(item['date period'])
-                
-            if item['date class']:
-                    intervalo = dateRange(clase_intervalo,tipo_intervalo,periodo=periodos,fmt=item.get('date format'))
-                    sqlDef['where'].append((item['elem'],'BETWEEN',intervalo,'f'))
+    def  __setDateFilter(self):
+        return self.cubo.setDateFilter()
         
     def  __setDataMatrix(self):
          #TODO clarificar el codigo
@@ -541,7 +551,7 @@ class Vista:
         sqlDef['base_filter']=mergeString(self.filtro,self.cubo.definition['base filter'],'AND')
         sqlDef['where'] = []
         
-        self.__setDateFilter(sqlDef)
+        sqlDef['where'] += self.__setDateFilter()
         
         #sqlDef['having']=None
         #sqlDef['order']=None
@@ -627,7 +637,7 @@ class Vista:
 
             sqlDef['where'] = []
 
-            self.__setDateFilter(sqlDef)
+            sqlDef['where'] += self.__setDateFilter()
         
             sqlDef['join']=[]
             #TODO claro candidato a ser incluido en una funcion
