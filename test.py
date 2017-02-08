@@ -55,7 +55,7 @@ def generaArgParser():
     security_parser.add_argument('--secure','-s',dest='secure', action='store_true',
                                  help='Solicita la clave de las conexiones de B.D.')
     security_parser.add_argument('--no-secure','-ns', dest='secure', action='store_false')
-    parser.set_defaults(secure=False)
+    parser.set_defaults(secure=True)
 
     return parser
 
@@ -78,24 +78,25 @@ def prueba():
     parser = generaArgParser()
     args = parser.parse_args()
     print(args)
-    dd = DataDict(defFile=args.configFile,secure=args.secure)
-    # defFile
-    # conName
-    # schema
-    # table
-    # iters
-    # confData (connexion Data)
-    # pos
+    #dd = DataDict(defFile=args.configFile,secure=args.secure)
     # dd= DataDict(conn=confName,schema=schema)
-    # dd= DataDict(conn=confName,schema=schema,table=table,iters=iters,confData=confData) 
+    confName=  '$$TEMP'
+    schema=  None #'dana_sample'
+    table=  None #'votos_locales'
+    iters=  0
+    confData=  {'driver': 'oracle', 'dbname': 'XE', 'dbhost': 'localhost', 'dbuser': 'system', 'dbpass': ''}
+
+    dd= DataDict(conName=confName,schema=schema,table=table,iters=iters,confData=confData,
+                 defFile=args.configFile,secure=args.secure) 
     pprint(dd.configData)
     #print(dd.baseModel)
     pprint(dd.conn)
     #print(dd.hiddenRoot)
-    #for entry in traverse(dd.hiddenRoot):
-        #tabs = '\t'*entry.depth()
-        #if not entry.isAuxiliar():
-            #print(tabs,entry.fqn(),entry.getFullDesc(), entry.getRow(),entry.gpi()) #(tabs,entry) #entry.text(),'\t',entry.getRow())
+    for entry in traverse(dd.hiddenRoot):
+        tabs = '\t'*entry.depth()
+        if not entry.isAuxiliar() :
+           if not entry.getTypeText() == '' :
+                print(tabs,entry.getTypeText(),':',entry.getFullDesc()) #entry.fqn(),entry.getFullDesc(), entry.getRow(),entry.gpi()) #(tabs,entry) #entry.text(),'\t',entry.getRow())
 
     #print(dd.isEmpty)
     

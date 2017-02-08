@@ -533,7 +533,7 @@ class TableTreeItem(BaseTreeItem):
         if schema == '':
             schema = None
         try:
-            self.getRecordCount()
+            #FIXME self.getRecordCount()
             
             for column in inspector.get_columns(table_name,schema):
                 try:

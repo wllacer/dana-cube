@@ -68,6 +68,10 @@ class DataDict():
         else:
             self.isEmpty = True
         
+    def close(self):
+        for entry in self.conn:
+            self.dropConnection(entry)
+            
     def getConnByName(self,name):
         for k in range(self.hiddenRoot.rowCount()):
             item = self.hiddenRoot.child(k)
@@ -164,12 +168,14 @@ class DataDict():
     
         #self.baseModel.beginResetModel()
         # limpio el arbol (podia usar findItem, pero no se, no se ...)
+    
         k = self.getConnNr(confName)
         if not k:
             if DEBUG:
                 print(confName,' conexion inexistente')
             return
         else:
+            self.conn[confName].close()
             self.hiddenRoot.removeRow(k)
         del self.configData['Conexiones'][confName]
         del self.conn[confName]
