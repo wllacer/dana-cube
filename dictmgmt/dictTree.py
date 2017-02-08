@@ -100,7 +100,8 @@ class BaseTreeItem(QStandardItem):
             colind = indice.sibling(indice.row(),2)
             if colind:
                 colind.setData(True)
-    
+                
+    @waiting_effects
     def getValueSpread(self):
         if self.type() == BaseTreeItem and not self.isAuxiliar() and self.parent().text() == 'FIELDS':
             conn = self.getConnection().data().engine
@@ -288,14 +289,22 @@ class BaseTreeItem(QStandardItem):
         self.menuActions = []
         if pai.text() in  ('FK','FK_REFERENCE'):
             self.menuActions.append(menu.addAction("Go to reverse FK",lambda:self.execAction(context,"reverse")))
+            self.menuActions[-1].setEnabled(False)
             self.menuActions.append(menu.addAction("Set descriptive fields",lambda:self.execAction(context,"descset")))
+            self.menuActions[-1].setEnabled(False)
         elif pai.text() == 'FIELDS':
             self.menuActions.append(menu.addAction("Set as descriptive field",lambda:self.execAction(context,"desc")))
-        for entrada in self.menuActions:
-            entrada.setEnabled(False)
+            self.menuActions[-1].setEnabled(False)
+            self.menuActions.append(menu.addAction("Get number of values",lambda:self.execAction(context,"histogram")))
+
+        #for entrada in self.menuActions:
+            #entrada.setEnabled(False)
         
     def execAction(self,context,action):
-        if action in ('reverse','descset'):
+        
+        if action in ('histogram',):
+            self.getValueSpread()
+        elif action in ('reverse','descset'):
             pass
         else:
             self.setDescriptive()
@@ -736,6 +745,7 @@ class TableTreeItem(BaseTreeItem):
         self.menuActions.append(menu.addAction("Refresh",lambda:self.execAction(context,"refresh")))
         self.menuActions.append(menu.addAction("Properties",lambda:self.execAction(context,"properties")))
         self.menuActions[-1].setEnabled(False)
+        self.menuActions.append(menu.addAction("Count rows",lambda:self.execAction(context,"rowcount")))
         self.menuActions.append(menu.addAction("Browse Data",lambda:self.execAction(context,"browse")))
         self.menuActions.append(menu.addAction("Browse Data with Foreign Key",lambda:self.execAction(context,"browseFK")))
         self.menuActions.append(menu.addAction("Browse Data with Foreign Key recursive",lambda:self.execAction(context,"browseFKR")))
@@ -752,6 +762,8 @@ class TableTreeItem(BaseTreeItem):
         # show properties sheet
         elif action == 'properties':
             pass
+        elif action == 'rowcount':
+            self.getRecordCount()
         elif 'browse' in action:
             conn,schema,table=self.getFullDesc().split('.')
             if action == 'browse':
@@ -767,7 +779,8 @@ class TableTreeItem(BaseTreeItem):
             context.cubebrowse(conn,schema,table)
             #cubemgr = CubeBrowserWin(conn,schema,table,pdataDict=self.model())
             pass # generate cube
-
+    
+    @waiting_effects
     def getRecordCount(self):
         if isinstance(self,TableTreeItem) :   #Recordar que especializamos Table.. con View luego el type no va
             conn = self.getConnection().data().engine
