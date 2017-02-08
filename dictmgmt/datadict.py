@@ -211,7 +211,7 @@ class DataDict():
         #self.baseModel.endResetModel()
     def editConnection(self,configData,nombre=None): 
         
-        from PyQt5.QtWidgets import QDialog, QLineEdit,QLabel,QDialogButtonBox, QVBoxLayout, QHBoxLayout, QComboBox, QCheckBox, QPushButton, QMessageBox
+        from PyQt5.QtWidgets import QDialog, QLineEdit,QLabel,QDialogButtonBox, QVBoxLayout, QHBoxLayout, QComboBox, QCheckBox, QPushButton, QMessageBox, QTextEdit
 
         from util.record_functions import dict2row, row2dict
         from datalayer.conn_dialogs import ConnectionSheetDlg
@@ -225,13 +225,13 @@ class DataDict():
         context = (
                 ('Nombre',
                     QLineEdit,
-                    {'setReadOnly':True},
+                    {'setReadOnly':True,'setStyleSheet':"background-color: rgb(211, 211, 211);"},
                     None,
                 ),
                 # driver
                 ("Driver ",
                     QLineEdit,
-                    {'setReadOnly':True},
+                    {'setReadOnly':True,'setStyleSheet':"background-color: rgb(211, 211, 211);"},
                     None,
                 ),
                 ("DataBase Name",

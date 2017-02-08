@@ -396,13 +396,13 @@ class DanaCubeWindow(QMainWindow):
         context = (
                 ('Nombre',
                     QLineEdit,
-                    {'setReadOnly':True},
+                    {'setReadOnly':True,'setStyleSheet':"background-color: rgb(211, 211, 211);"},
                     None,
                 ),
                 # driver
                 ("Driver ",
                     QLineEdit,
-                    {'setReadOnly':True},
+                    {'setReadOnly':True,'setStyleSheet':"background-color: rgb(211, 211, 211);"},
                     None,
                 ),
                 ("DataBase Name",
