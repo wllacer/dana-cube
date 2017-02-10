@@ -222,6 +222,16 @@ class BaseTreeItem(QStandardItem):
             item = item.parent()
         return item
 
+    def fqnArray(self):
+        if isinstance(self,BaseTreeItem):
+            result = [self.getConnection().text(),self.getSchema().text(),self.getTable(),self.text()]
+        elif isinstance(self,TableTreeItem):
+            result = [self.getConnection().text(),self.getSchema().text(),self.text()]
+        elif isinstance(self,SchemaTreeItem):
+            result = [self.getConnection().text(),self.text()]
+        elif isinstance(self,ConnectionTreeItem):
+            result = [self.text(),]
+            
     def fqn(self):
         if isinstance(self,TableTreeItem):
             # aparentemente sqlite funciona con main como esquema o sin
@@ -577,6 +587,16 @@ class TableTreeItem(BaseTreeItem):
                 print('Error en {}.{}'.format(schema,table_name),norm2String(e.orig.args))
                 
     def getFields(self,simple=False):
+        """
+        if simple returns fqn
+        else returns:
+           array of
+              fqn
+              format (my style)
+              if available value_spread
+              None
+              basename
+        """
         lista = []
         for item in self.listChildren():
             if item.text() != 'FIELDS':
@@ -622,48 +642,6 @@ class TableTreeItem(BaseTreeItem):
                 break
         return lista
        
-    def getBackRefInfo(self):
-        """
-           De momento no incluyo FKr -- no tengo claro necesitarla
-           Convertir esta rutina solo en backref
-        """
-        esquema = self.getSchema() 
-        nomEsquema = esquema.fqn()
-        InfoFKR = []
-        FKRs = self.getFKref(False)
-        if FKRs and len(FKRs) > 0:
-            #TableInfo['FKR']= []
-            for idx,asociacion in enumerate(FKRs):
-                RefInfo = dict()
-                RefInfo['ChildTable']=asociacion[1]
-                RefInfo['Field'] = asociacion[2] # campo en la tabla que nos ocupa
-                RefInfo['ChildField'] = asociacion[3]
-                esqReferred = esquema
-                qualName = asociacion[1].split('.')
-                if len(qualName) == 1 :
-                    padre = self.getBrotherByName(qualName[0])
-                elif qualName[0] == nomEsquema:
-                    padre = self.getBrotherByName(qualName[1])
-                else:
-                    esqReferred = esquema.getBrotherByName(qualName[0])
-                    if esqReferred is not None:
-                        padre = esqReferred.getChildByName(qualName[1])
-                    else:
-                        QMessageBox.critical(self,
-                                "Error fatal",
-                                'Error horroroso en {}{}'.format(self.text(),asociacion))
-                        if DEBUG:
-                            print('Error horroroso en ',self.text(),asociacion)
-                        exit()
-                camposPadre = padre.getFields()
-                for i in range(0,len(camposPadre)):
-                    if camposPadre[i][0] == asociacion[3] or camposPadre[i][4] == asociacion[3]: #tanto fqn como normal
-                        del camposPadre[i]
-                        break
-                RefInfo['CamposReferencia'] = camposPadre
-                InfoFKR.append(RefInfo)
-        
-        return InfoFKR
 
     def _getFkInfo(self,asociacion,esquema,nomEsquema,maxlevel,iter=0):
         kiter = iter + 1
@@ -714,6 +692,26 @@ class TableTreeItem(BaseTreeItem):
 
         return RefInfo
     
+    def getTableInfo(self):
+        TableInfo = dict()
+        esquema = self.getSchema()
+        TableInfo['schemaName'] = nomEsquema = esquema.text()
+        TableInfo['tableName'] = self.fqn()
+        Fields = self.getFields()
+        if Fields and len(Fields) != 0:
+            TableInfo['Fields'] = []
+            for entrada in Fields:
+                TableInfo['Fields'].append({'name':entrada[0],'format':entrada[1],'basename':entrada[-1]})
+                
+        FKs = self.getFK(False)
+            
+        if FKs and len(FKs) > 0:
+            TableInfo['FK']= []
+            for entrada in FKs:
+                TableInfo['FK'].append({'name':entrada[0],'parent table':entrada[1],'parent field':entrada[3],'ref field':entrada[2]})   
+        
+        return TableInfo
+        
     def getFullInfo(self):
         return self.getFullInfoRecursive(maxlevel=1)
     

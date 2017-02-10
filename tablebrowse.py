@@ -78,8 +78,21 @@ class CursorItem(QStandardItem):
                 #return Qt.AlignLeft| Qt.AlignVCenter
         return super(CursorItem,self).data(role)
     
+
 def getTable(dd,confName,schemaName,tableName,maxlevel=1):
-    #OJO silent error
+    """
+    Devuelve jerarquia arbon
+       Fields (de get Fields)
+       schemaName
+       tableName
+       FK  array of dicts
+            campos referencia (eq. a Fields)
+            parent table
+            parent field
+            field of linkage
+            Name of FK
+            FK array of dicts .... recursive
+    """
     con = dd.getConnByName(confName)
     if con is None:
         if DEBUG:
