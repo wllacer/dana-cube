@@ -37,7 +37,6 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QGridLayout, QSize
 
 from dictmgmt.datadict import DataDict
 from cubemgmt.cubeutil import FQName2array
-from tablebrowse import getTable
 
 from datalayer.query_constructor import *
 
@@ -121,11 +120,16 @@ class TableInfo():
     def getFKShallow(self):
         result = []
         idx = 0
-        result.append([ [entry,] for entry in self.lista[self.mainTable]['FK'] ])
+        if 'FK' in self.lista[self.mainTable]:
+            result.append([ [entry,] for entry in self.lista[self.mainTable]['FK'] ])
+        else: #no tiene fks
+            return result
         while idx < self.maxlevel:
             level = []
             for entry in result[-1]:
                 tabla_referenciada = entry[-1]['parent table']
+                if not 'FK' in self.lista[tabla_referenciada]:
+                    continue
                 for clave in self.lista[tabla_referenciada]['FK']:
                     tmp = list(entry) 
                     tmp.append(clave)
@@ -165,7 +169,7 @@ class TableInfo():
         #
         joinDict = dict()
         if not joinList or len(joinList) == 0:
-            return tableDict,fieldList,joinDefs
+            return tableDict,fieldList,joinDict
             #sqlContext['fields'] = [ item[2] for item in fieldList]
             #sqlContext['formats'] = [item[3] for item in fieldList ]
             #sqlContext['tables'] = [ self.mainTable, ]
@@ -212,7 +216,7 @@ class TableInfo():
             
         return tableDict,fieldList,joinDict
 
-    def prepareBulkSql(self):
+    def prepareBulkSql(self,pFilter=None):
 
         sqlContext = dict()
         sqlContext['driver']=self.driver.dialect.name
@@ -239,6 +243,7 @@ class TableInfo():
         if len(tableDict) == 1:
             sqlContext['fields'] = [ item[1] for item in fieldList]
             sqlContext['formats'] = [item[2] for item in fieldList ]
+            sqlContext['sqls'] = queryConstructor(**sqlContext)
             return sqlContext
          
         sqlContext['fields'] = [ '{}.{}'.format(tableDict[item[0]][1],item[1]) for item in fieldList ]
@@ -254,9 +259,13 @@ class TableInfo():
                                 '{}.{}'.format(tableDict[link_key][1],link[2].split('.')[-1])
                                 ),)
                 sqlContext['join'].append(clausula)  
-        sqls = sqlContext['sqls'] = queryConstructor(**sqlContext)
+        if pFilter:
+            sqlContext['base_filter'] = pFilter #TODO necesita que se le introduzcan los alias
+
+        sqlContext['sqls'] = queryConstructor(**sqlContext)
+        
         if DEBUG:
-            print(queryFormat(sqls))
+            print(queryFormat(sqlContext['sqls']))
         return sqlContext #
 
 """
