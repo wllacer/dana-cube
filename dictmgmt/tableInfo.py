@@ -36,7 +36,6 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QGridLayout, QSizePolicy, QWidget, QTreeView, QHBoxLayout
 
 from dictmgmt.datadict import DataDict
-from cubemgmt.cubeutil import FQName2array
 
 from datalayer.query_constructor import *
 
@@ -44,6 +43,19 @@ DEBUG = True
 
 (_ROOT, _DEPTH, _BREADTH) = range(3)
 
+
+def FQName2array(fqname):
+    dbmanager = '' #no deberia existir pero por si acaso
+    schema = ' '
+    filename = ''
+    splitdata = fqname.split('.')
+    if len(splitdata) == 3:
+        dbmanager,schema,filename = splitdata
+    elif len(splitdata) == 2:
+        schema,filename = splitdata
+    elif len(splitdata) == 1:
+       filename = fqname
+    return dbmanager,schema,filename
 
 def getTabRef(dd,confName,schemaName,tableName):
     con = dd.getConnByName(confName)
@@ -333,7 +345,7 @@ class TableInfo():
             #else:
             relationship = entry[-1]
             nombre = '.'.join([ item['name'] for item in entry ])
-            entrada['guides'].append({'name':relationship['name'],
+            entrada['guides'].append({'name':nombre,
                         'class':'o',
                         'prod':[{'domain': {
                                 "filter":"",

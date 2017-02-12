@@ -97,18 +97,6 @@ def getCubeInfo(rootElem):
     else:
         return [],[]
 
-def FQName2array(fqname):
-    dbmanager = '' #no deberia existir pero por si acaso
-    schema = ' '
-    filename = ''
-    splitdata = fqname.split('.')
-    if len(splitdata) == 3:
-        dbmanager,schema,filename = splitdata
-    elif len(splitdata) == 2:
-        schema,filename = splitdata
-    elif len(splitdata) == 1:
-       filename = fqname
-    return dbmanager,schema,filename
 
         
 def isDictionaryEntry(rootElem):
