@@ -23,6 +23,8 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QSplitter, QMe
      QDialog, QInputDialog, QLineEdit, QComboBox
 
 from dictmgmt.datadict import *    
+from dictmgmt.tableInfo import *
+
 from datalayer.query_constructor import *
 from datalayer.access_layer import dbDict2Url,internal2genericDriver
 from tablebrowse import *
@@ -47,115 +49,31 @@ def info2cube(dataDict,confName,schema,table,maxlevel=1):
        de la informacion de la tabla en DANACUBE crea un cubo por defecto
 
     """
-    info = getTable(dataDict,confName,schema,table,maxlevel)                
-    #pprint(info)
+    tableInfo = TableInfo(dataDict,confName=confName,schemaName=schema,tableName=table,maxlevel=maxlevel)
     
-    #cubo = load_cubo()
-    cubo = dict()
-    cubo[table]=dict() # si hubiera algo ... requiescat in pace
-    entrada = cubo[table]
-    #entrada = dict()
-    entrada['base filter']=""
-    entrada['table'] = '{}.{}'.format(schema,table) if schema != "" else table
+    return tableInfo.info2cube()
     
-    entrada['connect']=dict()
-    conn = dataDict.getConnByName(confName).data().engine
-    
-    print('Conexion ',conn.url,conn.driver,internal2genericDriver(conn.driver))  #TODO borrar
-    entrada['connect']["dbuser"] = None 
-    entrada['connect']["dbhost"] =  None
-    entrada['connect']["driver"] =  internal2genericDriver(conn.driver)
-    entrada['connect']["dbname"] =  str(conn.url) #"/home/werner/projects/dana-cube.git/ejemplo_dana.db"
-    entrada['connect']["dbpass"] =  None
-    
-    entrada['guides']=[]
-    entrada['fields']=[]
-    for fld in info['Fields']:
-        if fld[1] in ('numerico','entero'):
-            entrada['fields'].append(fld[0])
-        elif fld[1] in ('fecha','fechahora'):
-            entrada['guides'].append({'name':fld[0],
-                                      'class':'d',
-                                      'type':'Ymd',
-                                      'prod':[{'fmt':'date','elem':fld[0]},]
-                                      })  #no es completo
-            entrada['guides'].append( genTrimestreCode(fld[0],conn.driver))
-
-        else:
-            entrada['guides'].append({'name':fld[0],
-                                      'class':'o',
-                                      'prod':[{'elem':fld[0],},]})  #no es completo
-    if maxlevel == 0:
-        pass
-    elif maxlevel == 1:
-        for fk in info.get('FK',list()):
-            desc_fld = getDescList(fk)
-                
-            entrada['guides'].append({'name':fk['Name'],
-                                        'class':'o',
-                                        'prod':[{'domain': {
-                                                "filter":"",
-                                                "table":fk['ParentTable'],
-                                                "code":fk['ParentField'],
-                                                "desc":desc_fld
-                                            },
-                                            'elem':fk['Field']},]
-                                            })  #no es completo
-    else:
-        routier = []
-        #path = ''
-        path_array = []
-        for fk in info.get('FK',list()):
-            constructFKsheet(fk,path_array,routier)
-        
-        for elem in routier:
-            nombres = [ item['Name'] for item in elem]
-            nombres.reverse()
-            nombre = '@'.join(nombres)
-            activo = elem[-1]
-            base   = elem[0]
-            rule =   {'domain': {
-                                    "filter":"",
-                                    "table":activo['ParentTable'],
-                                    "code":activo['ParentField'],
-                                    "desc":getDescList(activo)
-                                },
-                         'elem':activo['Field']}   #?no lo tengo claro
-            if len(elem) > 1:
-                rule['link via']=list()
-                for idx in range(len(elem)-1):
-                    actor = elem[idx]
-                    join_clause = { "table":actor['ParentTable'],
-                                    "clause":[{"rel_elem":actor["ParentField"],"base_elem":actor['Field']},],
-                                    "filter":"" }
-                    rule['link via'].append(join_clause)
-                
-            entrada['guides'].append({'name':nombre,
-                                        'class':'o',
-                                        'prod':[rule ,]
-                                            })  #no es completo
-    return cubo
 
 """
    cubo --> lista de cubos
    col,row
 """
-def constructFKsheet(elemento, path_array,routier):    
-    path_array_local = path_array[:]
-    path_array_local.append(elemento)
-    routier.append(path_array_local)
-    for fkr in elemento.get('FK',list()):
-        constructFKsheet(fkr,path_array_local,routier)
+#def constructFKsheet(elemento, path_array,routier):    
+    #path_array_local = path_array[:]
+    #path_array_local.append(elemento)
+    #routier.append(path_array_local)
+    #for fkr in elemento.get('FK',list()):
+        #constructFKsheet(fkr,path_array_local,routier)
 
-def getDescList(fk):
-    desc_fld = []
-    for fld in fk['CamposReferencia']:
-        if fld[1] == 'texto':
-            desc_fld.append(fld[0])
-    if len(desc_fld) == 0:
-        print('No proceso correctamente por falta de texto',fk['Name'],fk['ParentTable'])
-        desc_fld = fk['ParentField']
-    return desc_fld
+#def getDescList(fk):
+    #desc_fld = []
+    #for fld in fk['CamposReferencia']:
+        #if fld[1] == 'texto':
+            #desc_fld.append(fld[0])
+    #if len(desc_fld) == 0:
+        #print('No proceso correctamente por falta de texto',fk['Name'],fk['ParentTable'])
+        #desc_fld = fk['ParentField']
+    #return desc_fld
 
 
 
@@ -179,18 +97,6 @@ def getCubeInfo(rootElem):
     else:
         return [],[]
 
-def FQName2array(fqname):
-    dbmanager = '' #no deberia existir pero por si acaso
-    schema = ' '
-    filename = ''
-    splitdata = fqname.split('.')
-    if len(splitdata) == 3:
-        dbmanager,schema,filename = splitdata
-    elif len(splitdata) == 2:
-        schema,filename = splitdata
-    elif len(splitdata) == 1:
-       filename = fqname
-    return dbmanager,schema,filename
 
         
 def isDictionaryEntry(rootElem):

@@ -36,6 +36,7 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QGridLayout, QSizePolicy, QWidget, QTreeView, QHBoxLayout
 
 from dictmgmt.datadict import DataDict
+from dictmgmt.tableInfo import TableInfo
 
 (_ROOT, _DEPTH, _BREADTH) = range(3)
 
@@ -81,23 +82,30 @@ def prueba():
     #dd = DataDict(defFile=args.configFile,secure=args.secure)
     # dd= DataDict(conn=confName,schema=schema)
     confName=  '$$TEMP'
-    schema=  None #'dana_sample'
-    table=  None #'votos_locales'
-    iters=  0
-    confData=  {'driver': 'oracle', 'dbname': 'XE', 'dbhost': 'localhost', 'dbuser': 'system', 'dbpass': ''}
+    schema=  'public' # None #'dana_sample'
+    table=  'rental' #None #'votos_locales'
+    iters=  2
+    confData=  {'driver': 'postgresql', 'dbname': 'pagila', 'dbhost': 'localhost', 'dbuser': 'werner', 'dbpass': ''}
 
-    dd= DataDict(conName=confName,schema=schema,table=table,iters=iters,confData=confData,
+    dd= DataDict(conName=confName,schema=schema,table=table,iters=iters +1,confData=confData,
                  defFile=args.configFile,secure=args.secure) 
-    pprint(dd.configData)
-    #print(dd.baseModel)
-    pprint(dd.conn)
+    #pprint(dd.configData)
+    ##print(dd.baseModel)
+    #pprint(dd.conn)
     #print(dd.hiddenRoot)
     for entry in traverse(dd.hiddenRoot):
         tabs = '\t'*entry.depth()
-        if not entry.isAuxiliar() :
-           if not entry.getTypeText() == '' :
-                print(tabs,entry.getTypeText(),':',entry.getFullDesc()) #entry.fqn(),entry.getFullDesc(), entry.getRow(),entry.gpi()) #(tabs,entry) #entry.text(),'\t',entry.getRow())
+        if not entry.isAuxiliar() and not entry.getTypeText() == '' :
+            print(tabs,entry.getTypeText(),':',entry.getFullDesc()) #entry.fqn(),entry.getFullDesc(), entry.getRow(),entry.gpi()) #(tabs,entry) #entry.text(),'\t',entry.getRow())
 
+    for entry in traverse(dd.hiddenRoot):
+        tabs = '\t'*entry.depth()
+        if not entry.isAuxiliar() and not entry.getTypeText() == '' :
+            print(tabs,entry.getTypeText(),':',entry.getFullDesc()) #entry.fqn(),entry.getFullDesc(), entry.getRow(),entry.gpi()) #(tabs,entry) #entry.text(),'\t',entry.getRow())
+
+    ds = TableInfo(dd,confName,schema,table,maxlevel= iters)
+    #pprint(ds.getFKShallow())
+    pprint(ds.info2cube())
     #print(dd.isEmpty)
     
 if __name__ == '__main__':

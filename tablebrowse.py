@@ -24,6 +24,8 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem, QColor, QPalette
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTableView, QSplitter, QMenu, QLineEdit, QComboBox, QLabel, QPlainTextEdit
 
 from datalayer.query_constructor import *
+from dictmgmt.tableInfo import *
+
 from dialogs import dataEntrySheetDlg
 from util.numeros import fmtNumber               
 from cubemgmt.cubeTypes import LOGICAL_OPERATOR
@@ -78,135 +80,7 @@ class CursorItem(QStandardItem):
                 #return Qt.AlignLeft| Qt.AlignVCenter
         return super(CursorItem,self).data(role)
     
-def getTable(dd,confName,schemaName,tableName,maxlevel=1):
-    #OJO silent error
-    con = dd.getConnByName(confName)
-    if con is None:
-        if DEBUG:
-            print('Conexion {} no definida'.format(confName))
-        return
-    sch = con.getChildrenByName(schemaName)
-    if sch is None:
-        if DEBUG:
-            print('Esquema {} no definido'.format(schemaName))
-        return
-    tab = sch.getChildrenByName(tableName)
-    if tab is None:
-        if DEBUG:
-            print('Tabla {} no definida'.format(tableName))
-        return
-    if DEBUG:
-        print('get Table ->',tab.getFullDesc())
-    #return tab.getFullInfo()
-    #pprint(tab.getBackRefInfo())
-    return tab.getFullInfoRecursive(maxlevel)
 
-def name_collisions(namespace):
-    for key in namespace.keys():
-        if len(namespace[key])>=3:
-            continue  #ya ha sido evaluada y es un duplicado.
-        else:
-            #TODO seguro que puede pitonizarse
-            matches=[]
-            for clave in namespace:
-                valor = namespace[clave][0]
-                if valor == namespace[key][0]:
-                    matches.append(clave)
-            if len(matches) > 1:
-                for idx,nombre in enumerate(matches):
-                    if len(namespace[nombre]) == 2:
-                        namespace[nombre].append('{}_{}'.format(namespace[nombre][1],str(idx)))
-                    else:  #no deberia ir por este path
-                        namespace[nombre][2] = '{}_{}'.format(namespace[nombre][1],str(idx))
-
-def normRef(namespace,entry):
-    if len(namespace[entry]) == 2:
-        reference = namespace[entry][0]
-        prefix = namespace[entry][1]
-    else:
-        prefix = namespace[entry][2]
-        reference='{} AS {}'.format(namespace[entry][0],prefix)
-    return reference,prefix
-
-
-
-def setLocalQuery(conn,info,iters=None):
-    """
-    TODO limit generico
-    TODO relaciones con mas de un campo como enlace
-    __DONE__ comprobar que nombres de tablas no colisionan
-    __DONE__ informacion de formatos para la tabla de visualizacion
-        Mejorar el rendimiento de la solucion
-    TODO generalizar :
-        * __DONE__ sin FKs
-        * con FKs recursivas
-    """
-    
-    if not iters:
-        iteraciones = 0
-    else:
-        iteraciones = iters
-        
-    sqlContext=dict()
-    namespace = dict()    
-
-
-    basetable = info['tableName']
-
-    namespace['base'] = [basetable,basetable.split('.')[-1],]
-    if 'FK' in info:
-        for relation in info['FK']:
-            namespace[relation['Name']] = [relation['ParentTable'],relation['ParentTable'].split('.')[-1],]        
-        name_collisions(namespace)
-    sqlContext['tables'],prefix = normRef(namespace,'base')
-    #print('namespace')
-    #pprint(namespace)
-    #print('prefix ',prefix)
-    #print('\n')
-    
-    dataspace = info['Fields'][:]
-    for entry in dataspace:
-        if prefix:
-            entry[0]='{}.{}'.format(prefix,entry[0].split('.')[-1])
-    
-
-    if info.get('FK') and iteraciones > 0:
-        sqlContext['join'] = []
-        for relation in info['FK']:
-            
-            entry = dict()
-            fkname = relation['Name']
-            entry['table'],fk_prefix = normRef(namespace,fkname) #relation['ParentTable']
-            #print(fkname,entry['table'],fk_prefix)
-            if prefix:
-                leftclause = prefix+'.'+relation['Field'].split('.')[-1]
-            else:
-                leftclause = relation['Field']
-            if fk_prefix:
-                rightclause = fk_prefix +'.'+relation['ParentField'].split('.')[-1]
-            else:
-                rightclause = relation['ParentField']
-                
-            entry['join_clause'] = ((leftclause,'=',rightclause),)
-            entry['join_modifier']='LEFT OUTER'
-            sqlContext['join'].append(entry)
-
-            campos = relation['CamposReferencia'][:]
-            for item in campos:
-                if fk_prefix:
-                    item[0]='{}.{}'.format(fk_prefix,item[0].split('.')[-1])
-            #FIXME horrible la sentencia de abajo y consume demasiados recursos. Debo buscar una alternativa
-            idx = [ k[0] for k in dataspace].index(entry['join_clause'][0][0])
-            dataspace[idx+1:idx+1] = campos
-    if info.get('base_filter'):
-        sqlContext['base_filter']=info['base_filter']
-    sqlContext['fields'] = [ item[0] for item in dataspace ]
-    sqlContext['formats'] = [ item[1] for item in dataspace ]
-    sqlContext['driver']=conn.dialect.name
-    sqls = sqlContext['sqls'] = queryConstructor(**sqlContext)
-    if DEBUG:
-        print(queryFormat(sqls))
-    return sqlContext
 
 def localQuery(conn,info,iters=None):
     sqlContext = setLocalQuery(conn,info,iters=None)
@@ -258,12 +132,11 @@ class TableBrowser(QTableView):
         self.localContext = (dataDict,confName,schema,table,iters)    
         if not confName or confName == '':
             return
-        info = getTable(dataDict,confName,schema,table,iters)
         
-        if pFilter:
-            info['base_filter']=pFilter
-        sqlContext= setLocalQuery(dataDict.conn[confName],info,iters)
+        self.tableInfo = TableInfo(dataDict,confName=confName,schemaName=schema,tableName=table,maxlevel=iters)
+        sqlContext = self.tableInfo.prepareBulkSql(pFilter)
         self.baseModel.recordStructure = []
+
         for  idx,fld in enumerate(sqlContext['fields']):
             self.baseModel.recordStructure.append({'name':fld,'format':sqlContext['formats'][idx]})
         sqls = sqlContext['sqls'] 
@@ -402,7 +275,7 @@ if __name__ == '__main__':
         reload(sys)
         sys.setdefaultencoding('utf-8')
     app = QApplication(sys.argv)
-    window = TableBrowserWin('MariaBD Local','sakila','film')
+    window = TableBrowserWin('MariaBD Local','sakila','film',iters=1)
     window.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
     window.show()
     sys.exit(app.exec_())
