@@ -36,7 +36,7 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QGridLayout, QSizePolicy, QWidget, QTreeView, QHBoxLayout
 
 from dictmgmt.datadict import DataDict
-from tablebrowse import getTableNew
+from dictmgmt.tableInfo import TableInfo
 
 (_ROOT, _DEPTH, _BREADTH) = range(3)
 
@@ -84,7 +84,7 @@ def prueba():
     confName=  '$$TEMP'
     schema=  'public' # None #'dana_sample'
     table=  'rental' #None #'votos_locales'
-    iters=  1
+    iters=  2
     confData=  {'driver': 'postgresql', 'dbname': 'pagila', 'dbhost': 'localhost', 'dbuser': 'werner', 'dbpass': ''}
 
     dd= DataDict(conName=confName,schema=schema,table=table,iters=iters +1,confData=confData,
@@ -98,12 +98,14 @@ def prueba():
         if not entry.isAuxiliar() and not entry.getTypeText() == '' :
             print(tabs,entry.getTypeText(),':',entry.getFullDesc()) #entry.fqn(),entry.getFullDesc(), entry.getRow(),entry.gpi()) #(tabs,entry) #entry.text(),'\t',entry.getRow())
     #getTable(dd,confName,schemaName,tableName,maxlevel=1):
-    ds = getTableNew(dd,confName,schema,table,maxlevel= 0)
-    print('level 0',[ item for item in ds ])
-    ds = getTableNew(dd,confName,schema,table,maxlevel= 1)
-    print('level 1',[ item for item in ds ])
-    ds = getTableNew(dd,confName,schema,table,maxlevel= 2)
-    print('level 2',[ item for item in ds ])
+    for entry in traverse(dd.hiddenRoot):
+        tabs = '\t'*entry.depth()
+        if not entry.isAuxiliar() and not entry.getTypeText() == '' :
+            print(tabs,entry.getTypeText(),':',entry.getFullDesc()) #entry.fqn(),entry.getFullDesc(), entry.getRow(),entry.gpi()) #(tabs,entry) #entry.text(),'\t',entry.getRow())
+    #getTable(dd,confName,schemaName,tableName,maxlevel=1):
+    ds = TableInfo(dd,confName,schema,table,maxlevel= iters)
+    #pprint(ds.getFKShallow())
+    pprint(ds.info2cube())
     #print(dd.isEmpty)
     
 if __name__ == '__main__':

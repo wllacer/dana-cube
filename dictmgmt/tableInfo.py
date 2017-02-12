@@ -86,6 +86,11 @@ class TableInfo():
             print('Necesito un diccionario abierto previamente')
             return None
         
+        self.dd = dd
+        self.confName = confName
+        self.schemaName = schemaName
+        self.tableName = tableName
+        
         self.driver = dd.getConnByName(confName).data()
                 
         tab = getTabRef(dd,confName,schemaName,tableName)
@@ -267,6 +272,85 @@ class TableInfo():
         if DEBUG:
             print(queryFormat(sqlContext['sqls']))
         return sqlContext #
+
+    def info2cube(self):
+        from datalayer.datemgr import genTrimestreCode
+
+        cubo = dict()
+        basename = self.mainTable.split('.')[-1]
+        cubo[basename]=dict() # si hubiera algo ... requiescat in pace
+        entrada = cubo[basename] #para simplificar la escritura
+        # la informacion basica
+        entrada['base filter']=""
+        entrada['table'] = self.mainTable
+        entrada['connect']=self.dd.configData['Conexiones'][self.confName]
+        # reseteamos la password
+        entrada['connect']['dbpass'] = ''
+        #
+        entrada['guides']=[]
+        entrada['fields']=[]
+        
+        info = self.lista[self.mainTable]
+        
+        for fld in info['Fields']:
+            if fld['format'] in ('numerico','entero'):
+                entrada['fields'].append(fld['name'])
+            elif fld['format'] in ('fecha','fechahora'):
+                entrada['guides'].append({'name':fld['basename'],
+                                        'class':'d',
+                                        'type':'Ym',
+                                        'prod':[{'fmt':'date','elem':fld['name']},]
+                                        })  #no es completo
+                entrada['guides'].append( genTrimestreCode(fld['name'],self.driver.dialect.name))
+
+            else:
+                entrada['guides'].append({'name':fld['basename'],
+                                        'class':'o',
+                                        'prod':[{'elem':fld['name'],},]})  #no es completo
+
+        if self.maxlevel == 0 or not self.lista[self.mainTable]['FK'] or len(self.lista[self.mainTable]['FK']) == 0:
+            return cubo
+
+        lista = self.getFKShallow()
+        fkList = []
+        for k in range(self.maxlevel):
+            fkList += lista[k]
+
+        
+        for entry in fkList:
+            #if len (entry) == 1:
+                #relationship = entry
+                #entrada['guides'].append({'name':relationship['name'],
+                            #'class':'o',
+                            #'prod':[{'domain': {
+                                    #"filter":"",
+                                    #"table":relationship['parent table'],
+                                    #"code":relationship['parent field'],
+                                    #"desc":None
+                                #},
+                                #'elem':relationship['ref field']},]
+                                #})  #no es completo
+            #else:
+            relationship = entry[-1]
+            nombre = '.'.join([ item['name'] for item in entry ])
+            entrada['guides'].append({'name':relationship['name'],
+                        'class':'o',
+                        'prod':[{'domain': {
+                                "filter":"",
+                                "table":relationship['parent table'],
+                                "code":relationship['parent field'],
+                                "desc":None
+                            },
+                            'link via':[{ "table":actor['parent table'],
+                                "clause":[{"rel_elem":actor["parent field"],"base_elem":actor['ref field']},],
+                                "filter":"" } for actor in entry[:-1]] ,
+
+                            'elem':entry[0]['ref field']},]
+                            })  #no es completo
+            if entrada['guides'][-1]['prod'][-1]['link via'] == [] :
+                                del entrada['guides'][-1]['prod'][-1]['link via']
+
+        return cubo
 
 """
  a partir de aqui es solo pruebas 
