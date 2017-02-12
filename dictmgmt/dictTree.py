@@ -643,54 +643,6 @@ class TableTreeItem(BaseTreeItem):
         return lista
        
 
-    #def _getFkInfo(self,asociacion,esquema,nomEsquema,maxlevel,iter=0):
-        #kiter = iter + 1
-        #RefInfo = dict()
-        ##FIXME ver si puede utilizarse nomenclatura fqn() aquí
-        #RefInfo['Name'] = asociacion[0]
-        #RefInfo['ParentTable']=asociacion[1]
-        #RefInfo['Field'] = '{}.{}'.format(self.fqn(),asociacion[2]) # campo en la tabla que nos ocupa
-        #RefInfo['ParentField'] = '{}.{}'.format(asociacion[1],asociacion[3])
-        #esqReferred = esquema
-        #qualName = asociacion[1].split('.')
-        #if len(qualName) == 1 :
-            #padre = self.getBrotherByName(qualName[0])
-        #elif qualName[0] == nomEsquema:
-            #padre = self.getBrotherByName(qualName[1])
-        #else:
-            #esqReferred = esquema.getBrotherByName(qualName[0])
-            #if esqReferred is not None:
-                #padre = esqReferred.getChildByName(qualName[1])
-            #else:
-                #QMessageBox.critical(self,
-                        #"Error fatal",
-                        #'Error horroroso en {}{}'.format(self.text(),asociacion))
-                #if DEBUG:
-                    #print('Error horroroso en ',self.text(),asociacion)
-                #exit()
-
-        
-        #""" si el diccionario se ha construido para una tabla con nivel de profundidad 0 (el parametro iters en DataDict.__init__) la evalaucin de FKs no tiene sentido, pero no he encontrado un sitio decente para 
-        #controlarlo. Como aqui es donde falla es donde se parchea. pero es eso, un parche FIXME"""
-        #if padre:
-            #camposPadre = padre.getFields()
-            #for i in range(0,len(camposPadre)):
-                #if camposPadre[i][0] == asociacion[3] or camposPadre[i][4] == asociacion[3]: #tanto fqn como normal
-                    #del camposPadre[i]
-                    #break
-            #RefInfo['CamposReferencia'] = camposPadre
-        
-        #if maxlevel > kiter :
-            #FKs = padre.getFK(False)
-        #else:
-            #FKs = None
-        #if  FKs and len(FKs) > 0:
-            #RefInfo['FK']= []
-            #for idx,asoc_2 in enumerate(FKs):
-                #refInfo = padre._getFkInfo(asoc_2,esquema,nomEsquema,maxlevel,kiter)
-                #RefInfo['FK'].append(refInfo)   
-
-        #return RefInfo
     
     def getTableInfo(self):
         TableInfo = dict()
@@ -712,30 +664,6 @@ class TableTreeItem(BaseTreeItem):
         
         return TableInfo
         
-    #def getFullInfo(self):
-        #return self.getFullInfoRecursive(maxlevel=1)
-    
-    #def getFullInfoRecursive(self,maxlevel=3):
-        #"""
-           #De momento no incluyo FKr -- no tengo claro necesitarla
-        #"""
-        #TableInfo = dict()
-        #esquema = self.getSchema()
-        #TableInfo['schemaName'] = nomEsquema = esquema.text()
-        #TableInfo['tableName'] = self.fqn()
-        #TableInfo['Fields']= self.getFields()
-        #if maxlevel > 0:
-            #FKs = self.getFK(False)
-        #else:
-            #FKs = None
-            
-        #if FKs and len(FKs) > 0:
-            #TableInfo['FK']= []
-            #for idx,asociacion in enumerate(FKs):
-                #refInfo = self._getFkInfo(asociacion,esquema,nomEsquema,maxlevel)
-                #TableInfo['FK'].append(refInfo)   
-        
-        #return TableInfo
 
     def setMenuActions(self,menu,context):      
         self.menuActions = []

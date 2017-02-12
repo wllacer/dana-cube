@@ -425,7 +425,7 @@ def prueba():
         tabs = '\t'*entry.depth()
         if not entry.isAuxiliar() and not entry.getTypeText() == '' :
             print(tabs,entry.getTypeText(),':',entry.getFullDesc()) #entry.fqn(),entry.getFullDesc(), entry.getRow(),entry.gpi()) #(tabs,entry) #entry.text(),'\t',entry.getRow())
-    #getTable(dd,confName,schemaName,tableName,maxlevel=1):
+
     ds = TableInfo(dd,confName,schema,table,maxlevel= iters)
     print( [ table for table in ds.lista] )
     ds.prepareBulkSql()
