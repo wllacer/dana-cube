@@ -81,14 +81,27 @@ def prueba():
     print(args)
     #dd = DataDict(defFile=args.configFile,secure=args.secure)
     # dd= DataDict(conn=confName,schema=schema)
-    confName=  '$$TEMP'
-    schema= 'public' # 'main' # None #'dana_sample'
-    table=  'rental' #'votos_locales' #'votos_prov_ref' #None #'votos_locales'
+    confName= 'Elecciones 2105' #'$$TEMP'
+    schema= 'main' # 'main' # None #'dana_sample'
+    table=  'votos_prov_ref' #'votos_locales' #'votos_prov_ref' #None #'votos_locales'
     iters=  1
-    confData=  {'driver': 'postgresql', 'dbname': 'pagila', 'dbhost': 'localhost', 'dbuser': 'werner', 'dbpass': ''}
-    #confData=  {'driver': 'sqlite', 'dbname': '/home/werner/projects/dana-cube.git/ejemplo-dana.db', 'dbhost': '', 'dbuser': '', 'dbpass': ''}
-    dd= DataDict(conName=confName,schema=schema,table=table,iters=iters +1,confData=confData,
-                 defFile=args.configFile,secure=args.secure) 
+    #confData=  {'driver': 'postgresql', 'dbname': 'pagila', 'dbhost': 'localhost', 'dbuser': 'werner', 'dbpass': ''}
+    #confData=   {
+            #"dbport": "",
+            #"dbhost": "",
+            #"driver": "sqlite",
+            #"dbpass": "",
+            #"debug": False,
+            #"dbuser": "",
+            #"dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db"
+        #}
+    #confData = {'dbname':"/home/werner/projects/dana-cube.git/ejemplo_dana.db",'driver':'sqlite'}
+    confData=  {'driver': 'sqlite', 'dbname': "/home/werner/projects/dana-cube.git/ejemplo_dana.db", 'dbhost': '', 'dbuser': '', 'dbpass': ''}
+    #dd= DataDict(conName=confName,schema=schema,table=table,iters=iters +1,
+    #            defFile=args.configFile,secure=args.secure) 
+    #dd= DataDict(defFile=args.configFile,secure=args.secure) 
+    #dd= DataDict(conName=confName,defFile=args.configFile,secure=args.secure) 
+    dd= DataDict(conName=confName,schema=schema,table=table,iters=iters +1,confData = confData)
     #pprint(dd.configData)
     ##print(dd.baseModel)
     #pprint(dd.conn)
@@ -99,9 +112,9 @@ def prueba():
             print(tabs,entry.getTypeText(),':',entry.getFullDesc()) #entry.fqn(),entry.getFullDesc(), entry.getRow(),entry.gpi()) #(tabs,entry) #entry.text(),'\t',entry.getRow())
 
 
-    #ds = TableInfo(dd,confName,schema,table,maxlevel= iters)
-    #pprint(ds.lista)
-    #pprint(ds.prepareBulkSql())
+    ds = TableInfo(dd,confName,schema,table,maxlevel= iters)
+
+    pprint(ds.prepareBulkSql())
     #pprint(ds.info2cube())
     #print(dd.isEmpty)
     

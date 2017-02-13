@@ -114,7 +114,6 @@ class DataDict():
         if 'conn' in kwargs:
             self.appendConnection(kwargs.get('conName','$$TEMP'),**kwargs)
             return
-
         if 'confData' not in kwargs:
             definition = self.configData.get('Conexiones')
         if 'conName' in kwargs:
