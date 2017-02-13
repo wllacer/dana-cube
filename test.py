@@ -82,11 +82,11 @@ def prueba():
     #dd = DataDict(defFile=args.configFile,secure=args.secure)
     # dd= DataDict(conn=confName,schema=schema)
     confName=  '$$TEMP'
-    schema=  'public' # None #'dana_sample'
-    table=  'rental' #None #'votos_locales'
-    iters=  2
+    schema= 'public' # 'main' # None #'dana_sample'
+    table=  'rental' #'votos_locales' #'votos_prov_ref' #None #'votos_locales'
+    iters=  1
     confData=  {'driver': 'postgresql', 'dbname': 'pagila', 'dbhost': 'localhost', 'dbuser': 'werner', 'dbpass': ''}
-
+    #confData=  {'driver': 'sqlite', 'dbname': '/home/werner/projects/dana-cube.git/ejemplo-dana.db', 'dbhost': '', 'dbuser': '', 'dbpass': ''}
     dd= DataDict(conName=confName,schema=schema,table=table,iters=iters +1,confData=confData,
                  defFile=args.configFile,secure=args.secure) 
     #pprint(dd.configData)
@@ -95,17 +95,14 @@ def prueba():
     #print(dd.hiddenRoot)
     for entry in traverse(dd.hiddenRoot):
         tabs = '\t'*entry.depth()
-        if not entry.isAuxiliar() and not entry.getTypeText() == '' :
+        if not entry.isAuxiliar():# and not entry.getTypeText() == '' :
             print(tabs,entry.getTypeText(),':',entry.getFullDesc()) #entry.fqn(),entry.getFullDesc(), entry.getRow(),entry.gpi()) #(tabs,entry) #entry.text(),'\t',entry.getRow())
 
-    for entry in traverse(dd.hiddenRoot):
-        tabs = '\t'*entry.depth()
-        if not entry.isAuxiliar() and not entry.getTypeText() == '' :
-            print(tabs,entry.getTypeText(),':',entry.getFullDesc()) #entry.fqn(),entry.getFullDesc(), entry.getRow(),entry.gpi()) #(tabs,entry) #entry.text(),'\t',entry.getRow())
 
-    ds = TableInfo(dd,confName,schema,table,maxlevel= iters)
-    #pprint(ds.getFKShallow())
-    pprint(ds.info2cube())
+    #ds = TableInfo(dd,confName,schema,table,maxlevel= iters)
+    #pprint(ds.lista)
+    #pprint(ds.prepareBulkSql())
+    #pprint(ds.info2cube())
     #print(dd.isEmpty)
     
 if __name__ == '__main__':

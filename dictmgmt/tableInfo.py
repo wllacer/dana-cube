@@ -39,7 +39,7 @@ from dictmgmt.datadict import DataDict
 
 from datalayer.query_constructor import *
 
-DEBUG = True
+DEBUG = False
 
 (_ROOT, _DEPTH, _BREADTH) = range(3)
 
@@ -73,6 +73,7 @@ def getTabRef(dd,confName,schemaName,tableName):
         if DEBUG:
             print('Tabla {} no definida'.format(tableName))
         return None
+
     if DEBUG:
         print('get Table ->',tab.getFullDesc())
                   
@@ -106,6 +107,10 @@ class TableInfo():
         self.driver = dd.getConnByName(confName).data()
                 
         tab = getTabRef(dd,confName,schemaName,tableName)
+        if not tab:
+            print('Tabla {}.{}.{} no encontrada'.format(confName,schemaName,tableName))
+            return 
+        
         self.lista = dict()
         self.mainTable = tab.fqn()
         self.maxlevel = maxlevel
@@ -174,8 +179,16 @@ class TableInfo():
         return final
         
 
-        
-    def prepareJoin(self,joinList):
+    def locate(self,fieldList,relName,tableName,fldName):
+        # no parece la mas eficiente de las soluciones ... pero no veo de momento posiblidad sin convertirlo en un dict
+        # tampoco es que tenga mucho sentido como metodo de la clase
+        for k,elem in enumerate(fieldList):
+            if elem[0] == (relName,tableName):
+                if elem[1] == fldName:
+                    return k
+        return None
+    
+    def prepareStmt(self,joinList):
         #
         # el juego es que utilzo tuplas (relationship,table) como clave del diccionario de tablas
         #
@@ -204,7 +217,14 @@ class TableInfo():
                     tableDict[(nombre,destTable)] = [False,None]
                 if k == len(link) -1:
                     #TODO me falta colocar los campos en el sitio adecuado
-                    fieldList +=[ [(nombre,destTable),item['basename'],item['format']] for item in self.lista[destTable]['Fields'] if item['basename'] != destField] 
+                    # localizar la posicion de childRel,childTable,childField
+                    pos = self.locate(fieldList,childRel,childTable,childField)
+                    thisTableFields = [ [(nombre,destTable),item['basename'],item['format']] for item in self.lista[destTable]['Fields'] if item['basename'] != destField] 
+                    if pos:
+                        fieldList[pos +1:pos +1]= thisTableFields
+                    else:
+                        fieldList += thisTableFields
+                        
                     tableDict[(nombre,destTable)][0]=True
                 # no me molesto en comprobar si existe, es lo bueno de los diccionarios
                 joinDict[(nombre,destTable)] = [(childRel,childTable),childField,destField]
@@ -247,7 +267,7 @@ class TableInfo():
         for k in range(self.maxlevel):
             klista += lista[k]
 
-        tableDict,fieldList,joinDict = self.prepareJoin(klista)
+        tableDict,fieldList,joinDict = self.prepareStmt(klista)
         
 
         base_id = ('base',self.mainTable)
