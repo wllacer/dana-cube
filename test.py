@@ -75,7 +75,7 @@ def traverse(root,base=None):
             del queue[0]
         else:
             queue = expansion  + queue[1:]      
-def prueba():
+def pruebaTableInfo():
     parser = generaArgParser()
     args = parser.parse_args()
     print(args)
@@ -128,4 +128,4 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     #aw = ApplicationWindow()
     #aw.show()
-    prueba()
+    pruebaTableInfo()
