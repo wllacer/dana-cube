@@ -299,7 +299,7 @@ class DanaCubeWindow(QMainWindow):
             }
         if entrada.filtroCampos != '':  #NO los rangos de fecha que son por naturaleza variables
             datos_defecto["vista"]["filter"] = entrada.filtroCampos
-        my_cubos = load_cubo(self.cubeFile,secure=True)
+        my_cubos = load_cubo(self.cubeFile)
         my_cubos['default'] = datos_defecto
         dump_structure(my_cubos,self.cubeFile)
         
