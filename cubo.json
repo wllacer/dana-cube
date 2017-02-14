@@ -87,6 +87,40 @@
                         "elem": "nacion, region, provincia"
                     }
                 ]
+            },
+            {
+                "class": "h",
+                "name": "geo jerarquico con el nuevo",
+                "prod": [
+                    {
+                        "domain": {
+                            "code": "pais",
+                            "desc": "pais",
+                            "filter": "",
+                            "table": "main.prov_complex"
+                        },
+                        "elem": "nacion"
+                    },                    {
+                        "domain": {
+                            "code": "region",
+                            "desc": "region",
+                            "filter": "",
+                            "table": "main.prov_complex",
+                            "grouped by":"pais"
+                        },
+                        "elem": "region"
+                    },                   {
+                        "domain": {
+                            "code": "provincia",
+                            "desc": "nombre",
+                            "filter": "",
+                            "table": "main.prov_complex",
+                            "grouped by":"pais,region"
+                        },
+                        "elem": "provincia"
+                    }
+
+                ]
             }
         ],
         "table": "main.votos_prov_ref"
