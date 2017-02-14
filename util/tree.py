@@ -294,8 +294,16 @@ class TreeDict(object):
             self.__append(node)
         else:
         # este lo dejo fallar
-            node.parentItem = self.content[parentKey]
+        # tengo dos opciones
+        # 1) try e ignorar las claves inexistentes y
+        # 2) construir las claves sobre la marcha. De momento voy a ignorarla, puede capturar mas casos generales
+            try:
+                node.parentItem = self.content[parentKey]
+            except KeyError :
+                node.parentItem = None
+
             self.__append(node)
+
         
     def searchNode(self,key):
         try:

@@ -39,7 +39,7 @@ from dictmgmt.datadict import DataDict
 
 from datalayer.query_constructor import *
 
-DEBUG = True
+DEBUG = False
 
 (_ROOT, _DEPTH, _BREADTH) = range(3)
 
@@ -73,6 +73,7 @@ def getTabRef(dd,confName,schemaName,tableName):
         if DEBUG:
             print('Tabla {} no definida'.format(tableName))
         return None
+
     if DEBUG:
         print('get Table ->',tab.getFullDesc())
                   
@@ -106,6 +107,10 @@ class TableInfo():
         self.driver = dd.getConnByName(confName).data()
                 
         tab = getTabRef(dd,confName,schemaName,tableName)
+        if not tab:
+            print('Tabla {}.{}.{} no encontrada'.format(confName,schemaName,tableName))
+            return 
+        
         self.lista = dict()
         self.mainTable = tab.fqn()
         self.maxlevel = maxlevel
@@ -174,8 +179,16 @@ class TableInfo():
         return final
         
 
-        
-    def prepareJoin(self,joinList):
+    def locate(self,fieldList,relName,tableName,fldName):
+        # no parece la mas eficiente de las soluciones ... pero no veo de momento posiblidad sin convertirlo en un dict
+        # tampoco es que tenga mucho sentido como metodo de la clase
+        for k,elem in enumerate(fieldList):
+            if elem[0] == (relName,tableName):
+                if elem[1] == fldName:
+                    return k
+        return None
+    
+    def prepareStmt(self,joinList):
         #
         # el juego es que utilzo tuplas (relationship,table) como clave del diccionario de tablas
         #
@@ -204,7 +217,14 @@ class TableInfo():
                     tableDict[(nombre,destTable)] = [False,None]
                 if k == len(link) -1:
                     #TODO me falta colocar los campos en el sitio adecuado
-                    fieldList +=[ [(nombre,destTable),item['basename'],item['format']] for item in self.lista[destTable]['Fields'] if item['basename'] != destField] 
+                    # localizar la posicion de childRel,childTable,childField
+                    pos = self.locate(fieldList,childRel,childTable,childField)
+                    thisTableFields = [ [(nombre,destTable),item['basename'],item['format']] for item in self.lista[destTable]['Fields'] if item['basename'] != destField] 
+                    if pos:
+                        fieldList[pos +1:pos +1]= thisTableFields
+                    else:
+                        fieldList += thisTableFields
+                        
                     tableDict[(nombre,destTable)][0]=True
                 # no me molesto en comprobar si existe, es lo bueno de los diccionarios
                 joinDict[(nombre,destTable)] = [(childRel,childTable),childField,destField]
@@ -247,7 +267,7 @@ class TableInfo():
         for k in range(self.maxlevel):
             klista += lista[k]
 
-        tableDict,fieldList,joinDict = self.prepareJoin(klista)
+        tableDict,fieldList,joinDict = self.prepareStmt(klista)
         
 
         base_id = ('base',self.mainTable)
@@ -271,10 +291,18 @@ class TableInfo():
                 link = joinDict[link_key]
                 clausula = {'join_modifier':'LEFT OUTER','table':None,'join_clause':None}
                 clausula['table']= '{} AS {}'.format(link_key[1],tableDict[link_key][1])
-                clausula['join_clause']=(('{}.{}'.format(tableDict[link[0]][1],link[1].split('.')[-1]),
+                leftTable =  tableDict[link[0]][1]  #childTable
+                leftFields = norm2List(link[1])
+                rightTable = tableDict[link_key][1] #parent Table
+                rightFields = norm2List(link[2])
+                if len(leftFields) != len(rightFields):
+                    print('No se como procesar ',link)
+                    continue
+                clausula['join_clause']=[
+                                 ('{}.{}'.format(leftTable,leftFields[k].split('.')[-1].strip()),
                                  '=',
-                                '{}.{}'.format(tableDict[link_key][1],link[2].split('.')[-1])
-                                ),)
+                                '{}.{}'.format(rightTable,rightFields[k].split('.')[-1].strip()))
+                                 for k in range(len(leftFields)) ]
                 sqlContext['join'].append(clausula)  
         if pFilter:
             sqlContext['base_filter'] = pFilter #TODO necesita que se le introduzcan los alias
@@ -330,19 +358,6 @@ class TableInfo():
 
         
         for entry in fkList:
-            #if len (entry) == 1:
-                #relationship = entry
-                #entrada['guides'].append({'name':relationship['name'],
-                            #'class':'o',
-                            #'prod':[{'domain': {
-                                    #"filter":"",
-                                    #"table":relationship['parent table'],
-                                    #"code":relationship['parent field'],
-                                    #"desc":None
-                                #},
-                                #'elem':relationship['ref field']},]
-                                #})  #no es completo
-            #else:
             relationship = entry[-1]
             nombre = '.'.join([ item['name'] for item in entry ])
             entrada['guides'].append({'name':nombre,
@@ -353,12 +368,27 @@ class TableInfo():
                                 "code":relationship['parent field'],
                                 "desc":None
                             },
-                            'link via':[{ "table":actor['parent table'],
-                                "clause":[{"rel_elem":actor["parent field"],"base_elem":actor['ref field']},],
-                                "filter":"" } for actor in entry[:-1]] ,
+                            'link via':[ ],
+                                #[{ "table":actor['parent table'],
+                                #"clause":[
+                                            #{"rel_elem":actor["parent field"],"base_elem":actor['ref field']}
+                                         #],
+                                #"filter":"" } for actor in entry[:-1]] ,
 
                             'elem':entry[0]['ref field']},]
-                            })  #no es completo
+                            })  
+            for actor in entry[:-1]:
+                link_dict = dict()
+                link_dict['table'] = actor['parent table']
+                link_dict['filter'] = ""
+                leftFields = norm2List(actor['ref field'])
+                rightFields = norm2List(actor['parent field'])
+                if len(leftFields) != len(rightFields):
+                    print('No puede procesarse la FK',entry)
+                    continue
+                link_dict['clause'] = [ {'rel elem':rightFields[k],'base elem':leftFields[k] } for k in range(len(leftFields)) ]
+                if link_dict:
+                    entrada['guides'][-1]['prod'][-1]['link via'].append(link_dict)
             if entrada['guides'][-1]['prod'][-1]['link via'] == [] :
                                 del entrada['guides'][-1]['prod'][-1]['link via']
 

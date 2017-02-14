@@ -2,7 +2,7 @@
 BuildItems=@Variant(\x00\x00\x00\t\x00\x00\x00\x00\x01\x00\x00\x00\x0b\x00\x00\x00\x00\x01\x00\x00\x00\x1a\x00d\x00a\x00n\x00a\x00-\x00c\x00u\x00b\x00e\x00.\x00g\x00i\x00t)
 
 [Filters]
-size=26
+size=27
 
 [Filters][0]
 inclusive=0
@@ -97,6 +97,11 @@ targets=1
 [Filters][25]
 inclusive=0
 pattern=*.pyo
+targets=1
+
+[Filters][26]
+inclusive=0
+pattern=/cubo.json.20170213-195740
 targets=1
 
 [Filters][3]

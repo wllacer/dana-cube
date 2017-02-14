@@ -325,6 +325,7 @@ class ConnectionTreeItem(BaseTreeItem):
         BaseTreeItem.__init__(self, name)
         #FIXME no podemos poner el icono de momento
         self.setIcon(QIcon("icons/16/database_server"))
+        self.inspector = None
         if connection is not None:
             self.setData(connection)
         #else:
@@ -391,21 +392,21 @@ class ConnectionTreeItem(BaseTreeItem):
         self.deleteChildren()
         if self.isOpen():
             engine = self.getConnection().data().engine
-            inspector = inspect(engine)
+            self.inspector = inspect(engine)
             
-            if len(inspector.get_schema_names()) is 0:
+            if len(self.inspector.get_schema_names()) is 0:
                 schemata =[None,]
             elif pSchema is not None:
                 schemata = [pSchema,]
             else:
-                schemata=inspector.get_schema_names()  #behaviour with default
+                schemata=self.inspector.get_schema_names()  #behaviour with default
             for schema in schemata:
                 self.appendRow(SchemaTreeItem(schema))
                 curSchema = self.lastChild()
                 curSchema.refresh(**kwargs)
             # en el caso de pedir una tabla en concreto NO se calculan la FK hierarchy
             if not kwargs.get('table'):    
-                self.FK_hierarchy(inspector,schemata)
+                self.FK_hierarchy(self.inspector,schemata)
             
         else:
             self.setIcon(QIcon('icons/16/database_lightning.png'))
@@ -473,8 +474,8 @@ class SchemaTreeItem(BaseTreeItem):
         self.deleteChildren()
         pFile = kwargs.get('table')
         
-        engine = self.getConnection().data().engine
-        inspector = inspect(engine)
+        #engine = self.getConnection().data().engine
+        inspector = self.getConnection().inspector #inspect(engine)
         schema = self.text() if self.text() != '' else None
         #no parece funcionar muy bien con el resto del codigo.
         #TODO ver como funciona con los sinonimos en oracle
@@ -545,15 +546,17 @@ class TableTreeItem(BaseTreeItem):
         curTableFK = self.lastChild()
         self.appendRow(BaseTreeItem('FK_REFERENCE'))
         #faltan las FK de vuelta
-        engine = self.getConnection().data().engine
-        inspector = inspect(engine)
+        #engine = self.getConnection().data().engine
+        #inspector = inspect(engine)
+        inspector = self.getConnection().inspector
+        
         table_name = self.text()
         schema = self.getSchema().text()
         if schema == '':
             schema = None
+            
         try:
             #FIXME self.getRecordCount()
-            
             for column in inspector.get_columns(table_name,schema):
                 try:
                     name = BaseTreeItem(column['name'])
@@ -697,7 +700,7 @@ class TableTreeItem(BaseTreeItem):
             elif action == 'browseFK':
                 niters = 1
             elif action == 'browseFKR':
-                niters = 3 #de momento NO
+                niters = 2 #de momento NO
             context.databrowse(conn,schema,table,iters=niters)
             
         elif action == 'generate':
@@ -733,8 +736,9 @@ class ViewTreeItem(TableTreeItem):
     def execAction(self,context,action):
         TableTreeItem.execAction(self,context,action)
         if action == 'properties' :
-            engine = self.getConnection().data().engine
-            inspector = inspect(engine)
+            #engine = self.getConnection().data().engine
+            #inspector = inspect(engine)
+            inspector = self.getConnection().inspector
             table_name = self.text()
             schema = self.getSchema().text()
             cadena = queryFormat(inspector.get_view_definition(table_name,schema))
