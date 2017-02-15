@@ -316,6 +316,10 @@ class TableInfo():
     def info2cube(self):
         from datalayer.datemgr import genTrimestreCode
 
+        conn = self.dd.getConnByName(self.confName)
+        inspector = conn.inspector
+        pkstring = norm2String(inspector.get_pk_constraint(self.tableName,self.schemaName)['constrained_columns'])
+        uqlist = [pkstring,] + [ norm2String(item['column_names']) for item in inspector.get_unique_constraints(self.tableName,self.schemaName)]
         cubo = dict()
         basename = self.mainTable.split('.')[-1]
         cubo[basename]=dict() # si hubiera algo ... requiescat in pace
@@ -333,6 +337,10 @@ class TableInfo():
         info = self.lista[self.mainTable]
         
         for fld in info['Fields']:
+            simpleName = fld['name'].split('.')[-1]
+            if simpleName in uqlist:
+                continue
+            
             if fld['format'] in ('numerico','entero'):
                 entrada['fields'].append(fld['name'])
             elif fld['format'] in ('fecha','fechahora'):
@@ -348,7 +356,7 @@ class TableInfo():
                                         'class':'o',
                                         'prod':[{'elem':fld['name'],},]})  #no es completo
 
-        if self.maxlevel == 0 or not self.lista[self.mainTable]['FK'] or len(self.lista[self.mainTable]['FK']) == 0:
+        if self.maxlevel == 0 or 'FK' not in self.lista[self.mainTable] or len(self.lista[self.mainTable]['FK']) == 0:
             return cubo
 
         lista = self.getFKShallow()
@@ -391,6 +399,9 @@ class TableInfo():
                     entrada['guides'][-1]['prod'][-1]['link via'].append(link_dict)
             if entrada['guides'][-1]['prod'][-1]['link via'] == [] :
                                 del entrada['guides'][-1]['prod'][-1]['link via']
+                                
+            if len(entry) > 1 or len(norm2List(entry[0]['ref field'])) > 1:
+                print('A crear jerarquias',entry)
 
         return cubo
 
