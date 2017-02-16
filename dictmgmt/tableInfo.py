@@ -383,14 +383,16 @@ class TableInfo():
                                          #],
                                 #"filter":"" } for actor in entry[:-1]] ,
 
-                            'elem':entry[0]['ref field']},]
+                            'elem':entry[-1]['ref field']},]
                             })  
-            for actor in entry[:-1]:
+            for k,actor in enumerate(entry[:-1]):
                 link_dict = dict()
                 link_dict['table'] = actor['parent table']
                 link_dict['filter'] = ""
-                leftFields = norm2List(actor['ref field'])
-                rightFields = norm2List(actor['parent field'])
+                leftTable = self.mainTable if k == 0 else entry[k -1]['parent table']
+                rightTable = link_dict['table']
+                leftFields = [ '{}.{}'.format(leftTable,item) for item in  norm2List(actor['ref field']) ]
+                rightFields = [ '{}.{}'.format(rightTable,item) for item in  norm2List(actor['parent field']) ]
                 if len(leftFields) != len(rightFields):
                     print('No puede procesarse la FK',entry)
                     continue

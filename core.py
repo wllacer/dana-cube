@@ -569,16 +569,17 @@ class Vista:
                 sqlDef['join']=[]
                 #TODO claro candidato a ser incluido en una funcion
                 if 'join' in self.cubo.lista_guias[self.row_id]['rules'][i]:
-                   row_join = self.cubo.lista_guias[self.row_id]['rules'][i]['join']
-                   for entry in row_join:
-                       join_entry = dict()
-                       join_entry['table'] = entry.get('table')
-                       join_entry['join_filter'] = entry.get('filter')
-                       join_entry['join_clause'] = []
-                       for clausula in entry['clause']:
-                           entrada = (clausula.get('rel_elem'),'=',clausula.get('base_elem'))
-                           join_entry['join_clause'].append(entrada)
-                       sqlDef['join'].append(join_entry)
+                    row_join = self.cubo.lista_guias[self.row_id]['rules'][i]['join']
+                    for entry in row_join:
+                        join_entry = dict()
+                        join_entry['table'] = entry.get('table')
+                        join_entry['join_filter'] = entry.get('filter')
+                        join_entry['join_clause'] = []
+                        for clausula in entry['clause']:
+                            entrada = (clausula.get('rel_elem'),'=',clausula.get('base_elem'))
+                            join_entry['join_clause'].append(entrada)
+                        sqlDef['join'].append(join_entry)
+                    print(sqlDef['join'])
                 if 'join' in self.cubo.lista_guias[self.col_id]['rules'][j]:
                    col_join = self.cubo.lista_guias[self.col_id]['rules'][j]['join']
                    for entry in col_join:

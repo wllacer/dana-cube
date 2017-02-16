@@ -121,7 +121,7 @@ def pruebaTableInfo():
 
     ds = TableInfo(dd,confName,schema,table,maxlevel= iters)
 
-    #pprint(ds.prepareBulkSql())
+    pprint(ds.lista)
     pprint(ds.info2cube())
     #print(dd.isEmpty)
     
