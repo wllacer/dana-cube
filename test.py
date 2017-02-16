@@ -82,10 +82,10 @@ def pruebaTableInfo():
     #dd = DataDict(defFile=args.configFile,secure=args.secure)
     # dd= DataDict(conn=confName,schema=schema)
     confName= '$$TEMP' #'Elecciones 2105' #'$$TEMP'
-    schema= 'libgen' # 'main' # None #'dana_sample'
-    table=  'main' #'datos_electorales_2015' #'votos_locales' #'votos_prov_ref' #None #'votos_locales'
-    iters=  1
-    #confData=  {'driver': 'postgresql', 'dbname': 'pagila', 'dbhost': 'localhost', 'dbuser': 'werner', 'dbpass': ''}
+    schema= 'public' # 'main' # None #'dana_sample'
+    table=  'rental' #'datos_electorales_2015' #'votos_locales' #'votos_prov_ref' #None #'votos_locales'
+    iters=  2
+    confData=  {'driver': 'postgresql', 'dbname': 'pagila', 'dbhost': 'localhost', 'dbuser': 'werner', 'dbpass': ''}
     #confData=   {
             #"dbport": "",
             #"dbhost": "",
@@ -97,7 +97,7 @@ def pruebaTableInfo():
         #}
     #confData = {'dbname':"/home/werner/projects/dana-cube.git/ejemplo_dana.db",'driver':'sqlite'}
     #confData=  {'driver': 'sqlite', 'dbname': "/home/werner/projects/dana-cube.git/ejemplo_dana.db", 'dbhost': '', 'dbuser': '', 'dbpass': ''}
-    confData=  {'driver': 'mysql', 'dbname': 'libgen', 'dbhost': 'localhost', 'dbuser': 'demo', 'dbpass': 'demo123'}
+    #confData=  {'driver': 'mysql', 'dbname': 'libgen', 'dbhost': 'localhost', 'dbuser': 'demo', 'dbpass': 'demo123'}
     #dd= DataDict(conName=confName,schema=schema,table=table,iters=iters +1,
     #            defFile=args.configFile,secure=args.secure) 
     #dd= DataDict(defFile=args.configFile,secure=args.secure) 

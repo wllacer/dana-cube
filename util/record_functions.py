@@ -26,6 +26,8 @@ def norm2List(entrada):
        Falla con parentesis dentro de parentesis.
        
     """
+    if not entrada:
+        return []
     if isinstance(entrada,(list,tuple)):
        return entrada
     elif '(' in entrada:
@@ -39,6 +41,8 @@ def norm2String(entrada,separador=', '):
        devuelve una entrada que puede ser una lista o un escalar como escalar siempre con un separador
        
     """
+    if not entrada:
+        return ''
     if isinstance(entrada,(list,tuple)):
         if isinstance(entrada[0],(int,float)):
             return separador.join([str(elem) for elem in entrada])

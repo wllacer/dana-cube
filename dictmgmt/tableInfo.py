@@ -399,9 +399,49 @@ class TableInfo():
                     entrada['guides'][-1]['prod'][-1]['link via'].append(link_dict)
             if entrada['guides'][-1]['prod'][-1]['link via'] == [] :
                                 del entrada['guides'][-1]['prod'][-1]['link via']
+            # creamos relaciones jerarquizadas. 
+            # de momento dos tipos solo fks multicampo y fks de mas de un nivel separadas
+            if len(entry) == 1 and len(norm2List(entry[0]['ref field'])) > 1:
+
+                nombre = '.'.join([ item['name'] for item in entry ]) + 'jerarquizada'
+                entrada['guides'].append({'name':nombre,
+                            'class':'h',
+                            'prod':[]
+                            })
+                actor = entry[-1]
+                leftFields = norm2List(actor['ref field'])
+                rightFields = norm2List(actor['parent field'])
+                if len(leftFields) != len(rightFields):
+                    print('No puede procesarse la FK',entry)
+                    continue
+                for k in range(len(leftFields)):
+                    paso = {'domain': {
+                                    "filter":"",
+                                    "table":relationship['parent table'],
+                                    "code":rightFields[k],
+                                    "desc":rightFields[k],
+                                    },
+                                #'link via':[ ],
+                                    ##[{ "table":actor['parent table'],
+                                    ##"clause":[
+                                                ##{"rel_elem":actor["parent field"],"base_elem":actor['ref field']}
+                                            ##],
+                                    ##"filter":"" } for actor in entry[:-1]] ,
+
+                                'elem':leftFields[k]}
+                    if k > 0:
+                        print(norm2String(rightFields[0:k]))
+                        paso['domain']['grouped by']=norm2String(rightFields[0:k])
+                    
+                    entrada['guides'][-1]['prod'].append(paso)
                                 
-            if len(entry) > 1 or len(norm2List(entry[0]['ref field'])) > 1:
-                print('A crear jerarquias',entry)
+            if len(entry) > 1:
+                nombre = '.'.join([ item['name'] for item in entry ]) + 'jerarquizada'
+                entrada['guides'].append({'name':nombre,
+                            'class':'h',
+                            'prod':[]
+                            })
+
 
         return cubo
 
