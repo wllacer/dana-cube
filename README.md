@@ -103,6 +103,7 @@ Qt, PyQt -and the additional libraries-, licensing might impose other restrictio
 
 ## DANACUBE enters __ALPHA__
 
+__Update 2017/02/16__  No release this week. Lots of changes, though, but still not stable enough.
 __Update 2017/02/07__  New alpha release. With sample data. The __danacube.pyw__ (the basic tool) can be seen as pretty complete and (hope) stable
 __Update 2017/02/01__. New alpha release
 
