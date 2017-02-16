@@ -231,7 +231,7 @@ def genTrimestreCode(fieldname,driver='QSQLITE'):
         function_mask ="{0}({1},'{2}')"
         year_marker='YYYY'
         month_marker = 'MM'
-        cat_stmt = "{} ||:||'{}' "
+        cat_stmt = "{} ||':'||'{}' "
     else:
         print('Date conversions for driver %s still not implemented'%driver)
         return None

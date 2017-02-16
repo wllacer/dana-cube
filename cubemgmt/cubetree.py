@@ -341,6 +341,9 @@ def tree2dict(rootItem,esdiccionario=None):
                 dato = item.getColumnData(1)
                 if dato == 'None':
                    result_d[item.text()]=None
+                # para los valores booleanos. Bug sutil 
+                if dato in ('True','False'):
+                    result_d[item.text()] = True if dato == 'True' else False
                 #elif is_number(dato):
                    #result_d[item.text()] = Decimal(dato)
                 else:

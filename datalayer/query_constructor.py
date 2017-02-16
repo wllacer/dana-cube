@@ -469,6 +469,7 @@ def _joinConstructor(**kwargs):
     if kwargs[definicion] is None:
         return ''
     entrada=norm2List(kwargs[definicion])
+    #DEBUG print(kwargs[definicion],entrada)
     statement = ''
     ind = 0
     num_elem = len(entrada)

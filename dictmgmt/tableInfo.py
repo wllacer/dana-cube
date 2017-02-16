@@ -374,7 +374,7 @@ class TableInfo():
                                 "filter":"",
                                 "table":relationship['parent table'],
                                 "code":relationship['parent field'],
-                                "desc":None
+                                "desc":relationship['parent field']
                             },
                             'link via':[ ],
                                 #[{ "table":actor['parent table'],
@@ -394,7 +394,7 @@ class TableInfo():
                 if len(leftFields) != len(rightFields):
                     print('No puede procesarse la FK',entry)
                     continue
-                link_dict['clause'] = [ {'rel elem':rightFields[k],'base elem':leftFields[k] } for k in range(len(leftFields)) ]
+                link_dict['clause'] = [ {'rel_elem':rightFields[k],'base_elem':leftFields[k] } for k in range(len(leftFields)) ]
                 if link_dict:
                     entrada['guides'][-1]['prod'][-1]['link via'].append(link_dict)
             if entrada['guides'][-1]['prod'][-1]['link via'] == [] :
@@ -435,12 +435,12 @@ class TableInfo():
                     
                     entrada['guides'][-1]['prod'].append(paso)
                                 
-            if len(entry) > 1:
-                nombre = '.'.join([ item['name'] for item in entry ]) + 'jerarquizada'
-                entrada['guides'].append({'name':nombre,
-                            'class':'h',
-                            'prod':[]
-                            })
+            #if len(entry) > 1:
+                #nombre = '.'.join([ item['name'] for item in entry ]) + 'jerarquizada'
+                #entrada['guides'].append({'name':nombre,
+                            #'class':'h',
+                            #'prod':[]
+                            #})
 
 
         return cubo
