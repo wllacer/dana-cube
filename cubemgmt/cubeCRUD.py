@@ -454,7 +454,7 @@ def execAction(exec_object,obj,action):
         obj.setData(text[0],Qt.EditRole)
         nombre = obj.getChildrenByName('name')
         if nombre:
-            item.setColumnData(1,text[0],Qt.EditRole)
+            obj.setColumnData(1,text[0],Qt.EditRole)
         else:
             obj.appendRow((CubeItem('name'),CubeItem(text[0],)))
     elif action == 'refresh':

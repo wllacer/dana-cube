@@ -436,7 +436,6 @@ class ConnectionTreeItem(BaseTreeItem):
 
     @keep_tree_layout(1)
     def execAction(self,context,action):
-        
         if action == "refresh" :
             modelo = self.model()
             modelo.beginResetModel()

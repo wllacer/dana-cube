@@ -157,6 +157,14 @@ class DanaBrowseWindow(QMainWindow):
 
         self.setWindowTitle("Visualizador de base de datos")
         
+    #def model(self):
+        #"""
+            #para los decoradores keep position y tal
+        #"""
+        #return self.baseModel
+    #def isExpanded(self,idx):
+        #return self.view.isEnabled(idx)
+    
     def setupView(self):
         self.view = QTreeView(self)
         self.view.setContextMenuPolicy(Qt.CustomContextMenu)
