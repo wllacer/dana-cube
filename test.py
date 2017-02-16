@@ -81,11 +81,11 @@ def pruebaTableInfo():
     print(args)
     #dd = DataDict(defFile=args.configFile,secure=args.secure)
     # dd= DataDict(conn=confName,schema=schema)
-    confName= 'Elecciones 2105' #'$$TEMP'
-    schema= 'main' # 'main' # None #'dana_sample'
-    table=  'votos_prov_ref' #'votos_locales' #'votos_prov_ref' #None #'votos_locales'
-    iters=  1
-    #confData=  {'driver': 'postgresql', 'dbname': 'pagila', 'dbhost': 'localhost', 'dbuser': 'werner', 'dbpass': ''}
+    confName= '$$TEMP' #'Elecciones 2105' #'$$TEMP'
+    schema= 'public' # 'main' # None #'dana_sample'
+    table=  'rental' #'datos_electorales_2015' #'votos_locales' #'votos_prov_ref' #None #'votos_locales'
+    iters=  2
+    confData=  {'driver': 'postgresql', 'dbname': 'pagila', 'dbhost': 'localhost', 'dbuser': 'werner', 'dbpass': ''}
     #confData=   {
             #"dbport": "",
             #"dbhost": "",
@@ -96,7 +96,8 @@ def pruebaTableInfo():
             #"dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db"
         #}
     #confData = {'dbname':"/home/werner/projects/dana-cube.git/ejemplo_dana.db",'driver':'sqlite'}
-    confData=  {'driver': 'sqlite', 'dbname': "/home/werner/projects/dana-cube.git/ejemplo_dana.db", 'dbhost': '', 'dbuser': '', 'dbpass': ''}
+    #confData=  {'driver': 'sqlite', 'dbname': "/home/werner/projects/dana-cube.git/ejemplo_dana.db", 'dbhost': '', 'dbuser': '', 'dbpass': ''}
+    #confData=  {'driver': 'mysql', 'dbname': 'libgen', 'dbhost': 'localhost', 'dbuser': 'demo', 'dbpass': 'demo123'}
     #dd= DataDict(conName=confName,schema=schema,table=table,iters=iters +1,
     #            defFile=args.configFile,secure=args.secure) 
     #dd= DataDict(defFile=args.configFile,secure=args.secure) 
@@ -104,6 +105,12 @@ def pruebaTableInfo():
     dd= DataDict(conName=confName,schema=schema,table=table,iters=iters +1,confData = confData)
     #pprint(dd.configData)
     ##print(dd.baseModel)
+    conn = dd.getConnByName(confName)
+    inspector = conn.inspector
+    #pprint(inspector.get_check_constraints(table,schema))
+    pprint(inspector.get_pk_constraint(table,schema))
+    pprint(inspector.get_unique_constraints(table,schema))
+    #pprint(inspector.get_columns(table,schema))
     #pprint(dd.conn)
     #print(dd.hiddenRoot)
     for entry in traverse(dd.hiddenRoot):
@@ -114,8 +121,8 @@ def pruebaTableInfo():
 
     ds = TableInfo(dd,confName,schema,table,maxlevel= iters)
 
-    pprint(ds.prepareBulkSql())
-    #pprint(ds.info2cube())
+    #pprint(ds.prepareBulkSql())
+    pprint(ds.info2cube())
     #print(dd.isEmpty)
     
 if __name__ == '__main__':
