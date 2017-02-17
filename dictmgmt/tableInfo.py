@@ -497,7 +497,7 @@ def prueba():
     iters=  2
     confData=  {'driver': 'postgresql', 'dbname': 'pagila', 'dbhost': 'localhost', 'dbuser': 'werner', 'dbpass': ''}
 
-    dd= DataDict(confName=confName,schema=schema,table=table,iters=iters +1
+    dd= DataDict(conName=confName,schema=schema,table=table,iters=iters +1
                  ,confData=confData,
                  defFile=args.configFile,secure=args.secure) 
     #pprint(dd.configData)
