@@ -98,11 +98,11 @@ def pruebaTableInfo():
     #confData = {'dbname':"/home/werner/projects/dana-cube.git/ejemplo_dana.db",'driver':'sqlite'}
     #confData=  {'driver': 'sqlite', 'dbname': "/home/werner/projects/dana-cube.git/ejemplo_dana.db", 'dbhost': '', 'dbuser': '', 'dbpass': ''}
     #confData=  {'driver': 'mysql', 'dbname': 'libgen', 'dbhost': 'localhost', 'dbuser': 'demo', 'dbpass': 'demo123'}
-    #dd= DataDict(conName=confName,schema=schema,table=table,iters=iters +1,
+    #dd= DataDict(confName=confName,schema=schema,table=table,iters=iters +1,
     #            defFile=args.configFile,secure=args.secure) 
     #dd= DataDict(defFile=args.configFile,secure=args.secure) 
-    #dd= DataDict(conName=confName,defFile=args.configFile,secure=args.secure) 
-    dd= DataDict(conName=confName,schema=schema,table=table,iters=iters +1,confData = confData)
+    #dd= DataDict(confName=confName,defFile=args.configFile,secure=args.secure) 
+    dd= DataDict(confName=confName,schema=schema,table=table,iters=iters +1,confData = confData)
     #pprint(dd.configData)
     ##print(dd.baseModel)
     conn = dd.getConnByName(confName)
