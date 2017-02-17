@@ -44,7 +44,7 @@ class DataDict():
     """
     Argumentos opcionales que recibe DataDict
     defFile. Nombre del fichero de configuracion
-    confName  Nombre de la conexion
+    conName  Nombre de la conexion
     confData (connexion Data, como en cubo.connect
     schema
     table
@@ -112,12 +112,12 @@ class DataDict():
         
     def _cargaModelo(self,**kwargs):
         if 'conn' in kwargs:
-            self.appendConnection(kwargs.get('confName','$$TEMP'),**kwargs)
+            self.appendConnection(kwargs.get('conName','$$TEMP'),**kwargs)
             return
         if 'confData' not in kwargs:
             definition = self.configData.get('Conexiones')
-        if 'confName' in kwargs:
-            self.appendConnection(kwargs.get('confName'),**kwargs)
+        if 'conName' in kwargs:
+            self.appendConnection(kwargs.get('conName'),**kwargs)
             return
         for confName in sorted(definition):
             self.appendConnection(confName,**kwargs)  # aqui no tiene sentido filtrar
