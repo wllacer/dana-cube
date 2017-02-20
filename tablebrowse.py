@@ -129,6 +129,11 @@ class TableBrowser(QTableView):
             dataDict = pdataDict
         else:
             dataDict=DataDict(conName=confName,schema=schema,table=table,iters=iters) #iters todavia no procesamos
+        
+        #if not dataDict.getConnByName(confName):
+            #print('Salimos por ausencia de diccionario')
+            #exit()
+            
         self.localContext = (dataDict,confName,schema,table,iters)    
         if not confName or confName == '':
             return
@@ -148,6 +153,7 @@ class TableBrowser(QTableView):
             modelRow = [ CursorItem(str(fld)) for fld in row ]
             self.baseModel.appendRow(modelRow)
         cursor = [] #operacion de limpieza, por si las mac-flies
+    
     def setupView(self):
         #        self.view = QTableView(self)
         # aqui por coherencia --es un tema de presentacion
@@ -275,7 +281,7 @@ if __name__ == '__main__':
         reload(sys)
         sys.setdefaultencoding('utf-8')
     app = QApplication(sys.argv)
-    window = TableBrowserWin('MariaBD Local','sakila','film',iters=1)
+    window = TableBrowserWin('Pagila','public','rental',iters=1)
     window.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
     window.show()
     sys.exit(app.exec_())

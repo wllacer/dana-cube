@@ -238,6 +238,7 @@ def getCursorAlch(db, sql_string,funcion=None,**kwargs):
         return None
       
     sqlString=text(sql_string + setLimitString(sql_string,db,**kwargs) )
+
     cursor= []
 
     resultCursor = db.execute(sqlString)

@@ -68,6 +68,9 @@ class DataDict():
         else:
             self.isEmpty = True
         
+    def model(self):
+        return self.baseModel
+    
     def close(self):
         for entry in self.conn:
             self.dropConnection(entry)
@@ -137,6 +140,11 @@ class DataDict():
         else:
             conf = self.configData['Conexiones'].get(confName)
             
+        if not conf:
+            self.conn[confName] = None
+            showConnectionError(confName,'No es posible determinar la configuracion')             
+            return 
+        
         if kwargs.get('pos') is None:
 #        if pos is None:
             pos = padre.rowCount()
@@ -157,9 +165,12 @@ class DataDict():
             padre.insertRow(pos,(ConnectionTreeItem(confName,conexion),QStandardItem(str(engine))))
             curConnection = padre.child(pos)
 
-        except ( OperationalError, ProgrammingError, InterfaceError ) as e:
+        #except ( OperationalError, ProgrammingError, InterfaceError,  ) as e:
+        except Exception as e:
             self.conn[confName] = None
-            showConnectionError(confName,norm2String(e.orig.args))             
+            informacion = [ str(item) for item in e.orig.args ]
+            print(informacion)
+            showConnectionError(confName,norm2String(informacion))             
             padre.insertRow(pos,(ConnectionTreeItem(confName,None),QStandardItem('Disconnected')))
             curConnection = padre.child(pos)
         

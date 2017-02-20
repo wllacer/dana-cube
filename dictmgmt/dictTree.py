@@ -434,7 +434,7 @@ class ConnectionTreeItem(BaseTreeItem):
         else:
             self.menuActions.append(menu.addAction("Connect",lambda:self.execAction(context,"switch")))
 
-    @keep_tree_layout(1)
+    
     def execAction(self,context,action):
         if action == "refresh" :
             modelo = self.model()
@@ -526,6 +526,7 @@ class SchemaTreeItem(BaseTreeItem):
         self.menuActions = []
         self.menuActions.append(menu.addAction("Refresh",lambda:self.execAction(context,"refresh")))
 
+    
     def execAction(self,context,action):
         if action == "refresh" :
             self.model().beginResetModel()
@@ -674,10 +675,13 @@ class TableTreeItem(BaseTreeItem):
         self.menuActions.append(menu.addAction("Properties",lambda:self.execAction(context,"properties")))
         self.menuActions[-1].setEnabled(False)
         self.menuActions.append(menu.addAction("Count rows",lambda:self.execAction(context,"rowcount")))
+        self.menuActions.append(menu.addAction("Field statisticts",lambda:self.execAction(context,"fieldstats")))
+        menu.addSeparator()
         self.menuActions.append(menu.addAction("Browse Data",lambda:self.execAction(context,"browse")))
         self.menuActions.append(menu.addAction("Browse Data with Foreign Key",lambda:self.execAction(context,"browseFK")))
         self.menuActions.append(menu.addAction("Browse Data with Foreign Key recursive",lambda:self.execAction(context,"browseFKR")))
         self.menuActions[-1].setEnabled(False)
+        menu.addSeparator()
         self.menuActions.append(menu.addAction("Generate Cube",lambda:self.execAction(context,"generate")))
         
         
@@ -692,6 +696,8 @@ class TableTreeItem(BaseTreeItem):
             pass
         elif action == 'rowcount':
             self.getRecordCount()
+        elif action == 'fieldstats':
+            self.getFieldStats()
         elif 'browse' in action:
             conn,schema,table=self.getFullDesc().split('.')
             if action == 'browse':
@@ -723,6 +729,15 @@ class TableTreeItem(BaseTreeItem):
         else:
             return None
 
+    @waiting_effects
+    def getFieldStats(self):
+        if isinstance(self,TableTreeItem) :   #Recordar que especializamos Table.. con View luego el type no va
+            listaCampos = self.getChildrenByName('FIELDS')
+            for item in listaCampos.listChildren():
+                item.getValueSpread()
+        else:
+            return None
+
 class ViewTreeItem(TableTreeItem):
     def __init__(self, name):
         TableTreeItem.__init__(self, name)
@@ -732,6 +747,7 @@ class ViewTreeItem(TableTreeItem):
         TableTreeItem.setMenuActions(self,menu,context)
         self.menuActions[1].setEnabled(True)  #FIXME buscar una manera mas segura de invocar el indice
                 
+                    
     def execAction(self,context,action):
         TableTreeItem.execAction(self,context,action)
         if action == 'properties' :

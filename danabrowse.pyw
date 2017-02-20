@@ -98,7 +98,7 @@ def generaArgParser():
     security_parser.add_argument('--secure','-s',dest='secure', action='store_true',
                                  help='Solicita la clave de las conexiones de B.D.')
     security_parser.add_argument('--no-secure','-ns', dest='secure', action='store_false')
-    parser.set_defaults(secure=False)
+    parser.set_defaults(secure=True)
 
     return parser
 
@@ -108,7 +108,7 @@ class DanaBrowseWindow(QMainWindow):
         #Leeo la configuracion
 
         self.maxlevel = 2  #para poder modificarlo luego
-        self.dictionary = DataDict()
+        self.dictionary = DataDict(defFile=args.configFile,secure=args.secure)
         #TODO variables asociadas del diccionario. Reevaluar al limpiar
         
         self.baseModel = self.dictionary.baseModel
@@ -156,14 +156,15 @@ class DanaBrowseWindow(QMainWindow):
         self.setCentralWidget(self.configSplitter)
 
         self.setWindowTitle("Visualizador de base de datos")
-        
-    #def model(self):
-        #"""
-            #para los decoradores keep position y tal
-        #"""
-        #return self.baseModel
-    #def isExpanded(self,idx):
-        #return self.view.isEnabled(idx)
+        """
+            estas funciones son para soportar para los decoradores keep position y tal
+        """        
+    def model(self):
+        return self.baseModel
+    def isExpanded(self,idx):
+        return self.view.isExpanded(idx)
+    def setExpanded(self,idx,state):
+        return self.view.setExpanded(idx,state)
     
     def setupView(self):
         self.view = QTreeView(self)
@@ -313,6 +314,7 @@ class DanaBrowseWindow(QMainWindow):
      
         
 
+    @keep_tree_layout()
     def openContextMenu(self,position):
         """
         """

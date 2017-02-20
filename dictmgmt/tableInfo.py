@@ -103,7 +103,12 @@ class TableInfo():
         self.confName = confName
         self.schemaName = schemaName
         self.tableName = tableName
+        self.lista = dict()
         
+        if not dd.getConnByName(confName):
+            print('Conexion inexistente ',confName)
+            exit()
+            
         self.driver = dd.getConnByName(confName).data()
                 
         tab = getTabRef(dd,confName,schemaName,tableName)
@@ -111,7 +116,7 @@ class TableInfo():
             print('Tabla {}.{}.{} no encontrada'.format(confName,schemaName,tableName))
             return 
         
-        self.lista = dict()
+
         self.mainTable = tab.fqn()
         self.maxlevel = maxlevel
         self.lista[tab.fqn()] = tab.getTableInfo()
