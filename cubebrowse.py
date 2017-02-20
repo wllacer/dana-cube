@@ -99,14 +99,15 @@ class CubeBrowserWin(QMainWindow):
         
     def close(self):
         import sys
-        #TODO  deberia cerrar los recursos de base de datos
-        #for conid in self.conn:
-            #if self.conn[conid] is None:
-                #continue
-            #if self.conn[conid].closed :
-                #self.conn[conid].close()
+        ##TODO  deberia cerrar los recursos de base de datos
+        connDict = self.cubeMgr.dataDict.conn
+        for conid in connDict:
+            if connDict[conid] is None:
+                continue
+            if not connDict[conid].closed :
+                connDict[conid].close()
         self.cubeMgr.saveConfigFile()
-        #sys.exit()
+        sys.exit()
     
     
 
