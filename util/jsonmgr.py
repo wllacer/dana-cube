@@ -53,7 +53,7 @@ def dump_structure(new_data, fichero="cubo.json",**flags):
             if new_data[entry]:
                 k_new_data[entry] = new_data[entry]
     if secure:
-        # proceso datos de seguridad (lo dejo como estaba. asi puedo usarlo con y sin)
+        # proceso datos de seguridad (los dejo como estaban. asi puedo usarlo con y sin)
         for entry in k_new_data:
             if not isinstance(k_new_data[entry],dict):
                 continue
@@ -65,9 +65,50 @@ def dump_structure(new_data, fichero="cubo.json",**flags):
     #no grabo si no hay cambios
     dump_json(baseCubo,'{}.{}'.format(fichero,datetime.datetime.now().strftime("%Y%m%d-%H%M%S")))
     dump_json(k_new_data,fichero)
+
+def dump_config(new_data, fichero=".danabrowse.json",**flags):
+    total = flags.get('total',True)
+    secure = flags.get('secure',False) 
+    """
+    new_data = tree2dict(self.hiddenRoot,isDictionaryEntry)
+    """
+    baseCubo=load_cubo(fichero)
+    k_new_data = dict()
+    
+    if total:
+        k_new_data = new_data
+    else:
+        k_new_data = { clave:new_data[clave] if clave != 'Conexiones' else dict() for clave in new_data }
+        added, removed, modified, same = dict_compare(new_data['Conexiones'],baseCubo['Conexiones'])
+        for entry in added:
+            k_new_data['Conexiones'][entry] = new_data['Conexiones'][entry]
+        for entry in removed:
+            k_new_data['Conexiones'][entry] = baseCubo['Conexiones'][entry]
+        for entry in same:
+            k_new_data['Conexiones'][entry] = baseCubo['Conexiones'][entry]
+        for entry in modified:
+            # con los borrados hay un problema, pues la edicion debe asumirse parcial. La unica opcion que he encotrado es borrar si esta vacia
+            if new_data['Conexiones'][entry]:
+                k_new_data['Conexiones'][entry] = new_data['Conexiones'][entry]
+    if secure:
+        # proceso datos de seguridad (los dejo como estaban. asi puedo usarlo con y sin)
+        for entry in k_new_data['Conexiones']:
+            if not isinstance(k_new_data['Conexiones'][entry],dict):
+                continue
+            if k_new_data['Conexiones'][entry].get('dbpass'):
+                k_new_data['Conexiones'][entry]['dbpass'] = baseCubo['Conexiones'][entry]['dbpass']
+            if k_new_data['Conexiones'][entry].get('dbuser'):
+                k_new_data['Conexiones'][entry]['dbuser'] = baseCubo['Conexiones'][entry]['dbuser']
+
+    if baseCubo == k_new_data:
+        return
+    #no grabo si no hay cambios
+    dump_json(baseCubo,'{}.{}'.format(fichero,datetime.datetime.now().strftime("%Y%m%d-%H%M%S")))
+    dump_json(k_new_data,fichero)
     
 def getConfigFileName(pName=None):
-            # Configuration file
+    # Configuration file
+    #TODO para ser efectivo de verdad necesita mas logica
     if not pName:
         name = '.danabrowse.json'
     else:
@@ -95,13 +136,62 @@ def dict_compare(nuevo, original):
   return added, removed, modified, same
 
 if __name__ == '__main__':
-    base = { 'entry1':1,
-             'entry2':{'connect':{'pepe':'hugo','dbpass':'mariano'}},
-             'entry4':2,
-             'entry3':3
-           }
-    nuevo = { 'entry1':1,
-              'entry2':{'connect':{'pepe':'hugo','dbpass':'fernandez'}},
+    #base = { 'entry1':1,
+             #'entry2':{'connect':{'pepe':'hugo','dbpass':'mariano'}},
+             #'entry4':2,
+             #'entry3':3
+           #}
+    #nuevo = { 'entry1':1,
+              #'entry2':{'connect':{'pepe':'hugo','dbpass':'fernandez'}},
+        #}
+    #dump_structure(base,nuevo,'pepelaalfa.txt')
+    #dump_structure(base,nuevo,'pepelaalfa.txt',total=False,secure=True)
+    base = {
+    "Conexiones": {
+        "Elecciones 2105": {
+            "dbport": "",
+            "dbhost": "",
+            "driver": "sqlite",
+            "dbpass": "",
+            "debug": False,
+            "dbuser": "",
+            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db"
+        },
+        "Pagila": {
+            "dbhost": "localhost",
+            "driver": "postgresql",
+            "dbpass": "",
+            "debug": False,
+            "dbuser": "werner",
+            "dbname": "pagila"
         }
-    dump_structure(base,nuevo,'pepelaalfa.txt')
-    dump_structure(base,nuevo,'pepelaalfa.txt',total=False,secure=True)
+    }
+    }
+    nuevo = {
+    "Conexiones": {
+        "Elecciones 2105": {
+            "dbport": "",
+            "dbhost": "",
+            "driver": "sqlite",
+            "dbpass": "",
+            "debug": False,
+            "dbuser": "",
+            "dbname": "/home/werner/projects/dana-cube.git/otro_dana.db"
+        },
+        "Pagila": {
+            "dbhost": "localhost",
+            "driver": "postgresql",
+            "dbpass": "",
+            "debug": False,
+            "dbuser": "werner",
+            "dbname": "pagila"
+        }
+    },
+    "configuracion" :
+         { 'uno':1,'dos':2}
+         
+     
+    }
+    #dump_config(base,nuevo,'pepelaalfa.txt')
+    dump_config(base,nuevo,'pepelaalfa.txt',total=False,secure=True)
+        

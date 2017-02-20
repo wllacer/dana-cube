@@ -106,7 +106,10 @@ class DanaBrowseWindow(QMainWindow):
     def __init__(self,args):
         super(DanaBrowseWindow, self).__init__()
         #Leeo la configuracion
-
+        self.configFile = args.configFile
+        self.secure = args.secure
+        self.cubeFile = args.cubeFile
+        
         self.maxlevel = 2  #para poder modificarlo luego
         self.dictionary = DataDict(defFile=args.configFile,secure=args.secure)
         #TODO variables asociadas del diccionario. Reevaluar al limpiar
@@ -202,7 +205,7 @@ class DanaBrowseWindow(QMainWindow):
             self.close()
             
     def saveConfigFile(self):
-        dump_json(self.configData,getConfigFileName()) #TODO de momento
+        dump_config(self.configData,getConfigFileName(self.configFile),secure=self.secure) #TODO de momento
     
     def closeEvent(self, event):
         self.close()
@@ -354,7 +357,7 @@ class DanaBrowseWindow(QMainWindow):
         #cubeMgr = CubeBrowserWin(confName,schema,table,self.dictionary,self)
         if self.cubeMgr and not self.cubeMgr.isHidden():
             self.hideCube()
-        self.cubeMgr = CubeMgr(self,confName,schema,table,self.dictionary,rawCube=infox)
+        self.cubeMgr = CubeMgr(self,confName,schema,table,self.dictionary,rawCube=infox,configFile=self.cubeFile)
         self.cubeMgr.expandToDepth(1)        
         #if self.configSplitter.count() == 1:  #de momento parece un modo sencillo de no multiplicar en exceso
         self.configSplitter.addWidget(self.cubeMgr)

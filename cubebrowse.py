@@ -15,6 +15,7 @@ Documentation, License etc.
 
 from pprint import pprint
 import datetime
+import argparse
 from decimal import *
 
 #from PyQt5.QtGui import QGuiApplication
@@ -41,11 +42,33 @@ from cubemgmt.cubeCRUD  import *
 (_ROOT, _DEPTH, _BREADTH) = range(3)
 
 
+def generaArgParser():
+    parser = argparse.ArgumentParser(description='Cubo de datos')
+    parser.add_argument('--cubeFile','--cubefile','-c',
+                        nargs='?',
+                        default='cubo.json',
+                        help='Nombre del fichero de configuración del cubo actual')    
+    #parser.add_argument('--configFile','--configfile','-cf',
+                        #nargs='?',
+                        #default='.danabrowse.json',
+                        #help='Nombre del fichero de configuración del cubo actual')    
+
+    #security_parser = parser.add_mutually_exclusive_group(required=False)
+    #security_parser.add_argument('--secure','-s',dest='secure', action='store_true',
+                                 #help='Solicita la clave de las conexiones de B.D.')
+    #security_parser.add_argument('--no-secure','-ns', dest='secure', action='store_false')
+    #parser.set_defaults(secure=True)
+
+    return parser
 
 class CubeBrowserWin(QMainWindow):
     def __init__(self,confName=None,schema=None,table=None,pdataDict=None,parent=None):
         super(CubeBrowserWin, self).__init__(parent)
-        self.configFile = 'cubo.json'   #DEVELOP
+        
+        parser = generaArgParser()
+        args = parser.parse_args()
+
+        self.configFile = args.cubeFile #'cubo.json'   #DEVELOP
         #Leeo la configuracion
 
         #TODO variables asociadas del diccionario. Reevaluar al limpiar
@@ -96,7 +119,7 @@ class CubeMgr(QTreeView):
         else:
             self.configFile = configFile
         
-       
+
         if isinstance(pdataDict,DataDict):
             self.dataDict = pdataDict
         else:
