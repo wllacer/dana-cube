@@ -145,11 +145,15 @@ class Cubo:
 
     def setDateFilter(self):
         sqlClause = []
-        for item in  self.definition.get('date filter',[]) :
+        filtros = self.definition.get('date filter')
+        if not filtros:
+            return sqlClause
+        for item in  filtros :
             clase_intervalo = CLASES_INTERVALO.index(item['date class'])
             tipo_intervalo = TIPOS_INTERVALO.index(item['date range'])
             periodos = int(item['date period'])
-                
+            if clase_intervalo == 0:
+                continue
             if item['date class']:
                     intervalo = dateRange(clase_intervalo,tipo_intervalo,periodo=periodos,fmt=item.get('date format'))
                     sqlClause.append((item['elem'],'BETWEEN',intervalo,'f'))

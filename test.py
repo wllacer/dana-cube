@@ -125,6 +125,10 @@ def pruebaTableInfo():
     pprint(ds.info2cube())
     #print(dd.isEmpty)
     
+def testea():
+    definition = dict()
+    for item in definition.get('lista',[]):
+        print(item)
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
     import sys
@@ -135,4 +139,5 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     #aw = ApplicationWindow()
     #aw.show()
-    pruebaTableInfo()
+    #pruebaTableInfo()
+    testea()

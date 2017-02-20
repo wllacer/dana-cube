@@ -140,7 +140,7 @@ class DataDict():
         else:
             conf = self.configData['Conexiones'].get(confName)
             
-        if not conf:
+        if 'conn' not in kwargs and not conf:
             self.conn[confName] = None
             showConnectionError(confName,'No es posible determinar la configuracion')             
             return 
