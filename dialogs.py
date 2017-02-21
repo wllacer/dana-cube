@@ -103,13 +103,14 @@ class dateFilterDlg(QDialog):
         rows = len(self.context)
         cols = max( [len(item) -1 for item in self.context ])  #FIXME
         self.sheet1=WPowerTable(rows,cols)
+
         for i,linea in enumerate(self.context):
             for j in range(1,len(linea)):
                 self.sheet1.addCell(i,j -1,linea[j])
-            self.sheet1.set(i,2,1)                
-            self.sheet1.cellWidget(i,0).currentIndexChanged.connect(lambda :self.seleccionCriterio(i))
-            self.sheet1.cellWidget(i,1).currentIndexChanged.connect(lambda :self.seleccionIntervalo(i))
-            self.sheet1.cellWidget(i,2).valueChanged.connect(lambda :self.seleccionIntervalo(i))
+                self.sheet1.set(i,j -1,self.data[i][j-1])
+            self.sheet1.cellWidget(i,0).currentIndexChanged[int].connect(lambda j,idx=i:self.seleccionCriterio(j,idx))
+            self.sheet1.cellWidget(i,1).currentIndexChanged[int].connect(lambda j,idx=i:self.seleccionIntervalo(j,idx))
+            self.sheet1.cellWidget(i,2).valueChanged[int].connect(lambda j,idx=i:self.seleccionIntervalo(j,idx))
             self.flipFlop(i,self.sheet1.get(i,0))
 
        #FIXME valor inicial        
@@ -157,11 +158,11 @@ class dateFilterDlg(QDialog):
             self.sheet1.cellWidget(line,2).setEnabled(True)
         # ponemos los valores ejemplo
 
-    def seleccionCriterio(self,idx):
-        self.flipFlop(idx,self.sheet1.get(idx,0))
-        self.seleccionIntervalo(idx)
+    def seleccionCriterio(self,value,idx):
+        self.flipFlop(idx,value)
+        self.seleccionIntervalo(value,idx)
             
-    def seleccionIntervalo(self,idx):
+    def seleccionIntervalo(self,value,idx):
         if self.sheet1.get(idx,0)  == 0:
             self.sheet1.set(idx,3,None)
             self.sheet1.set(idx,4,None)
@@ -180,7 +181,6 @@ class dateFilterDlg(QDialog):
                 continue
             else:
                 self.result.append((self.descriptores[k],valor[0],valor[1],valor[2]))
-        print(self.result)
         QDialog.accept(self)
     
 class dataEntrySheetDlg(QDialog):

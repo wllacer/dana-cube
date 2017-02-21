@@ -413,7 +413,12 @@ class Cubo:
                     #TODO solo se requiere consulta a la base de datos si el formato incluye 'Y'
                     sqlString = self.__setGuidesDateSqlStatement(componente)
                     row=getCursor(self.db,sqlString)
-                    date_cache[campo] = [row[0][0], row[0][1]] 
+                    print(row)
+                    if not row[0][0]:
+                        # un bypass para que no se note 
+                        date_cache[campo] = [datetime.date.today(),datetime.date.today()]
+                    else:
+                        date_cache[campo] = [row[0][0], row[0][1]] 
                     
                 cursor += getDateIndex(date_cache[campo][0]  #max_date
                                                 , date_cache[campo][1]  #min_date
@@ -483,7 +488,7 @@ class Vista:
         
         self.setNewView(row, col)
         
-    def setNewView(self,row, col, agregado=None, campo=None, filtro='',totalizado=True, stats=True):
+    def setNewView(self,row, col, agregado=None, campo=None, filtro='',totalizado=True, stats=True, force=False):
         
         dim_max = len(self.cubo.lista_guias)
         
@@ -502,6 +507,8 @@ class Vista:
         # Determinamos si han cambiado los valores
         
         procesar = False
+        if force:
+            procesar = True
         if self.row_id != row:
             procesar = True
             self.row_id = row

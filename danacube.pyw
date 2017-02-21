@@ -611,19 +611,19 @@ class DanaCube(QTreeView):
             #self.cargaVista(row,col,agregado,campo,totalizado,stats)
 
     @waiting_effects
-    def cargaVista(self,row, col, agregado, campo, total=True, estad=True):
+    def cargaVista(self,row, col, agregado, campo, total=True, estad=True,force=False):
         if self.vista is None:
             self.vista = Vista(self.cubo, row, col, agregado, campo, totalizado=total, stats=estad,filtro=self.filtro)
             self.vista.toTree2D()
             self.expandToDepth(2)
         else:
-            self.changeView(row, col, agregado, campo, total,estad)
+            self.changeView(row, col, agregado, campo, total,estad,force)
             #self.refreshTable()
         self.vista.format = self.format
      
     @waiting_effects
-    def changeView(self,row, col, agregado, campo, total=True, estad=True):
-        self.vista.setNewView(row, col, agregado, campo, totalizado=total, stats=estad,filtro=self.filtro)
+    def changeView(self,row, col, agregado, campo, total=True, estad=True,force=False):
+        self.vista.setNewView(row, col, agregado, campo, totalizado=total, stats=estad,filtro=self.filtro,force=force)
         self.vista.toTree2D()
         #
         self.setModel(self.defineModel())  #esto no deberia ser asi, sino dinámico, pero no lo he conseguido
@@ -830,17 +830,41 @@ class DanaCube(QTreeView):
         if len(camposFecha) == 0:
             #TODO que hago con Sqlite
             return
-        
-        descriptores = [ item[0] for item in camposFecha ]
-        form = dateFilterDlg(descriptores)
+        def queFormato(fieldName):
+            formato = 'fecha'
+            for item in camposFecha:
+                if fieldName == item[0]:
+                    formato = item[1]
+                    break
+            return formato
+        datos = []
+        descriptores = []
+        if self.cubo.definition.get('date filter'):
+            for item in self.cubo.definition.get('date filter'):
+                descriptores.append(item['elem'])
+                intervalo = dateRange(CLASES_INTERVALO.index(item['date class']),TIPOS_INTERVALO.index(item['date range']),periodo=int(item['date period']))
+                datos.append([CLASES_INTERVALO.index(item['date class']),
+                             TIPOS_INTERVALO.index(item['date range']),
+                             item['date period'],
+                             str(intervalo[0]),str(intervalo[1])])
+        for item in camposFecha:
+            if item[0] in descriptores:
+                continue
+            else:
+                descriptores.append(item[0])
+                datos.append([0,0,1,None,None])
+        #descriptores = [ item[0] for item in camposFecha ]
+        form = dateFilterDlg(descriptores,datos)
         if form.exec_():
             sqlGrp = []
-            if 'date filter' in self.cubo.definition:
-                pass
-            else:
-                self.cubo.definition['date filter'] = []
+            #if self.cubo.definition.get('date filter'):
+                #pass
+            #else:
+                #self.cubo.definition['date filter'] = []
+            self.cubo.definition['date filter'] = []        
             for k,entry in enumerate(form.result):
                 if entry[1] != 0:
+                    formato = queFormato(entry[0])
                     self.cubo.definition['date filter'].append({
                                                 'elem':entry[0],
                                                 'date class': CLASES_INTERVALO[entry[1]],
@@ -848,21 +872,21 @@ class DanaCube(QTreeView):
                                                 'date period': entry[3],
                                                 'date start': None,
                                                 'date end': None,
-                                                'date format': None
+                                                'date format': formato
                                                 })
-                    intervalo = dateRange(entry[1],entry[2],periodo=entry[3],fmt=camposFecha[k][1])
+                    intervalo = dateRange(entry[1],entry[2],periodo=entry[3],fmt=formato)
                     sqlGrp.append((entry[0],'BETWEEN',intervalo,'f'))
             if len(sqlGrp) > 0:
-                self.filtroFechas = searchConstructor('where',{'where':sqlGrp,'driver':self.cubo.dbdriver})
-                self.filtro = mergeString(self.filtroCampos,self.filtroFechas,'AND')
+                #self.filtroFechas = searchConstructor('where',{'where':sqlGrp,'driver':self.cubo.dbdriver})
+                #self.filtro = mergeString(self.filtroCampos,self.filtroFechas,'AND')
                 self.cargaVista(self.vista.row_id,self.vista.col_id,
                             self.vista.agregado,self.vista.campo,
-                            self.vista.totalizado,self.vista.stats) #__WIP__ evidentemente aqui faltan todos los parametros
+                            self.vista.totalizado,self.vista.stats,force=True) #__WIP__ evidentemente aqui faltan todos los parametros
 
                 self.parent.dateRangeActions['drop'].setEnabled(True)
                 self.parent.dateRangeActions['save'].setEnabled(True)
-            
-    def dropRange(self):
+    
+    def restoreRangeDef(self):
         my_cubos = load_cubo(self.parent.cubeFile)
         if my_cubos[self.cubo.nombre].get('date filter'):
             self.cubo.definition['date filter'] = my_cubos[self.cubo.nombre]['date filter']  
@@ -870,9 +894,12 @@ class DanaCube(QTreeView):
             del self.cubo.definition['date filter']
         self.filtroFechas=''
         self.filtro = mergeString(self.filtroCampos,self.filtroFechas,'AND')
+
+    def dropRange(self):
+        self.restoreRangeDef()
         self.cargaVista(self.vista.row_id,self.vista.col_id,
                         self.vista.agregado,self.vista.campo,
-                        self.vista.totalizado,self.vista.stats) #__WIP__ evidentemente aqui     def saveFilter(self):
+                        self.vista.totalizado,self.vista.stats,force=True) #__WIP__ evidentemente aqui     def saveFilter(self):
         self.parent.dateRangeActions['drop'].setEnabled(False)
         self.parent.dateRangeActions['save'].setEnabled(False)
 
