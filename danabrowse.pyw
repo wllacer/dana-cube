@@ -99,7 +99,10 @@ def generaArgParser():
                                  help='Solicita la clave de las conexiones de B.D.')
     security_parser.add_argument('--no-secure','-ns', dest='secure', action='store_false')
     parser.set_defaults(secure=True)
-
+    schema_parser = parser.add_mutually_exclusive_group(required=False)
+    schema_parser.add_argument('--sys','-S',dest='sysExclude', action='store_false',
+                                 help='Incluye los esquemas internos del gestor de B.D.')
+    parser.set_defaults(sysExclude=True)
     return parser
 
 class DanaBrowseWindow(QMainWindow):
@@ -109,9 +112,10 @@ class DanaBrowseWindow(QMainWindow):
         self.configFile = args.configFile
         self.secure = args.secure
         self.cubeFile = args.cubeFile
+        self.sysExclude = args.sysExclude
         
         self.maxlevel = 2  #para poder modificarlo luego
-        self.dictionary = DataDict(defFile=args.configFile,secure=args.secure)
+        self.dictionary = DataDict(defFile=args.configFile,secure=args.secure,sysExclude=args.sysExclude)
         #TODO variables asociadas del diccionario. Reevaluar al limpiar
         
         self.baseModel = self.dictionary.baseModel

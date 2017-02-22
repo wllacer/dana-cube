@@ -389,6 +389,7 @@ class ConnectionTreeItem(BaseTreeItem):
            El problema es que no acaba de cuadran para el caso que la base este caida
         """
         pSchema = kwargs.get('schema')
+        sysExcluded =kwargs.get('sysExclude',True)
         self.deleteChildren()
         if self.isOpen():
             engine = self.getConnection().data().engine
@@ -399,7 +400,11 @@ class ConnectionTreeItem(BaseTreeItem):
             elif pSchema is not None:
                 schemata = [pSchema,]
             else:
-                schemata=self.inspector.get_schema_names()  #behaviour with default
+                driver = self.data().dialect.name
+                if sysExcluded and driver in SYSTEM_SCHEMAS:                    
+                    schemata = [schema for schema in self.inspector.get_schema_names() if schema not in SYSTEM_SCHEMAS[driver] ]
+                else:
+                    schemata=self.inspector.get_schema_names()  #behaviour with default
             for schema in schemata:
                 self.appendRow(SchemaTreeItem(schema))
                 curSchema = self.lastChild()

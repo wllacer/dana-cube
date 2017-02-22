@@ -59,6 +59,11 @@ def generaArgParser():
     security_parser.add_argument('--no-secure','-ns', dest='secure', action='store_false')
     parser.set_defaults(secure=True)
 
+    schema_parser = parser.add_mutually_exclusive_group(required=False)
+    schema_parser.add_argument('--sys','-S',dest='sysExclude', action='store_false',
+                                 help='Incluye los esquemas internos del gestor de B.D.')
+    parser.set_defaults(sysExclude=True)
+
     return parser
 
 class CubeBrowserWin(QMainWindow):
@@ -71,6 +76,7 @@ class CubeBrowserWin(QMainWindow):
         self.cubeFile = args.cubeFile #'cubo.json'   #DEVELOP
         self.configFile = args.configFile
         self.secure = args.secure
+        self.sysExclude = args.sysExclude
         #Leeo la configuracion
 
         #TODO variables asociadas del diccionario. Reevaluar al limpiar
@@ -81,7 +87,7 @@ class CubeBrowserWin(QMainWindow):
         #self.setupView()
         #print('inicializacion completa')
         ##CHANGE here
-        self.cubeMgr = CubeMgr(self,confName,schema,table,pdataDict,self.cubeFile,configFile=self.configFile,secure=self.secure)
+        self.cubeMgr = CubeMgr(self,confName,schema,table,pdataDict,self.cubeFile,configFile=self.configFile,secure=self.secure,sysExclude=self.sysExclude)
         #self.querySplitter = QSplitter(Qt.Horizontal)
         #self.querySplitter.addWidget(self.view)
         #self.querySplitter.addWidget(self.view)
@@ -114,7 +120,7 @@ class CubeBrowserWin(QMainWindow):
     
 
 class CubeMgr(QTreeView):
-    def __init__(self,parent=None,confName=None,schema=None,table=None,pdataDict=None,cubeFile=None,rawCube=None,configFile=None,secure=True):
+    def __init__(self,parent=None,confName=None,schema=None,table=None,pdataDict=None,cubeFile=None,rawCube=None,configFile=None,secure=True,sysExclude=True):
         super(CubeMgr, self).__init__(parent)
         self.parentWindow = parent
         if not cubeFile:
@@ -127,7 +133,7 @@ class CubeMgr(QTreeView):
             self.dataDict = pdataDict
         else:
             if configFile:
-                self.dataDict = DataDict(defFile=configFile,secure=secure)
+                self.dataDict = DataDict(defFile=configFile,secure=secure,sysExclude=sysExclude)
             else:
                 self.dataDict = DataDict()
 

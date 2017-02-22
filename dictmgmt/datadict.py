@@ -52,6 +52,7 @@ class DataDict():
     pos   posicion donde se añade la conexión
     conn  -> conexion viva (nuevo)
     secure conexion obliga a login
+    sysExclude -> si excluye esquemas del sistema
     """
     def __init__(self,**kwargs):
         #FIXME eliminar parametros espureos
@@ -61,6 +62,7 @@ class DataDict():
         self.configData = None
         self.conn = dict()
         self.isEmpty = False
+        self.sysExclude = kwargs.get('sysExclude')
         
         self._setupModel()
         if 'confData' in kwargs or self._readConfigData(defFile):
@@ -210,7 +212,7 @@ class DataDict():
         if confName is None:
             self.baseModel.clear()
             self.hiddenRoot = self.baseModel.invisibleRootItem()
-            self._cargaModelo(self.baseModel)
+            self._cargaModelo(self.baseModel,sysExclude=self.sysExclude)
         else:
             conexion = self.conn.get(confName)
             if conexion is not None:  #conexion nueva
@@ -229,7 +231,7 @@ class DataDict():
                 break
                     # es un elemento que no estaba en el modelo
             
-            self.appendConnection(confName,pos=k)
+            self.appendConnection(confName,pos=k,sysExclude=self.sysExclude)
 
         #self.baseModel.endResetModel()
     def editConnection(self,configData,nombre=None): 
