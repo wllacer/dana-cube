@@ -95,6 +95,7 @@ class CubeWizard(QWizard):
            convierto los parametros en atributos para poder usarlos en las paginas 
         """
         self.exec_object = exec_object
+        self.obj = obj
         self.modelo = obj.model() # es necesario para que el delete no pierda la localizacion
         self.tipo = obj.type()
         self.jerarquia = obj.typeHierarchy()
