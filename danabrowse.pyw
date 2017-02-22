@@ -357,7 +357,7 @@ class DanaBrowseWindow(QMainWindow):
         #cubeMgr = CubeBrowserWin(confName,schema,table,self.dictionary,self)
         if self.cubeMgr and not self.cubeMgr.isHidden():
             self.hideCube()
-        self.cubeMgr = CubeMgr(self,confName,schema,table,self.dictionary,rawCube=infox,configFile=self.cubeFile)
+        self.cubeMgr = CubeMgr(self,confName,schema,table,self.dictionary,rawCube=infox,cubeFile=self.cubeFile)
         self.cubeMgr.expandToDepth(1)        
         #if self.configSplitter.count() == 1:  #de momento parece un modo sencillo de no multiplicar en exceso
         self.configSplitter.addWidget(self.cubeMgr)

@@ -159,7 +159,7 @@ def addBase(obj,exec_object):
             for key in info:
                 clave = key
                 break
-            recTreeLoader(exec_object.hiddenRoot,values[0],info[clave],'base')
+            dict2tree(exec_object.hiddenRoot,values[0],info[clave],'base')
 
     pass
     
@@ -413,7 +413,7 @@ def execAction(exec_object,obj,action):
                         else:
                             pai = obj
                         nombre = result.get('name',pai.rowCount())
-                        recTreeLoader(pai,nombre,result,tipo)
+                        dict2tree(pai,nombre,result,tipo)
             elif tipo == 'categories':
                 result = guideWizard(exec_object,obj)
                 del result['class']  #no lo necesito, de momento
@@ -425,7 +425,7 @@ def execAction(exec_object,obj,action):
                         item = pai.getChildrenByName(entry)
                         if item:
                             item.suicide()
-                        recTreeLoader(pai,entry,result[entry],entry)
+                        dict2tree(pai,entry,result[entry],entry)
                 pass
             elif tipo == 'connect':  # will not be honored
                 pass

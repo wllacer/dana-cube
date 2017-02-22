@@ -265,7 +265,7 @@ def recTreeLoader(parent,key,data,tipo=None):
                 recTreeLoader(newparent,clave,datos,tipo)
     #else:
         #newparent.appendRow(CubeItem(str(data)))
-        
+ 
 def recTreeLoaderAtomic(parent,key,data,tipo=None):
     """
     Funcion que carga de estructura de cubo python a arbol. NO USADA
@@ -279,7 +279,7 @@ def recTreeLoaderAtomic(parent,key,data,tipo=None):
     newparent = lastChild(parent)
     if isinstance(data,dict):
         for elem in data:
-            recTreeLoader(newparent,elem,data[elem])
+            recTreeLoaderAtomic(newparent,elem,data[elem])
     elif isinstance(data,(list,tuple)):
         for idx,elem in enumerate(data):
             if not isinstance(elem,(list,tuple,dict)):
@@ -289,13 +289,15 @@ def recTreeLoaderAtomic(parent,key,data,tipo=None):
                 clave = elem.get('name')
                 datos = elem
                 #datos['pos'] = idx
-                recTreeLoader(newparent,clave,datos,tipo)
+                recTreeLoaderAtomic(newparent,clave,datos,tipo)
             else:                
                 clave = str(idx)
                 datos = elem
-                recTreeLoader(newparent,clave,datos,tipo)
+                recTreeLoaderAtomic(newparent,clave,datos,tipo)
     else:
         newparent.appendRow(CubeItem(str(data)))
+
+dict2tree = recTreeLoader    #un sinonimo asi puedo elegir la rutina que mas me interese
 
 def tree2dict(rootItem,esdiccionario=None):
     """

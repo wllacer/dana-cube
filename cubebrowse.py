@@ -48,16 +48,16 @@ def generaArgParser():
                         nargs='?',
                         default='cubo.json',
                         help='Nombre del fichero de configuración del cubo actual')    
-    #parser.add_argument('--configFile','--configfile','-cf',
-                        #nargs='?',
-                        #default='.danabrowse.json',
-                        #help='Nombre del fichero de configuración del cubo actual')    
+    parser.add_argument('--configFile','--configfile','-cf',
+                        nargs='?',
+                        default='.danabrowse.json',
+                        help='Nombre del fichero de configuración del cubo actual')    
 
-    #security_parser = parser.add_mutually_exclusive_group(required=False)
-    #security_parser.add_argument('--secure','-s',dest='secure', action='store_true',
-                                 #help='Solicita la clave de las conexiones de B.D.')
-    #security_parser.add_argument('--no-secure','-ns', dest='secure', action='store_false')
-    #parser.set_defaults(secure=True)
+    security_parser = parser.add_mutually_exclusive_group(required=False)
+    security_parser.add_argument('--secure','-s',dest='secure', action='store_true',
+                                 help='Solicita la clave de las conexiones de B.D.')
+    security_parser.add_argument('--no-secure','-ns', dest='secure', action='store_false')
+    parser.set_defaults(secure=True)
 
     return parser
 
@@ -68,7 +68,9 @@ class CubeBrowserWin(QMainWindow):
         parser = generaArgParser()
         args = parser.parse_args()
 
-        self.configFile = args.cubeFile #'cubo.json'   #DEVELOP
+        self.cubeFile = args.cubeFile #'cubo.json'   #DEVELOP
+        self.configFile = args.configFile
+        self.secure = args.secure
         #Leeo la configuracion
 
         #TODO variables asociadas del diccionario. Reevaluar al limpiar
@@ -79,14 +81,14 @@ class CubeBrowserWin(QMainWindow):
         #self.setupView()
         #print('inicializacion completa')
         ##CHANGE here
-        self.cubeMgr = CubeMgr(self,confName,schema,table,pdataDict,self.configFile)
+        self.cubeMgr = CubeMgr(self,confName,schema,table,pdataDict,self.cubeFile,configFile=self.configFile,secure=self.secure)
         #self.querySplitter = QSplitter(Qt.Horizontal)
         #self.querySplitter.addWidget(self.view)
         #self.querySplitter.addWidget(self.view)
         #self.setCentralWidget(self.querySplitter)
         self.fileMenu = self.menuBar().addMenu("&General")
-        self.fileMenu.addAction("&Salvar", self.cubeMgr.saveConfigFile, "Ctrl+S")
-        self.fileMenu.addAction("&Restaurar", self.cubeMgr.restoreConfigFile, "Ctrl+M")
+        self.fileMenu.addAction("&Salvar", self.cubeMgr.saveCubeFile, "Ctrl+S")
+        self.fileMenu.addAction("&Restaurar", self.cubeMgr.restoreCubeFile, "Ctrl+M")
         self.fileMenu.addAction("S&alir", self.close, "Ctrl+D")
 
         self.setCentralWidget(self.cubeMgr)
@@ -99,32 +101,35 @@ class CubeBrowserWin(QMainWindow):
         
     def close(self):
         import sys
-        ##TODO  deberia cerrar los recursos de base de datos
+        #
         connDict = self.cubeMgr.dataDict.conn
         for conid in connDict:
             if connDict[conid] is None:
                 continue
             if not connDict[conid].closed :
                 connDict[conid].close()
-        self.cubeMgr.saveConfigFile()
+        self.cubeMgr.saveCubeFile()
         sys.exit()
     
     
 
 class CubeMgr(QTreeView):
-    def __init__(self,parent=None,confName=None,schema=None,table=None,pdataDict=None,configFile=None,rawCube=None):
+    def __init__(self,parent=None,confName=None,schema=None,table=None,pdataDict=None,cubeFile=None,rawCube=None,configFile=None,secure=True):
         super(CubeMgr, self).__init__(parent)
         self.parentWindow = parent
-        if not configFile:
-            self.configFile = 'cubo.json' #DEVELOP
+        if not cubeFile:
+            self.cubeFile = 'cubo.json' #DEVELOP
         else:
-            self.configFile = configFile
+            self.cubeFile = cubeFile
         
 
         if isinstance(pdataDict,DataDict):
             self.dataDict = pdataDict
         else:
-            self.dataDict = DataDict()
+            if configFile:
+                self.dataDict = DataDict(defFile=configFile,secure=secure)
+            else:
+                self.dataDict = DataDict()
 
 
         self.baseModel = QStandardItemModel()
@@ -149,10 +154,10 @@ class CubeMgr(QTreeView):
             self.particularContext=(confName,schema,table)
             #self.fullConfig = False
         else:
-            info = load_cubo(self.configFile)
+            info = load_cubo(self.cubeFile)
             #infox = None
         ##TODO convertir eso en una variable
-        #info = load_cubo(self.configFile)
+        #info = load_cubo(self.cubeFile)
         #if infox:
             #for nuevo in infox:
                 #info[nuevo] = infox[nuevo]
@@ -169,7 +174,7 @@ class CubeMgr(QTreeView):
                 tipo = entrada
             else:
                 tipo = 'base'
-            recTreeLoader(parent,entrada,info[entrada],tipo)
+            dict2tree(parent,entrada,info[entrada],tipo)
             print(entrada,'procesada')
         #navigateTree(self.hiddenRoot)
         #pprint(tree2dict(self.hiddenRoot))
@@ -185,8 +190,8 @@ class CubeMgr(QTreeView):
         self.view.expandAll() # es necesario para el resize
         for m in range(self.baseModel.columnCount()):
             self.view.resizeColumnToContents(m)
-        self.view.collapseAll()
-        self.view.expandToDepth(1)     
+        #self.view.collapseAll()
+        #self.view.expandToDepth(1)     
         #self.view.verticalHeader().hide()
         #self.view.setHeaderHidden(True)
         #self.view.setSortingEnabled(True)
@@ -211,14 +216,14 @@ class CubeMgr(QTreeView):
     def saveDialog(self):
         if (QMessageBox.question(self,
                 "Salvar",
-                "Desea salvar los cambios del fichero de configuracion {}?".format(self.configFile),
+                "Desea salvar los cambios del fichero de configuracion {}?".format(self.cubeFile),
                 QMessageBox.Yes|QMessageBox.No) == QMessageBox.Yes):
             return True
         else:
             return False
 
 
-    def saveConfigFile(self):
+    def saveCubeFile(self):
         if self.saveDialog():
             print('Voy a salvar el fichero')
             newcubeStruct = tree2dict(self.hiddenRoot,isDictionaryEntry)
@@ -226,12 +231,12 @@ class CubeMgr(QTreeView):
                 total=True
             else:
                 total = False
-            dump_structure(newcubeStruct,self.configFile,total=total)
+            dump_structure(newcubeStruct,self.cubeFile,total=total)
             
 
     @waiting_effects
     @model_change_control()
-    def restoreConfigFile(self):
+    def restoreCubeFile(self):
         #self.baseModel.beginResetModel()
         self.baseModel.clear()
         if self.particular:

@@ -73,6 +73,9 @@ TYPE_LEAF = set([
     'date class',
     'date period',
     'date range',
+    'date start',
+    'date end',
+    'date format',
     'dbhost',
     'dbname',
     'dbpass',
@@ -94,7 +97,9 @@ TYPE_LEAF = set([
     'table',
     'type',
     'values'])
-
+"""
+    Estos tres tipos son fundamentales en isDictionary pues determinan el repliegue del arbol como cubo
+"""
 TYPE_LIST = set(['case_sql',
      'fields',
      'values',
