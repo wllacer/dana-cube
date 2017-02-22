@@ -29,7 +29,7 @@ from util.mplwidget import SimpleChart
 #import math
 #import matplotlib.pyplot as plt
 #import numpy as np
-
+from util.decorators import *
 
 from PyQt5 import QtCore
 #from PyQt5.QtGui import QSizePolicy
@@ -83,9 +83,9 @@ def pruebaTableInfo():
     # dd= DataDict(conn=confName,schema=schema)
     confName= '$$TEMP' #'Elecciones 2105' #'$$TEMP'
     schema= 'public' # 'main' # None #'dana_sample'
-    table=  'rental' #'datos_electorales_2015' #'votos_locales' #'votos_prov_ref' #None #'votos_locales'
+    table=  'main' #'datos_electorales_2015' #'votos_locales' #'votos_prov_ref' #None #'votos_locales'
     iters=  2
-    confData=  {'driver': 'postgresql', 'dbname': 'pagila', 'dbhost': 'localhost', 'dbuser': 'werner', 'dbpass': ''}
+    confData=  {'driver': 'postgresql', 'dbname': 'libgen', 'dbhost': 'localhost', 'dbuser': 'werner', 'dbpass': ''}
     #confData=   {
             #"dbport": "",
             #"dbhost": "",
@@ -113,17 +113,32 @@ def pruebaTableInfo():
     #pprint(inspector.get_columns(table,schema))
     #pprint(dd.conn)
     #print(dd.hiddenRoot)
+    campos = []
     for entry in traverse(dd.hiddenRoot):
         tabs = '\t'*entry.depth()
-        if not entry.isAuxiliar():# and not entry.getTypeText() == '' :
-            print(tabs,entry.getTypeText(),':',entry.getFullDesc()) #entry.fqn(),entry.getFullDesc(), entry.getRow(),entry.gpi()) #(tabs,entry) #entry.text(),'\t',entry.getRow())
-
-
-    ds = TableInfo(dd,confName,schema,table,maxlevel= iters)
-
-    pprint(ds.lista)
-    pprint(ds.info2cube())
+        if not entry.isAuxiliar() and entry.getTypeText() == '' :
+            campos.append(entry)
+            #print(tabs,entry.getTypeText(),':',entry.getFullDesc()) #entry.fqn(),entry.getFullDesc(), entry.getRow(),entry.gpi()) #(tabs,entry) #entry.text(),'\t',entry.getRow())
+    # peor que individual . 50 * 8 s frente a 12 m
+    sqlstring = 'SELECT '
+    for k,item in enumerate(campos):
+        if k == 0:
+            sqlstring += ' COUNT(DISTINCT {})'.format(item.text())
+        else:
+            sqlstring = ', '.join((sqlstring,'COUNT(DISTINCT {})'.format(item.text())))
+    sqlstring += ' FROM {}.{}'.format(schema,table)
+    print(sqlstring)
+    #ds = TableInfo(dd,confName,schema,table,maxlevel= iters)
+    #getValueSpread(conn,sqlstring)
+    #pprint(ds.lista)
+    #pprint(ds.info2cube())
     #print(dd.isEmpty)
+
+@stopwatch
+def getValueSpread(conn,sqls):
+    from datalayer.access_layer import getCursor
+    result = getCursor(conn.data().engine,sqls)
+    pprint(result)
     
 def testea():
     definition = dict()
@@ -139,5 +154,5 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     #aw = ApplicationWindow()
     #aw.show()
-    #pruebaTableInfo()
-    testea()
+    pruebaTableInfo()
+
