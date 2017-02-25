@@ -49,6 +49,7 @@ def editTableElem(exec_object,obj,valor,refTable=None):
     #return None
 
 def editaCombo(obj,valueTable,valorActual):
+    # No es exactamente así
     descriptivo = False
     if isinstance(valueTable[0],(list,tuple,set)):
         descriptivo = True
@@ -56,17 +57,28 @@ def editaCombo(obj,valueTable,valorActual):
         claveList = [ str(item[0]) for item in valueTable ]
     else:
         claveList = comboList = tuple(valueTable)
-    if descriptivo and valorActual:
+
+    if valorActual:
         try:
             values = [ claveList.index(valorActual), ]
         except ValueError:
-            comboList.append(valorActual)
+            if descriptivo:
+                comboList.append(valorActual)
             claveList.append(valorActual)
             values = [ len(claveList) -1 ]
-    elif descriptivo:
-        values = [ None , ]
     else:
-        values = [ valorActual, ]
+        values = [ 0 , ]
+    #if descriptivo and valorActual:
+        #try:
+            #values = [ claveList.index(valorActual), ]
+        #except ValueError:
+            #comboList.append(valorActual)
+            #claveList.append(valorActual)
+            #values = [ len(claveList) -1 ]
+    #elif descriptivo:
+        #values = [ None , ]
+    #else:
+        #values = [ claveList.index(valorActual), ]
 
     spec = []
     spec.append(('Seleccione',QComboBox,{'setEditable':True},comboList))
@@ -270,17 +282,6 @@ def setContextMenu(obj,menu,exec_object=None):
 
         """
         
-def action_class(obj):
-    tipo = obj.type()
-    if tipo in FREE_FORM_ITEMS:
-        return 'input'
-    if tipo in STATIC_COMBO_ITEMS:
-        return 'static combo'
-    if tipo in DYNAMIC_COMBO_ITEMS:
-        return 'dynamic combo'
-    if tipo in TYPE_LEAF:  #temporal
-        return 'input'
-    return None
 
 def getDynamicArray(tipo,obj,exec_object):
     # los campos
@@ -317,6 +318,7 @@ def getDynamicArray(tipo,obj,exec_object):
             guidemaster = childByName(cubo,'guides')
             nombres = getItemList(guidemaster,'guides')
             array = [ (k,nombres) for k,nombres in enumerate(nombres) ]
+            
     elif tipo == 'cubo':
         array = getCubeList(exec_object.hiddenRoot)
     else:
@@ -364,7 +366,7 @@ def execAction(exec_object,obj,action):
         result = None
         if tipo in TYPE_LEAF:
             modo = action_class(obj)
-            
+        
             if action == 'edit':
                 value = obj.getColumnData(1)
             else:

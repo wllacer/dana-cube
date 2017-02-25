@@ -104,7 +104,10 @@ class WPowerTable(QTableWidget):
         elif isinstance(self.cellWidget(x,y),QSpinBox):
             self.cellWidget(x,y).setValue(value)
         elif isinstance(self.cellWidget(x,y),QComboBox):
-            self.cellWidget(x,y).setCurrentIndex(value)
+            if value is None:
+                pass
+            else:
+                self.cellWidget(x,y).setCurrentIndex(value)
         else:
             self.cellWidget(x,y).setText(value)
             print('Noooop',x,y)
@@ -210,7 +213,9 @@ class WPropertySheet(WPowerTable):
         self.context = context
         cabeceras = [ k[0] for k in self.context ]
         for k in range(len(self.context)):
-            self.addCell(k,0,context[k][1:],data[k])
+                self.addCell(k,0,context[k][1:],None)
+                if data:
+                    self.set(k,0,data[k])
         self.setVerticalHeaderLabels(cabeceras)
         #no necesito cabeceras horizontales en este caso
         self.horizontalHeader().hide()

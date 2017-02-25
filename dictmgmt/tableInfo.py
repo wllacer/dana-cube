@@ -46,7 +46,7 @@ DEBUG = False
 
 def FQName2array(fqname):
     dbmanager = '' #no deberia existir pero por si acaso
-    schema = ' '
+    schema = ''
     filename = ''
     splitdata = fqname.split('.')
     if len(splitdata) == 3:

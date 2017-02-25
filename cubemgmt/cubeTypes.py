@@ -210,9 +210,9 @@ DYNAMIC_COMBO_ITEMS = set([
      u'desc',       #             field of FK table (values)
      u'elem',      #              field of table, or derived value 
      u'elemento',  # FIELD of cube
-     u'fields',
+     u'fields',    #
      u'grouped by',#              field of FK table or derived value ??
      u'rel_elem',  #              field of FK table
      u'row',       # uno de los cubos del fichero
-     u'table',
+     u'table',     #
     ])

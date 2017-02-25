@@ -54,6 +54,31 @@ def info2cube(dataDict,confName,schema,table,maxlevel=1):
     return tableInfo.info2cube()
     
 
+def action_class(obj):
+    tipo = obj.type()
+    if tipo in FREE_FORM_ITEMS:
+        return 'input'
+    if tipo in STATIC_COMBO_ITEMS:
+        return 'static combo'
+    if tipo in DYNAMIC_COMBO_ITEMS:
+        return 'dynamic combo'
+    if tipo in TYPE_LEAF:  #temporal
+        return 'input'
+    return None
+
+def isDictionaryEntry(rootElem):
+    #result = False
+    #if rootElem.type() in TYPE_DICT or ( rootElem.type() in TYPE_LIST_DICT and rootElem.text() != rootElem.type() ):
+        #result = True
+    #return result
+    result = True
+    #if not rootElem.hasChildren(): #?seguro
+        #return False
+    if rootElem.type() in TYPE_LIST or ( rootElem.type() in TYPE_LIST_DICT and rootElem.text() == rootElem.type() ):
+        result = False
+    return result
+    
+
 """
    cubo --> lista de cubos
    col,row
@@ -86,6 +111,16 @@ def getCubeList(rootElem,restricted=True):
         lista = [ item.text() for item in childItems(rootElem) ]
     return lista
 
+def getCubeItemList(rootElem,restricted=True):
+    """
+    """
+    entradas_especiales = ('default',)
+    if restricted:
+        lista = [ item for item in childItems(rootElem) if item.text() not in entradas_especiales ]
+    else:
+        lista = [ item for item in childItems(rootElem) ]
+    return lista
+
 def getCubeInfo(rootElem):
     if rootElem.type() == 'base': 
         guidemaster = childByName(rootElem,'guides')
@@ -99,18 +134,6 @@ def getCubeInfo(rootElem):
 
 
         
-def isDictionaryEntry(rootElem):
-    #result = False
-    #if rootElem.type() in TYPE_DICT or ( rootElem.type() in TYPE_LIST_DICT and rootElem.text() != rootElem.type() ):
-        #result = True
-    #return result
-    result = True
-    #if not rootElem.hasChildren(): #?seguro
-        #return False
-    if rootElem.type() in TYPE_LIST or ( rootElem.type() in TYPE_LIST_DICT and rootElem.text() == rootElem.type() ):
-        result = False
-    return result
-    
  
 def getCubeTarget(obj):
     if obj.type() == 'base':
