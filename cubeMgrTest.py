@@ -112,6 +112,8 @@ from cubemgmt.cubeTypes import *
 from cubemgmt.cubeCRUD import editaCombo
 from dictmgmt.tableInfo import FQName2array
 
+from dialogs import propertySheetDlg
+
 import cubebrowse as cb
 
 import time
@@ -263,12 +265,12 @@ def getInputWidget(obj,cubeMgr,cube_root,cube_ref,cache_data):
     comboList = None
     claveList = None
     descriptivo = False
-    
+    data = []
     if  modo == 'input':
         texto = 'Edite '+obj.text()
         widget = QLineEdit
         options = None
-        values = [ value , ]
+        data = [ value , ]
         #text = QInputDialog.getText(None, "Editar:"+obj.text(),obj.text(), QLineEdit.Normal,value)
         #result = text[0]
     elif modo == 'static combo':
@@ -277,7 +279,7 @@ def getInputWidget(obj,cubeMgr,cube_root,cube_ref,cache_data):
         options = None
         array = STATIC_COMBO_ITEMS[tipo]
         descriptivo = True if isinstance(array[0],(list,tuple,set)) else False
-        comboList,claveList,defValue= preparaCombo(obj,array,value)
+        comboList,claveList,data= preparaCombo(obj,array,value)
     elif modo == 'dynamic combo':
         texto = 'Seleccione '+obj.text()
         widget = QComboBox
@@ -285,42 +287,45 @@ def getInputWidget(obj,cubeMgr,cube_root,cube_ref,cache_data):
         array = prepareDynamicArray(obj,cubeMgr,cube_root,cube_ref,cache_data)
         descriptivo = True if isinstance(array[0],(list,tuple,set)) else False
         if array:
-           comboList,claveList,values= preparaCombo(obj,array,value)
+           comboList,claveList,data= preparaCombo(obj,array,value)
     specs = (texto,widget,options,comboList,claveList,descriptivo)
-    return specs,values
+    return specs,data
 
 def leaf_management(obj,cubeMgr,cube_root,cube_ref,cache_data):
     tipo = obj.type()
     modo = action_class(obj)
     value = obj.getColumnData(1)
     specs,values = getInputWidget(obj,cubeMgr,cube_root,cube_ref,cache_data)
+    action = 'modify'
     
     result = None
     context = []
-    context.append(specs[0:3])
+    context.append(specs[0:4])
 
     parmDialog = propertySheetDlg('Edite '+obj.text(),context,values)
     if parmDialog.exec_():
         retorno = parmDialog.sheet.values()[0]
-        if specs[0][1] == QLineEdit :
+        
+        if specs[1] == QLineEdit :
             result = retorno
-        elif specs[0][5]: #descriptivo
-            comboList = specs[0][3]
-            claveList = specs[0][4]
+        elif specs[5]: #descriptivo
+            comboList = specs[3]
+            claveList = specs[4]
+            print(retorno,comboList,claveList)
             if parmDialog.sheet.cellWidget(0,0).currentText() != comboList[retorno]:
                 result = parmDialog.sheet.cellWidget(0,0).currentText()
             else:
                 result = claveList[retorno] 
         else:
            result = parmDialog.sheet.cellWidget(0,0).currentText()  #pues no lo tengo tan claro
-    print(result)
+   
 
-    #if result:    
-        #if tipo in TYPE_LIST and action == 'add':
-            #insertInList(obj,tipo,result)
-        #else:
-            #if result and result != value:
-                #obj.setColumnData(1,result,Qt.EditRole) 
+    if result:    
+        if tipo in TYPE_LIST and action == 'add':
+            insertInList(obj,tipo,result)
+        else:
+            if result and result != value:
+                obj.setColumnData(1,result,Qt.EditRole) 
     
 def leaf_management_old(obj,cubeMgr,cube_root,cube_ref,cache_data):
     tipo = obj.type()
