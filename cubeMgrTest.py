@@ -109,7 +109,7 @@ from core import Cubo
 from cubemgmt.cubeutil import info2cube,isDictionaryEntry,action_class,getCubeList,getCubeItemList
 from cubemgmt.cubetree import *
 from cubemgmt.cubeTypes import *
-from cubemgmt.cubeCRUD import editaCombo
+from cubemgmt.cubeCRUD import insertInList
 from dictmgmt.tableInfo import FQName2array
 
 from dialogs import propertySheetDlg
@@ -133,13 +133,18 @@ def openContextMenu(cubeMgr,position):
 
 def setMenuActions(menu,context,item):      
     menuActions = []
-    menuActions.append(menu.addAction("Manage",lambda:execAction(item,context,"manage")))
-
+    menuActions.append(menu.addAction("Add",lambda:execAction(item,context,"add")))
+    menuActions.append(menu.addAction("Edit",lambda:execAction(item,context,"edit")))
+    #TODO hay algunos imborrables
+    menuActions.append(menu.addAction("Delete",lambda:execAction(item,context,"delete")))
+    if item.type() != item.text():
+        menuActions.append(menu.addAction("Rename",lambda:execAction(item,context,"rename")))
+        #menuActions[-1].setEnabled(False)
 def execAction(item,context,action):
-    if action == "manage" :
-        context.model().beginResetModel()
-        manage(item,context)
-        context.model().endResetModel()
+
+    context.model().beginResetModel()
+    manage(item,context,action)
+    context.model().endResetModel()
 
 def info_cache(cubeMgr,cube_root):
     """
@@ -197,7 +202,7 @@ def info_cache(cubeMgr,cube_root):
     # fin del proceso de cache
     return cubeMgr.cache[cube_ref]
 
-def manage(item,cubeMgr):
+def manage(item,cubeMgr,action):
     '''
        item    -> cubeTree item
        cubeMgr -> cubeMgr actual
@@ -221,22 +226,45 @@ def manage(item,cubeMgr):
     #tabla  = cache_data['tabla']
     #tabla_ref = cache_data['tabla_ref']
     #info = cache_data['info']
-    
-    if tipo in TYPE_LEAF:
-        resultado = leaf_management(item,cubeMgr,cube_root,cube_ref,cache_data)
-    else:
-        print(tipo,item.text(),item.getColumnData(1))
-        resultado = block_management(item,cubeMgr,cube_root,cube_ref,cache_data)
+    if action in ('add','edit'):
+        if tipo in TYPE_LEAF:
+            resultado = leaf_management(item,cubeMgr,action,cube_root,cube_ref,cache_data)
+        else:
+            print(tipo,item.text(),item.getColumnData(1))
+            resultado = block_management(item,cubeMgr,action,cube_root,cube_ref,cache_data)
+    elif action == 'delete':
 
-    #if tipo in COMPLEX_TYPES:
-        #pprint(tree2dict(item,isDictionaryEntry))
-    #else:
-        #print('\t{}:{} ({})'.format(item.type(),item.text(),item.getColumnData(1)))
-    ##pprint(tree2dict(item,isDictionaryEntry))
-    #pprint(item.typeHierarchy())
+        if item.type() == 'base': #no puedo borrarlo pero si vaciarlo, es un probleam de logica. ver cubebrowewin.close()
+            indice = item.index()
+            while item.hasChildren():
+                item.model().item(indice.row()).removeRow(0)
+            item.setEnabled(False)
+        else:
+            item.suicide()
 
-def block_management(obj,cubeMgr,cube_root,cube_ref,cache_data):
-    pass
+    elif action == 'rename':
+        if tipo == texto:
+            return
+        text = QInputDialog.getText(None, "Renombrar el nodo :"+item.text(),"Nodo", QLineEdit.Normal,item.text())
+        print(text[0])
+        if text[0] and text[0] != '':
+            item.setData(text[0],Qt.EditRole)
+            nombre = item.getChildrenByName('name')
+            if nombre:
+                item.setColumnData(1,text[0],Qt.EditRole)
+            else:
+                item.appendRow((CubeItem('name'),CubeItem(text[0],)))
+
+
+
+def block_management(obj,cubeMgr,action,cube_root,cube_ref,cache_data):
+    print(action,obj.type(),obj.text())
+    wizard = MiniWizard(obj,cubeMgr,action,cube_root,cube_ref,cache_data)
+    if wizard.exec_() :
+        #print('Milagro',wizard.page(1).contador,wizard.page(2).contador,wizard.page(3).contador)
+        print(wizard.diccionario)
+        
+
 def preparaCombo(obj,valueTable,valorActual):
     descriptivo = False
     if isinstance(valueTable[0],(list,tuple,set)):
@@ -291,12 +319,15 @@ def getInputWidget(obj,cubeMgr,cube_root,cube_ref,cache_data):
     specs = (texto,widget,options,comboList,claveList,descriptivo)
     return specs,data
 
-def leaf_management(obj,cubeMgr,cube_root,cube_ref,cache_data):
+def leaf_management(obj,cubeMgr,action,cube_root,cube_ref,cache_data):
     tipo = obj.type()
     modo = action_class(obj)
-    value = obj.getColumnData(1)
+    if action == 'edit':
+        value = obj.getColumnData(1)
+    else:
+        value = None
+        
     specs,values = getInputWidget(obj,cubeMgr,cube_root,cube_ref,cache_data)
-    action = 'modify'
     
     result = None
     context = []
@@ -326,23 +357,26 @@ def leaf_management(obj,cubeMgr,cube_root,cube_ref,cache_data):
         else:
             if result and result != value:
                 obj.setColumnData(1,result,Qt.EditRole) 
-    
-def leaf_management_old(obj,cubeMgr,cube_root,cube_ref,cache_data):
-    tipo = obj.type()
-    modo = action_class(obj)
-    value = obj.getColumnData(1)
+    # efectos secundarios
+    # 1) referencia en conexion
+    # 2) table name
+    #
+#def leaf_management_old(obj,cubeMgr,cube_root,cube_ref,cache_data):
+    #tipo = obj.type()
+    #modo = action_class(obj)
+    #value = obj.getColumnData(1)
 
-    if  modo == 'input':
-        text = QInputDialog.getText(None, "Editar:"+obj.text(),obj.text(), QLineEdit.Normal,value)
-        result = text[0]
-    elif modo == 'static combo':
-        array = STATIC_COMBO_ITEMS[tipo]
-        result = editaCombo(obj,array,value)
-    elif modo == 'dynamic combo':
-        array = prepareDynamicArray(obj,cubeMgr,cube_root,cube_ref,cache_data)
-        if array:
-            result = editaCombo(obj,array,value)
-    print(result)
+    #if  modo == 'input':
+        #text = QInputDialog.getText(None, "Editar:"+obj.text(),obj.text(), QLineEdit.Normal,value)
+        #result = text[0]
+    #elif modo == 'static combo':
+        #array = STATIC_COMBO_ITEMS[tipo]
+        #result = editaCombo(obj,array,value)
+    #elif modo == 'dynamic combo':
+        #array = prepareDynamicArray(obj,cubeMgr,cube_root,cube_ref,cache_data)
+        #if array:
+            #result = editaCombo(obj,array,value)
+    #print(result)
     #if result:    
         #if tipo in TYPE_LIST and action == 'add':
             #insertInList(obj,tipo,result)
@@ -351,7 +385,6 @@ def leaf_management_old(obj,cubeMgr,cube_root,cube_ref,cache_data):
                 #obj.setColumnData(1,result,Qt.EditRole) 
 
 def prepareDynamicArray(obj,cubeMgr,cube_root,cube_ref,cache_data):
-    
     #los campos
     tipo = obj.type()
     if tipo == 'table':
@@ -376,12 +409,14 @@ def prepareDynamicArray(obj,cubeMgr,cube_root,cube_ref,cache_data):
             pai = obj
             while pai.type() != 'link via':
                 pai = pai.parent()
-            indice = int(pai.text())
+            #indice = int(pai.text())
+            indice = pai.getPos()
             if indice == 0:
                 tabla_campos = cache_data['tabla_ref']
             else:
                 indice -= 1
-                siguiente = pai.getBrotherByName(str(indice))
+                #siguiente = pai.getBrotherByName(str(indice))
+                siguiente = pai.parent().getChildByPos(indice)
                 tabla_campos = siguiente.getChildrenByName('table').getColumnData(1)
         elif tipo in ('rel_elem',):
             pai = obj
@@ -489,7 +524,12 @@ class WzConnect(QWizardPage):
         self.setLayout(meatLayout)
 
     def initializePage(self):
-        pass
+        print(self.wizard().diccionario)
+        for k,clave in enumerate(('name','driver','dbname','dbhost','dbuser','dbpass','port','debug')):
+            if clave == 'driver':
+                self.sheet.set(k,0,self.wizard().diccionario.get(clave))
+            self.sheet.set(k,0,self.wizard().diccionario.get(clave))
+        
 
 class WzBaseFilter(QWizardPage):
     def __init__(self,parent=None):
@@ -577,16 +617,22 @@ class WzGuideList(QWizardPage):
 
 
 class MiniWizard(QWizard):
-    def __init__(self):
+    def __init__(self,obj,cubeMgr,action,cube_root,cube_ref,cache_data):
         super(MiniWizard,self).__init__()
         """
            convierto los parametros en atributos para poder usarlos en las paginas 
         """
-        self.diccionario = {'alfa':'omega'}
-        self.setPage(1, WzConnect())
-        self.setPage(2, WzBaseFilter())
-        self.setPage(3, WzDateFilter())
-        self.setPage(4, WzFieldList())
+        tipo = obj.type()
+        self.diccionario = tree2dict(obj,isDictionaryEntry)
+        print(self.diccionario)
+        if not tipo or tipo == 'connect':
+            self.setPage(1, WzConnect())
+        if not tipo or tipo == 'base filter':
+            self.setPage(2, WzBaseFilter())
+        if not tipo or tipo == 'date filter':
+            self.setPage(3, WzDateFilter())
+        if not tipo or tipo == 'fields':
+            self.setPage(4, WzFieldList())
         self.setWindowTitle('Tachan')
         self.show()
 

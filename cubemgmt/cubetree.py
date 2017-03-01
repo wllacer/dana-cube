@@ -219,6 +219,18 @@ class CubeItem(QStandardItem):
             item = item.parent()
         return item
 
+    def getPos(self):
+        pai = self.parent()
+        pos = None
+        for k,item in enumerate(pai.listChildren()):
+            if item == self:
+                pos = k 
+                break
+        return pos
+    
+    def getChildByPos(self,pos):
+        return self.child(pos)
+                
 
     def __repr__(self):
         return "<" + self.text() + ">"
