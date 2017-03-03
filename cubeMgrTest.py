@@ -140,6 +140,8 @@ def setMenuActions(menu,context,item):
     if item.type() != item.text():
         menuActions.append(menu.addAction("Rename",lambda:execAction(item,context,"rename")))
         #menuActions[-1].setEnabled(False)
+
+@model_change_control(1)
 def execAction(item,context,action):
 
     context.model().beginResetModel()
@@ -259,10 +261,39 @@ def manage(item,cubeMgr,action):
 
 def block_management(obj,cubeMgr,action,cube_root,cube_ref,cache_data):
     print(action,obj.type(),obj.text())
+    tipo = obj.type()
+    texto = obj.text()
+    padre = obj.parent()
+    if tipo == 'base':
+        children = ('base_filter','date_filter','fields','guides')
+    elif tipo == 'default_base':
+        children = ('cubo','vista')
+    elif tipo == 'connect':
+        children = ('driver','dbname','dbhost','dbuser','dbpass','port','debug')
+    elif tipo == 'domain':
+        children == ('table','code','desc','filter','grouped_by')
+    elif tipo == 'vista':
+        children = ('agregado','elemento','row','col')
+    elif tipo == 'categories':
+        children = ('elem','default','condition','values','result','enum_fmt')
+    elif tipo == 'clause':
+        children = ('base_elem','rel_elem'),
+    elif tipo == 'guides':
+        children = ('class','name','prod'),
+    elif tipo == 'prod':
+        children = ('elem','class','domain','link_via','case_sql','type','fmt','categorias')
+    elif tipo == 'link via':
+        children = ('table','clause','filter'),
+    elif tipo == 'date filter':
+        children = ('elem','date class','date period','date range','date start','date end')
+
+
     wizard = MiniWizard(obj,cubeMgr,action,cube_root,cube_ref,cache_data)
     if wizard.exec_() :
         #print('Milagro',wizard.page(1).contador,wizard.page(2).contador,wizard.page(3).contador)
-        print(wizard.diccionario)
+        nudict = {texto:wizard.diccionario }
+        obj.suicide()
+        dict2tree(padre,tipo,nudict[texto])
         
 
 def preparaCombo(obj,valueTable,valorActual):
@@ -342,8 +373,12 @@ def leaf_management(obj,cubeMgr,action,cube_root,cube_ref,cache_data):
         elif specs[5]: #descriptivo
             comboList = specs[3]
             claveList = specs[4]
-            print(retorno,comboList,claveList)
-            if parmDialog.sheet.cellWidget(0,0).currentText() != comboList[retorno]:
+            #print(retorno,comboList,claveList)
+            # en un combo tengo que tener cuidado que no se hayan añadido/modificado
+            # entradas durante la ejecucion (p.e de campo a funcion(campo)
+            if retorno >= len(comboList):  #nueva entrada dinamica en el combo
+                result = parmDialog.sheet.cellWidget(0,0).currentText() 
+            elif parmDialog.sheet.cellWidget(0,0).currentText() != comboList[retorno]:
                 result = parmDialog.sheet.cellWidget(0,0).currentText()
             else:
                 result = claveList[retorno] 
@@ -361,28 +396,6 @@ def leaf_management(obj,cubeMgr,action,cube_root,cube_ref,cache_data):
     # 1) referencia en conexion
     # 2) table name
     #
-#def leaf_management_old(obj,cubeMgr,cube_root,cube_ref,cache_data):
-    #tipo = obj.type()
-    #modo = action_class(obj)
-    #value = obj.getColumnData(1)
-
-    #if  modo == 'input':
-        #text = QInputDialog.getText(None, "Editar:"+obj.text(),obj.text(), QLineEdit.Normal,value)
-        #result = text[0]
-    #elif modo == 'static combo':
-        #array = STATIC_COMBO_ITEMS[tipo]
-        #result = editaCombo(obj,array,value)
-    #elif modo == 'dynamic combo':
-        #array = prepareDynamicArray(obj,cubeMgr,cube_root,cube_ref,cache_data)
-        #if array:
-            #result = editaCombo(obj,array,value)
-    #print(result)
-    #if result:    
-        #if tipo in TYPE_LIST and action == 'add':
-            #insertInList(obj,tipo,result)
-        #else:
-            #if result and result != value:
-                #obj.setColumnData(1,result,Qt.EditRole) 
 
 def prepareDynamicArray(obj,cubeMgr,cube_root,cube_ref,cache_data):
     #los campos
@@ -501,9 +514,10 @@ class WzConnect(QWizardPage):
         super(WzConnect,self).__init__(parent)
         nombre = None
         data = None
-        context = (
-                ('Nombre',QLineEdit,{'setReadOnly':True} if nombre is not None else None,None,),
-                # driver
+        self.midict = None
+        self.context = (
+                #('Nombre',QLineEdit,{'setReadOnly':True} if nombre is not None else None,None,),
+                ## driver
                 ("Driver ",QComboBox,None,DRIVERS,),
                 ("DataBase Name",QLineEdit,None,None,),
                 ("Host",QLineEdit,None,None,),
@@ -512,7 +526,7 @@ class WzConnect(QWizardPage):
                 ("Port",QLineEdit,None,None,),
                 ("Debug",QCheckBox,None,None,)
             )
-        self.sheet=WPropertySheet(context,data)
+        self.sheet=WPropertySheet(self.context,data)
         
         self.msgLine = QLabel('')
         self.msgLine.setWordWrap(True)
@@ -524,13 +538,27 @@ class WzConnect(QWizardPage):
         self.setLayout(meatLayout)
 
     def initializePage(self):
-        print(self.wizard().diccionario)
-        for k,clave in enumerate(('name','driver','dbname','dbhost','dbuser','dbpass','port','debug')):
-            if clave == 'driver':
-                self.sheet.set(k,0,self.wizard().diccionario.get(clave))
-            self.sheet.set(k,0,self.wizard().diccionario.get(clave))
+        if 'connect' in self.wizard().diccionario:
+            self.midict = self.wizard().diccionario['connect']
+        else:
+            self.midict = self.wizard().diccionario
+        for k,clave in enumerate(('driver','dbname','dbhost','dbuser','dbpass','port','debug')):
+            if self.context[k][1] == QComboBox:
+                self.sheet.set(k,0,self.context[k][3].index(self.midict.get(clave)))
+            self.sheet.set(k,0,self.midict.get(clave))
         
-
+    def validatePage(self):
+        values = self.sheet.values()
+        for k,clave in enumerate(('driver','dbname','dbhost','dbuser','dbpass','port','debug')):
+            if self.context[k][1] == QComboBox:
+                try:
+                    self.midict[clave] = self.context[k][3][values[k]]
+                except IndexError:
+                    self.midict[clave] = self.sheet.cellWidget(k,0).getCurrentText()
+            else:
+                self.midict[clave] = values[k]
+        return True
+    
 class WzBaseFilter(QWizardPage):
     def __init__(self,parent=None):
         super(WzBaseFilter,self).__init__(parent)
@@ -553,7 +581,8 @@ class WzBaseFilter(QWizardPage):
         
     def initializePage(self):
         pass
-
+    def validatePage(self):
+        pass
 class WzDateFilter(QWizardPage):
     def __init__(self,parent=None):
         super(WzDateFilter,self).__init__(parent)
@@ -576,6 +605,8 @@ class WzDateFilter(QWizardPage):
 
     def initializePage(self):
         pass
+    def validatePage(self):
+        pass
    
 class WzFieldList(QWizardPage):
     def __init__(self,parent=None):
@@ -594,6 +625,8 @@ class WzFieldList(QWizardPage):
         self.setLayout(meatLayout)
     
     def initializePage(self):
+        pass
+    def validatePage(self):
         pass
    
 class WzGuideList(QWizardPage):
@@ -614,6 +647,8 @@ class WzGuideList(QWizardPage):
     
     def initializePage(self):
         pass
+    def validatePage(self):
+        pass
 
 
 class MiniWizard(QWizard):
@@ -627,12 +662,12 @@ class MiniWizard(QWizard):
         print(self.diccionario)
         if not tipo or tipo == 'connect':
             self.setPage(1, WzConnect())
-        if not tipo or tipo == 'base filter':
-            self.setPage(2, WzBaseFilter())
-        if not tipo or tipo == 'date filter':
-            self.setPage(3, WzDateFilter())
         if not tipo or tipo == 'fields':
-            self.setPage(4, WzFieldList())
+            self.setPage(2, WzFieldList())
+        if not tipo or tipo == 'base filter':
+            self.setPage(3, WzBaseFilter())
+        if not tipo or tipo == 'date filter':
+            self.setPage(4, WzDateFilter())
         self.setWindowTitle('Tachan')
         self.show()
 

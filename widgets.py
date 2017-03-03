@@ -106,8 +106,18 @@ class WPowerTable(QTableWidget):
         elif isinstance(self.cellWidget(x,y),QComboBox):
             if value is None:
                 pass
-            else:
+            elif isinstance(value,int):
                 self.cellWidget(x,y).setCurrentIndex(value)
+            else:
+                self.cellWidget(x,y).setCurrentIndex(self.cellWidget(x,y).findText(value,Qt.MatchExactly))
+                #FIXME no se si no debe sustituirse por esta de abajo
+                #TODO comprobar matches parciales
+                #try:
+                    #self.cellWidget(x,y).setCurrentIndex(self.cellWidget(x,y).findText(value))
+                #except IndexError :
+                    #self.cellWidget(x,y).addItem(value)
+                    #self.cellWidget(x,y).setCurrentIndex(self.cellWidget(x,y).count() -1)
+
         else:
             self.cellWidget(x,y).setText(value)
             print('Noooop',x,y)

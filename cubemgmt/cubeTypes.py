@@ -110,7 +110,6 @@ TYPE_LIST = set(['case_sql',
 TYPE_DICT = set([u'base',
      u'default_base',
      'connect',
-     u'default_base',
      'domain',
      'vista',])
 

@@ -18,6 +18,7 @@ from pprint import pprint
 #from decimal import *
 
 ##from PyQt5.QtGui import QGuiApplication
+from PyQt5.QtCore import *
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 #from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QSplitter, QMenu, \
      #QDialog, QInputDialog, QLineEdit, QComboBox
@@ -44,7 +45,7 @@ class CubeItem(QStandardItem):
         self.setColumnCount(1)
         #self.setData(self)
         self.gpi = self.getRow        
-        
+            
     def suicide(self):
         """
            Mas bien suicida
@@ -153,7 +154,18 @@ class CubeItem(QStandardItem):
             k +=1
             colind = indice.sibling(indice.row(),k)
         return lista
-     
+    #FIXME desactivado por el momento, no acaba de salir como yo quiero y no tengo tiempo
+    def data(self,role=Qt.UserRole +1):
+        indice = self.index() #self.model().indexFromItem(field)
+        tipo = None
+        if indice.column() == 1:
+            tipoInd = indice.sibling(indice.row(),2)
+            if tipoInd.isValid():
+                tipo = tipoInd.data(role)
+            if tipo and tipo == 'dbpass' and role == Qt.DisplayRole :
+                return '********'
+        return super(CubeItem,self).data(role)
+ 
     def getColumnData(self,column,role=None):
         indice = self.index() #self.model().indexFromItem(field)
         colind = indice.sibling(indice.row(),column)
@@ -311,7 +323,7 @@ def recTreeLoaderAtomic(parent,key,data,tipo=None):
 
 dict2tree = recTreeLoader    #un sinonimo asi puedo elegir la rutina que mas me interese
 
-def tree2dict(rootItem,esdiccionario=None):
+def tree2dict(rootItem,esdiccionario=None,role=None):
     """
        convertir un nodo de  estructura arbol en una entrada de cubo en memoria (diccionario) -recursiva-
        deberia ir a cubetree
@@ -336,9 +348,9 @@ def tree2dict(rootItem,esdiccionario=None):
         result_l = list()
         for item in elementos:
             if item.hasChildren():
-                result_l.append(tree2dict(item,esdiccionario))
+                result_l.append(tree2dict(item,esdiccionario,role))
             else:
-                dato = item.getColumnData(1)
+                dato = item.getColumnData(1,role)
                 if dato == 'None':
                    result_l.append(None)
                 #elif is_number(dato):
@@ -350,9 +362,9 @@ def tree2dict(rootItem,esdiccionario=None):
         result_d = dict()
         for item in elementos:
             if item.hasChildren():
-                result_d[item.text()] = tree2dict(item,esdiccionario)
+                result_d[item.text()] = tree2dict(item,esdiccionario,role)
             else:
-                dato = item.getColumnData(1)
+                dato = item.getColumnData(1,role)
                 if dato == 'None':
                    result_d[item.text()]=None
                 # para los valores booleanos. Bug sutil 

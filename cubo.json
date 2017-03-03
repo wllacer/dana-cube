@@ -2,10 +2,10 @@
     "default": {
         "cubo": "rental_manual",
         "vista": {
-            "elemento": "public.rental.inventory_id",
             "agregado": "count",
-            "row": 3,
-            "col": 2
+            "col": "2",
+            "elemento": "public.rental.inventory_id",
+            "row": "3"
         }
     },
     "rental_manual": {
@@ -13,12 +13,12 @@
         "connect": {
             "dbhost": "localhost",
             "dbname": "pagila",
-            "dbpass": "",
+            "dbpass": "paco",
             "dbuser": "werner",
             "debug": false,
             "driver": "postgresql"
         },
-        "date filter": [],
+        "date filter": "None",
         "fields": [
             "public.rental.inventory_id",
             "public.rental.customer_id",
@@ -147,7 +147,7 @@
         "connect": {
             "dbhost": "",
             "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
-            "dbpass": "",
+            "dbpass": "********",
             "dbport": "",
             "dbuser": "",
             "debug": false,

@@ -232,7 +232,7 @@ class CubeMgr(QTreeView):
     def saveCubeFile(self):
         if self.saveDialog():
             print('Voy a salvar el fichero')
-            newcubeStruct = tree2dict(self.hiddenRoot,isDictionaryEntry)
+            newcubeStruct = tree2dict(self.hiddenRoot,isDictionaryEntry,Qt.EditRole)
             if isinstance(self.parentWindow,CubeBrowserWin):
                 total=True
             else:

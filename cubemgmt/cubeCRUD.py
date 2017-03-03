@@ -368,7 +368,7 @@ def execAction(exec_object,obj,action):
             modo = action_class(obj)
         
             if action == 'edit':
-                value = obj.getColumnData(1)
+                value = obj.getColumnData(1,Qt.EditRole)
             else:
                 value = None
                 
