@@ -140,10 +140,14 @@ def setMenuActions(menu,context,item):
     if item.type() != item.text():
         menuActions.append(menu.addAction("Rename",lambda:execAction(item,context,"rename")))
         #menuActions[-1].setEnabled(False)
-
+    if item.type() == 'base':
+        menu.addSeparator()
+        hijo = item.getChildrenByName('date filter')
+        if not hijo:
+            menuActions.append(menu.addAction("Add Date Filter",lambda:execAction(item,context,"add date filter")))
+            
 @model_change_control(1)
 def execAction(item,context,action):
-
     context.model().beginResetModel()
     manage(item,context,action)
     context.model().endResetModel()
@@ -228,11 +232,10 @@ def manage(item,cubeMgr,action):
     #tabla  = cache_data['tabla']
     #tabla_ref = cache_data['tabla_ref']
     #info = cache_data['info']
-    if action in ('add','edit'):
+    if action in ('add','edit','add date filter'):
         if tipo in TYPE_LEAF:
             resultado = leaf_management(item,cubeMgr,action,cube_root,cube_ref,cache_data)
         else:
-            print(tipo,item.text(),item.getColumnData(1))
             resultado = block_management(item,cubeMgr,action,cube_root,cube_ref,cache_data)
     elif action == 'delete':
 
@@ -262,7 +265,7 @@ def manage(item,cubeMgr,action):
 def block_management(obj,cubeMgr,action,cube_root,cube_ref,cache_data):
     print(action,obj.type(),obj.text())
     tipo = obj.type()
-    texto = obj.text()
+    texto = obj.text() 
     padre = obj.parent()
     if tipo == 'base':
         children = ('base_filter','date_filter','fields','guides')
@@ -291,8 +294,20 @@ def block_management(obj,cubeMgr,action,cube_root,cube_ref,cache_data):
     wizard = MiniWizard(obj,cubeMgr,action,cube_root,cube_ref,cache_data)
     if wizard.exec_() :
         #print('Milagro',wizard.page(1).contador,wizard.page(2).contador,wizard.page(3).contador)
-        nudict = {texto:wizard.diccionario }
-        obj.suicide()
+        if action == 'add date filter':
+            padre = obj
+            texto = tipo = 'date filter'     
+            if texto in wizard.diccionario:
+                nudict = {texto:wizard.diccionario[texto]}
+            else:
+                nudict = {texto:wizard.diccionario }
+            if len(nudict[texto]) == 0:
+                print('tengo que escapar')
+                return
+        else:
+            nudict = {texto:wizard.diccionario }
+            obj.suicide()
+            
         dict2tree(padre,tipo,nudict[texto])
         
 
@@ -483,7 +498,6 @@ def prepareDynamicArray(obj,cubeMgr,cube_root,cube_ref,cache_data):
     return array
 
 def miniCube():
-
     app = QApplication(sys.argv)
     win = QMainWindow()
     confName = 'Pagila'
@@ -508,7 +522,8 @@ def miniCube():
 
 
 from widgets import *    
-            
+from util.fechas import dateRange
+
 class WzConnect(QWizardPage):
     def __init__(self,parent=None):
         super(WzConnect,self).__init__(parent)
@@ -560,7 +575,7 @@ class WzConnect(QWizardPage):
         return True
     
 class WzBaseFilter(QWizardPage):
-    def __init__(self,parent=None):
+    def __init__(self,parent=None,cache=None):
         super(WzBaseFilter,self).__init__(parent)
         numrows = 5
         context=[]
@@ -584,11 +599,16 @@ class WzBaseFilter(QWizardPage):
     def validatePage(self):
         pass
 class WzDateFilter(QWizardPage):
-    def __init__(self,parent=None):
+    #TODO falta validaciones cruzadas como en el dialogo
+    #TODO falta aceptar un campo no fecha (para sqlite) ya definido
+    def __init__(self,parent=None,cache=None):
         super(WzDateFilter,self).__init__(parent)
-        numrows = 5
+        baseTable = cache['tabla_ref']
+        self.baseFieldList = cache['info'][baseTable]['Fields']
+        fieldList = ['',] + [item['basename'] for item in self.baseFieldList if item['format'] in ('fecha','fechahora') ]
+        self.fqnfields = ['',] + [ item['name'] for item in self.baseFieldList if item['format'] in ('fecha','fechahora') ]
+        numrows = len(fieldList) -1
         context = []
-        fieldList = ['','Uno','Dos','Tres']
         context.append(('campo','Clase','Rango','Numero','Desde','Hasta'))
         context.append((QComboBox,None,fieldList))
         context.append((QComboBox,None,CLASES_INTERVALO))
@@ -596,20 +616,75 @@ class WzDateFilter(QWizardPage):
         context.append((QSpinBox,{"setRange":(1,366)},None,1))
         context.append((QLineEdit,{"setEnabled":False},None))
         context.append((QLineEdit,{"setEnabled":False},None))
+
         self.sheet=self.sheet = WDataSheet(context,numrows)
 
         meatLayout = QGridLayout()
         meatLayout.addWidget(self.sheet,0,0,1,0)
         
         self.setLayout(meatLayout)
+        self.midict = None
+        
+    def getFormat(self,fieldName):
+        formato = 'fecha'
+        for item in self.baseFieldList:
+            if item['basename'] == fieldName:
+                formato = item['formato']
+                break
+        return formato
 
     def initializePage(self):
-        pass
+        if 'date filter' in self.wizard().diccionario:
+            self.midict = self.wizard().diccionario['date filter']
+        else:
+            self.midict = self.wizard().diccionario
+        if len(self.midict) > 0:
+            for k,entry in enumerate(self.midict):
+                #'elem':entry[0],
+                #'date class': CLASES_INTERVALO[entry[1]],
+                #'date range': TIPOS_INTERVALO[entry[2]],
+                #'date period': entry[3],
+                #'date start': None,
+                #'date end': None,
+                #'date format': formato
+
+                campo = self.fqnfields.index(entry['elem'])
+                self.sheet.set(k,0,campo)
+                self.sheet.set(k,1,CLASES_INTERVALO.index(entry['date class']))
+                self.sheet.set(k,2,TIPOS_INTERVALO.index(entry['date range']))
+                self.sheet.set(k,3,int(entry['date period']))
+                formato = 'fechahora'
+                if not entry.get('date format'):
+                    formato = self.getFormat(entry['elem'])
+                else:
+                    formato = entry['date format']
+
+                if not entry.get('date start'):
+                    intervalo = dateRange(self.sheet.get(k,1),self.sheet.get(k,2),periodo=int(entry['date period']),fmt=entry['date format'])
+                else:
+                    intervalo = tuple([entry['date start'],entry['date end']] )
+                self.sheet.set(k,4,str(intervalo[0]))
+                self.sheet.set(k,5,str(intervalo[1]))
+                    
     def validatePage(self):
-        pass
+        values = self.sheet.values()
+        guiaCamposVal = [item[0] for item in values]
+        guiaCamposDic = [item['elem'] for item in self.midict]
+        self.midict.clear()
+        for entrada in values:
+            print(entrada)
+            if entrada[0] == 0 or entrada[1] == 0:
+                continue
+            self.midict.append({'elem':self.fqnfields[entrada[0]],
+                                'date class':CLASES_INTERVALO[entrada[1]],
+                                'date range':TIPOS_INTERVALO[entrada[2]],
+                                'date period':entrada[3],
+                                'date format':self.getFormat(self.fqnfields[entrada[0]])
+                               })
+        return True
    
 class WzFieldList(QWizardPage):
-    def __init__(self,parent=None):
+    def __init__(self,parent=None,cache=None):
         super(WzFieldList,self).__init__(parent)
         fieldList = ['uno','dos','tres']
         context = [ [argumento,QCheckBox,None] for argumento in fieldList]
@@ -627,7 +702,7 @@ class WzFieldList(QWizardPage):
     def initializePage(self):
         pass
     def validatePage(self):
-        pass
+        return True
    
 class WzGuideList(QWizardPage):
     def __init__(self,parent=None):
@@ -648,7 +723,7 @@ class WzGuideList(QWizardPage):
     def initializePage(self):
         pass
     def validatePage(self):
-        pass
+        return True
 
 
 class MiniWizard(QWizard):
@@ -658,16 +733,20 @@ class MiniWizard(QWizard):
            convierto los parametros en atributos para poder usarlos en las paginas 
         """
         tipo = obj.type()
-        self.diccionario = tree2dict(obj,isDictionaryEntry)
+        if action == 'add date filter':
+            self.diccionario = {'date filter':[]}
+        else:
+            self.diccionario = tree2dict(obj,isDictionaryEntry)
         print(self.diccionario)
         if not tipo or tipo == 'connect':
             self.setPage(1, WzConnect())
-        if not tipo or tipo == 'fields':
-            self.setPage(2, WzFieldList())
-        if not tipo or tipo == 'base filter':
-            self.setPage(3, WzBaseFilter())
-        if not tipo or tipo == 'date filter':
-            self.setPage(4, WzDateFilter())
+        # TODO no son estrictamente complejos pero la interfaz es mejor como complejos
+        # 
+        if not tipo:
+            self.setPage(2, WzFieldList(cache=cache_data))
+            self.setPage(3, WzBaseFilter(cache=cache_data))
+        if not tipo or tipo == 'date filter' or action == 'add date filter':
+            self.setPage(4, WzDateFilter(cache=cache_data))
         self.setWindowTitle('Tachan')
         self.show()
 

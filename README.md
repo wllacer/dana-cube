@@ -94,15 +94,20 @@ __Best policy__ would be to comply to the terms of the __LGPL__ license family (
 
 __a good enough policy__ would be to acknowledge my autorship of this piece of code and to send upstream all corrections and enhancements to the original functionality.
 
-If in doubt, or your legal overlords demand some clear answer, then, my code is __LGPL v2 and/or greater than__ licensed.
-Two _caveats_ :
+If in doubt, or your legal overlords demand some clear answer, then, my code is __LGPL v2 and/or greater than__ licensed. For . __more grave doubts__ please contact me, We'll broker an favorable agreement.
+
+A few _caveats_ :
+* Any module installed via the __"user functions"__ functionality is __NOT bound__ to the above mentioned license. That functionality was intendended for the users to extend the capabilities of the tool, so they remain (whatever the mode of linking) property of their developers. In spite of this, those provided by my as samples, are still mine, and licencing aplies (but you have unrestricted right to fork)
+* From my point of view, data used and/ore produced by the tool, are owned by their users, not, in any way, by the tool (i.e. me)
 * IIRC, the *GPL licenses demand that the code must be made available by the distributor. I think that linking where the source of Danacube resides covers it. Although it might be, from the practical POV a bad idea: repositories may move, version changes could be destructive, and any private enhancement could get lost, ...
-* I'm not into legal hairsplitting, so just to avoid confusion, I don't mind if the code is used in/distributed with products under other open source license in the broad sense, as long as they honor my licensing for my code
+* I'm not into legal hairsplitting, so just to avoid confusion, I don't mind if the code is used in/distributed with products under other open source license in the broad sense, as long as they honor my licensing for my code.
+* IIRC, my jurisdiction -Spain- DOES NOT recognize software patents, so don't bother me with that. I wonder, anyhow, what would be "patentable" in my algorithms ... and if, not covered by thousands of previous art.
 
 Qt, PyQt -and the additional libraries-, licensing might impose other restrictions, please keep an eye on it (AFAIK PyQt is/was __GPL__ licensed)
 
 ## DANACUBE enters __ALPHA__
 
+__Update 2017/03/07__ Still no release this week, i'm afraid. There have been many small updates to the code, but the functionality i'm working is still not there (vacations, sick leave, getting a Windows test environment ... and a thougher nut to crack than I thought). So, it's not a bad idea to download _master_ if you find some hickups in the code
 __Update 2017/02/16__  No release this week. Lots of changes, though, but still not stable enough.
 __Update 2017/02/07__  New alpha release. With sample data. The __danacube.pyw__ (the basic tool) can be seen as pretty complete and (hope) stable
 __Update 2017/02/01__. New alpha release
