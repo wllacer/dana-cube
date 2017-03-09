@@ -47,6 +47,7 @@ ITEM_TYPE = set([
      u'fmt',
      u'grouped by',
      u'guides',
+     u'mask',
      u'name',
      # u'pos', no se de donde sale
      u'prod',
@@ -90,6 +91,7 @@ TYPE_LEAF = set([
     'filter',
     'fmt',
     'grouped by',
+    'mask',
     'name',
     'rel_elem',
     'result',
@@ -171,6 +173,7 @@ EDITED_ITEMS = set([
     'filter',
     'fmt',
     'grouped by',
+    'mask',
     'name',
     'result',
     'row',
@@ -211,6 +214,7 @@ DYNAMIC_COMBO_ITEMS = set([
      u'elemento',  # FIELD of cube
      u'fields',    #
      u'grouped by',#              field of FK table or derived value ??
+     u'mask',
      u'rel_elem',  #              field of FK table
      u'row',       # uno de los cubos del fichero
      u'table',     #

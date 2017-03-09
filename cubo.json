@@ -18,7 +18,6 @@
             "debug": false,
             "driver": "postgresql"
         },
-        "date filter": "None",
         "fields": [
             "public.rental.inventory_id",
             "public.rental.customer_id",
@@ -34,7 +33,7 @@
                         "fmt": "date"
                     }
                 ],
-                "type": "Ym"
+                "type": "YW"
             },
             {
                 "class": "h",

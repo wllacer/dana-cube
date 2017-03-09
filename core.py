@@ -148,6 +148,8 @@ class Cubo:
         filtros = self.definition.get('date filter')
         if not filtros:
             return sqlClause
+        if len(filtros) == 0 :
+            return sqlClause
         for item in  filtros :
             clase_intervalo = CLASES_INTERVALO.index(item['date class'])
             tipo_intervalo = TIPOS_INTERVALO.index(item['date range'])
@@ -301,9 +303,16 @@ class Cubo:
                 if clase != 'd':  #las fechas generan dinamicamente guias jerarquicas
                     guia['elem'] +=norm2List(componente['elem'])
                 if clase == 'd':
+                    base_date = norm2List(componente['elem'])[-1]
+                    #toda esta parafernalia es para mantener la compatibilidad con versiones antiguas de los cubos
                     if 'mask' not in componente:
-                        componente['mask'] = 'Ym'  #(agrupado en año mes dia por defecto'
-                        base_date = norm2List(componente['elem'])[-1]
+                        if 'type' in componente:
+                            componente['mask'] = componente['type']
+                        elif 'type' in entrada:
+                            componente['mask'] = entrada['type']
+                        else:
+                            componente['mask'] = 'Ym'  #(agrupado en año mes dia por defecto'
+                    #    base_date = norm2List(componente['elem'])[-1]
                     #
                     for k in range(len(componente['mask'])):
                         kmask = componente['mask'][0:k+1]                   

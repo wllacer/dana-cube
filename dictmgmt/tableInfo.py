@@ -351,8 +351,7 @@ class TableInfo():
             elif fld['format'] in ('fecha','fechahora'):
                 entrada['guides'].append({'name':fld['basename'],
                                         'class':'d',
-                                        'type':'Ym',
-                                        'prod':[{'fmt':'date','elem':fld['name']},]
+                                        'prod':[{'fmt':'date','elem':fld['name'],'mask':'Ym'},]
                                         })  #no es completo
                 entrada['guides'].append( genTrimestreCode(fld['name'],self.driver.dialect.name))
 

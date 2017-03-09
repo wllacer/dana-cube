@@ -175,6 +175,8 @@ class WDataSheet(WPowerTable):
             self.addCell(line,y,colDef)
             
     def fill(self,data):
+        if len(data) == 0:
+            return
         rows=min(self.rowCount(),len(data))
         cols=min(self.columnCount(),len(data[0]))
         for x in range(rows):

@@ -135,8 +135,8 @@ class DataDict():
             # asi tengo acceso a esos datos aunque sea dinamica
             if not self.configData:
                 self.configData = {'Conexiones':{confName:conf}}
-            elif 'Conexiones' not in self.confiData:
-                self.configData['Conexiones']: {confName:conf}
+            elif 'Conexiones' not in self.configData:
+                self.configData['Conexiones'] = {confName:conf}
             else:
                 self.configData['Conexiones'][confName] = conf
         else:
