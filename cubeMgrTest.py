@@ -110,7 +110,7 @@ from cubemgmt.cubeutil import info2cube,isDictionaryEntry,action_class,getCubeLi
 from cubemgmt.cubetree import *
 from cubemgmt.cubeTypes import *
 from cubemgmt.cubeCRUD import insertInList
-from dictmgmt.tableInfo import FQName2array
+from dictmgmt.tableInfo import FQName2array,TableInfo
 
 from dialogs import propertySheetDlg
 
@@ -417,16 +417,40 @@ def leaf_management(obj,cubeMgr,action,cube_root,cube_ref,cache_data):
     # 2) table name
     #
 
+def getAvailableTables(cubeMgr,cache_data):
+    #restringimos a las del mismo esquema
+    dd=cubeMgr.dataDict
+    conn = dd.getConnByName(cache_data['confName'])
+    schema = conn.getChildrenByName(cache_data['schema'])
+    hijos = schema.listChildren()
+    array = [ (item.fqn(),item.text()) for item in hijos ]
+    return array
+    
+def getFieldsFromTable(fqn_table_name,cache_data,cube,tipo_destino=None):
+    # obtenemos la lista de campos
+    #TODO falta por evaluar que ocurre si el fichero no esta en el cache de datos
+    if fqn_table_name not in cache_data['info']:
+        basename = fqn_table_name.split('.')[-1]
+        tmpTabInfo = TableInfo(cube.dataDict,cache_data['confName'],cache_data['schema'],basename,maxlevel=0)
+        for key in tmpTabInfo.lista:
+            cache_data['info'][key] = tmpTabInfo.lista[key] #FIXME no seria mas rentable un deepcopy ?
+        
+    if tipo_destino == 'fields':
+        array = [ (item['name'],item['basename']) 
+                    for item in cache_data['info'][fqn_table_name]['Fields'] 
+                    if item['format'] in ('entero','numerico')
+                    ]
+    else:
+        array = [ (item['name'],item['basename']) for item in cache_data['info'][fqn_table_name]['Fields'] ]    
+    return array
+
 def prepareDynamicArray(obj,cubeMgr,cube_root,cube_ref,cache_data):
     #los campos
     tipo = obj.type()
     if tipo == 'table':
         #restringimos a las del mismo esquema
-        dd=cubeMgr.dataDict
-        conn = dd.getConnByName(cache_data['confName'])
-        schema = conn.getChildrenByName(cache_data['schema'])
-        hijos = schema.listChildren()
-        array = [ (item.fqn(),item.text()) for item in hijos ]
+        array = getAvailableTables(cubeMgr,cache_data)
+        
         #TODO normalizar el valor actual
     elif tipo in ('elem','base_elem','fields','code','desc','grouped by','base_elem','rel_elem'):
         # primero determinamos de que tabla hay que extraer los datos
@@ -465,17 +489,8 @@ def prepareDynamicArray(obj,cubeMgr,cube_root,cube_ref,cache_data):
         if esquema == '':
             esquema = cache_data['schema']
         tabla_campos = '{}.{}'.format(esquema,tabName)
-        # obtenemos la lista de campos
-        #TODO falta por evaluar que ocurre si el fichero no esta en el cache de datos
-        if tipo != 'fields':
-            array = [ (item['name'],item['basename']) for item in cache_data['info'][tabla_campos]['Fields'] ]
-        else:
-            array = [ (item['name'],item['basename']) 
-                     for item in cache_data['info'][tabla_campos]['Fields'] 
-                     if item['format'] in ('entero','numerico')
-                     ]
-        #TODO normalizar el valor actual
-    # las referencias en el default
+        array = getFieldsFromTable(tabla_campos,cache_data,cubeMgr,tipo)
+
     elif tipo in ('row','col','elemento'): 
         # identificamos el cubo de defecto
         pai = obj.parent()
@@ -907,7 +922,7 @@ class WzProdBase(QWizardPage):
                 if self.midict.get(key):
                     del self.midict[key]
         elif self.linkCtorRB.isChecked():
-            for key in ('domain','categorias','case_sql','mask'):
+            for key in ('categorias','case_sql','mask'):
                 if self.midict.get(key):
                     del self.midict[key]
         
@@ -1234,64 +1249,276 @@ class WzTime(QWizardPage):
                 self.formFechaCombo[k].blockSignals(False)  
 
 class WzDomain(QWizardPage):
-    def __init__(self,parent=None,cache=None):
+    def __init__(self,parent=None,cube=None,cache=None):
         super(WzDomain,self).__init__(parent)
-        guideList = ['uno','dos','tres']
-        context = [ [argumento,QCheckBox,None] for argumento in guideList]
-        data = [ None for k in range(len(context))]
 
-        self.sheet=WPropertySheet(context,data)
+        self.cube = cube
+        self.cache = cache
+        
+        tableArray = getAvailableTables(self.cube,self.cache)
+        
+        
+        self.listOfTables = ['',] + [ item[1] for item in tableArray]
+        self.listOfTablesCode = ['',] + [ item[0] for item in tableArray]
+        self.listOfFields = []
+        
+        targetTableLabel = QLabel("&Tabla origen:")
+        self.targetTableCombo = QComboBox()
+        #MARK VERY CAREFULLY. If has default value, DON'T make it mandatory in wizard
+        #                     Use a null value in combos if mandatory
+        self.targetTableCombo.addItems(self.listOfTables)
+        self.targetTableCombo.setCurrentIndex(0)
+        targetTableLabel.setBuddy(self.targetTableCombo)
+        self.targetTableCombo.setStyleSheet("background-color:khaki;")
+        self.targetTableCombo.currentIndexChanged[int].connect(self.tablaElegida)
 
-        #TODO una linea pura de codigo. O mejor alterar los tamaños
+        targetFilterLabel = QLabel("&Filtro:")
+        self.targetFilterLineEdit = QLineEdit()
+        targetFilterLabel.setBuddy(self.targetFilterLineEdit)
+        
+
+        targetCodeLabel = QLabel("&Clave de enlace:")
+        self.targetCodeList = QListWidget()
+        targetCodeLabel.setBuddy(self.targetCodeList)
+        self.targetCodeList.setStyleSheet("background-color:khaki;")
+        self.targetCodeList.setSelectionMode(QListWidget.ExtendedSelection)
+
+        targetDescLabel = QLabel("&Textos desciptivos:")
+        self.targetDescList = QListWidget()
+        targetDescLabel.setBuddy(self.targetDescList)
+        self.targetDescList.setSelectionMode(QListWidget.ExtendedSelection)
+
+        linkLabel = QLabel("¿Requiere de un enlace externo?")
+        self.linkCheck = QCheckBox()
+        linkLabel.setBuddy(self.linkCheck)
+        self.linkCheck.stateChanged.connect(self.estadoLink)
+        
         meatLayout = QGridLayout()
-        meatLayout.addWidget(self.sheet,0,0,1,0)
+        meatLayout.addWidget(targetTableLabel,0,0)
+        meatLayout.addWidget(self.targetTableCombo,0,1)
+        meatLayout.addWidget(targetCodeLabel,1,0)
+        meatLayout.addWidget(self.targetCodeList,1,1)
+        meatLayout.addWidget(targetDescLabel,2,0)
+        meatLayout.addWidget(self.targetDescList,2,1)
+        meatLayout.addWidget(targetFilterLabel,3,0)
+        meatLayout.addWidget(self.targetFilterLineEdit,3,1)
+        meatLayout.addWidget(linkLabel,4,0)
+        meatLayout.addWidget(self.linkCheck,4,1)
+        
+        self.setLayout(meatLayout)
+
 
         
         self.setLayout(meatLayout)
     
     def initializePage(self):
         self.iterator = self.wizard().page(ixWzProdBase).iterations
+        #TODO no inicializa si no esta en la regla de produccion
+        self.iterator = self.wizard().page(ixWzProdBase).iterations
+        if isinstance(self.wizard().diccionario,(list,tuple)):
+            #varias entradas
+            self.midict = self.wizard().diccionario[self.iterator -1]
+        else:
+            self.midict = self.wizard().diccionario
+        print('inicializando',self.midict)
+        if self.midict.get('domain'):
+            domain = self.midict['domain']
+            print('y aqui el dominio',domain)
+            if domain.get('table'):
+                try:
+                    idx = self.listOfTablesCode.index(domain['table'])
+                except ValueError:
+                    idx = self.listOfTables.index(domain['table'])
+                print(domain['table'],idx)
+                self.targetTableCombo.setCurrentIndex(idx)
+            if domain.get('code'):
+                ct = norm2List(domain['code'])
+                for item in ct:
+                    try:
+                        idx = self.listOfFieldsCode.index(item)
+                        entry = self.targetCodeList.model().itemFromIndex(idx)
+                    except ValueError:
+                        try:
+                            idx = self.listOfFields.index(item)
+                        except ValueError:
+                            self.targetCodeList.addItem(item)
+                            idx= self.targetCodeList.count() -1
+                            #select item
+                            self.listOfFields.append(item)
+                            self.listOfFieldsCode.append(item)
+                    #entry = self.targetCodeList.model().itemFromIndex(idx)
+                    selItem = self.targetCodeList.item(idx)
+                    selItem.setSelected(True)
+                    
+            if domain.get('desc'):
+                ct = norm2List(domain['desc'])
+                for item in ct:
+                    try:
+                        idx = self.listOfFieldsCode.index(item)
+                        entry = self.targetDescList.model().itemFromIndex(idx)
+                    except ValueError:
+                        try:
+                            idx = self.listOfFields.index(item)
+                        except ValueError:
+                            self.targetDescList.addItem(item)
+                            idx= self.targetDescList.count() -1
+                            #select item
+                            self.listOfFields.append(item)
+                            self.listOfFieldsCode.append(item)
+                    selItem = self.targetDescList.item(idx)
+                    selItem.setSelected(True)
+                    
+            if domain.get('filter'):
+                self.targetFilterLineEdit.setText(domain['filter'])
+            if domain.get('grouped by'):
+                #TODO TODO
+                pass
         pass
 
     def nextId(self):
-        return -1
+        return ixWzLink
 
     def validatePage(self):
+        # verificar que los campos obligatorios estan rellenos
+        if self.targetTableCombo.currentText() == '':
+            self.targetTableCombo.setFocus()
+            return False
+        #TODO aqui deberia verificarse que el numero corresponde al numero de elementos de la regla de prod.
+        if len(self.targetCodeList.selectedItems()) == 0:
+            self.targetCodeList.setFocus()
+            return False
+            
+        if not self.midict.get('domain'):
+            self.midict['domain']={}
+        domain = self.midict['domain']
+        
+        tabidx =self.targetTableCombo.currentIndex()
+        domain['table'] = self.listOfTablesCode[tabidx]
+        
+        domain['code'] = []
+        for entry in self.targetCodeList.selectedItems():
+            nombre = entry.text()
+            idx = self.listOfFields.index(nombre)
+            domain['code'].append(self.listOfFieldsCode[idx])
+        
+        domain['desc'] = []
+        for entry in self.targetDescList.selectedItems():
+            nombre = entry.text()
+            idx = self.listOfFields.index(nombre)
+            domain['desc'].append(self.listOfFieldsCode[idx])
+         
+        domain['filter'] = self.targetFilterLineEdit.text()
+         
         if self.isFinalPage() and self.iterator < self.wizard().prodIters:
             self.wizard().setStartId(ixWzProdBase);
             self.wizard().restart()        
             return False
         return True
+
+    def estadoLink(self,idx):
+        if self.linkCheck.isChecked():
+            self.setFinalPage(False)
+        else:
+            self.setFinalPage(True)
+            
+    def tablaElegida(self,idx):
+        print('Algo encuentra',idx)
+        tabname = self.listOfTablesCode[idx]
+        self.listOfFields = [ item[1] for item in getFieldsFromTable(tabname,self.cache,self.cube) ]
+        self.listOfFieldsCode = [ item[0] for item in getFieldsFromTable(tabname,self.cache,self.cube) ]
+        self.targetCodeList.clear()
+        self.targetDescList.clear()
+        self.targetCodeList.addItems(self.listOfFields)
+        self.targetDescList.addItems(self.listOfFields) 
 
 class WzLink(QWizardPage):
-    def __init__(self,parent=None,cache=None):
+    def __init__(self,parent=None,cube=None,cache=None):
         super(WzLink,self).__init__(parent)
-        guideList = ['uno','dos','tres']
-        context = [ [argumento,QCheckBox,None] for argumento in guideList]
-        data = [ None for k in range(len(context))]
+        self.setFinalPage(True)
+        
+        self.cube = cube
+        self.cache = cache
+        
+        tableArray = getAvailableTables(self.cube,self.cache)
+        
+        
+        self.listOfTables = ['',] + [ item[1] for item in tableArray]
+        self.listOfTablesCode = ['',] + [ item[0] for item in tableArray]
+        self.listOfFields = []
+        
+        joinTableLabel = QLabel("&Tabla de enlace")
+        self.joinTableCombo = QComboBox()
+        #MARK VERY CAREFULLY. If has default value, DON'T make it mandatory in wizard
+        #                     Use a null value in combos if mandatory
+        self.joinTableCombo.addItems(self.listOfTables)
+        self.joinTableCombo.setCurrentIndex(0)
+        joinTableLabel.setBuddy(self.joinTableCombo)
+        self.joinTableCombo.currentIndexChanged[int].connect(self.tablaElegida)
 
-        self.sheet=WPropertySheet(context,data)
-
-        #TODO una linea pura de codigo. O mejor alterar los tamaños
+        joinFilterLabel = QLabel("&Filtro:")
+        self.joinFilterLineEdit = QLineEdit()
+        joinFilterLabel.setBuddy(self.joinFilterLineEdit)
+        
+        #TODO esto quedaria mejor con un WDataSheet 
+        
+        context=[]
+        
+        context.append(('c. base','condicion','c. enlace'))
+        context.append((QComboBox,None,('',)+tuple(self.listOfFields)))
+        context.append((QComboBox,None,tuple(LOGICAL_OPERATOR)))
+        context.append((QComboBox,None,None))
+        
+        numrows=3
+        
+        self.joinClauseArray = WDataSheet(context,numrows)
+        
+        for k in range(self.joinClauseArray.rowCount()):
+            self.joinClauseArray.cellWidget(k,1).setCurrentIndex(3) #la condicion de igualdad
+        self.joinClauseArray.resizeColumnToContents(0)
+            
         meatLayout = QGridLayout()
-        meatLayout.addWidget(self.sheet,0,0,1,0)
+        meatLayout.addWidget(joinTableLabel,0,0)
+        meatLayout.addWidget(self.joinTableCombo,0,1)
+        meatLayout.addWidget(joinFilterLabel,1,0)
+        meatLayout.addWidget(self.joinFilterLineEdit,1,1)
+        meatLayout.addWidget(self.joinClauseArray,2,0,1,2)
+        self.setLayout(meatLayout)
 
         
-        self.setLayout(meatLayout)
+
     
     def initializePage(self):
-        self.iterator = self.wizard().page(ixWzProdBase).iterations 
+        self.iterator = self.wizard().page(ixWzProdBase).iterations
+        #TODO no inicializa si no esta en la regla de produccion
+        self.iterator = self.wizard().page(ixWzProdBase).iterations
+        if isinstance(self.wizard().diccionario,(list,tuple)):
+            #varias entradas
+            self.midict = self.wizard().diccionario[self.iterator -1]
+        else:
+            self.midict = self.wizard().diccionario
+
         pass
 
     def nextId(self):
         return -1
 
     def validatePage(self):
+        
         if self.isFinalPage() and self.iterator < self.wizard().prodIters:
             self.wizard().setStartId(ixWzProdBase);
             self.wizard().restart()        
             return False
         return True
+
+    def tablaElegida(self,idx):
+        print('Algo encuentra',idx)
+        tabname = self.listOfTablesCode[idx]
+        self.listOfFields = [ item[1] for item in getFieldsFromTable(tabname,self.cache,self.cube) ]
+        self.listOfFieldsCode = [ item[0] for item in getFieldsFromTable(tabname,self.cache,self.cube) ]
+        self.targetCodeList.clear()
+        self.targetDescList.clear()
+        self.targetCodeList.addItems(self.listOfFields)
+        self.targetDescList.addItems(self.listOfFields) 
 
 
 class MiniWizard(QWizard):
@@ -1341,8 +1568,8 @@ class MiniWizard(QWizard):
             self.setPage(ixWzCategory, WzCategory(cache=cache_data))
             self.setPage(ixWzRowEditor, WzRowEditor(cache=cache_data))
             self.setPage(ixWzTime, WzTime(cache=cache_data))
-            self.setPage(ixWzDomain, WzDomain(cache=cache_data))
-            self.setPage(ixWzLink, WzLink(cache=cache_data))
+            self.setPage(ixWzDomain, WzDomain(cube=cubeMgr,cache=cache_data))
+            self.setPage(ixWzLink, WzLink(cube=cubeMgr,cache=cache_data))
             
             
         self.setWindowTitle('Tachan')
