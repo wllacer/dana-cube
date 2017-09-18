@@ -293,7 +293,7 @@ def block_management(obj,cubeMgr,action,cube_root,cube_ref,cache_data):
         #children = ('elem','date class','date period','date range','date start','date end')
 
 
-    wizard = MiniWizard(obj,cubeMgr,action,cube_root,cube_ref,cache_data)
+    wizard = CubeWizard(obj,cubeMgr,action,cube_root,cube_ref,cache_data)
     if wizard.exec_() :
         #print('Milagro',wizard.page(1).contador,wizard.page(2).contador,wizard.page(3).contador)
         if action == 'add date filter':
@@ -454,7 +454,14 @@ def prepareDynamicArray(obj,cubeMgr,cube_root,cube_ref,cache_data):
         #TODO normalizar el valor actual
     elif tipo in ('elem','base_elem','fields','code','desc','grouped by','base_elem','rel_elem'):
         # primero determinamos de que tabla hay que extraer los datos
-        if tipo in ('elem','fields'):
+        if tipo in ('elem',):
+            join = obj.getBrotherByName('link via')
+            if join:
+                joinelem = join.listChildren()[-1] #eso obliga a una disciplina
+                tabla_campos  = joinelem.getChildrenByName('table').getColumnData(1)
+            else:
+                tabla_campos = cache_data['tabla_ref']
+        if tipo in ('fields'):
             tabla_campos = cache_data['tabla_ref']
         elif tipo in ('code','desc','grouped by'):
             pai = obj
@@ -484,7 +491,6 @@ def prepareDynamicArray(obj,cubeMgr,cube_root,cube_ref,cache_data):
             tabla_campos = pai.getBrotherByName('table').getColumnData(1)
         # normalizamos el nombre de la tabla (añadiendo el esquema si es necesario).
         # es un pequeño fastido pero no hay manera de garantizar que los datos esten bien en origen
-        print(tabla_campos)
         conexion,esquema,tabName = FQName2array(tabla_campos)
         if esquema == '':
             esquema = cache_data['schema']
@@ -1373,10 +1379,19 @@ class WzDomain(QWizardPage):
             if domain.get('grouped by'):
                 #TODO TODO
                 pass
+            if self.midict.get('link via'):
+                self.linkCheck.setChecked(True)
+                self.setFinalPage(False)
+            else:
+                self.linkCheck.setChecked(False)
+                self.setFinalPage(True)
         pass
 
     def nextId(self):
-        return ixWzLink
+        if self.linkCheck.isChecked():
+            return ixWzLink
+        else:
+            return -1
 
     def validatePage(self):
         # verificar que los campos obligatorios estan rellenos
@@ -1521,9 +1536,9 @@ class WzLink(QWizardPage):
         self.targetDescList.addItems(self.listOfFields) 
 
 
-class MiniWizard(QWizard):
+class CubeWizard(QWizard):
     def __init__(self,obj,cubeMgr,action,cube_root,cube_ref,cache_data):
-        super(MiniWizard,self).__init__()
+        super(CubeWizard,self).__init__()
         """
            convierto los parametros en atributos para poder usarlos en las paginas 
         """
@@ -1575,78 +1590,6 @@ class MiniWizard(QWizard):
         self.setWindowTitle('Tachan')
         self.show()
 
-class Wz1(QWizardPage):
-    def __init__(self,parent=None):
-        super(Wz1,self).__init__(parent)
-        self.contador = 0
-        label =QLabel('alfa')
-        self.value = QLineEdit()
-        self.value.editingFinished.connect(self.modificaValue)
-        layout = QGridLayout()
-        layout.addWidget(label, 0, 0)
-        layout.addWidget(self.value, 0, 1)
-        self.setLayout(layout)
-        self.registerField('alfa', self.value)
-
-    def initializePage(self):
-        self.value.setText(self.wizard().diccionario['alfa'])
-        self.contador += 1
-
-    def modificaValue(self):
-        if self.value.isModified():
-            self.wizard().diccionario['alfa']=self.value.text()
-        
-    
-class Wz2(QWizardPage):
-    def __init__(self,parent=None):
-        super(Wz2,self).__init__(parent)
-        self.contador = 0
-    def initializePage(self):
-        self.contador += 1
-        self.wizard().diccionario[self.contador] = 'iteracion' + str(self.contador)
-
-class Wz3(QWizardPage):
-    def __init__(self,parent=None):
-        super(Wz3,self).__init__(parent)
-
-        linkLabel = QLabel("¿Quiere volver a empezar?")
-        self.linkCheck = QCheckBox()
-        linkLabel.setBuddy(self.linkCheck)
-        self.linkCheck.stateChanged.connect(self.estadoLink)
-        
-
-        layout = QGridLayout()
-        layout.addWidget(linkLabel,0,0)
-        layout.addWidget(self.linkCheck,0,1)
-        self.setLayout(layout)
-
-        self.contador = 0
-    
-    def estadoLink(self):
-        if self.linkCheck.isChecked():
-            self.wizard().setStartId(2);
-            self.wizard().restart()        
-    def initializePage(self):
-        self.contador += 1
-
-class Wz4(QWizardPage):
-    def __init__(self,parent=None):
-        super(Wz4,self).__init__(parent)
-        self.contador = 0
-    def initializePage(self):
-        self.contador += 1
-        
-
-
-def miniWizard():
-    
-    app = QApplication(sys.argv)
-    wizard = MiniWizard()        
-    if wizard.exec_() :
-        print(wizard.page(1).value.text())
-        #print('Milagro',wizard.page(1).contador,wizard.page(2).contador,wizard.page(3).contador)
-        print(wizard.diccionario)
-        exit()
 
 if __name__ == '__main__':
     import sys

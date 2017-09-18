@@ -20,6 +20,9 @@ from util.jsonmgr import *
 from models import *
 
 from user_functions import *
+
+import user as uf
+
 from util.decorators import *
 
 #from util.tree import traverse
@@ -29,6 +32,7 @@ from cubemgmt.cubetree import traverseTree
 from datalayer.query_constructor import searchConstructor
 
 from util.mplwidget import SimpleChart
+from util.uf_manager import *
 
 import exportWizard as eW
 
@@ -148,7 +152,7 @@ class DanaCubeWindow(QMainWindow):
         self.optionsMenu.addSeparator()
         self.optionsMenu.addAction("&Graficos",self.setGraph,"Ctrl+G")
         ##
-        
+        #TODO esta es la version vieja del menu funcional
         self.userFunctionsMenu = self.menuBar().addMenu("&Funciones de usuario")
         self.restorator = self.userFunctionsMenu.addAction("&Restaurar valores originales"
             ,self.tabulatura.currentWidget().tree.restoreData,"Ctrl+R")
@@ -157,8 +161,25 @@ class DanaCubeWindow(QMainWindow):
         
         for ind,item in enumerate(USER_FUNCTION_LIST):
              self.userFunctionsMenu.addAction(USER_FUNCTION_LIST[ind][0],
-                                              lambda  idx=ind: self.dispatch(idx))        
+                                              lambda  idx=ind: self.dispatchOld(idx))        
 
+        #TODO esta es la version nueva del menu funcional
+        self.userFunctionsMenu2 = self.menuBar().addMenu("&Funciones de usuario 2")
+        self.restorator = self.userFunctionsMenu2.addAction("&Restaurar valores originales"
+            ,self.tabulatura.currentWidget().tree.restoreData,"Ctrl+R")
+        self.restorator.setEnabled(False)
+        self.userFunctionsMenu2.addSeparator()
+        self.plugins = dict()
+        uf_discover(uf,self.plugins)
+
+        for k in sorted(self.plugins, key=lambda x:self.plugins[x].get('seqnr', float('inf'))):
+            entry = self.plugins[k]
+            if entry.get('hidden',False):
+                continue
+            self.userFunctionsMenu2.addAction(entry['text'],
+                                              lambda  idx=k: self.dispatch(idx))
+            if entry.get('sep',False):
+                self.userFunctionsMenu2.addSeparator()
         
         # esto al final para que las distintas opciones raras que van al menu de cubos vayan en su sitio
         self.cubeMenu.addSeparator()
@@ -378,12 +399,13 @@ class DanaCubeWindow(QMainWindow):
     def setGraph(self):
         self.tabulatura.currentWidget().setGraph()
        
-    def dispatch(self,FcnIdx):
-        self.tabulatura.currentWidget().dispatch(FcnIdx)
+    def dispatchOld(self,FcnIdx):
+        self.tabulatura.currentWidget().dispatchOld(FcnIdx)
     
-    
-    def editConnection(self,configData,nombre=None): 
+    def dispatch(self,FcnName):
+        self.tabulatura.currentWidget().dispatch(FcnName)
         
+    def editConnection(self,configData,nombre=None):         
         from util.record_functions import dict2row, row2dict
         from datalayer.conn_dialogs import ConnectionSheetDlg
         
@@ -473,10 +495,14 @@ class TabMgr(QWidget):
     def getTitleText(self):
         return self.tree.getTitleText()
     
-    def dispatch(self,FcnIdx):
-        self.tree.dispatch(FcnIdx)
+    def dispatchOld(self,FcnIdx):
+        self.tree.dispatchOld(FcnIdx)
         self.drawChart()
-        
+
+    def dispatch(self,FcnName):
+        self.tree.dispatch(FcnName)
+        self.drawChart()
+
     def drawChart(self,index=None):
         if self.chartType:
             self.processChartItem(index,tipo=self.chartType)
@@ -518,8 +544,7 @@ class TabMgr(QWidget):
         
 class DanaCube(QTreeView):    
     def __init__(self,parent,**kwargs):
-        super(DanaCube, self).__init__()
-        
+        super(DanaCube, self).__init__()        
         self.format = dict(thousandsseparator=".",
                                     decimalmarker=",",
                                     decimalplaces=2,
@@ -722,7 +747,7 @@ class DanaCube(QTreeView):
         app.setOverrideCursor(QCursor(Qt.WaitCursor))
 
         
-    def funDispatch(self,entry,ind):
+    def funDispatch(self,entry,ind=None):
         #FIXME clarificar codificacion. es enrevesada
         if entry[1] in ('colkey','colparm','rowparm'):
            if entry[1] in ('colkey','colparm'):
@@ -753,7 +778,7 @@ class DanaCube(QTreeView):
             item.setBackup()
             if entry[1] == 'row':
                 item.setPayload(entry[0](item.getPayload()))
-            elif entry[1] == 'item':
+            elif entry[1] in ('item','item,leaf'):
                 entry[0](item)
             elif entry[1] == 'map':
                  item.setPayload(list(map(entry[0],item.getPayload())))
@@ -764,15 +789,16 @@ class DanaCube(QTreeView):
                 entry[0](item,col_parm)
             if self.vista.stats :
                item.setStatistics()
+
                
     @keep_tree_layout()         
     @waiting_effects
     @model_change_control()
-    def dispatch(self,ind):
+    def dispatchOld(self,ind):
         #TODO reducir el numero de arrays temporales
         #self.baseModel.beginResetModel()
         for elem in USER_FUNCTION_LIST[ind][1]:
-            self.funDispatch(elem,ind)
+            self.funDispatchOld(elem,ind)
             if len(elem) > 2: 
                 if elem[2] == 'leaf':
                     self.vista.recalcGrandTotal()
@@ -781,6 +807,20 @@ class DanaCube(QTreeView):
         self.parent.restorator.setEnabled(True)
         #self.expandToDepth(2)
 
+    #@keep_tree_layout()         
+    #@waiting_effects
+    #@model_change_control()
+    def dispatch(self,fcnName):
+        #TODO reducir el numero de arrays temporales
+        #self.baseModel.beginResetModel()
+        for elem in self.parent.plugins[fcnName]['exec']:
+            self.funDispatch(elem)
+            if 'leaf' in elem[1]:
+                self.vista.recalcGrandTotal()
+        #self.baseModel.endResetModel()
+        self.isModified = True
+        self.parent.restorator.setEnabled(True)
+        #self.expandToDepth(2)
         
     def setFilter(self):
         #self.areFiltered = True
