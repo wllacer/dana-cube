@@ -798,7 +798,7 @@ class DanaCube(QTreeView):
         #TODO reducir el numero de arrays temporales
         #self.baseModel.beginResetModel()
         for elem in USER_FUNCTION_LIST[ind][1]:
-            self.funDispatchOld(elem,ind)
+            self.funDispatch(elem,ind)
             if len(elem) > 2: 
                 if elem[2] == 'leaf':
                     self.vista.recalcGrandTotal()

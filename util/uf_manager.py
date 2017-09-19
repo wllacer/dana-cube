@@ -12,24 +12,31 @@ from pprint import pprint
 def registro_funcion(context,**kwparms):
     """
     Parametros a evaluar
+    a) lista general
     name    Nombre (obligatorio)
     entry   entry_point (obligatorio)
-    type    tipo_parm (obligatorio)
+    type    tipo_parm (depende de aplicacion)
     aux_parm    parametros auxiliares 
     text    texto en menu
+    b) para presentacion (opcionales)
     seqnr   secuencia en menu
     sep     separador tras entrada
     hidden  si oculto
+    c) cualqiier cosa por aplicacion
     """
     if 'name' not in kwparms or 'entry' not in kwparms:
         print('Parametro obligatorio no suminstrado (name, entry o type')
         return
     item= dict()
-    item['exec'] = ((kwparms['entry'],kwparms.get('type','item'),kwparms.get('aux_parm'),),)
+    item['exec'] = ((kwparms['entry'],kwparms.get('type'),kwparms.get('aux_parm'),),)
     item['text'] = kwparms.get('text',kwparms['name'])  
-    item['seqnr'] = kwparms.get('seqnr',999) 
-    item['sep'] = kwparms.get('sep',False)
-    item['hidden'] = kwparms.get('hidden',False)
+    for entrada in kwparms:
+        if entrada in ('name','entry','text','type','aux_parm'):
+            continue
+        item[entrada] = kwparms[entrada]
+    #item['seqnr'] = kwparms.get('seqnr',999) 
+    #item['sep'] = kwparms.get('sep',False)
+    #item['hidden'] = kwparms.get('hidden',False)
     context[kwparms['name']] = item
     return None
 
@@ -42,6 +49,8 @@ def registro_secuencia(context,**kwparms):
     text    texto en menu
     seqnr   secuencia en menu
     sep     separador tras entrada
+    hidden  si oculto
+    c) cualqiier cosa por aplicacion
     """
     if 'name' not in kwparms or 'list' not in kwparms:
         print('Parametro obligatorio no suminstrado (name)')
@@ -64,9 +73,14 @@ def registro_secuencia(context,**kwparms):
                 lista[-1][2]=parms #deberia añadir y no modificar. TODO
     item['exec'] = lista
     item['text'] = kwparms.get('text',kwparms['name'])  
-    item['seqnr'] = kwparms.get('seqnr',9999) 
-    item['sep'] = kwparms.get('sep',False)
-    item['hidden'] = kwparms.get('hidden',False)
+    for entrada in kwparms:
+        if entrada in ('name','list','text'):
+            continue
+        item[entrada] = kwparms[entrada]
+    
+    #item['seqnr'] = kwparms.get('seqnr',9999) 
+    #item['sep'] = kwparms.get('sep',False)
+    #item['hidden'] = kwparms.get('hidden',False)
     context[kwparms['name']] = item
     return None
 
