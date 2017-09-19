@@ -19,8 +19,6 @@ from dialogs import *
 from util.jsonmgr import *
 from models import *
 
-from user_functions import *
-
 import user as uf
 
 from util.decorators import *
@@ -151,24 +149,13 @@ class DanaCubeWindow(QMainWindow):
                                    "Ctrl+F")
         self.optionsMenu.addSeparator()
         self.optionsMenu.addAction("&Graficos",self.setGraph,"Ctrl+G")
-        ##
-        #TODO esta es la version vieja del menu funcional
+
+        # esta es la version nueva del menu funcional
         self.userFunctionsMenu = self.menuBar().addMenu("&Funciones de usuario")
         self.restorator = self.userFunctionsMenu.addAction("&Restaurar valores originales"
             ,self.tabulatura.currentWidget().tree.restoreData,"Ctrl+R")
         self.restorator.setEnabled(False)
         self.userFunctionsMenu.addSeparator()
-        
-        for ind,item in enumerate(USER_FUNCTION_LIST):
-             self.userFunctionsMenu.addAction(USER_FUNCTION_LIST[ind][0],
-                                              lambda  idx=ind: self.dispatchOld(idx))        
-
-        #TODO esta es la version nueva del menu funcional
-        self.userFunctionsMenu2 = self.menuBar().addMenu("&Funciones de usuario 2")
-        self.restorator = self.userFunctionsMenu2.addAction("&Restaurar valores originales"
-            ,self.tabulatura.currentWidget().tree.restoreData,"Ctrl+R")
-        self.restorator.setEnabled(False)
-        self.userFunctionsMenu2.addSeparator()
         self.plugins = dict()
         uf_discover(uf,self.plugins)
 
@@ -176,10 +163,10 @@ class DanaCubeWindow(QMainWindow):
             entry = self.plugins[k]
             if entry.get('hidden',False):
                 continue
-            self.userFunctionsMenu2.addAction(entry['text'],
+            self.userFunctionsMenu.addAction(entry['text'],
                                               lambda  idx=k: self.dispatch(idx))
             if entry.get('sep',False):
-                self.userFunctionsMenu2.addSeparator()
+                self.userFunctionsMenu.addSeparator()
         
         # esto al final para que las distintas opciones raras que van al menu de cubos vayan en su sitio
         self.cubeMenu.addSeparator()
@@ -399,9 +386,6 @@ class DanaCubeWindow(QMainWindow):
     def setGraph(self):
         self.tabulatura.currentWidget().setGraph()
        
-    def dispatchOld(self,FcnIdx):
-        self.tabulatura.currentWidget().dispatchOld(FcnIdx)
-    
     def dispatch(self,FcnName):
         self.tabulatura.currentWidget().dispatch(FcnName)
         
@@ -495,10 +479,6 @@ class TabMgr(QWidget):
     def getTitleText(self):
         return self.tree.getTitleText()
     
-    def dispatchOld(self,FcnIdx):
-        self.tree.dispatchOld(FcnIdx)
-        self.drawChart()
-
     def dispatch(self,FcnName):
         self.tree.dispatch(FcnName)
         self.drawChart()
@@ -775,45 +755,46 @@ class DanaCube(QTreeView):
               self.requestFunctionParms(a_spec,a_data)            
               
         for item in self.baseModel.traverse(mode=1,output=1):
+            lparms = []
+            if entry[2]:
+                kwparms = entry[2]
+            else:
+                kwparms = dict()
+                
             item.setBackup()
             if entry[1] == 'row':
-                item.setPayload(entry[0](item.getPayload()))
+                lparms.append(item.getPayload())
+                item.setPayload(entry[0](*lparms,**kwparms))
             elif entry[1] in ('item','item,leaf'):
-                entry[0](item)
+                lparms.append(item)
+                entry[0](*lparms,**kwparms)
             elif entry[1] == 'map':
-                 item.setPayload(list(map(entry[0],item.getPayload())))
+                lparms.append(item.getPayload())
+                item.setPayload(list(map(entry[0],lparms)))
             elif entry[1] in ('colkey',):
-                entry[0](item,a_key)
+                lparms.append(item)
+                lparms.append(a_key)
+                entry[0](*lparms,**kwparms)
             elif entry[1] in ('colparm','rowparm','kwargs'):
                 col_parm=[(a_spec[k][0],a_data[k]) for k in range(len(a_spec))] #nombre y valor
-                entry[0](item,col_parm)
+                lparms.append(item)
+                lparms.append(col_parm)
+                entry[0](*lparms,**kwparms)
             if self.vista.stats :
                item.setStatistics()
 
                
+
     @keep_tree_layout()         
     @waiting_effects
     @model_change_control()
-    def dispatchOld(self,ind):
-        #TODO reducir el numero de arrays temporales
-        #self.baseModel.beginResetModel()
-        for elem in USER_FUNCTION_LIST[ind][1]:
-            self.funDispatch(elem,ind)
-            if len(elem) > 2: 
-                if elem[2] == 'leaf':
-                    self.vista.recalcGrandTotal()
-        #self.baseModel.endResetModel()
-        self.isModified = True
-        self.parent.restorator.setEnabled(True)
-        #self.expandToDepth(2)
-
-    #@keep_tree_layout()         
-    #@waiting_effects
-    #@model_change_control()
     def dispatch(self,fcnName):
         #TODO reducir el numero de arrays temporales
         #self.baseModel.beginResetModel()
         for elem in self.parent.plugins[fcnName]['exec']:
+            if elem[1] is None: #defino un defecto para esta aplicacion
+                elem[1] = 'item'
+            print(elem)
             self.funDispatch(elem)
             if 'leaf' in elem[1]:
                 self.vista.recalcGrandTotal()
