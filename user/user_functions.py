@@ -93,11 +93,12 @@ def escanos(provincia):
     else:
         return asignacion[provincia]
 
-#def porcentaje(row):
+#def porcentaje(item):
 def porcentaje(*parms,**kwparms):
-    row = parms[0]
+    item = parms[0]
+    row = item.getPayload()
     suma=sum(filter(None,row))
-    return list(map(lambda item: item*100/suma if item is not None else None,row))
+    item.setPayload(list(map(lambda entry: entry*100/suma if entry is not None else None,row)))
 
 #ef ordinal(item):
 def ordinal(*parms,**kwparms):
@@ -194,7 +195,6 @@ def factorizaAgregado(*parms,**kwparms):
 def consolida(*parms,**kwparms):
     item = parms[0]
     colkey = parms[1]
-
     desde=kwparms.get('desde')
     if desde is None:
         return 
@@ -230,7 +230,7 @@ def simula(*parms,**kwparms):
     asigna(item)
        
 def register(contexto):
-    ufm.registro_funcion(contexto,name='porcentaje',entry=porcentaje,type='row',seqnr=1,
+    ufm.registro_funcion(contexto,name='porcentaje',entry=porcentaje,type='item',seqnr=1,
                          text='Porcentaje calculados en la fila')
     ufm.registro_funcion(contexto,name='ordinal',entry=ordinal,type='item',seqnr=2,sep=True,
                          text='ordinales')
@@ -265,7 +265,6 @@ KWARGS_LIST = { simula:(None,)}
     
 if __name__ == '__main__':
     row=[15,26,74,66,None,24]
-    print(USER_FUNCTION_LIST[0][1][0][0](row))
 
     data = [33.03,
     22.66,

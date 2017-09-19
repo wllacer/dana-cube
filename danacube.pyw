@@ -728,73 +728,88 @@ class DanaCube(QTreeView):
 
         
     def funDispatch(self,entry,ind=None):
-        #FIXME clarificar codificacion. es enrevesada
-        if entry[1] in ('colkey','colparm','rowparm'):
-           if entry[1] in ('colkey','colparm'):
-               guia = self.baseModel.datos.col_hdr_idx
-           else:
-               guia = self.baseModel.datos.row_hdr_idx
-               
-           a_key = [None for k in range(guia.count())]
-           a_desc = [None for k in range(guia.count())]
-           a_data = [ None for k in range(guia.count())]
-           
-           idx = 0
-           for key in guia.traverse(mode=1):
-               a_key[idx] = key.split(':')[-1]
-               a_desc[idx] = guia[key].desc
-               idx += 1
-               
-           if entry[1] in ('colparm','rowparm'):
-              a_spec = [ [a_desc[k],None,None] for k in range(len(a_desc))]
-              self.requestFunctionParms(a_spec,a_data)
+        """
+        Tipos de funcion que reconocemos
+        item, item,leaf, row, map basicamente identicos, solo que item,leaf solo ejecuta en items finales
+            lparametro a pasar -> item
+        colkey  necesito las claves de las columnas
+            lparametro a pasar -> item,clave de columnas
+        colparm parametros por pantalla asociados a la columna
+            lparametro a pasar -> item,lsita con coluna y vaor asociado
+        rowparm parametros por pantalla asociados a la fila
+            lparametro a pasar -> item,lsita con fila y vaor asociado
+        kwparms parametros por pantalla libres
+            lparamtro a pasar -> item
+            kparametro a pasar -> parametros especificados
+        """
+        plugin = entry[0]
+        tipo_plugin = entry[1]
+
+        def indice2tablas(guia):
+            """
+            funcioncilla para obtener las tablas para parmetrizar y presentar de las cabeceras de fila o columna
+            """
+            m_key = [None for k in range(guia.count())]
+            m_desc = [None for k in range(guia.count())]            
+            idx = 0
+            for key in guia.traverse(mode=1):
+                m_key[idx] = key.split(':')[-1]
+                m_desc[idx] = guia[key].desc
+                idx += 1
+            return m_key,m_desc
+
+        # Obtengo los datos de cabeceras que necesito en arrays (clave y desc)
+        if tipo_plugin in ('colkey','colparm','rowparm'):
+            if 'col' in tipo_plugin:
+                guia = self.baseModel.datos.col_hdr_idx
+            else:
+                guia = self.baseModel.datos.row_hdr_idx
+                
+            a_key,a_desc = indice2tablas(guia)
+                
+        if tipo_plugin in ('colparm','rowparm'):
+            a_data = [ None for k in range(guia.count())]
+            a_spec = [ [a_desc[k],None,None] for k in range(len(a_desc))]
+            self.requestFunctionParms(a_spec,a_data)
               
-        elif entry[1] in 'kwargs':
-              a_spec = [ [argumento,None,None] for argumento in KWARGS_LIST[entry[0]]]
+        if tipo_plugin in 'kwargs':
+              a_spec = [ [argumento,None,None] for argumento in KWARGS_LIST[plugin]]
               a_data = [ None for k in range(len(a_desc))]
               self.requestFunctionParms(a_spec,a_data)            
-              
+        # ejecuto el plugin para cada fila. segun el tipo paso unos u otros parametros
         for item in self.baseModel.traverse(mode=1,output=1):
+            item.setBackup()
+            if 'leaf' in tipo_plugin and not item.isLeaf():
+                continue
             lparms = []
+            lparms.append(item)
             if entry[2]:
                 kwparms = entry[2]
             else:
                 kwparms = dict()
                 
-            item.setBackup()
-            if entry[1] == 'row':
-                lparms.append(item.getPayload())
-                item.setPayload(entry[0](*lparms,**kwparms))
-            elif entry[1] in ('item','item,leaf'):
-                lparms.append(item)
-                entry[0](*lparms,**kwparms)
-            elif entry[1] == 'map':
-                lparms.append(item.getPayload())
-                item.setPayload(list(map(entry[0],lparms)))
-            elif entry[1] in ('colkey',):
-                lparms.append(item)
+            if tipo_plugin in ('colkey',):
                 lparms.append(a_key)
-                entry[0](*lparms,**kwparms)
-            elif entry[1] in ('colparm','rowparm','kwargs'):
+            elif tipo_plugin in ('colparm','rowparm','kwargs'):
                 col_parm=[(a_spec[k][0],a_data[k]) for k in range(len(a_spec))] #nombre y valor
-                lparms.append(item)
                 lparms.append(col_parm)
-                entry[0](*lparms,**kwparms)
+            
+            plugin(*lparms,**kwparms)
+            
             if self.vista.stats :
                item.setStatistics()
 
                
 
-    @keep_tree_layout()         
-    @waiting_effects
-    @model_change_control()
+    #@keep_tree_layout()         
+    #@waiting_effects
+    #@model_change_control()
     def dispatch(self,fcnName):
         #TODO reducir el numero de arrays temporales
         #self.baseModel.beginResetModel()
         for elem in self.parent.plugins[fcnName]['exec']:
             if elem[1] is None: #defino un defecto para esta aplicacion
                 elem[1] = 'item'
-            print(elem)
             self.funDispatch(elem)
             if 'leaf' in elem[1]:
                 self.vista.recalcGrandTotal()
