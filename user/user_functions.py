@@ -1,25 +1,30 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
+So
     Tipos de funcion que reconocemos (api version 0)
         item, item,leaf, row, map basicamente identicos, solo que item,leaf solo ejecuta en items finales
             lparametro a pasar -> item
         colkey  necesito las claves de las columnas
             lparametro a pasar -> item,clave de columnas
         colparm parametros por pantalla asociados a la columna
-        lparametro a pasar -> item,lista con columna y valor asociado
+            lparametro a pasar -> item,lista con columna y valor asociado
         rowparm parametros por pantalla asociados a la fila
-        lparametro a pasar -> item,lista con fila y valor asociado
+            lparametro a pasar -> item,lista con fila y valor asociado
         kwparms parametros por pantalla libres
             lparamtro a pasar -> item
             kparametro a pasar -> parametros especificados
     
     Api version 1: (to do)
+    El mismo conjunto de tipos que la version 0, pero pueden aparecer varios en la misma definicion, separados por coma.
+    Los tipos item son compatibles entre la api 0 y la api 1
         lparm 0 -> item    TreeItem
         lparm 1 -> colkey  list
         lparm 2 -> rowparm
         lparm 3 -> colparm
+        lparm's 1 to 3 elements are a tuple of (code -internal key-,text,value) 
         kparm   -> parametros auxiliares segun necesidad
+        
     Metodos que pueden ser utilizadas para acceder a los datos del modelo (de TreeItem
     item.getPayload
     item.setPayload
@@ -215,19 +220,43 @@ def factorizaAgregado(*parms,**kwparms):
 
         item.spi(k,item.gpi(k)*factor)
 
+def nfactoriza(*parms,**kwparms):
+    item = parms[0]
+    colparm = parms[3]
+    funAgr = kwparms['funAgr']
+    for k,entrada in enumerate(colparm):
+        codigo = entrada[0]
+        desc = entrada[1]
+        valor = entrada[2]
+        oldratio = funAgr(desc)
+        if valor is None or valor in ('','0'):
+            continue
+
+        newratio = float(valor)
+        if newratio is None  or oldratio == 0:  #FIXME para evitar division por 0 pereo no tiene mucho sentido
+            continue
+        factor = newratio/oldratio
+        
+        if item.gpi(k) is None:
+            continue
+
+        item.spi(k,item.gpi(k)*factor)
 
 def consolida(*parms,**kwparms):
     item = parms[0]
-    colkey = parms[1]
+    column = parms[1]
+    colkey = [ norm2List(data)[0] for data in column] #compatibilidad de apis por la via rapida
+    
     desde=kwparms.get('desde')
     if desde is None:
         return 
     hacia=kwparms.get('hacia')
     if hacia is None:
         return
+    
     for idx in norm2List(desde):
         try:
-            difunta = colkey.index(idx) +1
+            difunta = colkey.index(idx) +1 
         except ValueError:
             continue
         for candidatura in norm2List(hacia):
@@ -245,47 +274,12 @@ def consolida(*parms,**kwparms):
 
     pass
 
-def nconsolida(*parms,**kwparms):
-    item = parms[0]
-    colkey = parms[1]
-    rowparm = parms[2]
-    colparm = parms[3]
-    
-    desde=kwparms.get('desde')
-    if desde is None:
-        return 
-    hacia=kwparms.get('hacia')
-    if hacia is None:
-        return
-    
-    for idx in norm2List(desde):
-        try:
-            difunta = colkey.index(idx) +1
-        except ValueError:
-            continue
-        for candidatura in norm2List(hacia):
-            try:
-                cakey = colkey.index(candidatura) +1
-            except ValueError:
-                continue
-            if item.itemData[cakey] is not None:  #se presentaban en la provincia
-                if item.itemData[difunta] is None:
-                    pass #deberia ser break pero bueno
-                else:
-                    item.itemData[cakey] += item.itemData[difunta]
-                    item.itemData[difunta]=None
-                break
-
-    pass
-#def simula(item,colparm):
-def simula(*parms,**kwparms):
-    item = parms[0]
-    colparm = parms[1]
-    
-    factoriza(item,colparm)
-    asigna(item)
        
 def register(contexto):
+    # auxiliares
+    ufm.registro_funcion(contexto,name='factoriza',entry=nfactoriza,aux_parm={'funAgr':resultados},type='colparm',hidden=True,api=1)
+    ufm.registro_funcion(contexto,name='factorizaAgregado',entry=nfactoriza,aux_parm={'funAgr':resultadosAgr},type='colparm',hidden=True,api=1)
+    # funciones
     ufm.registro_funcion(contexto,name='porcentaje',entry=porcentaje,type='item',seqnr=1,
                          text='Porcentaje calculados en la fila')
     ufm.registro_funcion(contexto,name='ordinal',entry=ordinal,type='item',seqnr=2,sep=True,
@@ -293,13 +287,6 @@ def register(contexto):
     ufm.registro_funcion(contexto,name='asigna',entry=asigna,type='item,leaf',seqnr=10,
                          text='Asignacion de escaños')
     ufm.registro_funcion(contexto,name='Senado',entry=senado,type='item,leaf',seqnr=11,sep=True)
-    ufm.registro_funcion(contexto,name='borraCol (api 1)',entry=nconsolida,api=1,
-                         aux_parm={'desde':'4850','hacia':('3736','5008','5041','5033')},type='colkey,kwparm',seqnr=20,
-                         text='Mueve columnas especificas')
-
-    ufm.registro_funcion(contexto,name='borraIU (api 1)',entry=nconsolida,api=1,
-                         aux_parm={'desde':'4850','hacia':('3736','5008','5041','5033')},type='colkey',seqnr=20,
-                         text='Integra UI en Podemos api 1')
 
     ufm.registro_funcion(contexto,name='borraIU',entry=consolida,
                          aux_parm={'desde':'4850','hacia':('3736','5008','5041','5033')},type='colkey',seqnr=20,
@@ -312,20 +299,22 @@ def register(contexto):
                          text='Agrupa en uno las candidaturas de Podemos')
     ufm.registro_secuencia(contexto,name='Podemos',list=('borraIU','borraMes','unPodemos'),seqnr=23,sep=True,
                            text='Todo lo anterior')
-    ufm.registro_funcion(contexto,name='factoriza',entry=factoriza,type='colparm',hidden=True)
-    ufm.registro_funcion(contexto,name='factorizaAgregado',entry=factorizaAgregado,type='colparm',hidden=True)
     ufm.registro_secuencia(contexto,name='simul_voto',list=('Podemos','factorizaAgregado'),
-                            seqnr=30,text='Simulacion de voto. Podemos Agregado')
-    #list=('borraIU','borraMes','unPodemos','factorizaAgregado'),
+                            seqnr=31,text='Simulacion de voto. Podemos Agregado')
     ufm.registro_secuencia(contexto,name='simul_agregado',
                            list=('Podemos','factorizaAgregado','asigna'),
-                           seqnr=31,text='SImulacion de escaños. Podemos Agregado')
-    ufm.registro_secuencia(contexto,name='simul',list=('Podemos','asigna'),
-                           seqnr=32,text='SImulacion de escaños. separado')
+                           seqnr=32,text='SImulacion de escaños. Podemos Agregado')
+    ufm.registro_secuencia(contexto,name='simul',list=('Podemos','factoriza','asigna'),sep=True,
+                           seqnr=33,text='SImulacion de escaños. separado')
     
-                     
+    #ufm.registro_secuencia(contexto,name='simul_v1_simple',
+                           #list=('Podemos','factoriza','asigna'),
+                           #seqnr=40,text='SImulacion de escaños. Simple. Version 1')                 
+    #ufm.registro_secuencia(contexto,name='simul_v1_agregado',
+                           #list=('Podemos','factorizaAgregado','asigna'),
+                           #seqnr=41,text='SImulacion de escaños. Agregado Podemos. Version 1')                 
 
-KWARGS_LIST = { simula:(None,)}
+KWARGS_LIST = { }
     
 if __name__ == '__main__':
     row=[15,26,74,66,None,24]

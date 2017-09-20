@@ -61,7 +61,8 @@ def waiting_effects(function):
     return cursor_busy
 
 def model_change_control(clas_pos=0):
-    """
+    """ 
+    FIXME . si hay una interaccion por pantalla por medio (un dialogo) la vista va a blanco. Es un error detectado varias veces.
         decorator para incluir el par beginResetModel/endResetModel para todos los derivados de QAbstractItemModel
         Espera que el primer argumento tenga una funcion model() para acceder a el (normalmente una instasncia de QAbstractViewModel o incluso un elemento de modelo)
         La posición del argumento que contiene referencias al modelo es nuestra variable

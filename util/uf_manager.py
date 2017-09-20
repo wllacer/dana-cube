@@ -29,7 +29,7 @@ def registro_funcion(context,**kwparms):
         print('Parametro obligatorio no suminstrado (name, entry o type')
         return
     item= dict()
-    item['exec'] = ((kwparms['entry'],kwparms.get('type'),kwparms.get('aux_parm'),),)
+    item['exec'] = ((kwparms['entry'],kwparms.get('type'),kwparms.get('aux_parm'),kwparms['name'],),)
     item['text'] = kwparms.get('text',kwparms['name'])  
     for entrada in kwparms:
         if entrada in ('name','entry','text','type','aux_parm'):

@@ -726,7 +726,7 @@ class DanaCube(QTreeView):
             #print([a_spec[k][1] for k in range(len(a_spec))])
         app.setOverrideCursor(QCursor(Qt.WaitCursor))
 
-    def funDispatchV1(self,entry):
+    def funDispatch(self,entry):
         from util.record_functions import norm2String
         plugin = entry[0]
         tipo_plugin = entry[1]
@@ -740,140 +740,68 @@ class DanaCube(QTreeView):
             """
             funcioncilla para obtener las tablas para parmetrizar y presentar de las cabeceras de fila o columna
             """
-            m_key = [None for k in range(guia.count())]
-            m_desc = [None for k in range(guia.count())]            
-            idx = 0
+            m_tabla = []
             for key in guia.traverse(mode=1):
-                m_key[idx] = key.split(':')[-1]
-                m_desc[idx] = guia[key].desc
-                idx += 1
-            return m_key,m_desc
+                m_tabla.append((key.split(':')[-1],guia[key].desc))
+            return m_tabla
         
+        def presenta(a_table,a_data = None):
+            """
+            funcioncilla para presentar los datos
+            """
+            if not a_data:
+                a_data = [ None for k in range(len(a_table))]
+            a_gui_def = [ [a_table[k][1],None,None] for k in range(len(a_table))]
+            self.requestFunctionParms(a_gui_def,a_data)
+            return a_data
+
         if 'colkey' in tipo_plugin:
-            lparm[1],a_desc = indice2tablas(self.baseModel.datos.col_hdr_idx)
+            lparm[1] = indice2tablas(self.baseModel.datos.col_hdr_idx)
 
         if 'colparm' in tipo_plugin:
             if lparm[1]:
-                a_key = lparm[1]
+                a_table = lparm[1]
             else:
-                a_key,a_desc = indice2tablas(self.baseModel.datos.col_hdr_idx)
-            a_data = [ None for k in range(len(a_desc))]
-            a_gui_def = [ [a_desc[k],None,None] for k in range(len(a_desc))]
-            self.requestFunctionParms(a_gui_def,a_data)
-            lparm[3] = [(a_key[k],a_data[k]) for k in range(len(a_gui_def))]
+                a_table = indice2tablas(self.baseModel.datos.col_hdr_idx)
+            lparm[3] = [(a_table[k][0],a_table[k][1],data) for k,data in enumerate(presenta(a_table))]
             
         if 'rowparm' in tipo_plugin:
-            a_key,a_desc = indice2tablas(self.baseModel.datos.row_hdr_idx)
-            a_data = [ None for k in range(len(a_desc))]
-            a_gui_def = [ [a_desc[k],None,None] for k in range(len(a_desc))]
-            self.requestFunctionParms(a_gui_def,a_data)
-            lparm[2] = [(a_key[k],a_data[k]) for k in range(len(a_gui_def))]
+            a_table = indice2tablas(self.baseModel.datos.row_hdr_idx)
+            lparm[2] = [(a_table[k][0],a_table[k][1],data) for k,data in enumerate(presenta(a_table))]
         
         if 'kwparm' in tipo_plugin:
-            a_key = [key for key in kparm]
-            a_desc = a_key
-            a_data = [norm2String(kparm[key]) for key in a_key]
-            a_gui_def = [ [a_desc[k],None,None] for k in range(len(a_desc))]
-            self.requestFunctionParms(a_gui_def,a_data)
-            for i,key in enumerate(a_key):
-                kparm[key] = a_data[i]
+            a_table = [ [key,key] for key in kparm]
+            m_datos = presenta(a_table,[norm2String(kparm[key][0]) for key in a_table])
+            for i,key in enumerate(a_table):
+                kparm[key[0]] = m_datos[i]
+        
+        self.efectiveDispatch(plugin,tipo_plugin,lparm,kparm)
 
-        for item in self.baseModel.traverse(mode=1,output=1):
-            item.setBackup()
-            if 'leaf' in tipo_plugin and not item.isLeaf():
-                continue
-            lparm[0] = item 
-            plugin(*lparm,**kparm)
-            if self.vista.stats :
-                item.setStatistics()
-            
-    def funDispatch(self,entry,ind=None):
+    @keep_tree_layout() 
+    @model_change_control()    
+    def efectiveDispatch(self,plugin,tipo_plugin,lparm,kparm):
         """
-        Tipos de funcion que reconocemos (api version 0)
-        item, item,leaf, row, map basicamente identicos, solo que item,leaf solo ejecuta en items finales
-            lparametro a pasar -> item
-        colkey  necesito las claves de las columnas
-            lparametro a pasar -> item,clave de columnas
-        colparm parametros por pantalla asociados a la columna
-        lparametro a pasar -> item,lista con columna y valor asociado
-        rowparm parametros por pantalla asociados a la fila
-        lparametro a pasar -> item,lista con fila y valor asociado
-        kwparms parametros por pantalla libres
-            lparamtro a pasar -> item
-            kparametro a pasar -> parametros especificados
+        separado para evitar efectos secundarios de model_change_control
         """
-        plugin = entry[0]
-        tipo_plugin = entry[1]
-
-        def indice2tablas(guia):
-            """
-            funcioncilla para obtener las tablas para parmetrizar y presentar de las cabeceras de fila o columna
-            """
-            m_key = [None for k in range(guia.count())]
-            m_desc = [None for k in range(guia.count())]            
-            idx = 0
-            for key in guia.traverse(mode=1):
-                m_key[idx] = key.split(':')[-1]
-                m_desc[idx] = guia[key].desc
-                idx += 1
-            return m_key,m_desc
-
-        # Obtengo los datos de cabeceras que necesito en arrays (clave y desc)
-        if tipo_plugin in ('colkey','colparm','rowparm'):
-            if 'col' in tipo_plugin:
-                guia = self.baseModel.datos.col_hdr_idx
-            else:
-                guia = self.baseModel.datos.row_hdr_idx
-                
-            a_key,a_desc = indice2tablas(guia)
-                
-        if tipo_plugin in ('colparm','rowparm'):
-            a_data = [ None for k in range(guia.count())]
-            a_spec = [ [a_desc[k],None,None] for k in range(len(a_desc))]
-            self.requestFunctionParms(a_spec,a_data)
-              
-        if tipo_plugin in 'kwparm':
-              a_spec = [ [argumento,None,None] for argumento in KWARGS_LIST[plugin]]
-              a_data = [ None for k in range(len(a_desc))]
-              self.requestFunctionParms(a_spec,a_data)            
-        # ejecuto el plugin para cada fila. segun el tipo paso unos u otros parametros
         for item in self.baseModel.traverse(mode=1,output=1):
-            item.setBackup()
-            if 'leaf' in tipo_plugin and not item.isLeaf():
-                continue
-            lparms = []
-            lparms.append(item)
-            if entry[2]:
-                kwparms = entry[2]
-            else:
-                kwparms = dict()
-                
-            if tipo_plugin in ('colkey',):
-                lparms.append(a_key)
-            elif tipo_plugin in ('colparm','rowparm','kwargs'):
-                col_parm=[(a_spec[k][0],a_data[k]) for k in range(len(a_spec))] #nombre y valor
-                lparms.append(col_parm)
+                item.setBackup()
+                if 'leaf' in tipo_plugin and not item.isLeaf():
+                    continue
+                lparm[0] = item 
+                plugin(*lparm,**kparm)
+                if self.vista.stats :
+                    item.setStatistics()
             
-            plugin(*lparms,**kwparms)
+
             
-            if self.vista.stats :
-               item.setStatistics()
-
-               
-
-    #@keep_tree_layout()         
-    #@waiting_effects
-    #@model_change_control()
+    @waiting_effects    
     def dispatch(self,fcnName):
         #TODO reducir el numero de arrays temporales
         #self.baseModel.beginResetModel()
         for elem in self.parent.plugins[fcnName]['exec']:
             if elem[1] is None: #defino un defecto para esta aplicacion
                 elem[1] = 'item'
-            if self.parent.plugins[fcnName].get('api',0) == 0:
-                self.funDispatch(elem)
-            else:
-                self.funDispatchV1(elem)
+            self.funDispatch(elem)
             if 'leaf' in elem[1]:
                 self.vista.recalcGrandTotal()
         #self.baseModel.endResetModel()
