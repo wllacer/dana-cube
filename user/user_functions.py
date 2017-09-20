@@ -1,8 +1,32 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-   code is based on the simpletreemodel sample of the Qt/PyQt documentation,
-           which is BSD licensed by Nokia and successors, and Riverbank
+    Tipos de funcion que reconocemos (api version 0)
+        item, item,leaf, row, map basicamente identicos, solo que item,leaf solo ejecuta en items finales
+            lparametro a pasar -> item
+        colkey  necesito las claves de las columnas
+            lparametro a pasar -> item,clave de columnas
+        colparm parametros por pantalla asociados a la columna
+        lparametro a pasar -> item,lista con columna y valor asociado
+        rowparm parametros por pantalla asociados a la fila
+        lparametro a pasar -> item,lista con fila y valor asociado
+        kwparms parametros por pantalla libres
+            lparamtro a pasar -> item
+            kparametro a pasar -> parametros especificados
+    
+    Api version 1: (to do)
+        lparm 0 -> item    TreeItem
+        lparm 1 -> colkey  list
+        lparm 2 -> rowparm
+        lparm 3 -> colparm
+        kparm   -> parametros auxiliares segun necesidad
+    Metodos que pueden ser utilizadas para acceder a los datos del modelo (de TreeItem
+    item.getPayload
+    item.setPayload
+    item.lenPayload
+    item.getPayloadItem o item.gpi
+    item.setPayloaDITEM o item.spi
+    
 '''
 from __future__ import division
 from __future__ import absolute_import
@@ -221,6 +245,38 @@ def consolida(*parms,**kwparms):
 
     pass
 
+def nconsolida(*parms,**kwparms):
+    item = parms[0]
+    colkey = parms[1]
+    rowparm = parms[2]
+    colparm = parms[3]
+    
+    desde=kwparms.get('desde')
+    if desde is None:
+        return 
+    hacia=kwparms.get('hacia')
+    if hacia is None:
+        return
+    
+    for idx in norm2List(desde):
+        try:
+            difunta = colkey.index(idx) +1
+        except ValueError:
+            continue
+        for candidatura in norm2List(hacia):
+            try:
+                cakey = colkey.index(candidatura) +1
+            except ValueError:
+                continue
+            if item.itemData[cakey] is not None:  #se presentaban en la provincia
+                if item.itemData[difunta] is None:
+                    pass #deberia ser break pero bueno
+                else:
+                    item.itemData[cakey] += item.itemData[difunta]
+                    item.itemData[difunta]=None
+                break
+
+    pass
 #def simula(item,colparm):
 def simula(*parms,**kwparms):
     item = parms[0]
@@ -237,6 +293,14 @@ def register(contexto):
     ufm.registro_funcion(contexto,name='asigna',entry=asigna,type='item,leaf',seqnr=10,
                          text='Asignacion de escaños')
     ufm.registro_funcion(contexto,name='Senado',entry=senado,type='item,leaf',seqnr=11,sep=True)
+    ufm.registro_funcion(contexto,name='borraCol (api 1)',entry=nconsolida,api=1,
+                         aux_parm={'desde':'4850','hacia':('3736','5008','5041','5033')},type='colkey,kwparm',seqnr=20,
+                         text='Mueve columnas especificas')
+
+    ufm.registro_funcion(contexto,name='borraIU (api 1)',entry=nconsolida,api=1,
+                         aux_parm={'desde':'4850','hacia':('3736','5008','5041','5033')},type='colkey',seqnr=20,
+                         text='Integra UI en Podemos api 1')
+
     ufm.registro_funcion(contexto,name='borraIU',entry=consolida,
                          aux_parm={'desde':'4850','hacia':('3736','5008','5041','5033')},type='colkey',seqnr=20,
                          text='Integra UI en Podemos')

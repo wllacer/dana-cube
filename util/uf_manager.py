@@ -23,6 +23,7 @@ def registro_funcion(context,**kwparms):
     sep     separador tras entrada
     hidden  si oculto
     c) cualqiier cosa por aplicacion
+    api determina que interfaz utiliza en danacube
     """
     if 'name' not in kwparms or 'entry' not in kwparms:
         print('Parametro obligatorio no suminstrado (name, entry o type')
