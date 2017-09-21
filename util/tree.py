@@ -96,6 +96,9 @@ class TreeItem(object):
         else:
             return self.itemData[0]
     
+    def getKey(self):
+        return self.key
+    
     def hasChildren(self):
         if len(self.childItems) >0:
             return True

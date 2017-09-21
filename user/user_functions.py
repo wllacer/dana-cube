@@ -1,37 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-So
-    Tipos de funcion que reconocemos (api version 0)
-        item, item,leaf, row, map basicamente identicos, solo que item,leaf solo ejecuta en items finales
-            lparametro a pasar -> item
-        colkey  necesito las claves de las columnas
-            lparametro a pasar -> item,clave de columnas
-        colparm parametros por pantalla asociados a la columna
-            lparametro a pasar -> item,lista con columna y valor asociado
-        rowparm parametros por pantalla asociados a la fila
-            lparametro a pasar -> item,lista con fila y valor asociado
-        kwparms parametros por pantalla libres
-            lparamtro a pasar -> item
-            kparametro a pasar -> parametros especificados
-    
-    Api version 1: (to do)
-    El mismo conjunto de tipos que la version 0, pero pueden aparecer varios en la misma definicion, separados por coma.
-    Los tipos item son compatibles entre la api 0 y la api 1
-        lparm 0 -> item    TreeItem
-        lparm 1 -> colkey  list
-        lparm 2 -> rowparm
-        lparm 3 -> colparm
-        lparm's 1 to 3 elements are a tuple of (code -internal key-,text,value) 
-        kparm   -> parametros auxiliares segun necesidad
-        
-    Metodos que pueden ser utilizadas para acceder a los datos del modelo (de TreeItem
-    item.getPayload
-    item.setPayload
-    item.lenPayload
-    item.getPayloadItem o item.gpi
-    item.setPayloaDITEM o item.spi
-    
+Ver documentacion general de la api en ../docs/user_functions.md
 '''
 from __future__ import division
 from __future__ import absolute_import
@@ -42,6 +12,9 @@ from pprint import pprint
 from  util import uf_manager as ufm 
 from util.record_functions import norm2List
 
+"""
+Funciones auxiliares
+"""
 def dhont(escanos,data):
     
   res = [0 for i in range(len(data))]
@@ -59,7 +32,8 @@ def dhont(escanos,data):
          
   return res
 
-def resultados(partido):
+def resultados(*entrada):
+    partido = entrada[1]
     datos ={
         "C's":14.0382822541147,
         "CCa-PNC":0.327843488841832,
@@ -84,7 +58,8 @@ def resultados(partido):
         return None
 
 
-def resultadosAgr(partido):
+def resultadosAgr(*entrada):
+    partido = entrada[1]
     datos ={
         "C's":14.0382822541147,
         "CCa-PNC":0.327843488841832,
@@ -122,15 +97,29 @@ def escanos(provincia):
     else:
         return asignacion[provincia]
 
-#def porcentaje(item):
+"""
+Funciones de usuario genéricas
+
+"""
+
 def porcentaje(*parms,**kwparms):
+    """
+    Convierte a porcentajes sobre el total de esta fila.
+    
+    tipo = item
+    """
     item = parms[0]
     row = item.getPayload()
     suma=sum(filter(None,row))
     item.setPayload(list(map(lambda entry: entry*100/suma if entry is not None else None,row)))
 
-#ef ordinal(item):
+
 def ordinal(*parms,**kwparms):
+    """
+    Convierte a numero de orden dentro de la fila. (el primero es el mayor). 
+    
+    tipo = item
+    """
     item = parms[0]
     """
         para ser compatible con python3 he tenido que sustituir los nulos por -Inf
@@ -149,6 +138,115 @@ def ordinal(*parms,**kwparms):
             round += 1
     item.setPayload(ordtmp)
 
+
+
+def nfactoriza(*parms,**kwparms):
+    """
+    Parametro por keyword = funAgr  una referencia a una funcion python que devuelve un valor para una columna concreta
+    Se trata de un simulador.
+    El usuario envia la variación que se desea para cada una de las columnas.
+    Si no se especifica el paramtro funAgr, se modifica directamente el valor de la columna.
+    Si funAgr se especifica, el valor se modifica por la razon entre el solicitado por el usuario y el devuelto por la funcion.
+    Si se desea que el valor resultante sea 0, debe ponerse 0.0 en la entrada de la columna, no 0
+    En esta versión la variación se define implicitamente en porcentajes
+
+    tipo = item,colparm
+    Utilizar aux_parm para referenciar la función .
+    
+    TODO. El comportamiento cuando no existe valor previo no es realista
+    """
+    item = parms[0]
+    colparm = parms[3]
+    funAgr = kwparms.get('funAgr')
+    for k,entrada in enumerate(colparm):
+        codigo = entrada[0]
+        desc = entrada[1]
+        valor = entrada[2]            
+        if valor is None or valor in ('','0'):
+            continue
+        newratio = float(valor)
+        if newratio is None:
+            continue
+        if item.gpi(k) is None:
+            continue
+        
+        if funAgr:
+            oldratio = funAgr(*entrada)
+            if oldratio == 0:  #FIXME para evitar division por 0 pereo no tiene mucho sentido
+                continue
+            factor = newratio/oldratio
+            item.spi(k,item.gpi(k)*factor)
+        else:
+            item.spi(k,item.gpi(k)*newratio / 100.0)
+            
+def consolida(*parms,**kwparms):
+    """
+    Agrega el contenido de una o varias columnas (parametro desde) en otra (parametro hacia) y borra la columna origen.
+    Si el destino es una lista de columnas, se agrega a la primera que encuente con valor. Si no encuentra no se ejecuta.
+    TODO: caso que no exista ninguna columna destino
+    En esta versión las columnas se identifican por la clave, por lo que necesitamos esta información de las columnas
+    
+    tipo = item,colkey
+    debe usar aux_parm para especificar los parametros desde, hacia
+    opcionalmente puede ejecutarse como kwparm para especificar desde,hacia interactivamente
+    """
+    item = parms[0]
+    column = parms[1]
+    colkey = [ norm2List(data)[0] for data in column] #compatibilidad de apis por la via rapida
+    
+    desde=kwparms.get('desde')
+    if desde is None:
+        return 
+    hacia=kwparms.get('hacia')
+    if hacia is None:
+        return
+
+    #for idx in norm2List(desde):
+        #try:
+            #difunta = colkey.index(idx) +1 
+        #except ValueError:
+            #continue
+        #for candidatura in norm2List(hacia):
+            #try:
+                #cakey = colkey.index(candidatura) +1
+            #except ValueError:
+                #continue
+            #if item.itemData[cakey] is not None:  #se presentaban en la provincia
+                #if item.itemData[difunta] is None:
+                    #pass #deberia ser break pero bueno
+                #else:
+                    #item.itemData[cakey] += item.itemData[difunta]
+                    #item.itemData[difunta]=None
+                    #print(item.itemData[cakey],item.gpi(cakey),item.gpi(cakey -1))
+                    #exit()
+                #break
+
+    for idx in norm2List(desde):
+        try:
+            difunta = colkey.index(idx)
+        except ValueError:
+            continue
+        if not item.gpi(difunta):
+            continue
+        for candidatura in norm2List(hacia):
+            try:
+                cakey = colkey.index(candidatura)
+            except ValueError:
+                continue
+            suma = item.gpi(difunta)
+            if item.gpi(cakey) is not None:  #se presentaban en la provincia
+                suma += item.gpi(cakey)    
+                #if item.gpi(difunta) is None:
+                    #pass #deberia ser break pero bueno
+                #else:
+                item.spi(cakey,suma)
+                item.spi(difunta,None)
+                break
+    pass
+
+"""
+Funciones particulares de la BD. electoral
+"""
 #def senado(item):
 def senado(*parms,**kwparms):
     item = parms[0]
@@ -181,100 +279,9 @@ def asigna(*parms,**kwparms):
         item.setPayload(dhont(puestos,item.getPayload()))
 
 
-#def factoriza(item,colparm):
-def factoriza(*parms,**kwparms):
-    item = parms[0]
-    colparm = parms[1]
-    for k,entrada in enumerate(colparm):
-        oldratio = resultados(entrada[0])
-        if entrada[1] is None or entrada[1] in ('','0'):
-            continue
-        elif entrada[1] == '0.0':
-            item.spi(k,0.0)
-            continue
-        newratio = float(entrada[1])
-        if newratio is None  or oldratio == 0:  #FIXME para evitar division por 0 pereo no tiene mucho sentido
-            continue
-        factor = newratio/oldratio
-        
-        if item.gpi(k) is None:
-            continue
-        item.spi(k,item.gpi(k)*factor)
-
-#def factorizaAgregado(item,colparm):
-def factorizaAgregado(*parms,**kwparms):
-    item = parms[0]
-    colparm = parms[1]
-    for k,entrada in enumerate(colparm):
-        oldratio = resultadosAgr(entrada[0])
-        if entrada[1] is None or entrada[1] in ('','0'):
-            continue
-
-        newratio = float(entrada[1])
-        if newratio is None  or oldratio == 0:  #FIXME para evitar division por 0 pereo no tiene mucho sentido
-            continue
-        factor = newratio/oldratio
-        
-        if item.gpi(k) is None:
-            continue
-
-        item.spi(k,item.gpi(k)*factor)
-
-def nfactoriza(*parms,**kwparms):
-    item = parms[0]
-    colparm = parms[3]
-    funAgr = kwparms['funAgr']
-    for k,entrada in enumerate(colparm):
-        codigo = entrada[0]
-        desc = entrada[1]
-        valor = entrada[2]
-        oldratio = funAgr(desc)
-        if valor is None or valor in ('','0'):
-            continue
-
-        newratio = float(valor)
-        if newratio is None  or oldratio == 0:  #FIXME para evitar division por 0 pereo no tiene mucho sentido
-            continue
-        factor = newratio/oldratio
-        
-        if item.gpi(k) is None:
-            continue
-
-        item.spi(k,item.gpi(k)*factor)
-
-def consolida(*parms,**kwparms):
-    item = parms[0]
-    column = parms[1]
-    colkey = [ norm2List(data)[0] for data in column] #compatibilidad de apis por la via rapida
-    
-    desde=kwparms.get('desde')
-    if desde is None:
-        return 
-    hacia=kwparms.get('hacia')
-    if hacia is None:
-        return
-    
-    for idx in norm2List(desde):
-        try:
-            difunta = colkey.index(idx) +1 
-        except ValueError:
-            continue
-        for candidatura in norm2List(hacia):
-            try:
-                cakey = colkey.index(candidatura) +1
-            except ValueError:
-                continue
-            if item.itemData[cakey] is not None:  #se presentaban en la provincia
-                if item.itemData[difunta] is None:
-                    pass #deberia ser break pero bueno
-                else:
-                    item.itemData[cakey] += item.itemData[difunta]
-                    item.itemData[difunta]=None
-                break
-
-    pass
-
-       
+"""
+Registro de funciones y secuencias
+"""
 def register(contexto):
     # auxiliares
     ufm.registro_funcion(contexto,name='factoriza',entry=nfactoriza,aux_parm={'funAgr':resultados},type='colparm',hidden=True,api=1)
