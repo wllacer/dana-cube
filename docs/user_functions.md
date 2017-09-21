@@ -168,7 +168,7 @@ En La aplicación ejemplo hemos definido una serie de funciones, unas de uso gen
 
 * __consolida__ mueve una(s) columna sobre otra(s)
 
-* __nfactoriza__ realiza simulaciones de cambios (porcentuales) de valor de las columnas
+* __factoriza__ realiza simulaciones de cambios  de valor de las columnas. Puede invocar una  funcion de calculo
 
 Y otras especificas de la aplicacion (__asigna__ y __senado__ ) que no vamos a detallar aquí
 
@@ -177,12 +177,12 @@ Veamos como podemos registrarlas como funcion de usuario
 ```
 def register(contexto):
     # funciones ocultas. no aparecen en menu
-    ufm.registro_funcion(contexto,name='factoriza',entry=nfactoriza,aux_parm={'funAgr':resultados},type='colparm',hidden=True,api=1)
-    ufm.registro_funcion(contexto,name='factorizaAgregado',entry=nfactoriza,aux_parm={'funAgr':resultadosAgr},type='colparm',hidden=True,api=1)
+    ufm.registro_funcion(contexto,name='factoriza',entry=factoriza,aux_parm={'funAgr':resultados},type='colparm',hidden=True,api=1)
+    ufm.registro_funcion(contexto,name='factorizaAgregado',entry=factoriza,aux_parm={'funAgr':resultadosAgr},type='colparm',hidden=True,api=1)
 ```
 La simulación depende de los valores que el usuario defina para cada columna. Con _type=colparm_ el sistema automaticamente generará un dialogo para introducir los datos.Tenemos dos posibles casos, por ello las dos entradas distintas con el mismo _entry_
 
-En este caso la simulación cada caso necesita una función especial para dar un parametro inicial fijo para cada columna. esto lo hacemos pasando la funcion como parametro _aux\_parm={'funAgr':...}_ distinto en cada caso
+En este caso la simulación puede hacerse de dos maneras distintas (la funcion que pasamos como parametro _aux\_parm={'funAgr':...}_ ) y por ello definimos dos entradas distintas 
 
 La simulación no nos interesa por si misma sino con un fin (_ver abajo_), asi que no va a tener entradas en el menú (_hidden=True_). Al ser ocultas no nos molestamos en definir un texto
 
@@ -234,7 +234,7 @@ Notese que las tres funciones tienen el mismo _seqnr_ En que orden apareceran en
     ufm.registro_secuencia(contexto,name='simul_agregado',
                            list=('combinaCompleja','factorizaAgregado','asigna'),
                            seqnr=32,text='SImulacion de escaños. combinaCompleja Agregado')
-    ufm.registro_secuencia(contexto,name='simul',list=('combinaCompleja','factoriza','asigna'),sep=True,
+    ufm.registro_secuencia(contexto,name='simul',list=('factoriza','asigna'),sep=True,
                            seqnr=33,text='SImulacion de escaños. separado')
 ```    
 Otros ejemplos de secuencia. Vease que en la lista se puede incluir otra secuencia (_combinaCompleja_ en nuestro ejemplo) y es donde usamos las funciones que primero definimos como ocultas (_factoriza..._)    

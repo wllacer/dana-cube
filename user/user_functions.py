@@ -29,11 +29,16 @@ def dhont(escanos,data):
   for i in range(len(data)):
      if data[i] == -float('Inf'): #is None:
          res[i] = None
-         
+  # estetica sin escaños es nulo
+  for i in range(len(res)):
+      if res[i] == 0:
+          res[i] = None
   return res
 
-def resultados(*entrada):
+    
+def resultados(original,*entrada):
     partido = entrada[1]
+    newratio = float(entrada[2])
     datos ={
         "C's":14.0382822541147,
         "CCa-PNC":0.327843488841832,
@@ -53,13 +58,19 @@ def resultados(*entrada):
         "PSOE":22.1801820596102
         }
     try:
-        return datos[partido]
+        oldratio = datos[partido]
+        if oldratio == 0:  #FIXME para evitar division por 0 pereo no tiene mucho sentido
+            return None
+        factor = newratio/oldratio
+        return original*factor
+
     except KeyError:
         return None
 
 
-def resultadosAgr(*entrada):
+def resultadosAgr(original,*entrada):
     partido = entrada[1]
+    newratio = float(entrada[2])
     datos ={
         "C's":14.0382822541147,
         "CCa-PNC":0.327843488841832,
@@ -79,7 +90,12 @@ def resultadosAgr(*entrada):
         "PSOE":22.1801820596102
         }
     try:
-        return datos[partido]
+        oldratio = datos[partido]
+        if oldratio == 0:  #FIXME para evitar division por 0 pereo no tiene mucho sentido
+            return None
+        factor = newratio/oldratio
+        return original*factor
+
     except KeyError:
         return None
 
@@ -139,14 +155,14 @@ def ordinal(*parms,**kwparms):
     item.setPayload(ordtmp)
 
 
-
-def nfactoriza(*parms,**kwparms):
+def factoriza(*parms,**kwparms):
     """
     Parametro por keyword = funAgr  una referencia a una funcion python que devuelve un valor para una columna concreta
+    funAgr(valor_actual,referencia de la columna compatible con colparm)
     Se trata de un simulador.
     El usuario envia la variación que se desea para cada una de las columnas.
-    Si no se especifica el paramtro funAgr, se modifica directamente el valor de la columna.
-    Si funAgr se especifica, el valor se modifica por la razon entre el solicitado por el usuario y el devuelto por la funcion.
+    Si no se especifica el paramtro funAgr, el valor de entrada para cada columna se considera el porcentaje de variacion
+    Si funAgr se especifica, el valor sera el devuelto por la función
     Si se desea que el valor resultante sea 0, debe ponerse 0.0 en la entrada de la columna, no 0
     En esta versión la variación se define implicitamente en porcentajes
 
@@ -158,26 +174,27 @@ def nfactoriza(*parms,**kwparms):
     item = parms[0]
     colparm = parms[3]
     funAgr = kwparms.get('funAgr')
+    
     for k,entrada in enumerate(colparm):
         codigo = entrada[0]
         desc = entrada[1]
         valor = entrada[2]            
-        if valor is None or valor in ('','0'):
-            continue
-        newratio = float(valor)
-        if newratio is None:
-            continue
+        
         if item.gpi(k) is None:
+            continue
+
+        if valor is None or valor in ('','0'):
             continue
         
         if funAgr:
-            oldratio = funAgr(*entrada)
-            if oldratio == 0:  #FIXME para evitar division por 0 pereo no tiene mucho sentido
-                continue
-            factor = newratio/oldratio
-            item.spi(k,item.gpi(k)*factor)
+            newvalue = funAgr(item.gpi(k),*entrada)
+            if newvalue:
+                item.spi(k,newvalue)
         else:
-            item.spi(k,item.gpi(k)*newratio / 100.0)
+            newratio = float(valor) / 100.0
+            item.spi(k,item.gpi(k)*newratio)
+
+
             
 def consolida(*parms,**kwparms):
     """
@@ -201,26 +218,6 @@ def consolida(*parms,**kwparms):
     if hacia is None:
         return
 
-    #for idx in norm2List(desde):
-        #try:
-            #difunta = colkey.index(idx) +1 
-        #except ValueError:
-            #continue
-        #for candidatura in norm2List(hacia):
-            #try:
-                #cakey = colkey.index(candidatura) +1
-            #except ValueError:
-                #continue
-            #if item.itemData[cakey] is not None:  #se presentaban en la provincia
-                #if item.itemData[difunta] is None:
-                    #pass #deberia ser break pero bueno
-                #else:
-                    #item.itemData[cakey] += item.itemData[difunta]
-                    #item.itemData[difunta]=None
-                    #print(item.itemData[cakey],item.gpi(cakey),item.gpi(cakey -1))
-                    #exit()
-                #break
-
     for idx in norm2List(desde):
         try:
             difunta = colkey.index(idx)
@@ -236,9 +233,6 @@ def consolida(*parms,**kwparms):
             suma = item.gpi(difunta)
             if item.gpi(cakey) is not None:  #se presentaban en la provincia
                 suma += item.gpi(cakey)    
-                #if item.gpi(difunta) is None:
-                    #pass #deberia ser break pero bueno
-                #else:
                 item.spi(cakey,suma)
                 item.spi(difunta,None)
                 break
@@ -284,8 +278,8 @@ Registro de funciones y secuencias
 """
 def register(contexto):
     # auxiliares
-    ufm.registro_funcion(contexto,name='factoriza',entry=nfactoriza,aux_parm={'funAgr':resultados},type='colparm',hidden=True,api=1)
-    ufm.registro_funcion(contexto,name='factorizaAgregado',entry=nfactoriza,aux_parm={'funAgr':resultadosAgr},type='colparm',hidden=True,api=1)
+    ufm.registro_funcion(contexto,name='factoriza',entry=factoriza,aux_parm={'funAgr':resultados},type='colparm',hidden=True,api=1)
+    ufm.registro_funcion(contexto,name='factorizaAgregado',entry=factoriza,aux_parm={'funAgr':resultadosAgr},type='colparm',hidden=True,api=1)
     # funciones
     ufm.registro_funcion(contexto,name='porcentaje',entry=porcentaje,type='item',seqnr=1,
                          text='Porcentaje calculados en la fila')
@@ -311,15 +305,8 @@ def register(contexto):
     ufm.registro_secuencia(contexto,name='simul_agregado',
                            list=('Podemos','factorizaAgregado','asigna'),
                            seqnr=32,text='SImulacion de escaños. Podemos Agregado')
-    ufm.registro_secuencia(contexto,name='simul',list=('Podemos','factoriza','asigna'),sep=True,
+    ufm.registro_secuencia(contexto,name='simul',list=('borraIU','borraMes','factoriza','asigna'),sep=True,
                            seqnr=33,text='SImulacion de escaños. separado')
-    
-    #ufm.registro_secuencia(contexto,name='simul_v1_simple',
-                           #list=('Podemos','factoriza','asigna'),
-                           #seqnr=40,text='SImulacion de escaños. Simple. Version 1')                 
-    #ufm.registro_secuencia(contexto,name='simul_v1_agregado',
-                           #list=('Podemos','factorizaAgregado','asigna'),
-                           #seqnr=41,text='SImulacion de escaños. Agregado Podemos. Version 1')                 
 
 KWARGS_LIST = { }
     
