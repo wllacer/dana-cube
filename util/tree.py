@@ -82,6 +82,8 @@ class TreeItem(object):
             return None
         
     def getPayload(self):
+        """ Devuelve una lista con el contenido (columnas) del item
+        """
         if self.itemData is None or len(self.itemData) == 1:
             return None
         else:

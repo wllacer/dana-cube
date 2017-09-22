@@ -300,7 +300,6 @@ def asigna(*parms,**kwparms):
     else:
         item.setPayload(dhont(puestos,item.getPayload()))
 
-
 """
 Registro de funciones y secuencias
 """
@@ -312,10 +311,13 @@ def register(contexto):
     ufm.registro_funcion(contexto,name='porcentaje',entry=porcentaje,type='item',seqnr=1,
                          text='Porcentaje calculados en la fila')
     ufm.registro_funcion(contexto,name='ordinal',entry=ordinal,type='item',seqnr=2,
-                         text='ordinales')
-    ufm.registro_funcion(contexto,name='agrupa',entry=consolida,type='colkey,kwparm',seqnr=3,sep=True,
+                         text='Número de orden descendente en la fila')
+    ufm.registro_funcion(contexto,name='agrupa',entry=consolida,type='colkey,kwparm',seqnr=3, 
                          aux_parm= { 'desde':None,'hacia':None,'searchby':'value'},
                          text='fusiona columnas')
+    ufm.registro_funcion(contexto,name='simula',entry=factoriza,type='colparm',seqnr=4,sep=True,
+                         text='Realiza simulaciones')
+    
     ufm.registro_funcion(contexto,name='asigna',entry=asigna,type='item,leaf',seqnr=10,
                          text='Asignacion de escaños',
                          db='datos locales')
