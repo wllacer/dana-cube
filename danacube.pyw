@@ -151,30 +151,46 @@ class DanaCubeWindow(QMainWindow):
         self.optionsMenu.addAction("&Graficos",self.setGraph,"Ctrl+G")
 
         # esta es la version nueva del menu funcional
+        
         self.userFunctionsMenu = self.menuBar().addMenu("&Funciones de usuario")
         self.restorator = self.userFunctionsMenu.addAction("&Restaurar valores originales"
             ,self.tabulatura.currentWidget().tree.restoreData,"Ctrl+R")
         self.restorator.setEnabled(False)
         self.userFunctionsMenu.addSeparator()
-        self.plugins = dict()
-        uf_discover(uf,self.plugins)
-
-        for k in sorted(self.plugins, key=lambda x:self.plugins[x].get('seqnr', float('inf'))):
-            entry = self.plugins[k]
-            if entry.get('hidden',False):
-                continue
-            self.userFunctionsMenu.addAction(entry['text'],
-                                              lambda  idx=k: self.dispatch(idx))
-            if entry.get('sep',False):
-                self.userFunctionsMenu.addSeparator()
         
+        self.plugins = dict()
+        
+        uf_discover(uf,self.plugins)
+        self.fillUserFunctionMenu(self.userFunctionsMenu) #las comunes
+        self.userFunctionsMenu.addSeparator()
+        self.pluginDbMenu = self.userFunctionsMenu.addMenu("Especificas")
+        self.fillUserFunctionMenu(self.pluginDbMenu,self.cubo.nombre) #las especificas del cubo
+            
         # esto al final para que las distintas opciones raras que van al menu de cubos vayan en su sitio
         self.cubeMenu.addSeparator()
         self.cubeMenu.addAction("E&xit", self.close, "Ctrl+Q")
 
 
         self.setCentralWidget(self.tabulatura)
-      
+     
+    def fillUserFunctionMenu(self,menu,db=''):
+        if db != '':
+            menu.clear()
+            menu.setTitle('Funciones especificas para '+ db)
+            subset = { k:self.plugins[k] for k in self.plugins if db in self.plugins[k].get('db','') }
+        else:
+            subset = { k:self.plugins[k] for k in self.plugins if self.plugins[k].get('db','') == '' }
+        if len(subset) == 0:
+            return
+        for k in sorted(subset,
+                    key=lambda x:self.plugins[x].get('seqnr', float('inf'))):
+            entry = self.plugins[k]
+            if entry.get('hidden',False):
+                continue
+            menu.addAction(entry['text'],lambda  idx=k: self.dispatch(idx))
+            if entry.get('sep',False):
+                menu.addSeparator()
+        
     def checkChanges(self,destino):
         currentWidget = self.tabulatura.currentWidget()   #.tree
         if not self.filterActions or not self.dateRangeActions or not self.restorator:
@@ -233,6 +249,7 @@ class DanaCubeWindow(QMainWindow):
         self.setupCubo(my_cubos,self.cubeName)
         if not inicial:
             self.reinitialize()
+            self.fillUserFunctionMenu(self.pluginDbMenu,self.cubo.nombre)
             return None
             pass #crea primer tab con los datos de la ventana
         else:
@@ -255,7 +272,8 @@ class DanaCubeWindow(QMainWindow):
         self.cubo.nombre = seleccion #FIXME es que no tengo sitio en Cubo para definirlo
         self.cubo.recordStructure = self.summaryGuia()
         self.setWindowTitle(self.cubo.nombre)
-    
+
+        
     @waiting_effects
     def summaryGuia(self):
         result = []
@@ -771,7 +789,7 @@ class DanaCube(QTreeView):
         
         if 'kwparm' in tipo_plugin:
             a_table = [ [key,key] for key in kparm]
-            m_datos = presenta(a_table,[norm2String(kparm[key][0]) for key in a_table])
+            m_datos = presenta(a_table,[norm2String(kparm[key[0]]) for key in a_table])
             for i,key in enumerate(a_table):
                 kparm[key[0]] = m_datos[i]
         

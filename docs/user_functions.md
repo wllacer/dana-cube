@@ -112,6 +112,8 @@ Para __registro_funcion__:
     
 * para presentacion (opcionales)
 
+    * __db__    permite que los objetos solo se presenten para un determinado cubo. Una cadena con los nombres de los cubos en los que puede aparecer separados por comas
+    
     * __seqnr__   numero de orden con el que se presenta en el menú. 
 
     * __sep__     True o False. Determina si se dibuja un separador tras el. Defecto False

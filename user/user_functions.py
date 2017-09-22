@@ -200,16 +200,24 @@ def consolida(*parms,**kwparms):
     """
     Agrega el contenido de una o varias columnas (parametro desde) en otra (parametro hacia) y borra la columna origen.
     Si el destino es una lista de columnas, se agrega a la primera que encuente con valor. Si no encuentra no se ejecuta.
-    TODO: caso que no exista ninguna columna destino
+    caso que no exista ninguna columna destino con valor se agrega a la última de la lista
     En esta versión las columnas se identifican por la clave, por lo que necesitamos esta información de las columnas
     
     tipo = item,colkey
-    debe usar aux_parm para especificar los parametros desde, hacia
+    debe usar aux_parm para especificar los parametros
+        desde, columna(s) origen
+        hacia, columna(s) destino
+        searchby = (key|value) criterio de busqueda. defecto key
     opcionalmente puede ejecutarse como kwparm para especificar desde,hacia interactivamente
     """
     item = parms[0]
     column = parms[1]
-    colkey = [ norm2List(data)[0] for data in column] #compatibilidad de apis por la via rapida
+    if kwparms.get('searchby','key') == 'key':
+        colkey = [ norm2List(data)[0] for data in column] #compatibilidad de apis por la via rapida
+    elif kwparms.get('searchby') == 'value':
+        colkey = [ norm2List(data)[1] for data in column] #compatibilidad de apis por la via rapida
+    else:
+        return
     
     desde=kwparms.get('desde')
     if desde is None:
@@ -236,7 +244,27 @@ def consolida(*parms,**kwparms):
                 item.spi(cakey,suma)
                 item.spi(difunta,None)
                 break
+        else:  #cuando no hay candidaturas destino. va a la ultima de la lista
+            cakey = colkey.index(candidatura)
+            item.spi(cakey,item.gpi(difunta))
+            item.spi(difunta,None)
     pass
+
+def exec_map(*parms,**kwparms):
+    """
+    Ejecuta un map sobre la lista. 
+    Con o sin parametros si estos se ajustan al mismo estandar de las funciones de usuario
+    """
+    function = kwparms.get('function')
+    if not function:
+        return 
+    item = parms[0]
+    item.setPayload(list(map(function,item.getPayload())))
+    ### esto esta comentado por no tener experiencia real con ello
+    #if any(parm[k] is not None for k in range(1,len(parms))) or kwparms is not None:
+        #item.setPayload(list(map(lambda p: function(p, *parms,**kwparms), item.getPayload())))
+    #else:    
+        #item.setPayload(list(map(function,item.getPayload()))
 
 """
 Funciones particulares de la BD. electoral
@@ -283,30 +311,42 @@ def register(contexto):
     # funciones
     ufm.registro_funcion(contexto,name='porcentaje',entry=porcentaje,type='item',seqnr=1,
                          text='Porcentaje calculados en la fila')
-    ufm.registro_funcion(contexto,name='ordinal',entry=ordinal,type='item',seqnr=2,sep=True,
+    ufm.registro_funcion(contexto,name='ordinal',entry=ordinal,type='item',seqnr=2,
                          text='ordinales')
+    ufm.registro_funcion(contexto,name='agrupa',entry=consolida,type='colkey,kwparm',seqnr=3,sep=True,
+                         aux_parm= { 'desde':None,'hacia':None,'searchby':'value'},
+                         text='fusiona columnas')
     ufm.registro_funcion(contexto,name='asigna',entry=asigna,type='item,leaf',seqnr=10,
-                         text='Asignacion de escaños')
-    ufm.registro_funcion(contexto,name='Senado',entry=senado,type='item,leaf',seqnr=11,sep=True)
+                         text='Asignacion de escaños',
+                         db='datos locales')
+    ufm.registro_funcion(contexto,name='Senado',entry=senado,type='item,leaf',seqnr=11,sep=True,
+                         db='datos locales')
 
     ufm.registro_funcion(contexto,name='borraIU',entry=consolida,
-                         aux_parm={'desde':'4850','hacia':('3736','5008','5041','5033')},type='colkey',seqnr=20,
-                         text='Integra UI en Podemos')
+                         aux_parm={'desde':'4850','hacia':('5008','5041','5033','3736')},type='colkey',seqnr=20,
+                         text='Integra UI en Podemos',
+                         db='datos locales')
     ufm.registro_funcion(contexto,name='borraMes',entry=consolida,
-                         aux_parm={'desde':'4976','hacia':('3736','5008','5041','5033')},type='colkey',seqnr=20,
-                         text='Integra Mès en Podemos')
+                         aux_parm={'desde':'4976','hacia':('5008','5041','5033','3736')},type='colkey',seqnr=20,
+                         text='Integra Mès en Podemos',
+                         db='datos locales')
     ufm.registro_funcion(contexto,name='unPodemos',entry=consolida,
                          aux_parm={'desde':('5008','5041','5033'),'hacia':('3736',)},type='colkey',seqnr=20,
-                         text='Agrupa en uno las candidaturas de Podemos')
+                         text='Agrupa en uno las candidaturas de Podemos',
+                         db='datos locales')
     ufm.registro_secuencia(contexto,name='Podemos',list=('borraIU','borraMes','unPodemos'),seqnr=23,sep=True,
-                           text='Todo lo anterior')
-    ufm.registro_secuencia(contexto,name='simul_voto',list=('Podemos','factorizaAgregado'),
-                            seqnr=31,text='Simulacion de voto. Podemos Agregado')
+                           text='Todo lo anterior',
+                           db='datos locales,datos light')
+    ufm.registro_secuencia(contexto,name='simul_voto',list=('Podemos','factorizaAgregado','porcentaje'),
+                            seqnr=31,text='Simulacion de voto. Podemos Agregado',
+                         db='datos locales,datos light')
     ufm.registro_secuencia(contexto,name='simul_agregado',
                            list=('Podemos','factorizaAgregado','asigna'),
-                           seqnr=32,text='SImulacion de escaños. Podemos Agregado')
+                           seqnr=32,text='SImulacion de escaños. Podemos Agregado',
+                         db='datos locales,datos light')
     ufm.registro_secuencia(contexto,name='simul',list=('borraIU','borraMes','factoriza','asigna'),sep=True,
-                           seqnr=33,text='SImulacion de escaños. separado')
+                           seqnr=33,text='SImulacion de escaños. separado',
+                         db='datos locales')
 
 KWARGS_LIST = { }
     
