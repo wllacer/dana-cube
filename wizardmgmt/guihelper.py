@@ -58,7 +58,7 @@ DELIMITER=':'
 
 from cubemgmt.cubeutil import info2cube,isDictionaryEntry,action_class,getCubeList,getCubeItemList
 #from cubemgmt.cubetree import *
-grep from cubemgmt.cubeTypes import *
+from cubemgmt.cubeTypes import *
 from cubemgmt.cubeCRUD import insertInList
 from dictmgmt.tableInfo import FQName2array,TableInfo
 

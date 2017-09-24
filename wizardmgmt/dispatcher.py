@@ -60,7 +60,7 @@ DELIMITER=':'
 #from cubemgmt.cubetree import *
 from cubemgmt.cubeTypes import *
 #from cubemgmt.cubeCRUD import insertInList
-grepfrom dictmgmt.tableInfo import FQName2array,TableInfo
+from dictmgmt.tableInfo import FQName2array,TableInfo
 
 #from dialogs import propertySheetDlg
 
@@ -124,7 +124,11 @@ def info_cache(cubeMgr,cube_root):
                     'dbname':conn_root.getChildrenByName('dbname').getColumnData(1),
                     'driver':conn_root.getChildrenByName('driver').getColumnData(1)
                     }
-
+        #FIXME correcciones al vuelo
+        if conn_dict['dbhost'] == 'None':
+            conn_dict['dbhost'] = ''
+        if conn_dict['driver'].lower() == 'qsqlite':
+            conn_dict['driver'] = 'sqlite'    
         dd=cubeMgr.dataDict
         
         confName,schema,tabla = FQName2array(tabla_ref)

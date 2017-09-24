@@ -39,6 +39,8 @@ from cubemgmt.cubeTypes import *
 from cubemgmt.cubeutil  import *
 from cubemgmt.cubeCRUD  import *
 
+from wizardmgmt.dispatcher import *
+
 (_ROOT, _DEPTH, _BREADTH) = range(3)
 
 
@@ -128,7 +130,8 @@ class CubeMgr(QTreeView):
         else:
             self.cubeFile = cubeFile
         
-
+        self.cache = dict() #para la gestion del wizard
+        
         if isinstance(pdataDict,DataDict):
             self.dataDict = pdataDict
         else:
@@ -208,16 +211,17 @@ class CubeMgr(QTreeView):
     def openContextMenu(self,position):
         """
         """
-        indexes = self.view.selectedIndexes()
-        if len(indexes) > 0:
-            index = indexes[0]
-            item = self.baseModel.itemFromIndex(index)
-        else:
-            return
-        menu = QMenu()
-        setContextMenu(item,menu,self)        
-        action = menu.exec_(self.view.viewport().mapToGlobal(position))
-        # getContextMenu(item,action,self)
+        openContextMenu(self,position)
+        #indexes = self.view.selectedIndexes()
+        #if len(indexes) > 0:
+            #index = indexes[0]
+            #item = self.baseModel.itemFromIndex(index)
+        #else:
+            #return
+        #menu = QMenu()
+        #setContextMenu(item,menu,self)        
+        #action = menu.exec_(self.view.viewport().mapToGlobal(position))
+        ## getContextMenu(item,action,self)
  
     def saveDialog(self):
         if (QMessageBox.question(self,

@@ -57,7 +57,7 @@ from util.record_functions import *
 #from core import Cubo
 
 from cubemgmt.cubeutil import info2cube,isDictionaryEntry,action_class,getCubeList,getCubeItemList
-#from cubemgmt.cubetree import *
+from cubemgmt.cubetree import *
 from cubemgmt.cubeTypes import *
 #from cubemgmt.cubeCRUD import insertInList
 #from dictmgmt.tableInfo import FQName2array,TableInfo
