@@ -9,6 +9,7 @@ from datalayer.access_layer import DRIVERS, AGR_LIST
 from util.fechas import CLASES_INTERVALO, TIPOS_INTERVALO
 
 """
+Documentacion funcioanl de los atributos del cubo en docs/tree_docs.md
     Definimos los tipos y si son hojas o nodos intermedios. Ojo todos los elementosde TYPE_LIST actuan, segun 
     la circunsancia de una u otra forma (son arrays de valores).
     
