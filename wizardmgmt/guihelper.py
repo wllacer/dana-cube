@@ -59,7 +59,7 @@ DELIMITER=':'
 from cubemgmt.cubeutil import info2cube,isDictionaryEntry,action_class,getCubeList,getCubeItemList
 #from cubemgmt.cubetree import *
 from cubemgmt.cubeTypes import *
-from cubemgmt.cubeCRUD import insertInList
+#from cubemgmt.cubeCRUD import insertInList
 from dictmgmt.tableInfo import FQName2array,TableInfo
 
 from dialogs import propertySheetDlg
@@ -67,6 +67,29 @@ from dialogs import propertySheetDlg
 #import cubebrowse as cb
 
 #import time
+
+def insertInList(obj,tipo,value):
+    if not obj.text():
+        #ya es un array; solo hay que añadir elementos
+        idx = obj.index()
+        pai = obj.parent()
+        pai.insertRow(idx.row()+1,(CubeItem(None),CubeItem(str(value)),CubeItem(tipo)))
+    elif not obj.getColumnData(1):
+        #hablamos del padre. Solo hay que añadir un hijo
+        obj.appendRow((CubeItem(None),CubeItem(str(value)),CubeItem(tipo)))
+        pass
+    else: # <code> : <valor>
+        #creo un elemento array hijo copiado del actual
+        #borro el contenido del original
+        #creo un nuevo registro
+        #oldRecord = [ CubeItem(obj.getColumnData[k]) for k in range(1,obj.columnCount()) ]
+        #oldRecord.insert(0,CubeItem(None))
+        #pprint(oldRecord)
+        obj.appendRow((CubeItem(None),CubeItem(obj.getColumnData(1)),CubeItem(obj.getColumnData(2))))
+        #obj.appendRow(oldRecord)
+        obj.appendRow((CubeItem(None),CubeItem(str(value)),CubeItem(tipo)))
+        obj.setColumnData(1,None,Qt.EditRole)
+        pass
 
 def preparaCombo(obj,valueTable,valorActual):
     descriptivo = False
@@ -159,7 +182,7 @@ def leaf_management(obj,cubeMgr,action,cube_root,cube_ref,cache_data):
    
 
     if result:    
-        if tipo in TYPE_LIST and action == 'add':
+        if tipo in TYPE_LIST and action == 'add': #TODO ojillo a la accion
             insertInList(obj,tipo,result)
         else:
             if result and result != value:

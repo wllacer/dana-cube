@@ -108,6 +108,7 @@ TYPE_LIST = set(['case_sql',
      'values',
      'code',
      'desc',
+     'elem',
      'grouped_by'])
 
 TYPE_DICT = set([u'base',
@@ -138,7 +139,8 @@ TIPO_FECHA = ('Ymd', 'Ym','Ymw','YWw')
 FECHADOR = (('Y','Año'),('C','Cuatrimestre'),('Q','Trimestre'),('m','Mes'),('q','Quincena'),('W','Semana del Año'),('w','semana'),('d','Día'))
 
 """
-    son elementos que solo se definen a traves de otras pantallas o directamente en la generacion
+    son elementos que solo se definen a traves de otras pantallas o directamente en la generacion.
+    NO ADD LIST de momento es inactiva
 """
 NO_ADD_LIST = set([
     u'base',
@@ -148,7 +150,10 @@ NO_ADD_LIST = set([
     u'domain',
     ])
 
+
 NO_EDIT_LIST = set([u'base',])
+NO_DELETE_LIST = set([u'base',u'cubo',u'vista',u'row',u'col',u'agregado',u'elemento',
+    u'base filter',u'connect',u'dbuser',u'dbhost',u'driver',u'dbname',u'dbpass',])
 """
    son los tipos que tienen valor y hay que editar
 """

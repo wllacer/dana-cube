@@ -88,10 +88,25 @@ def openContextMenu(cubeMgr,position):
 
 def setMenuActions(menu,context,item):      
     menuActions = []
-    menuActions.append(menu.addAction("Add",lambda:execAction(item,context,"add")))
-    menuActions.append(menu.addAction("Edit",lambda:execAction(item,context,"edit")))
+    if ( item.type() in  TYPE_LIST_DICT  and item.type() == item.text())  :
+        menuActions.append(menu.addAction("Add",lambda:execAction(item,context,"add")))
+    if item.type() in (TYPE_LIST) :
+        menuActions.append(menu.addAction("Add",lambda:execAction(item,context,"add")))
+    
+    if  ( item.type() in NO_EDIT_LIST or
+         (item.type() in (TYPE_LIST) and item.type() == item.text()) or
+         (item.text() in ('guides') )
+         ):
+        pass
+    else:
+        menuActions.append(menu.addAction("Edit",lambda:execAction(item,context,"edit")))
+        
     #TODO hay algunos imborrables
-    menuActions.append(menu.addAction("Delete",lambda:execAction(item,context,"delete")))
+    if item.type() in NO_DELETE_LIST or item.text() in ('connect','fields','guides','prod','clause'):
+        pass
+    else:
+        menuActions.append(menu.addAction("Delete",lambda:execAction(item,context,"delete")))
+        
     if item.type() != item.text():
         menuActions.append(menu.addAction("Rename",lambda:execAction(item,context,"rename")))
         #menuActions[-1].setEnabled(False)
@@ -100,6 +115,21 @@ def setMenuActions(menu,context,item):
         hijo = item.getChildrenByName('date filter')
         if not hijo:
             menuActions.append(menu.addAction("Add Date Filter",lambda:execAction(item,context,"add date filter")))
+    #if item.type() in ('base','guides'):
+        menu.addSeparator()
+        menuActions.append(menu.addAction("Copy",lambda:execAction(item,context,"copy")))
+        menuActions[-1].setEnabled(False)
+    if item.type() == 'guides' and item.text() != 'guides' : #TODO
+        menu.addSeparator()
+        menuActions.append(menu.addAction("Copy",lambda:execAction(item,context,"copy")))
+        menuActions[-1].setEnabled(False)
+    if item.type() in (TYPE_LIST | TYPE_LIST_DICT ) and item.type() != item.text() :  #TODO
+        menu.addSeparator()
+        menuActions.append(menu.addAction("Sube",lambda:execAction(item,context,"add")))
+        menuActions[-1].setEnabled(False)
+        menuActions.append(menu.addAction("Baja",lambda:execAction(item,context,"add")))
+        menuActions[-1].setEnabled(False)
+        menu.addSeparator()
             
 @model_change_control(1)
 def execAction(item,context,action):

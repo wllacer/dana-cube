@@ -105,7 +105,7 @@ Se desaconseja el uso de __dbpass__ ya que implica tener una clave guardada en u
 
 Los drivers que actualmente aceptamos son : _sqlite, postgresql, mysql, oracle, db2, mssql_  (Los dos últimos no están activos en la versión actual
     
-*  \<table\> ::= tablename ,, schema '.' tablename ,, query de la base de datos
+*  \<table\> ::= tablename | schema '.' tablename | query de la base de datos
 
 Identificamos el nombre de la tabla dentro de la base de datos que vamos a utilizar. Puede ser una tabla, vista o directamente una query sobre la base de datos.
 
@@ -199,10 +199,10 @@ Actualmente soportamos las siguientes clases:
                     {
                         "case_sql": [
                             "case",
-                            "when strftime('%m',$$1) in ('01','02','03')  then strftime('%Y',$$1),,'\\:1'",
-                            "when strftime('%m',$$1) in ('04','05','06')  then strftime('%Y',$$1),,'\\:2'",
-                            "when strftime('%m',$$1) in ('07','08','09') then strftime('%Y',$$1),,'\\:3'",
-                            "when strftime('%m',$$1) in ('10','11','12') then strftime('%Y',$$1),,'\\:4'",
+                            "when strftime('%m',$$1) in ('01','02','03')  then strftime('%Y',$$1)|'\\:1'",
+                            "when strftime('%m',$$1) in ('04','05','06')  then strftime('%Y',$$1)|'\\:2'",
+                            "when strftime('%m',$$1) in ('07','08','09') then strftime('%Y',$$1)|'\\:3'",
+                            "when strftime('%m',$$1) in ('10','11','12') then strftime('%Y',$$1)|'\\:4'",
                             "end as $$2"
                         ],
                         "class": "c",
@@ -368,7 +368,7 @@ la entrada default, esta compuesta por la identicación del cubo y la definción
     },
 
 ```
-
+*   <\default\> ::= 'default :'\<cubeid\> <\view_def\>
 *   \<cubeid \>   ::=  "cubo" ":" cube_name
 
 El nombre del cubo debe coincidir con uno de los cubos definidos en el fichero
@@ -384,4 +384,53 @@ El nombre del cubo debe coincidir con uno de los cubos definidos en el fichero
     
     * __field_id__  es el nombre del campo sobre el que realizamos la consulta
 
-    *   __\<agregate_fn\>__ ::= 'sum' ,, 'count' ,, 'avg' ,, 'max' ,,'min'  Es la función de agregación que vamos a ejecutar sobre el campo. Las funciones permitidas esán documentadas en _datalayer.access_layer.AGR_LIST_
+    *   __\<agregate_fn\>__ ::= 'sum' | 'count' | 'avg' | 'max' |'min'  Es la función de agregación que vamos a ejecutar sobre el campo. Las funciones permitidas esán documentadas en _datalayer.access_layer.AGR_LIST_
+
+## relacion completa de las reglas BNF
+
+*  \<cube_file\> ::= \<cube_defs\>+ [ \<default\> ]
+*  \<cube_defs\> ::= nombre ':' \<definicion de cubo\>
+* \<defincion de cubo\>:= 'connect :' \<connect\> 'table :' \<table\> 'fields :' \<fields\> 'guides :' \<guides\> 'base_filter': \<base filter\> [ 'date_filter :' \<date filter\>
+*   \<connect\> ::= 'dbhost :' dbhost dbname :' dbname 'dbuser :' dbuser 'dbpass :'dbpass 'driver :' driver
+*  \<table\> ::= tablename | schema '.' tablename | query de la base de datos
+*  \<base_filter\> ::= querySQL
+* \<date_filter\> ::= __*TODO*__
+*  \<fields\> :: = campo +
+*   \<guides\> = \<guide_def\>+   
+*   \<guides\> = \<guide_def\>+   
+* \<guide_def\> ::= 'name :' name 'class :' \<class\>  'prod :' <prod>
+* \<class\> ::= o , c , h , d
+* \<prod\> ::= \<ordinary_prod\> , \<category_prod\> , ( \<ordinary_prod\> , \<category_prod\> )+ , \<date_prod\>
+* \<ordinary_prod  \> ::= [ \<name\> ] \<elem\>+ [  \<domain\> ]  [\<fmt\>] 
+* \<category_prod \> ::= [ \<name\> ] \<elem\> ( \<categories\> , \<case_sql\> ) [\<fmt\>] [\fmt_out\>]
+* \<date_prod \> ::= [ \<name\> ] \<elem\>  \<class\>  \<fmt\> \<mask\>
+* \<name\> ::= 'name :' nombre
+* \<elem\> ::= 'elem :' ( campo , campo \<link via\> )
+* \<domain\> ::=   \<table\>  \<code\>+ [ \<desc\>+ ]  [ \<filter\> ] [ \<grouped by\> ]
+* \<table\> ::= 'table :' nombre_de_tabla
+* \<code\> ::=  'code:'  (nombre de campo)+
+* \<desc\> ::=  'desc:'  (nombre de campo)+
+* \<filter\> ::= 'filter :' ("" , clasula_select )
+* \<grouped by\> ::= nombre de campo+
+* \<categories\> ::= \<defaut value\> \<category item\>+
+* \<default value> ::= 'default ::=' valor
+* \<category item\> ::= 'result :=' valor 'condition :=' condition 'values :'valor+
+* \<case_sql\> ::= (codigo_sql)+
+*  \<link via\> ::= 'link via :' \<link path\>+
+*  \<link path\> ::= 'table :' link_table ['filter :' ("",sentencia) ] 'clause :' \<join clause\>+
+*  \<join clause\> ::= 'base_elem :' campo+ [ 'condition :' \<condition\>' ]rel_elem' campo+
+*  \<condition\> ::=  ('in','between','like','=','!=','<','>','>=','<=','not in','not between','not like','is null','is not null')
+* \<\fmt\>::= 'fmt ::= \<fmt_clause\>
+* \<\fmt_out\>::= 'fmt_out ::= \<fmt_clause\>
+* \<fmt\>::= 'fmt ::= ' ( 'txt' , 'num' ,'date')
+*   <\default\> ::= 'default :'\<cubeid\> <\view_def\>
+*   \<cubeid \>   ::=  "cubo" ":" cube_name
+*   \<view_def \> ::=  "view" ":" \<view_detail\>
+
+*   \<view_detail \> ::= "row" ":" guide_id
+                   "col" ":" guide_id
+                   "elemento" ":" field_id
+                   "agregado" ":" \<agregate_fn\>
+* __guide\_id__     es el ordinal de los criterios  guia que queremos analizar.
+* __field_id__  es el nombre del campo sobre el que realizamos la consulta
+*   __\<agregate_fn\>__ ::= 'sum' | 'count' | 'avg' | 'max' |'min' 

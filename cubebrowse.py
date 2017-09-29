@@ -37,7 +37,7 @@ from dialogs import propertySheetDlg
 from cubemgmt.cubetree import *
 from cubemgmt.cubeTypes import *
 from cubemgmt.cubeutil  import *
-from cubemgmt.cubeCRUD  import *
+#from cubemgmt.cubeCRUD  import *
 
 from wizardmgmt.dispatcher import *
 

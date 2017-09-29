@@ -1085,7 +1085,7 @@ class CubeWizard(QWizard):
         if not tipo or tipo == 'date filter' or action == 'add date filter':
             self.setPage(ixWzDateFilter, WzDateFilter(cache=cache_data))
         
-        if tipo == 'prod':
+        if tipo in ('guides','prod'): #== 'prod':
             self.prodIters = 1
             if obj.text() != 'prod':  # entrada individual
                 if action in ('add','insert after','insert before'):
