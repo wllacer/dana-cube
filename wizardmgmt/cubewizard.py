@@ -79,6 +79,10 @@ from util.fechas import dateRange
 class WzConnect(QWizardPage):
     def __init__(self,parent=None):
         super(WzConnect,self).__init__(parent)
+        
+        self.setTitle("Definicion conexión")
+        self.setSubTitle(""" Defina los parámetros de conexion con la base de datos """)
+
         nombre = None
         data = None
         self.midict = None
@@ -137,6 +141,9 @@ class WzBaseFilter(QWizardPage):
         context.append((QComboBox,None,tuple(LOGICAL_OPERATOR)))
         context.append((QLineEdit,None,None))
 
+        self.setTitle("Filtro Base")
+        self.setSubTitle(""" Introduzca la condicion SQL por el que filtrar la tabla base """)
+
         self.sheet = WDataSheet(context,numrows)
         self.editArea = QPlainTextEdit()
         #TODO una linea pura de codigo. O mejor alterar los tamaños
@@ -168,6 +175,9 @@ class WzDateFilter(QWizardPage):
         context.append((QSpinBox,{"setRange":(1,366)},None,1))
         context.append((QLineEdit,{"setEnabled":False},None))
         context.append((QLineEdit,{"setEnabled":False},None))
+
+        self.setTitle("Filtro Fechas")
+        self.setSubTitle(""" Introduzca los criterios dinámicos de fecha por los que filtrar la tabla base """)
 
         self.sheet=self.sheet = WDataSheet(context,numrows)
 
@@ -298,7 +308,10 @@ class WzProdBase(QWizardPage):
         self.formatArrayCode = [None , ] + [elem[0] for elem in ENUM_FORMAT ]
         fieldArray = [None , ] + [ '{}  ({})'.format(item['basename'],item['format']) for item in self.baseFieldList]
         self.fieldArrayCode = [None , ] + [ item['name'] for item in self.baseFieldList]
-                             
+        
+        self.setTitle("Definicion basica de la guía")
+        self.setSubTitle(""" Introduzca el campo por el que desea agrupar los resultados y como determinar el texto  """)
+
         valueFormatLabel = QLabel("&Formato:")
         self.valueFormatCombo = QComboBox()
         self.valueFormatCombo.addItems(formatArray)
@@ -498,6 +511,9 @@ class WzCategory(QWizardPage):
         
         Formatos = [ item[1] for item in ENUM_FORMAT ]
         
+        self.setTitle("Definicion por categorias")
+        self.setSubTitle(""" Introduzca la agrupación de valores que constityen cada categoria  """)
+
         catResultFormatLabel = QLabel("Formato del &Resultado:")
         self.catResultFormatCombo = QComboBox()
         self.catResultFormatCombo.addItems(Formatos)
@@ -622,6 +638,10 @@ class WzRowEditor(QWizardPage):
         
         self.setFinalPage(True)
 
+        self.setTitle("Definicion de texto libre")
+        self.setSubTitle(""" Introduzca el codigo SQL que desea utilizar para agrupar.
+        Recuerde sustituir el nombre del campo guia por $$1 """)
+
         #FIXME no admite mandatory
         self.editArea = QPlainTextEdit()
 
@@ -667,6 +687,9 @@ class WzTime(QWizardPage):
         super(WzTime,self).__init__(parent)
         
         self.setFinalPage(True)
+        
+        self.setTitle("Guía tipo fecha")
+        self.setSubTitle(""" Introduzca la jerarquía de criteros temporales que desea  """)
 
         self.Formatos = [ item[1] for item in FECHADOR ]
         self.formatosCode = [ item[0] for item in FECHADOR ]
@@ -790,6 +813,9 @@ class WzDomain(QWizardPage):
         self.listOfTablesCode = ['',] + [ item[0] for item in tableArray]
         self.listOfFields = []
         
+        self.setTitle("Dominio de definición")
+        self.setSubTitle(""" Defina el dominio con el que creará la guía  """)
+
         targetTableLabel = QLabel("&Tabla origen:")
         self.targetTableCombo = QComboBox()
         #MARK VERY CAREFULLY. If has default value, DON'T make it mandatory in wizard
@@ -983,6 +1009,9 @@ class WzLink(QWizardPage):
         self.listOfTablesCode = ['',] + [ item[0] for item in tableArray]
         self.listOfFields = []
         
+        self.setTitle("Definición del enlace entre tablas")
+        self.setSubTitle(""" Introduzca la definición del enlace entre la tabla base y la guía  """)
+
         joinTableLabel = QLabel("&Tabla de enlace")
         self.joinTableCombo = QComboBox()
         #MARK VERY CAREFULLY. If has default value, DON'T make it mandatory in wizard
@@ -1108,6 +1137,6 @@ class CubeWizard(QWizard):
             self.setPage(ixWzDomain, WzDomain(cube=cubeMgr,cache=cache_data))
             self.setPage(ixWzLink, WzLink(cube=cubeMgr,cache=cache_data))
             
-            
-        self.setWindowTitle('Tachan')
+        texto_pantalla = obj.text() if obj.text() != tipo else obj.parent().text()
+        self.setWindowTitle('Mantenimiento de ' + tipo + ' ' + texto_pantalla.split('.')[-1])
         self.show()
