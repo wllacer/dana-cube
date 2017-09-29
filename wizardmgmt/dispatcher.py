@@ -279,7 +279,6 @@ def block_management(obj,cubeMgr,action,cube_root,cube_ref,cache_data):
     #elif tipo == 'date filter':
         #children = ('elem','date class','date period','date range','date start','date end')
 
-
     wizard = CubeWizard(obj,cubeMgr,action,cube_root,cube_ref,cache_data)
     if wizard.exec_() :
         #print('Milagro',wizard.page(1).contador,wizard.page(2).contador,wizard.page(3).contador)
@@ -294,10 +293,33 @@ def block_management(obj,cubeMgr,action,cube_root,cube_ref,cache_data):
                 print('tengo que escapar')
                 return
         #TODO aqui tengo que realizar la vuelta de una regla de produccion
-        elif tipo == 'prod':
-            nudict = {texto:wizard.diccionario }
+        elif tipo in TYPE_LIST_DICT:
+            print(obj.getPos(),wizard.diccionario)
+            if tipo != texto:
+                yayo = padre.parent()
+                nudict = tree2dict(yayo,isDictionaryEntry)
+                lista = nudict[tipo]
+                if obj.getPos() is not None:
+                    print('pille entrada')
+                    lista[obj.getPos()] = wizard.diccionario
+                else: #hay que retocar cosas aqui para append e insert before
+                    print('no pille entrada')
+                    lista.append(wizard.diccionario)
+                padre.suicide()
+                padre= yayo
+                texto = tipo
+
+            elif action == 'add' :
+                nudict = tree2dict(padre,isDictionaryEntry)
+                lista = nudict[tipo]
+                lista.append(wizard.diccionario)
+                obj.suicide()
+                #padre= yayo
+                #texto = tipo
+            else:
+                nudict = {texto:wizard.diccionario }
+                obj.suicide()
         else:
             nudict = {texto:wizard.diccionario }
             obj.suicide()
-            
         dict2tree(padre,tipo,nudict[texto])
