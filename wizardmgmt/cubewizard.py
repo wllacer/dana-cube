@@ -294,11 +294,12 @@ def toCodeDescList(origin,codeId,descId,withBlank=False):
         desc.insert(0,'')
     return code,desc
 
-class WzProdBase(QWizardPage):
+
+class WzProdBaseOld(QWizardPage):
     def __init__(self,parent=None,cache=None):
         #TODO campos obligatorios fondo amarillo, por convencion
         #TODO class y fmt. eliminar si no aparecen en el origen
-        super(WzProdBase,self).__init__(parent)
+        super(WzProdBaseOld,self).__init__(parent)
     
         self.iterations = 0
         
@@ -1087,6 +1088,171 @@ class WzLink(QWizardPage):
         self.targetDescList.addItems(self.listOfFields) 
 
 
+class WzProdBase(QWizardPage):
+    def __init__(self,parent=None,cube=None,cache=None):
+        super(WzProdBase,self).__init__(parent)
+        self.setFinalPage(True)
+        
+        self.iterations = 0
+        self.cube = cube
+        self.cache = cache
+        
+        tableArray = getAvailableTables(self.cube,self.cache)
+        
+        
+        self.listOfTables = ['',] + [ item[1] for item in tableArray]
+        self.listOfTablesCode = ['',] + [ item[0] for item in tableArray]
+        self.listOfFields = []
+        self.listOfFieldsCode = []
+        self.listOfLinkFields = ['',] + [ item[1] for item in getFieldsFromTable(cache['tabla_ref'],self.cache,self.cube) ]
+        self.listOfLinkFieldsCode = ['',] +  [ item[1] for item in getFieldsFromTable(cache['tabla_ref'],self.cache,self.cube) ]
+
+        
+        self.setTitle("Definición del dominio de la guía")
+        self.setSubTitle(""" Introduzca la localización donde estan los valores por los que vamos a agrupar """)
+
+        prodNameLabel = QLabel("&Nombre:")
+        self.prodName = QLineEdit()
+        prodNameLabel.setBuddy(self.prodName)
+        self.prodName.setStyleSheet("background-color:khaki;")
+ 
+        joinTableLabel = QLabel("&Tabla")
+        self.joinTableCombo = QComboBox()
+        #MARK VERY CAREFULLY. If has default value, DON'T make it mandatory in wizard
+        #                     Use a null value in combos if mandatory
+        self.joinTableCombo.addItems(self.listOfTables)
+        self.joinTableCombo.setCurrentIndex(0)
+        joinTableLabel.setBuddy(self.joinTableCombo)
+        self.joinTableCombo.currentIndexChanged[int].connect(self.tablaElegida)
+
+        #
+        guideFldLabel = QLabel("&Campo guia:")
+        self.guidFldCombo = QComboBox()
+        self.guidFldCombo.addItems(self.listOfFieldsCode)
+        self.guidFldCombo.setEditable(True)
+        guideFldLabel.setBuddy(self.guidFldCombo)
+        self.guidFldCombo.currentIndexChanged[int].connect(self.campoElegido)
+        self.guidFldCombo.setStyleSheet("background-color:khaki;")
+ 
+        #
+        guideDescLabel = QLabel("&Campo Descriptivo:")
+        self.guideDescCombo = QComboBox()
+        self.guideDescCombo.addItems(self.listOfFieldsCode)
+        self.guideDescCombo.setEditable(True)
+        guideDescLabel.setBuddy(self.guideDescCombo)
+        self.guideDescCombo.currentIndexChanged[int].connect(self.campoElegido)
+
+        #TODO algo para poder construir links complejos. Es necesario en la interfaz
+        self.guideLinkLabel = QLabel("&Campo de enlace en \n" + cache['tabla_ref'].split('.')[-1])
+        self.guideLinkLabel.setAlignment(Qt.AlignRight)
+        self.guideLinkLabel.setWordWrap(True)  
+        self.guideLinkCombo = QComboBox()
+        self.guideLinkCombo.addItems(self.listOfLinkFieldsCode)
+        self.guideLinkCombo.setEditable(True)
+        self.guideLinkLabel.setBuddy(self.guideLinkCombo)
+        self.guideLinkCombo.currentIndexChanged[int].connect(self.campoElegido)
+        self.guideLinkCombo.setStyleSheet("background-color:khaki;")
+        self.linkRB = QRadioButton("Con tablas intermedias")
+        self.guideLinkLabel.hide()
+        self.guideLinkCombo.hide()
+        self.linkRB.hide()
+        #
+        sp_retain = self.guideLinkCombo.sizePolicy()
+        sp_retain.setRetainSizeWhenHidden(True)
+        self.guideLinkCombo.setSizePolicy(sp_retain)
+        
+        self.catCtorRB = QRadioButton("Agrupado en Categorias")
+        self.caseCtorRB = QRadioButton("Directamente via código SQL")
+        self.dateCtorRB = QRadioButton("Agrupaciones de fechas")
+        
+        groupBox = QGroupBox("Criterios de agrupacion manuales ")
+        groupBoxLayout = QHBoxLayout()
+        groupBoxLayout.addWidget(self.catCtorRB)
+        groupBoxLayout.addWidget(self.caseCtorRB)
+        groupBoxLayout.addWidget(self.dateCtorRB)
+        groupBox.setLayout(groupBoxLayout)
+        
+        #context.append(('c. base','condicion','c. enlace'))
+        #context.append((QComboBox,None,('',)+tuple(self.listOfFields)))
+        #context.append((QComboBox,None,tuple(LOGICAL_OPERATOR)))
+        #context.append((QComboBox,None,None))
+        
+        #numrows=3
+        
+        #self.joinClauseArray = WDataSheet(context,numrows)
+        
+        #for k in range(self.joinClauseArray.rowCount()):
+            #self.joinClauseArray.cellWidget(k,1).setCurrentIndex(3) #la condicion de igualdad
+        #self.joinClauseArray.resizeColumnToContents(0)
+            
+        meatLayout = QGridLayout()
+        meatLayout.addWidget(prodNameLabel,0,0)
+        meatLayout.addWidget(self.prodName,0,1,1,3)
+        meatLayout.addWidget(joinTableLabel,1,0)
+        meatLayout.addWidget(self.joinTableCombo,1,1)
+        meatLayout.addWidget(guideFldLabel,1,2)
+        meatLayout.addWidget(self.guidFldCombo,1,3)
+        meatLayout.addWidget(guideDescLabel,2,2)
+        meatLayout.addWidget(self.guideDescCombo,2,3)
+        meatLayout.addWidget(self.guideLinkLabel,3,0,1,2)
+        meatLayout.addWidget(self.guideLinkCombo,3,2)
+        meatLayout.addWidget(self.linkRB,3,3)
+        meatLayout.addWidget(groupBox, 4, 0, 1, 4)
+
+        #meatLayout.addWidget(self.joinClauseArray,2,0,1,2)
+        self.setLayout(meatLayout)
+
+        
+
+    
+    def initializePage(self):
+        self.iterator = self.wizard().page(ixWzProdBase).iterations
+        #TODO no inicializa si no esta en la regla de produccion
+        self.iterator = self.wizard().page(ixWzProdBase).iterations
+        if isinstance(self.wizard().diccionario,(list,tuple)):
+            #varias entradas
+            self.midict = self.wizard().diccionario[self.iterator -1]
+        else:
+            self.midict = self.wizard().diccionario
+
+        #vamos ahora al proceso de add
+        #TODO si no esta en la lista
+        pos = self.listOfTablesCode.index(self.cache['tabla_ref'])
+        self.joinTableCombo.setCurrentIndex(pos)
+
+    def nextId(self):
+        return -1
+
+    def validatePage(self):
+        
+        if self.isFinalPage() and self.iterator < self.wizard().prodIters:
+            self.wizard().setStartId(ixWzProdBase);
+            self.wizard().restart()        
+            return False
+        return True
+
+    def tablaElegida(self,idx):
+        print('Algo encuentra',idx)
+        tabname = self.listOfTablesCode[idx]
+        self.listOfFields = [ item[1] for item in getFieldsFromTable(tabname,self.cache,self.cube) ]
+        self.listOfFieldsCode = [ item[0] for item in getFieldsFromTable(tabname,self.cache,self.cube) ]
+        self.guidFldCombo.clear()
+        self.guidFldCombo.addItems(self.listOfFields)
+        self.guideDescCombo.clear()
+        self.guideDescCombo.addItems(['',] + self.listOfFields)
+
+        if tabname != self.cache['tabla_ref']:
+            self.guideLinkLabel.show()
+            self.guideLinkCombo.show()
+            self.linkRB.show()
+        #self.targetCodeList.clear()
+        #self.targetDescList.clear()
+        #self.targetCodeList.addItems(self.listOfFields)
+        #self.targetDescList.addItems(self.listOfFields) 
+
+    def campoElegido(self,idx):
+        return 
+    
 class CubeWizard(QWizard):
     def __init__(self,obj,cubeMgr,action,cube_root,cube_ref,cache_data):
         super(CubeWizard,self).__init__()
@@ -1130,7 +1296,7 @@ class CubeWizard(QWizard):
             print(self.prodIters,self.diccionario)
             
             
-            self.setPage(ixWzProdBase, WzProdBase(cache=cache_data))
+            self.setPage(ixWzProdBase, WzProdBase(cube=cubeMgr,cache=cache_data))
             self.setPage(ixWzCategory, WzCategory(cache=cache_data))
             self.setPage(ixWzRowEditor, WzRowEditor(cache=cache_data))
             self.setPage(ixWzTime, WzTime(cache=cache_data))
