@@ -299,3 +299,24 @@ def prepareDynamicArray(obj,cubeMgr,cube_root,cube_ref,cache_data):
     else:
         print('Edit dynamic sin regla',obj,tipo)
     return array
+
+def setAddComboElem(fieldValue,widget,codeArray,descArray,offset=0):
+    """ Añadir elementos a un combo editabe con dos arrays (uno para el codigo y otro el texto
+    fieldValue  la entrada
+    widget      al combo que vamos a tratar
+    codeArray   valores internos
+    descArray   valores presentacion
+    offset      por si es necesario para los espacios en blanco
+    """
+    try:
+        if '.' in fieldValue:
+            pos = codeArray.index(fieldValue)
+        else:
+            pos = descArray.index(fieldValue)
+            widget.setCurrentIndex(pos + offset)  #FIXME
+    except ValueError:
+        widget.addItem(fieldValue)
+        codeArray.append(fieldValue)
+        descArray.append(fieldValue)
+        widget.setCurrentIndex(widget.count() -1)
+        widget.setStyleSheet("background-color:yellow;")

@@ -1214,16 +1214,43 @@ class WzProdBase(QWizardPage):
             self.midict = self.wizard().diccionario[self.iterator -1]
         else:
             self.midict = self.wizard().diccionario
-
+        
+            
+            
         #vamos ahora al proceso de add
         #TODO si no esta en la lista
+        self.prodName.setText(self.midict.get('name',str(self.iterations)))
+            
         if self.midict.get('domain'):
-            print('dominio encontrado')
-        if self.midict.get('link via'):
-            print('guia encontrada')
-        pos = self.listOfTablesCode.index(self.cache['tabla_ref'])
-        self.joinTableCombo.setCurrentIndex(pos)
-
+            #TODO elementos multiples
+            setAddComboElem(self.midict['domain'].get('table'),
+                            self.joinTableCombo,
+                            self.listOfTablesCode,self.listOfTables)
+            #es valido porque la señal de cambio de tabla se dispara internamente con el setCurrentIndex
+            setAddComboElem(self.midict['domain'].get('code'),
+                            self.guidFldCombo,
+                            self.listOfFieldsCode,self.listOfFields,1)
+            setAddComboElem(self.midict['domain'].get('desc'),
+                            self.guideDescCombo,
+                            self.listOfFieldsCode,self.listOfFields)
+            if self.midict.get('link via'):
+                print('guia encontrada')
+                external = True
+            else:
+                setAddComboElem(self.midict.get('elem'),
+                                self.guideLinkCombo,
+                                self.listOfLinkFieldsCode,self.listOfLinkFields)
+                
+        else:    
+            setAddComboElem(self.cache['tabla_ref'],
+                            self.joinTableCombo,
+                            self.listOfTablesCode,self.listOfTables)
+            #es valido porque la señal de cambio de tabla se dispara internamente con el setCurrentIndex
+            setAddComboElem(self.midict.get('elem'),
+                            self.guidFldCombo,
+                            self.listOfFieldsCode,self.listOfFields,1)
+            self.guideDescCombo.setCurrentIndex(0)  #FIXME
+            self.guideLinkCombo.setCurrentIndex(0) 
     def nextId(self):
         print('invocamos nextId')
         nextPage = -1
