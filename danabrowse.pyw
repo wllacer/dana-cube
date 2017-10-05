@@ -371,13 +371,13 @@ class DanaBrowseWindow(QMainWindow):
  
  
     def saveCubeFile(self):
-        self.cubeMgr.saveConfigFile()
+        self.cubeMgr.saveCubeFile()
     
     def restoreCubeFile(self):
         self.cubeMgr.restoreConfigFile()
         
     def hideCube(self):
-        self.cubeMgr.saveConfigFile()
+        self.cubeMgr.saveCubeFile()
         self.cubeMgr.hide()
         self.cubeMenu.setEnabled(False)
 

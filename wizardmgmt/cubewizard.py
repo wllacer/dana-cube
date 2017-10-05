@@ -1152,10 +1152,10 @@ class WzProdBase(QWizardPage):
         self.guideLinkLabel.setBuddy(self.guideLinkCombo)
         self.guideLinkCombo.currentIndexChanged[int].connect(self.campoElegido)
         self.guideLinkCombo.setStyleSheet("background-color:khaki;")
-        self.linkRB = QRadioButton("Con tablas intermedias")
+        self.linkCTorRB = QRadioButton("Con tablas intermedias")
         self.guideLinkLabel.hide()
         self.guideLinkCombo.hide()
-        self.linkRB.hide()
+        self.linkCTorRB.hide()
         #
         sp_retain = self.guideLinkCombo.sizePolicy()
         sp_retain.setRetainSizeWhenHidden(True)
@@ -1196,7 +1196,7 @@ class WzProdBase(QWizardPage):
         meatLayout.addWidget(self.guideDescCombo,2,3)
         meatLayout.addWidget(self.guideLinkLabel,3,0,1,2)
         meatLayout.addWidget(self.guideLinkCombo,3,2)
-        meatLayout.addWidget(self.linkRB,3,3)
+        meatLayout.addWidget(self.linkCTorRB,3,3)
         meatLayout.addWidget(groupBox, 4, 0, 1, 4)
 
         #meatLayout.addWidget(self.joinClauseArray,2,0,1,2)
@@ -1217,11 +1217,29 @@ class WzProdBase(QWizardPage):
 
         #vamos ahora al proceso de add
         #TODO si no esta en la lista
+        if self.midict.get('domain'):
+            print('dominio encontrado')
+        if self.midict.get('link via'):
+            print('guia encontrada')
         pos = self.listOfTablesCode.index(self.cache['tabla_ref'])
         self.joinTableCombo.setCurrentIndex(pos)
 
     def nextId(self):
-        return -1
+        print('invocamos nextId')
+        nextPage = -1
+        
+        if self.catCtorRB.isChecked():
+            nextPage =  ixWzCategory
+        elif self.caseCtorRB.isChecked():
+            nextPage =  ixWzRowEditor
+        elif self.dateCtorRB.isChecked():
+            nextPage =  ixWzTime
+            
+        if self.linkCTorRB.isChecked() and nextPage == -1:
+            nextPage =  ixWzDomain
+
+        return nextPage
+
 
     def validatePage(self):
         
@@ -1244,7 +1262,7 @@ class WzProdBase(QWizardPage):
         if tabname != self.cache['tabla_ref']:
             self.guideLinkLabel.show()
             self.guideLinkCombo.show()
-            self.linkRB.show()
+            self.linkCTorRB.show()
         #self.targetCodeList.clear()
         #self.targetDescList.clear()
         #self.targetCodeList.addItems(self.listOfFields)
