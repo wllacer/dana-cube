@@ -57,7 +57,7 @@ DELIMITER=':'
 #from core import Cubo
 
 from cubemgmt.cubeutil import info2cube,isDictionaryEntry,action_class,getCubeList,getCubeItemList
-#from cubemgmt.cubetree import *
+from cubemgmt.cubetree import CubeItem
 from cubemgmt.cubeTypes import *
 #from cubemgmt.cubeCRUD import insertInList
 from dictmgmt.tableInfo import FQName2array,TableInfo
@@ -215,6 +215,10 @@ def getFieldsFromTable(fqn_table_name,cache_data,cube,tipo_destino=None):
                     for item in cache_data['info'][fqn_table_name]['Fields'] 
                     if item['format'] in ('entero','numerico')
                     ]
+    elif tipo_destino == 'fmt':
+        array = [ (item['name'],item['basename'],item['format']) 
+                    for item in cache_data['info'][fqn_table_name]['Fields'] 
+                    ]
     else:
         array = [ (item['name'],item['basename']) for item in cache_data['info'][fqn_table_name]['Fields'] ]    
     return array
@@ -300,7 +304,7 @@ def prepareDynamicArray(obj,cubeMgr,cube_root,cube_ref,cache_data):
         print('Edit dynamic sin regla',obj,tipo)
     return array
 
-def setAddComboElem(fieldValue,widget,codeArray,descArray,offset=0):
+def setAddComboElem(dataValue,widget,codeArray,descArray,offset=0):
     """ Añadir elementos a un combo editabe con dos arrays (uno para el codigo y otro el texto
     fieldValue  la entrada
     widget      al combo que vamos a tratar
@@ -308,15 +312,43 @@ def setAddComboElem(fieldValue,widget,codeArray,descArray,offset=0):
     descArray   valores presentacion
     offset      por si es necesario para los espacios en blanco
     """
+    #FIXME codigo trapacer para evitar problemas con arrays
+    fieldValue = norm2String(dataValue)
     try:
         if '.' in fieldValue:
             pos = codeArray.index(fieldValue)
         else:
             pos = descArray.index(fieldValue)
-            widget.setCurrentIndex(pos + offset)  #FIXME
+        widget.setCurrentIndex(pos +offset)  #FIXME
     except ValueError:
         widget.addItem(fieldValue)
         codeArray.append(fieldValue)
         descArray.append(fieldValue)
         widget.setCurrentIndex(widget.count() -1)
         widget.setStyleSheet("background-color:yellow;")
+
+
+def setAddQListElem(fieldValue,widget,codeArray,descArray,offset=0):
+    """ Añadir elementos a un QListWidget editabe con dos arrays (uno para el codigo y otro el texto
+    fieldValue  la entrada
+    widget      al QListWidget que vamos a tratar
+    codeArray   valores internos
+    descArray   valores presentacion
+    offset      por si es necesario para los espacios en blanco
+    """
+    
+    try:
+        idx = codeArray.index(fieldValue)
+        #entry = widget.model().itemFromIndex(idx)
+    except ValueError:
+        try:
+            idx = descArray.index(fieldValue)
+        except ValueError:
+            widget.addItem(fieldValue)
+            idx= widget.count() -1
+            #select fieldValue
+            descArray.append(fieldValue)
+            codeArray.append(fieldValue)
+            #entry = widget.model().itemFromIndex(idx)
+    selfieldValue = widget.item(idx)
+    selfieldValue.setSelected(True)
