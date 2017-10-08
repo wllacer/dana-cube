@@ -527,12 +527,11 @@ class WzCategory(QWizardPage):
         catValueFormatLabel.setBuddy(self.catValueFormatCombo)
         
         #OJO notar que su posicion es posterior, pero lo necesito para cargar valor
-        catResultDefaultLabel = QLabel("Resultado por &Defecto:")
+        self.catResultDefaultLabel = QLabel("Resultado por &Defecto:")
         self.catResultDefaultLine = QLineEdit()
-        catResultDefaultLabel.setBuddy(self.catResultDefaultLine)
+        self.catResultDefaultLabel.setBuddy(self.catResultDefaultLine)
     
         self.context=[]
-        
         self.context.append(('categoria','condicion','valores'))
         self.context.append((QLineEdit,None,None))
         self.context.append((QComboBox,None,tuple(LOGICAL_OPERATOR)))
@@ -541,6 +540,13 @@ class WzCategory(QWizardPage):
         self.data = None
         self.sheet = WDataSheet(self.context,self.numrows)
         #self.sheet.fill(self.data)
+        self.simpleContext=(
+            ('categoria',QLineEdit,None,None),
+            ('condicion',QComboBox,None,tuple(LOGICAL_OPERATOR)),
+            ('valores',QLineEdit,None,None),
+            )
+        self.simpleSheet = WPropertySheet(self.simpleContext,self.data)
+        self.simpleSheet.hide()
     
     
         meatLayout = QGridLayout()
@@ -549,30 +555,79 @@ class WzCategory(QWizardPage):
         meatLayout.addWidget(catResultFormatLabel,1,0)
         meatLayout.addWidget(self.catResultFormatCombo,1,1)
         meatLayout.addWidget(self.sheet, 2, 0, 1, 2)
-        meatLayout.addWidget(catResultDefaultLabel,8,0)
+        meatLayout.addWidget(self.simpleSheet, 2, 0, 1, 3)
+        meatLayout.addWidget(self.catResultDefaultLabel,8,0)
         meatLayout.addWidget(self.catResultDefaultLine,8,1)
         
         self.setLayout(meatLayout)
     
     def initializePage(self):
-        self.iterator = self.wizard().page(ixWzProdBase).iterations
-        if isinstance(self.wizard().diccionario,(list,tuple)):
-            #varias entradas
-            self.midict = self.wizard().diccionario[self.iterator -1]
+        base = self.wizard().page(ixWzProdBase) 
+        if not base:
+            self.iterator = -1
         else:
-            self.midict = self.wizard().diccionario
+            self.iterator = self.wizard().page(ixWzProdBase).iterations
 
-        if self.midict.get('fmt'):
-            self.catResultFormatCombo.setCurrentIndex( [ item[0] for item in ENUM_FORMAT ].index(self.midict['fmt']))
-        if self.midict.get('enum_fmt'): #es el formato del campo origen
-            self.catValueFormatCombo.setCurrentIndex( [ item[0] for item in ENUM_FORMAT ].index(self.midict['enum_fmt']))
-        if self.midict.get('categorias'):
-            self.data = [] #'categoria','condicion','valores'  || 'result','condition','values'
-            for entry in self.midict['categorias']:
+        obj = self.wizard().obj
+        if obj.type() == 'prod': # cuando la llamada es indirecta
+            self.midict = self.wizard().diccionario
+            if self.midict.get('fmt'):
+                self.catResultFormatCombo.setCurrentIndex( [ item[0] for item in ENUM_FORMAT ].index(self.midict['fmt']))
+            if self.midict.get('enum_fmt'): #es el formato del campo origen
+                self.catValueFormatCombo.setCurrentIndex( [ item[0] for item in ENUM_FORMAT ].index(self.midict['enum_fmt']))
+
+        elif obj.type() == 'categories':
+            if obj.text() == obj.type():  #las categorias al completo
+                self.midict = {'categories':self.wizard().diccionario}
+                pai = self.wizard().obj.parent()
+            else:
+                self.midict = self.wizard().diccionario
+                pai = self.wizard().obj.parent().parent()  
+                self.sheet.hide()
+                if self.midict.get('default'):
+                    pass
+                else:
+                    self.simpleSheet.show()
+                    self.catResultDefaultLabel.hide()
+                    self.catResultDefaultLine.hide()
+            fmtObj = pai.getChildrenByName('fmt')
+            if not fmtObj:
+                fmt = 'txt'
+            else:
+                fmt = fmtObj.getColumnData(1)
+            enum_fmtObj = pai.getChildrenByName('enum_fmt')
+            if not enum_fmtObj:
+                enum_fmt = 'txt'
+            else:
+                enum_fmt = enum_fmtObj.getColumnData(1)
+                
+            self.catResultFormatCombo.setCurrentIndex( [ item[0] for item in ENUM_FORMAT ].index(fmt))
+            self.catValueFormatCombo.setCurrentIndex( [ item[0] for item in ENUM_FORMAT ].index(enum_fmt))
+            self.catResultFormatCombo.setEnabled(False)
+            self.catValueFormatCombo.setEnabled(False)
+
+
+        
+    #def validatePage(self):
+        #values = self.sheet.values()
+        #for k,clave in enumerate(('driver','dbname','dbhost','dbuser','dbpass','port','debug')):
+            #if self.context[k][1] == QComboBox:
+                #try:
+                    #self.midict[clave] = self.context[k][3][values[k]]
+                #except IndexError:
+                    #self.midict[clave] = self.sheet.cellWidget(k,0).getCurrentText()
+            #else:
+                #self.midict[clave] = values[k]
+        #return True
+
+        self.data = [] #'categoria','condicion','valores'  || 'result','condition','values'
+        if self.midict.get('categories'): #usa sheet
+            lista = self.midict['categories']
+            for entry in lista:
                 if entry.get('default'):
                     self.catResultDefaultLine.setText(entry['default'])
                     continue
-                tmp = []
+                tmp = [ None for i in range(3) ]
                 tmp[0] = entry['result']
                 tmp[1] = LOGICAL_OPERATOR.index(entry['condition'])
                 tmp[2] = norm2String(entry['values'])
@@ -584,38 +639,88 @@ class WzCategory(QWizardPage):
         
             self.sheet.fill(self.data)
 
-        self.wizard().setOptions(QWizard.HaveCustomButton1)
-        self.setButtonText(QWizard.CustomButton1,'Mas entradas')
-        self.wizard().customButtonClicked.connect(self.addEntry)
+        else:
+            entry = self.midict
+            if entry.get('default'):
+                self.catResultDefaultLine.setText(entry['default'])
+            else:
+                for k,clave in enumerate(('result','condition','values')):
+                    if self.simpleContext[k][1] == QComboBox:
+                        self.simpleSheet.set(k,0,self.simpleContext[k][3].index(self.midict.get(clave,'in')))
+                    self.simpleSheet.set(k,0,norm2String(self.midict.get(clave)))
+            
+
+        if self.midict.get('categories'):
+            self.wizard().setOptions(QWizard.HaveCustomButton1)
+            self.setButtonText(QWizard.CustomButton1,'Mas entradas')
+            self.wizard().customButtonClicked.connect(self.addEntry)
 
         
     def nextId(self):
         return -1
+    
     def validatePage(self):        
-        formato = ENUM_FORMAT[self.catResultFormatCombo.currentIndex()][0]
-        enumFmt = ENUM_FORMAT[self.catValueFormatCombo.currentIndex()][0]
-        print(formato,enumFmt)
-        if self.midict.get('fmt') or formato != 'txt':
-            self.midict['fmt'] = formato
-        if self.midict.get('enum_fmt') or formato != enumFmt:
-            self.midict['enum_fmt'] = enumFmt
-        if self.midict.get('categorias'):      
-            self.midict['categorias'].clear()
-        else:
-            self.midict['categorias'] = []
+
         resultado = self.sheet.values()
-        for entry in resultado:
-            if entry[0] == '':
-                continue
-            self.midict['categorias'].append({'result':entry[0],'condition':LOGICAL_OPERATOR[entry[1]],'values':norm2List(entry[2])})
-        
-        if self.catResultDefaultLine.text() != '':
-            self.midict['categorias'].insert(0,{'default':self.catResultDefaultLine.text()})
+        obj = self.wizard().obj
+        if obj.type() == 'prod': # cuando la llamada es indirecta
+            formato = ENUM_FORMAT[self.catResultFormatCombo.currentIndex()][0]
+            enumFmt = ENUM_FORMAT[self.catValueFormatCombo.currentIndex()][0]
             
-        if self.isFinalPage() and  self.iterator < self.wizard().prodIters:
-            self.wizard().setStartId(ixWzProdBase);
-            self.wizard().restart()        
-            return False
+            if self.midict.get('fmt') or formato != 'txt':
+                self.midict['fmt'] = formato
+            if self.midict.get('enum_fmt') or formato != enumFmt:
+                self.midict['enum_fmt'] = enumFmt
+            if self.midict.get('categories'):      
+                self.midict['categories'].clear()
+            else:
+                self.midict['categories'] = []
+            resultado = self.sheet.values()
+            for entry in resultado:
+                if entry[0] == '':
+                    continue
+                self.midict['categories'].append({'result':entry[0],'condition':LOGICAL_OPERATOR[entry[1]],'values':norm2List(entry[2])})
+            
+            if self.catResultDefaultLine.text() != '':
+                self.midict['categories'].insert(0,{'default':self.catResultDefaultLine.text()})
+
+        elif obj.type() == 'categories':
+            if obj.text() == obj.type():  #las categorias al completo
+                lista_categ = self.wizard().diccionario
+                lista_categ.clear()
+                for entry in resultado:
+                    if entry[0] == '':
+                        continue
+                    lista_categ.append({'result':entry[0],'condition':LOGICAL_OPERATOR[entry[1]],'values':norm2List(entry[2])})
+                
+                if self.catResultDefaultLine.text() != '':
+                    lista_categ.insert(0,{'default':self.catResultDefaultLine.text()})
+
+            else:
+                # FIXME no procesa bien el default
+                self.midict.clear()
+                if self.catResultDefaultLine.text() != '':
+                    self.midict = {'default':self.catResultDefaultLine.text()}
+                    return True
+                values = self.simpleSheet.values()
+                for k,clave in enumerate(('result','condition','values')):
+                    if self.context[k][1] == QComboBox:
+                        try:
+                            self.midict[clave] = self.context[k][3][values[k]]
+                        except IndexError:
+                            self.midict[clave] = self.sheet.cellWidget(k,0).getCurrentText()
+                    else:
+                        self.midict[clave] = values[k]
+                        print(self.midict,self.wizard().diccionario)
+
+
+                
+        
+            
+        #if self.isFinalPage() and  (self.iterator == -1 or self.iterator < self.wizard().prodIters ):
+            #self.wizard().setStartId(ixWzProdBase);
+            #self.wizard().restart()        
+            #return False
 
         return True
     
