@@ -90,11 +90,11 @@ def setMenuActions(menu,context,item):
     menuActions = []
     if ( item.type() in  TYPE_LIST_DICT  and item.type() == item.text())  :
         menuActions.append(menu.addAction("Add",lambda:execAction(item,context,"add")))
-    if item.type() in (TYPE_LIST) :
+    if item.type() in (TYPE_ARRAY) :
         menuActions.append(menu.addAction("Add",lambda:execAction(item,context,"add")))
     
     if  ( item.type() in NO_EDIT_LIST or
-         (item.type() in (TYPE_LIST) and item.type() == item.text()) or
+         (item.type() in TYPE_ARRAY  and item.type() == item.text()) or
          (item.text() in ('guides') )
          ):
         pass
@@ -107,7 +107,7 @@ def setMenuActions(menu,context,item):
     else:
         menuActions.append(menu.addAction("Delete",lambda:execAction(item,context,"delete")))
         
-    if item.type() != item.text():
+    if item.type() != item.text() and item.type() not in TYPE_EDIT:
         menuActions.append(menu.addAction("Rename",lambda:execAction(item,context,"rename")))
         #menuActions[-1].setEnabled(False)
     if item.type() == 'base':

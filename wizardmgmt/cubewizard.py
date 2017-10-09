@@ -577,7 +577,7 @@ class WzCategory(QWizardPage):
                 self.catValueFormatCombo.setCurrentIndex( [ item[0] for item in ENUM_FORMAT ].index(self.midict['enum_fmt']))
 
         elif obj.type() == 'categories':
-            if obj.text() == obj.type():  #las categorias al completo
+            if obj.text() == obj.type() :  #las categorias al completo
                 self.midict = {'categories':self.wizard().diccionario}
                 pai = self.wizard().obj.parent()
             else:
@@ -758,15 +758,19 @@ class WzRowEditor(QWizardPage):
         self.setLayout(meatLayout)
     
     def initializePage(self):
-        self.iterator = self.wizard().page(ixWzProdBase).iterations
-        if isinstance(self.wizard().diccionario,(list,tuple)):
-            #varias entradas
-            self.midict = self.wizard().diccionario[self.iterator -1]
+        self.iterator = -1
+        if self.wizard().obj.type() not in TYPE_EDIT :
+            self.iterator = self.wizard().page(ixWzProdBase).iterations
+            if isinstance(self.wizard().diccionario,(list,tuple)):
+                #varias entradas
+                self.midict = self.wizard().diccionario[self.iterator -1]
+            else:
+                self.midict = self.wizard().diccionario
+            caseStmt = self.midict.get('case_sql')
         else:
             self.midict = self.wizard().diccionario
-        
-
-        caseStmt = self.midict.get('case_sql')
+            caseStmt = self.midict
+            
         if isinstance(caseStmt,(list,tuple)):
             self.editArea.setPlainText('\n'.join(caseStmt))
         else:    
@@ -775,17 +779,22 @@ class WzRowEditor(QWizardPage):
     def nextId(self):
         return -1
     def validatePage(self):
-        if self.isFinalPage() and self.iterator < self.wizard().prodIters:
-            self.wizard().setStartId(ixWzProdBase);
-            self.wizard().restart()        
-            return False
+        #if self.isFinalPage() and self.iterator < self.wizard().prodIters:
+            #self.wizard().setStartId(ixWzProdBase);
+            #self.wizard().restart()        
+            #return False
         
         texto = self.editArea.document().toPlainText()
-        
+        if isinstance(self.midict,dict):
+            area = self.midict.get('case_sql')
+        else:
+            area = self.midict
+            
         if texto and texto.strip() != '':
-            self.midict['case_sql'] = texto.split('\n')
-        elif self.midict.get('case_sql'):
-            del self.midict['case_sql']
+            area.clear()
+            area += texto.split('\n')
+        elif self.midict is not None: 
+            area.clear()
         return True
 
 class WzTime(QWizardPage):

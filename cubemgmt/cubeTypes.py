@@ -66,7 +66,7 @@ TYPE_LEAF = set([
     'agregado',
     'base_elem',
     'base filter',
-    'case_sql',
+    #'case_sql',
     'class',
     'code',
     'col',
@@ -103,13 +103,16 @@ TYPE_LEAF = set([
 """
     Estos tres tipos son fundamentales en isDictionary pues determinan el repliegue del arbol como cubo
 """
-TYPE_LIST = set(['case_sql',
-     'fields',
+TYPE_ARRAY = set(['fields',
      'values',
      'code',
      'desc',
      'elem',
      'grouped_by'])
+
+TYPE_EDIT = set (['case_sql'])
+
+TYPE_LIST = TYPE_ARRAY | TYPE_EDIT
 
 TYPE_DICT = set([u'base',
      u'default_base',
@@ -125,7 +128,7 @@ TYPE_LIST_DICT = set([
      'link via',
      'date filter'])
 
-COMPLEX_TYPES = TYPE_DICT | TYPE_LIST | TYPE_LIST_DICT
+COMPLEX_TYPES = TYPE_DICT | TYPE_LIST | TYPE_LIST_DICT 
 
 GUIDE_CLASS = ( 
     ('o','normal',),
