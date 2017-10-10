@@ -142,7 +142,7 @@ Una lista con todas y cada uno de las posibles guias (criterios de agrupación) 
 
 * \<ordinary_prod  \> ::= [ \<name\> ] \<elem\>+ [  \<domain\> ]  [\<fmt\>] 
 
-* \<category_prod \> ::= [ \<name\> ] \<elem\> ( \<categories\> , \<case_sql\> ) [\<fmt\>] [\fmt_out\>]
+* \<category_prod \> ::= [ \<name\> ] \<elem\> ( \<categories\> , \<case_sql\> ) [\<fmt\>] [\enum_fmt\>]
 
 * \<date_prod \> ::= [ \<name\> ] \<elem\>  \<class\>  \<fmt\> \<mask\>
 
@@ -338,14 +338,14 @@ y en el caso de múltiples clauses ( _0 y _1 denotan las respectivas entradas en
 Opcionalemnte se puede especificar una clausula de enlace que no sea la condición igual (normalmente no recomendado)
 
 * \<\fmt\>::= 'fmt ::= \<fmt_clause\>
-* \<\fmt_out\>::= 'fmt_out ::= \<fmt_clause\>
+* \<\enum_fmt\>::= 'enum_fmt ::= \<fmt_clause\>
 * \<fmt\>::= 'fmt ::= ' ( 'txt' , 'num' ,'date')
 
 En algunas circunstacias puede ser recomendable incluir un formato del campo para asegurar correctas ordenaciones o comparaciones en el gestor.
 
 En las guias _ordinarias_, normalmente corresponde al definido en la base de datos y no suele ser necesario especificarlo. 
 
-En _categorias_ podemos necesitar dos de ellos, __fmt__ el que corresponde al campo sobre el que agrupamos y __fmt_out__ que corresponde al formato del resultados. Si no se especifica, se asume que es _'txt'_.
+En _categorias_ podemos necesitar dos de ellos, __fmt__ el que corresponde al campo sobre el que agrupamos y __enum_fmt__ que corresponde al formato del resultados. Si no se especifica, se asume que es _'txt'_.
 
 Para las guias tipo _date_debería incluirse siempre (aunque casi siempre sea _'date'_ )
 
@@ -402,7 +402,7 @@ El nombre del cubo debe coincidir con uno de los cubos definidos en el fichero
 * \<class\> ::= o , c , h , d
 * \<prod\> ::= \<ordinary_prod\> , \<category_prod\> , ( \<ordinary_prod\> , \<category_prod\> )+ , \<date_prod\>
 * \<ordinary_prod  \> ::= [ \<name\> ] \<elem\>+ [  \<domain\> ]  [\<fmt\>] 
-* \<category_prod \> ::= [ \<name\> ] \<elem\> ( \<categories\> , \<case_sql\> ) [\<fmt\>] [\fmt_out\>]
+* \<category_prod \> ::= [ \<name\> ] \<elem\> ( \<categories\> , \<case_sql\> ) [\<fmt\>] [\enum_fmt\>]
 * \<date_prod \> ::= [ \<name\> ] \<elem\>  \<class\>  \<fmt\> \<mask\>
 * \<name\> ::= 'name :' nombre
 * \<elem\> ::= 'elem :' ( campo , campo \<link via\> )
@@ -421,7 +421,7 @@ El nombre del cubo debe coincidir con uno de los cubos definidos en el fichero
 *  \<join clause\> ::= 'base_elem :' campo+ [ 'condition :' \<condition\>' ]rel_elem' campo+
 *  \<condition\> ::=  ('in','between','like','=','!=','<','>','>=','<=','not in','not between','not like','is null','is not null')
 * \<\fmt\>::= 'fmt ::= \<fmt_clause\>
-* \<\fmt_out\>::= 'fmt_out ::= \<fmt_clause\>
+* \<\enum_fmt\>::= 'enum_fmt ::= \<fmt_clause\>
 * \<fmt\>::= 'fmt ::= ' ( 'txt' , 'num' ,'date')
 *   <\default\> ::= 'default :'\<cubeid\> <\view_def\>
 *   \<cubeid \>   ::=  "cubo" ":" cube_name

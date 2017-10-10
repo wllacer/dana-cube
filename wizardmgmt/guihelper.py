@@ -326,7 +326,8 @@ def setAddComboElem(dataValue,widget,codeArray,descArray,offset=0):
         descArray.append(fieldValue)
         widget.setCurrentIndex(widget.count() -1)
         widget.setStyleSheet("background-color:yellow;")
-
+        pos = -1
+    return pos + offset
 
 def setAddQListElem(fieldValue,widget,codeArray,descArray,offset=0):
     """ Añadir elementos a un QListWidget editabe con dos arrays (uno para el codigo y otro el texto

@@ -34,7 +34,7 @@ def norm2List(entrada):
         return re.split(r',\s*(?=[^)]*(?:\(|$))', entrada)
 
     else:
-       return entrada.split(',')
+       return re.split(r', *',entrada)
       
 def norm2String(entrada,separador=', '):
     """

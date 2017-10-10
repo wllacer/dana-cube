@@ -14,9 +14,115 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 from pprint import pprint
-from util.record_functions import norm2List
+from util.record_functions import norm2List,norm2String
  
 
+class WMultiCombo(QComboBox):
+    """ Una variante de combo con seleccion multiple
+    """
+    def __init__(self,parent=None):
+        super(WMultiCombo,self).__init__(parent)
+        self.Head = None
+        self.view().pressed.connect(self.handleItemPressed)
+        
+    def load(self,data,dataDisplay):
+        model = QStandardItemModel()
+        item = QStandardItem('Seleccione los elementos')
+        model.setItem(0,0,item)
+        self.Head = item.index()
+        for i,entrada in enumerate(dataDisplay):
+            item = QStandardItem(entrada)
+            item.setData(Qt.Unchecked,Qt.CheckStateRole)
+            item.setFlags(Qt.ItemIsEnabled)
+            item.setData(data[i],Qt.UserRole+1)
+            model.setItem(i+1,0,item)
+        self.setModel(model)
+
+    def updateHeader(self,status,item):
+        hdr = self.model().itemFromIndex(self.Head)
+        extra = set(norm2List(hdr.data()))
+        if status == 'add':
+            extra.add(item.data(Qt.DisplayRole))
+        elif status == 'remove':
+            try:
+                extra.remove(item.data(Qt.DisplayRole))
+            except KeyError:
+                pass
+        if len(extra) > 0:
+            hdr.setData(norm2String(list(extra)))
+            hdr.setData(norm2String(list(extra)),Qt.DisplayRole)
+        else:
+            hdr.setData(norm2String(None))
+            hdr.setData(norm2String(None),Qt.DisplayRole)
+
+    def handleItemPressed(self, index):
+        item = self.model().itemFromIndex(index)
+
+        if index.row() == 0:
+            return
+        if item.checkState() == Qt.Checked:
+            item.setCheckState(Qt.Unchecked)
+            self.updateHeader('remove',item)
+        else:
+            item.setCheckState(Qt.Checked)
+            self.updateHeader('add',item)
+
+    def checkElemText(self,text):
+        # find data choca con el elemento 0
+        for k in range(1,self.count()):
+            if text in (self.itemData(k,Qt.DisplayRole),self.itemData(k,Qt.UserRole +1)):
+                return k
+        return -1
+        
+    def addCell(self,data,dataDisplay=None,values=None):
+        if not dataDisplay:
+            display = data
+        else:
+            display = dataDisplay
+        self.load(data,display)
+        
+        if values is None :
+            return 
+        self.set(values)
+
+    def set(self,values):
+        elementos = norm2List(values)
+        for item in elementos:
+            idx = self.checkElemText(item)
+            if idx < 0:
+                item = QStandardItem(elementos)
+                item.setData(Qt.Checked,Qt.CheckStateRole)
+                item.setFlags(Qt.ItemIsEnabled)
+                item.setData(elementos,Qt.UserRole+1)
+                self.model().appendRow(item)
+                idx = self.model().count() -1
+                
+            self.setItemData(idx,Qt.Checked,Qt.CheckStateRole)
+            self.updateHeader('add',self.model().item(idx))
+    
+    def unset(self,values):
+        elementos = norm2List(values)
+        for item in elementos:
+            idx = self.checkElemText(item)
+            if idx > 0:
+                self.setItemData(idx,Qt.Unchecked,Qt.CheckStateRole)
+                self.updateHeader('remove',self.model().item(idx))
+                
+    def reset(self):
+        for idx in range(1,self.count()):
+            if self.itemData(idx,Qt.CheckStateRole) == Qt.Checked:
+                self.setItemData(idx,Qt.Unchecked,Qt.CheckStateRole)
+                
+        self.setItemData(0,'Seleccione los elementos')
+                                 
+    
+    def get(self):
+        result = []
+        for k in range(1,self.count()):
+            if self.itemData(k,Qt.CheckStateRole) == Qt.Checked :
+                result.append(self.itemData(k,Qt.UserRole +1))
+                return norm2String(result)
+            
 class WPowerTable(QTableWidget):
     # TODO mas tipos
     # TODO un defecto razonable
@@ -52,6 +158,20 @@ class WPowerTable(QTableWidget):
                 editItem.setValue(0)
             else:
                 editItem.setValue(item)
+        elif type == WMultiCombo:
+            editItem = WMultiCombo()
+            if listVals is not None:
+                """
+                aqui list vals es un array de dos elementos interno y display 
+                """
+                if len(listVals) == 2:
+                    display = listVals[1]
+                    datos = listVals [0]
+                else:
+                    display = datos = listVals[0]
+                    editItem.addCell(datos,display,item)
+
+            
         elif type == QComboBox:
             editItem = QComboBox()
             if listVals is not None:
@@ -103,6 +223,8 @@ class WPowerTable(QTableWidget):
                 self.cellWidget(x,y).setChecked(value)
         elif isinstance(self.cellWidget(x,y),QSpinBox):
             self.cellWidget(x,y).setValue(value)
+        elif isinstance(self.cellWidget(x,y),WMultiCombo):
+            self.cellWidget(x,y).set(value)
         elif isinstance(self.cellWidget(x,y),QComboBox):
             if value is None:
                 pass
@@ -130,6 +252,9 @@ class WPowerTable(QTableWidget):
             return self.cellWidget(x,y).isChecked()
         elif isinstance(self.cellWidget(x,y),QSpinBox):
             return self.cellWidget(x,y).value()
+        elif isinstance(self.cellWidget(x,y),WMultiCombo()):
+            return self.cellWidget(x,y).get()
+
         elif isinstance(self.cellWidget(x,y),QComboBox):
             return self.cellWidget(x,y).currentIndex()
         else:
