@@ -63,7 +63,7 @@ from cubemgmt.cubeTypes import *
 from dictmgmt.tableInfo import FQName2array,TableInfo
 
 from dialogs import propertySheetDlg
-
+from widgets import WMultiCombo
 #import cubebrowse as cb
 
 #import time
@@ -314,6 +314,9 @@ def setAddComboElem(dataValue,widget,codeArray,descArray,offset=0):
     """
     #FIXME codigo trapacer para evitar problemas con arrays
     fieldValue = norm2String(dataValue)
+    if isinstance(widget,WMultiCombo):
+        widget.set(fieldValue)
+        return
     try:
         if '.' in fieldValue:
             pos = codeArray.index(fieldValue)

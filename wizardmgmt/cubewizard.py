@@ -949,15 +949,14 @@ class WzDomain(QWizardPage):
         
 
         targetCodeLabel = QLabel("&Clave de enlace:")
-        self.targetCodeList = QListWidget()
+        self.targetCodeList = WMultiCombo()
         targetCodeLabel.setBuddy(self.targetCodeList)
         self.targetCodeList.setStyleSheet("background-color:khaki;")
-        self.targetCodeList.setSelectionMode(QListWidget.ExtendedSelection)
 
         targetDescLabel = QLabel("&Textos desciptivos:")
-        self.targetDescList = QListWidget()
+        self.targetDescList = WMultiCombo()
         targetDescLabel.setBuddy(self.targetDescList)
-        self.targetDescList.setSelectionMode(QListWidget.ExtendedSelection)
+
 
         linkLabel = QLabel("¿Requiere de un enlace externo?")
         self.linkCheck = QCheckBox()
@@ -1010,15 +1009,9 @@ class WzDomain(QWizardPage):
             self.targetTableCombo.setCurrentIndex(idx)
             
         if domain.get('code'):
-            ct = norm2List(domain['code'])
-            for item in ct:
-                setAddQListElem(item,self.targetCodeList,self.listOfFieldsCode,self.listOfFields)
-                
+            self.targetCodeList.set(norm2String(domain.get('code')))
         if domain.get('desc'):
-            ct = norm2List(domain['desc'])
-            for item in ct:
-                setAddQListElem(item,self.targetDescList,self.listOfFieldsCode,self.listOfFields)    
-                
+            self.targetDescList.set(norm2String(domain.get('desc')))
         if domain.get('filter'):
             self.targetFilterLineEdit.setText(domain['filter'])
         if domain.get('grouped by'):
@@ -1056,17 +1049,9 @@ class WzDomain(QWizardPage):
         tabidx =self.targetTableCombo.currentIndex()
         domain['table'] = self.listOfTablesCode[tabidx]
         
-        domain['code'] = []
-        for entry in self.targetCodeList.selectedItems():
-            nombre = entry.text()
-            idx = self.listOfFields.index(nombre)
-            domain['code'].append(self.listOfFieldsCode[idx])
+        domain['code'] = norm2List(self.targetCodeList.get())
         
-        domain['desc'] = []
-        for entry in self.targetDescList.selectedItems():
-            nombre = entry.text()
-            idx = self.listOfFields.index(nombre)
-            domain['desc'].append(self.listOfFieldsCode[idx])
+        domain['desc'] = norm2List(self.targetDescList.get())
          
         domain['filter'] = self.targetFilterLineEdit.text()
          
@@ -1087,10 +1072,9 @@ class WzDomain(QWizardPage):
         tabname = self.listOfTablesCode[idx]
         self.listOfFields = [ item[1] for item in getFieldsFromTable(tabname,self.cache,self.cube) ]
         self.listOfFieldsCode = [ item[0] for item in getFieldsFromTable(tabname,self.cache,self.cube) ]
-        self.targetCodeList.clear()
-        self.targetDescList.clear()
-        self.targetCodeList.addItems(self.listOfFields)
-        self.targetDescList.addItems(self.listOfFields) 
+        self.targetCodeList.load(self.listOfFieldsCode,self.listOfFields)
+        self.targetDescList.load(self.listOfFieldsCode,self.listOfFields)
+
 
 class WzLink(QWizardPage):
     def __init__(self,parent=None,cube=None,cache=None):
@@ -1275,8 +1259,8 @@ class WzProdBase(QWizardPage):
         self.listOfTablesCode = ['',] + [ item[0] for item in tableArray]
         self.listOfFields = []
         self.listOfFieldsCode = []
-        self.listOfLinkFields = ['',] + [ item[1] for item in getFieldsFromTable(cache['tabla_ref'],self.cache,self.cube) ]
-        self.listOfLinkFieldsCode = ['',] +  [ item[0] for item in getFieldsFromTable(cache['tabla_ref'],self.cache,self.cube) ]
+        self.listOfLinkFields = [ item[1] for item in getFieldsFromTable(cache['tabla_ref'],self.cache,self.cube) ]
+        self.listOfLinkFieldsCode = [ item[0] for item in getFieldsFromTable(cache['tabla_ref'],self.cache,self.cube) ]
 
         
         self.setTitle("Definición del dominio de la guía")
@@ -1298,8 +1282,8 @@ class WzProdBase(QWizardPage):
 
         #
         guideFldLabel = QLabel("&Campo guia:")
-        self.guidFldCombo = QComboBox()
-        self.guidFldCombo.addItems(self.listOfFields)
+        self.guidFldCombo = WMultiCombo()
+        #self.guidFldCombo.addItems(self.listOfFields)
         self.guidFldCombo.setEditable(True)
         guideFldLabel.setBuddy(self.guidFldCombo)
         self.guidFldCombo.currentIndexChanged[int].connect(self.campoElegido)
@@ -1307,8 +1291,8 @@ class WzProdBase(QWizardPage):
  
         #
         guideDescLabel = QLabel("&Campo Descriptivo:")
-        self.guideDescCombo = QComboBox()
-        self.guideDescCombo.addItems(self.listOfFields)
+        self.guideDescCombo = WMultiCombo()
+        #self.guideDescCombo.addItems(self.listOfFields)
         self.guideDescCombo.setEditable(True)
         guideDescLabel.setBuddy(self.guideDescCombo)
         #self.guideDescCombo.currentIndexChanged[int].connect(self.campoElegido)
@@ -1317,8 +1301,8 @@ class WzProdBase(QWizardPage):
         self.guideLinkLabel = QLabel("&Campo de enlace en \n" + cache['tabla_ref'].split('.')[-1])
         self.guideLinkLabel.setAlignment(Qt.AlignRight)
         self.guideLinkLabel.setWordWrap(True)  
-        self.guideLinkCombo = QComboBox()
-        self.guideLinkCombo.addItems(self.listOfLinkFields)
+        self.guideLinkCombo = WMultiCombo()
+        self.guideLinkCombo.load(self.listOfLinkFieldsCode,self.listOfLinkFields)
         self.guideLinkCombo.setEditable(True)
         self.guideLinkLabel.setBuddy(self.guideLinkCombo)
         #self.guideLinkCombo.currentIndexChanged[int].connect(self.campoElegido)
@@ -1401,12 +1385,8 @@ class WzProdBase(QWizardPage):
                             self.joinTableCombo,
                             self.listOfTablesCode,self.listOfTables)
             #es valido porque la señal de cambio de tabla se dispara internamente con el setCurrentIndex
-            setAddComboElem(self.midict['domain'].get('code'),
-                            self.guidFldCombo,
-                            self.listOfFieldsCode,self.listOfFields)
-            setAddComboElem(self.midict['domain'].get('desc'),
-                            self.guideDescCombo,
-                            self.listOfFieldsCode,self.listOfFields,1)
+            self.guidFldCombo.set(norm2String(self.midict['domain'].get('code')))
+            self.guideDescCombo.set(norm2String(self.midict['domain'].get('desc')))
             if self.midict.get('link via'):
                 self.linkCTorRB.setChecked(True)
                 self.guideLinkLabel.show()
@@ -1414,24 +1394,17 @@ class WzProdBase(QWizardPage):
                 self.linkCTorRB.show()
                 #TODO multiples criterios 
                 ultimo_filipinas = self.midict['link via'][-1]['clause'][-1].get('base_elem')
-                setAddComboElem(ultimo_filipinas,
-                                self.guideLinkCombo,
-                                self.listOfLinkFieldsCode,self.listOfLinkFields)
+                self.guideLinkCombo.set(norm2String(ultimo_filipinas))
                 
             else:
-                setAddComboElem(self.midict.get('elem'),
-                                self.guideLinkCombo,
-                                self.listOfLinkFieldsCode,self.listOfLinkFields)
-                
+                self.guideLinkCombo.set(norm2String(self.midict.get('elem')))
         else:    
             setAddComboElem(self.cache['tabla_ref'],
                             self.joinTableCombo,
                             self.listOfTablesCode,self.listOfTables)
             #es valido porque la señal de cambio de tabla se dispara internamente con el setCurrentIndex
             if self.midict.get('elem'):
-                setAddComboElem(self.midict.get('elem'),
-                                self.guidFldCombo,
-                                self.listOfFieldsCode,self.listOfFields)
+                self.guidFldCombo.set(norm2String(self.midict.get('elem')))
             else:
                 self.guidFldCombo.setCurrentIndex(0)  #FIXME
             self.guideDescCombo.setCurrentIndex(0)  #FIXME
@@ -1488,10 +1461,9 @@ class WzProdBase(QWizardPage):
         self.baseFieldList = getFieldsFromTable(tabname,self.cache,self.cube,'fmt')
         self.listOfFields = [ item[1] for item in self.baseFieldList ]
         self.listOfFieldsCode = [ item[0] for item in self.baseFieldList ]
-        self.guidFldCombo.clear()
-        self.guidFldCombo.addItems(self.listOfFields)
-        self.guideDescCombo.clear()
-        self.guideDescCombo.addItems(['',] + self.listOfFields)
+        self.guidFldCombo.load(self.listOfFieldsCode,self.listOfFields)
+        self.guideDescCombo.load(self.listOfFieldsCode,self.listOfFields)
+
 
         if tabname != self.cache['tabla_ref']:
             self.guideLinkLabel.show()
@@ -1519,7 +1491,6 @@ class WzProdBase(QWizardPage):
         if self.fmtEnum in ('date',):
             self.dateCtorRB.setChecked(True)
 
-    
 class CubeWizard(QWizard):
     def __init__(self,obj,cubeMgr,action,cube_root,cube_ref,cache_data):
         super(CubeWizard,self).__init__()

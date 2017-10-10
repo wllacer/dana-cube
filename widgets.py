@@ -73,7 +73,7 @@ class WMultiCombo(QComboBox):
             if text in (self.itemData(k,Qt.DisplayRole),self.itemData(k,Qt.UserRole +1)):
                 return k
         return -1
-        
+      
     def addCell(self,data,dataDisplay=None,values=None):
         if not dataDisplay:
             display = data
@@ -121,8 +121,16 @@ class WMultiCombo(QComboBox):
         for k in range(1,self.count()):
             if self.itemData(k,Qt.CheckStateRole) == Qt.Checked :
                 result.append(self.itemData(k,Qt.UserRole +1))
-                return norm2String(result)
+        return norm2String(result)
             
+    def selectedItems(self):
+        result = []
+        for k in range(1,self.count()):
+            if self.itemData(k,Qt.CheckStateRole) == Qt.Checked :
+                result.append(self.model().item(k))
+        return result
+            
+
 class WPowerTable(QTableWidget):
     # TODO mas tipos
     # TODO un defecto razonable
