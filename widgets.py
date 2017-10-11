@@ -260,7 +260,7 @@ class WPowerTable(QTableWidget):
             return self.cellWidget(x,y).isChecked()
         elif isinstance(self.cellWidget(x,y),QSpinBox):
             return self.cellWidget(x,y).value()
-        elif isinstance(self.cellWidget(x,y),WMultiCombo()):
+        elif isinstance(self.cellWidget(x,y),WMultiCombo):
             return self.cellWidget(x,y).get()
 
         elif isinstance(self.cellWidget(x,y),QComboBox):

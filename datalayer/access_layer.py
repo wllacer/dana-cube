@@ -198,7 +198,7 @@ def dbDict2Url(conDict):
         print('Ya viene definida la base de datos')
         context = dbname
     else:
-        if conDict['driver'] not in ('QSQLITE','sqlite'):
+        if conDict['driver'] not in ('QSQLITE','sqlite','qsqlite'):
             host = conDict['dbhost']
             user = conDict['dbuser']
             password = conDict['dbpass']
