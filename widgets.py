@@ -235,7 +235,7 @@ class WPowerTable(QTableWidget):
             self.cellWidget(x,y).set(value)
         elif isinstance(self.cellWidget(x,y),QComboBox):
             if value is None:
-                pass
+                self.cellWidget(x,y).setCurrentIndex(-1)
             elif isinstance(value,int):
                 self.cellWidget(x,y).setCurrentIndex(value)
             else:
@@ -284,7 +284,7 @@ class WDataSheet(WPowerTable):
            ...
            m numero de filas a generar
           
-    """
+    """        
     def __init__(self,context,rows,parent=None): 
         
         cols=len(context) -1
@@ -292,8 +292,10 @@ class WDataSheet(WPowerTable):
         super(WDataSheet, self).__init__(rows,cols,parent)
         # cargando parametros de defecto
         self.context = context
+        self.initializeTable(rows)
         
         #FIXME es un desastre
+    def initializeTable(self,rows):
         cabeceras = [ item  for item in self.context[0] ]
         for k in range(rows):
             self.addRow(k)
@@ -301,8 +303,25 @@ class WDataSheet(WPowerTable):
         self.setHorizontalHeaderLabels(cabeceras)
         
 
-        self.resizeRowsToContents()
+        self.resizeColumnsToContents()
 
+    def changeContext(self,context):
+        #FIXME y que pasa con el contenido actual
+        self.context = context
+        self.clearContents()
+        self.initializeTable(self.rowCount())
+
+    def changeContextColumn(self,context,column):
+        #FIXME y que pasa con el contenido actual
+        self.context[column] = context
+        for k in range(self.rowCount()):
+            if self.context[column][0] == QComboBox:
+                self.cellWidget(k,column -1).clear()
+                self.cellWidget(k,column -1).addItems(self.context[column][2])
+            else:
+                self.set(k,column - 1,None)
+
+         
     def addRow(self,line):
         for y,colDef in enumerate(self.context[1:]):
             self.addCell(line,y,colDef)

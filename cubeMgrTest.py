@@ -76,9 +76,9 @@ from wizardmgmt.dispatcher import *
 def miniCube():
     app = QApplication(sys.argv)
     win = QMainWindow()
-    confName = 'Elecciones 2105'
-    schema = 'main'
-    table = 'votos_locales'
+    confName = 'Pagila'
+    schema = 'public'
+    table = 'rental'
     dataDict=DataDict(conName=confName,schema=schema)
     cubo = info2cube(dataDict,confName,schema,table,3)   
     cubeMgr = cb.CubeMgr(win,confName,schema,table,dataDict,rawCube=cubo)
