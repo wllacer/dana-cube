@@ -131,7 +131,7 @@ def setMenuActions(menu,context,item):
         menuActions[-1].setEnabled(False)
         menu.addSeparator()
             
-@model_change_control(1)
+
 def execAction(item,context,action):
     context.model().beginResetModel()
     manage(item,context,action)
@@ -250,9 +250,7 @@ def manage(item,cubeMgr,action):
                 item.appendRow((CubeItem('name'),CubeItem(text[0],)))
 
 
-
 def block_management(obj,cubeMgr,action,cube_root,cube_ref,cache_data):
-    print(action,obj.type(),obj.text())
     tipo = obj.type()
     texto = obj.text() 
     padre = obj.parent()
@@ -281,45 +279,93 @@ def block_management(obj,cubeMgr,action,cube_root,cube_ref,cache_data):
 
     wizard = CubeWizard(obj,cubeMgr,action,cube_root,cube_ref,cache_data)
     if wizard.exec_() :
-        #print('Milagro',wizard.page(1).contador,wizard.page(2).contador,wizard.page(3).contador)
-        if action == 'add date filter':
-            padre = obj
-            texto = tipo = 'date filter'     
-            if texto in wizard.diccionario:
-                nudict = {texto:wizard.diccionario[texto]}
-            else:
-                nudict = {texto:wizard.diccionario }
-            if len(nudict[texto]) == 0:
-                print('tengo que escapar')
-                return
-        #TODO aqui tengo que realizar la vuelta de una regla de produccion
-        elif tipo in TYPE_LIST_DICT:
-            print(obj.getPos(),wizard.diccionario)
-            if tipo != texto:
-                yayo = padre.parent()
-                nudict = tree2dict(yayo,isDictionaryEntry)
-                lista = nudict[tipo]
-                if obj.getPos() is not None:
-                    print('pille entrada')
-                    lista[obj.getPos()] = wizard.diccionario
-                else: #hay que retocar cosas aqui para append e insert before
-                    print('no pille entrada')
-                    lista.append(wizard.diccionario)
-                padre.suicide()
-                padre= yayo
-                texto = tipo
-
-            elif action == 'add' :
-                nudict = tree2dict(padre,isDictionaryEntry)
-                lista = nudict[tipo]
-                lista.append(wizard.diccionario)
-                obj.suicide()
+        CubeWizardExec(obj,cubeMgr,wizard,action,cube_root,cube_ref,cache_data)
+        ##print('Milagro',wizard.page(1).contador,wizard.page(2).contador,wizard.page(3).contador)
+        #if action == 'add date filter':
+            #padre = obj
+            #texto = tipo = 'date filter'     
+            #if texto in wizard.diccionario:
+                #nudict = {texto:wizard.diccionario[texto]}
+            #else:
+                #nudict = {texto:wizard.diccionario }
+            #if len(nudict[texto]) == 0:
+                #print('tengo que escapar')
+                #return
+        ##TODO aqui tengo que realizar la vuelta de una regla de produccion
+        #elif tipo in TYPE_LIST_DICT:
+            #print(obj.getPos(),wizard.diccionario)
+            #if tipo != texto:
+                #yayo = padre.parent()
+                #nudict = tree2dict(yayo,isDictionaryEntry)
+                #lista = nudict[tipo]
+                #if obj.getPos() is not None:
+                    #print('pille entrada')
+                    #lista[obj.getPos()] = wizard.diccionario
+                #else: #hay que retocar cosas aqui para append e insert before
+                    #print('no pille entrada')
+                    #lista.append(wizard.diccionario)
+                #padre.suicide()
                 #padre= yayo
                 #texto = tipo
-            else:
-                nudict = {texto:wizard.diccionario }
-                obj.suicide()
+
+            #elif action == 'add' :
+                #nudict = tree2dict(padre,isDictionaryEntry)
+                #lista = nudict[tipo]
+                #lista.append(wizard.diccionario)
+                #obj.suicide()
+                ##padre= yayo
+                ##texto = tipo
+            #else:
+                #nudict = {texto:wizard.diccionario }
+                #obj.suicide()
+        #else:
+            #nudict = {texto:wizard.diccionario }
+            #obj.suicide()
+        #dict2tree(padre,tipo,nudict[texto])
+
+@model_change_control(1)
+def CubeWizardExec(obj,cubeMgr,wizard,action,cube_root,cube_ref,cache_data):
+    tipo = obj.type()
+    texto = obj.text() 
+    padre = obj.parent()
+    if action == 'add date filter':
+        padre = obj
+        texto = tipo = 'date filter'     
+        if texto in wizard.diccionario:
+            nudict = {texto:wizard.diccionario[texto]}
+        else:
+            nudict = {texto:wizard.diccionario }
+        if len(nudict[texto]) == 0:
+            print('tengo que escapar')
+            return
+    #TODO aqui tengo que realizar la vuelta de una regla de produccion
+    elif tipo in TYPE_LIST_DICT:
+        print(obj.getPos(),wizard.diccionario)
+        if tipo != texto:
+            yayo = padre.parent()
+            nudict = tree2dict(yayo,isDictionaryEntry)
+            lista = nudict[tipo]
+            if obj.getPos() is not None:
+                print('pille entrada')
+                lista[obj.getPos()] = wizard.diccionario
+            else: #hay que retocar cosas aqui para append e insert before
+                print('no pille entrada')
+                lista.append(wizard.diccionario)
+            padre.suicide()
+            padre= yayo
+            texto = tipo
+
+        elif action == 'add' :
+            nudict = tree2dict(padre,isDictionaryEntry)
+            lista = nudict[tipo]
+            lista.append(wizard.diccionario)
+            obj.suicide()
+            #padre= yayo
+            #texto = tipo
         else:
             nudict = {texto:wizard.diccionario }
             obj.suicide()
-        dict2tree(padre,tipo,nudict[texto])
+    else:
+        nudict = {texto:wizard.diccionario }
+        obj.suicide()
+    dict2tree(padre,tipo,nudict[texto])

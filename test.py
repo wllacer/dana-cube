@@ -75,75 +75,116 @@ def traverse(root,base=None):
             del queue[0]
         else:
             queue = expansion  + queue[1:]      
-def pruebaTableInfo():
+#def pruebaTableInfo():
+    #parser = generaArgParser()
+    #args = parser.parse_args()
+    #print(args)
+    ##dd = DataDict(defFile=args.configFile,secure=args.secure)
+    ## dd= DataDict(conn=confName,schema=schema)
+    #confName= '$$TEMP' #'Elecciones 2105' #'$$TEMP'
+    #schema= 'public' # 'main' # None #'dana_sample'
+    #table=  'main' #'datos_electorales_2015' #'votos_locales' #'votos_prov_ref' #None #'votos_locales'
+    #iters=  2
+    #confData=  {'driver': 'postgresql', 'dbname': 'libgen', 'dbhost': 'localhost', 'dbuser': 'werner', 'dbpass': ''}
+    ##confData=   {
+            ##"dbport": "",
+            ##"dbhost": "",
+            ##"driver": "sqlite",
+            ##"dbpass": "",
+            ##"debug": False,
+            ##"dbuser": "",
+            ##"dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db"
+        ##}
+    ##confData = {'dbname':"/home/werner/projects/dana-cube.git/ejemplo_dana.db",'driver':'sqlite'}
+    ##confData=  {'driver': 'sqlite', 'dbname': "/home/werner/projects/dana-cube.git/ejemplo_dana.db", 'dbhost': '', 'dbuser': '', 'dbpass': ''}
+    ##confData=  {'driver': 'mysql', 'dbname': 'libgen', 'dbhost': 'localhost', 'dbuser': 'demo', 'dbpass': 'demo123'}
+    ##dd= DataDict(conName=confName,schema=schema,table=table,iters=iters +1,
+    ##            defFile=args.configFile,secure=args.secure) 
+    ##dd= DataDict(defFile=args.configFile,secure=args.secure) 
+    ##dd= DataDict(conName=confName,defFile=args.configFile,secure=args.secure) 
+    #dd= DataDict(conName=confName,schema=schema,table=table,iters=iters +1,confData = confData)
+    ##pprint(dd.configData)
+    ###print(dd.baseModel)
+    #conn = dd.getConnByName(confName)
+    #inspector = conn.inspector
+    ##pprint(inspector.get_check_constraints(table,schema))
+    #pprint(inspector.get_pk_constraint(table,schema))
+    #pprint(inspector.get_unique_constraints(table,schema))
+    ##pprint(inspector.get_columns(table,schema))
+    ##pprint(dd.conn)
+    ##print(dd.hiddenRoot)
+    #campos = []
+    #for entry in traverse(dd.hiddenRoot):
+        #tabs = '\t'*entry.depth()
+        #if not entry.isAuxiliar() and entry.getTypeText() == '' :
+            #campos.append(entry)
+            ##print(tabs,entry.getTypeText(),':',entry.getFullDesc()) #entry.fqn(),entry.getFullDesc(), entry.getRow(),entry.gpi()) #(tabs,entry) #entry.text(),'\t',entry.getRow())
+    ## peor que individual . 50 * 8 s frente a 12 m
+    #sqlstring = 'SELECT '
+    #for k,item in enumerate(campos):
+        #if k == 0:
+            #sqlstring += ' COUNT(DISTINCT {})'.format(item.text())
+        #else:
+            #sqlstring = ', '.join((sqlstring,'COUNT(DISTINCT {})'.format(item.text())))
+    #sqlstring += ' FROM {}.{}'.format(schema,table)
+    #print(sqlstring)
+    ##ds = TableInfo(dd,confName,schema,table,maxlevel= iters)
+    ##getValueSpread(conn,sqlstring)
+    ##pprint(ds.lista)
+    ##pprint(ds.info2cube())
+    ##print(dd.isEmpty)
+
+#@stopwatch
+#def getValueSpread(conn,sqls):
+    #from datalayer.access_layer import getCursor
+    #result = getCursor(conn.data().engine,sqls)
+    #pprint(result)
+    
+#def testea():
+    #definition = dict()
+    #for item in definition.get('lista',[]):
+        #print(item)
+#if __name__ == '__main__':
+    ## para evitar problemas con utf-8, no lo recomiendan pero me funciona
+    #import sys
+    ## para evitar problemas con utf-8, no lo recomiendan pero me funciona
+    #if sys.version_info[0] < 3:
+        #reload(sys)
+        #sys.setdefaultencoding('utf-8')
+    #app = QApplication(sys.argv)
+    ##aw = ApplicationWindow()
+    ##aw.show()
+    #pruebaTableInfo()
+
+def prueba():
     parser = generaArgParser()
     args = parser.parse_args()
     print(args)
     #dd = DataDict(defFile=args.configFile,secure=args.secure)
     # dd= DataDict(conn=confName,schema=schema)
-    confName= '$$TEMP' #'Elecciones 2105' #'$$TEMP'
-    schema= 'public' # 'main' # None #'dana_sample'
-    table=  'main' #'datos_electorales_2015' #'votos_locales' #'votos_prov_ref' #None #'votos_locales'
+    confName=  '$$TEMP'
+    schema=  'public' # None #'dana_sample'
+    table=  'rental' #None #'votos_locales'
     iters=  2
-    confData=  {'driver': 'postgresql', 'dbname': 'libgen', 'dbhost': 'localhost', 'dbuser': 'werner', 'dbpass': ''}
-    #confData=   {
-            #"dbport": "",
-            #"dbhost": "",
-            #"driver": "sqlite",
-            #"dbpass": "",
-            #"debug": False,
-            #"dbuser": "",
-            #"dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db"
-        #}
-    #confData = {'dbname':"/home/werner/projects/dana-cube.git/ejemplo_dana.db",'driver':'sqlite'}
-    #confData=  {'driver': 'sqlite', 'dbname': "/home/werner/projects/dana-cube.git/ejemplo_dana.db", 'dbhost': '', 'dbuser': '', 'dbpass': ''}
-    #confData=  {'driver': 'mysql', 'dbname': 'libgen', 'dbhost': 'localhost', 'dbuser': 'demo', 'dbpass': 'demo123'}
-    #dd= DataDict(conName=confName,schema=schema,table=table,iters=iters +1,
-    #            defFile=args.configFile,secure=args.secure) 
-    #dd= DataDict(defFile=args.configFile,secure=args.secure) 
-    #dd= DataDict(conName=confName,defFile=args.configFile,secure=args.secure) 
-    dd= DataDict(conName=confName,schema=schema,table=table,iters=iters +1,confData = confData)
+    confData=  {'driver': 'postgresql', 'dbname': 'pagila', 'dbhost': 'localhost', 'dbuser': 'werner', 'dbpass': ''}
+
+    dd= DataDict(conName=confName,schema=schema,table=table,iters=iters +1
+                 ,confData=confData,
+                 defFile=args.configFile,secure=args.secure) 
     #pprint(dd.configData)
     ##print(dd.baseModel)
-    conn = dd.getConnByName(confName)
-    inspector = conn.inspector
-    #pprint(inspector.get_check_constraints(table,schema))
-    pprint(inspector.get_pk_constraint(table,schema))
-    pprint(inspector.get_unique_constraints(table,schema))
-    #pprint(inspector.get_columns(table,schema))
     #pprint(dd.conn)
     #print(dd.hiddenRoot)
-    campos = []
     for entry in traverse(dd.hiddenRoot):
         tabs = '\t'*entry.depth()
-        if not entry.isAuxiliar() and entry.getTypeText() == '' :
-            campos.append(entry)
-            #print(tabs,entry.getTypeText(),':',entry.getFullDesc()) #entry.fqn(),entry.getFullDesc(), entry.getRow(),entry.gpi()) #(tabs,entry) #entry.text(),'\t',entry.getRow())
-    # peor que individual . 50 * 8 s frente a 12 m
-    sqlstring = 'SELECT '
-    for k,item in enumerate(campos):
-        if k == 0:
-            sqlstring += ' COUNT(DISTINCT {})'.format(item.text())
-        else:
-            sqlstring = ', '.join((sqlstring,'COUNT(DISTINCT {})'.format(item.text())))
-    sqlstring += ' FROM {}.{}'.format(schema,table)
-    print(sqlstring)
-    #ds = TableInfo(dd,confName,schema,table,maxlevel= iters)
-    #getValueSpread(conn,sqlstring)
-    #pprint(ds.lista)
-    #pprint(ds.info2cube())
-    #print(dd.isEmpty)
+        if not entry.isAuxiliar() and not entry.getTypeText() == '' :
+            print(tabs,entry.getTypeText(),':',entry.getFullDesc()) #entry.fqn(),entry.getFullDesc(), entry.getRow(),entry.gpi()) #(tabs,entry) #entry.text(),'\t',entry.getRow())
 
-@stopwatch
-def getValueSpread(conn,sqls):
-    from datalayer.access_layer import getCursor
-    result = getCursor(conn.data().engine,sqls)
-    pprint(result)
-    
-def testea():
-    definition = dict()
-    for item in definition.get('lista',[]):
-        print(item)
+    ds = TableInfo(dd,confName,schema,table,maxlevel= iters)
+    pprint(ds.info2cube())
+    print( [ table for table in ds.lista] )
+    ds.prepareBulkSql()
+    #pprint(ds.getFKDeep()[2])
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
     import sys
@@ -154,5 +195,4 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     #aw = ApplicationWindow()
     #aw.show()
-    pruebaTableInfo()
-
+    prueba()

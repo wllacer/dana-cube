@@ -1075,218 +1075,388 @@ class WzDomain(QWizardPage):
         self.targetCodeList.load(self.listOfFieldsCode,self.listOfFields)
         self.targetDescList.load(self.listOfFieldsCode,self.listOfFields)
 
-
 class WzLink(QWizardPage):
     def __init__(self,parent=None,cube=None,cache=None):
         super(WzLink,self).__init__(parent)
-        self.setFinalPage(True)
-        
+        self.setFinalPage(True)        
         self.cube = cube
         self.cache = cache
-        
-        tableArray = getAvailableTables(self.cube,self.cache)
-        
-        self.baseTable = None
-        self.targetTable = None
-        self.listOfTables = ['Eliga Tabla',] + [ item[1] for item in tableArray]
-        self.listOfTablesCode = ['',] + [ item[0] for item in tableArray]
-        self.listOfFields = []
-        
+
         self.setTitle("Definición del enlace entre tablas")
         self.setSubTitle(""" Introduzca la definición del enlace entre la tabla base y la guía  """)
-        
-        baseLabel = QLabel('Desde ')
-        self.baseTableCombo = QComboBox()
-        self.baseTableCombo.addItems(self.listOfTables)
-        self.baseTableCombo.setCurrentIndex(0)
-        self.baseFieldCombo = QComboBox()
 
+        self.tipo = None
         
-        destLabel = QLabel('Hasta ')
-        self.destTableCombo = QComboBox()
-        self.destTableCombo.addItems(self.listOfTables)
-        self.destTableCombo.setCurrentIndex(0)
-        self.destFieldCombo = QComboBox()
+        tableArray = getAvailableTables(self.cube,self.cache)
+        self.baseTable = None
+        self.targetTable = None
+        self.listOfTables = ['',] + [ item[1] for item in tableArray]
+        self.listOfTablesCode = ['',] + [ item[0] for item in tableArray]
+        self.listOfFields = []
 
-        
-        #joinTableLabel = QLabel("&Tabla de enlace")
-        #self.joinTableCombo = QComboBox()
-        ##MARK VERY CAREFULLY. If has default value, DON'T make it mandatory in wizard
-        ##                     Use a null value in combos if mandatory
-        #self.joinTableCombo.addItems(self.listOfTables)
-        #self.joinTableCombo.setCurrentIndex(0)
-        #joinTableLabel.setBuddy(self.joinTableCombo)
-        #self.joinTableCombo.currentIndexChanged[int].connect(self.tablaElegida)
 
-        joinFilterLabel = QLabel("&Filtro:")
-        self.joinFilterLineEdit = QLineEdit()
-        joinFilterLabel.setBuddy(self.joinFilterLineEdit)
-        
-        #TODO esto quedaria mejor con un WDataSheet 
+        #para la lista
         
         self.context=[]
         
-        self.context.append(['c. base','condicion','c. enlace'])
-        self.context.append([QComboBox,None,['',]+list(self.listOfFields)])
-        self.context.append([QComboBox,None,tuple(LOGICAL_OPERATOR)])
-        self.context.append([QComboBox,None,None])
+        self.context.append(['Tabla Desde','campos desde','Tabla hasta','Campos Hasta'])
+        self.context.append([QComboBox,None,self.listOfTables])
+        self.context.append([WMultiCombo,None,['',]])
+        self.context.append([QComboBox,None,self.listOfTables])
+        self.context.append([WMultiCombo,None,['',]])
+        
+        numrows=4
+        
+        self.joinListArray = WDataSheet(self.context,numrows)
+        
+        for row in range(numrows):
+            self.defineSlots(row)
+        
+        
+        # ahora para el detalle
+
+        self.baseLabel = QLabel('Desde ')
+        self.baseTableCombo = QComboBox()
+        self.baseTableCombo.addItems(self.listOfTables)
+        self.baseTableCombo.setCurrentIndex(0)
+
+        
+        self.destLabel = QLabel('Hacia ')
+        self.destTableCombo = QComboBox()
+        self.destTableCombo.addItems(self.listOfTables)
+        self.destTableCombo.setCurrentIndex(0)
+        
+        self.clauseContext=[]
+        
+        self.clauseContext.append(['c. base','condicion','c. enlace'])
+        self.clauseContext.append([QComboBox,None,['',]+list(self.listOfFields)])
+        self.clauseContext.append([QComboBox,None,tuple(LOGICAL_OPERATOR)])
+        self.clauseContext.append([QComboBox,None,None])
         
         numrows=3
         
-        self.joinClauseArray = WDataSheet(self.context,numrows)
+        self.joinClauseArray = WDataSheet(self.clauseContext,numrows)
         
-        self.destTableCombo.currentIndexChanged[int].connect(lambda i,w='target' : self.tablaElegida(i,w))
-        self.baseTableCombo.currentIndexChanged[int].connect(lambda i,w='base' : self.tablaElegida(i,w))
+        #self.destTableCombo.currentIndexChanged[int].connect(lambda i,w='target' : self.tablaElegida(i,w))
+        #self.baseTableCombo.currentIndexChanged[int].connect(lambda i,w='base' : self.tablaElegida(i,w))
         
         for k in range(self.joinClauseArray.rowCount()):
             self.joinClauseArray.cellWidget(k,1).setCurrentIndex(3) #la condicion de igualdad
         self.joinClauseArray.resizeColumnToContents(0)
+
+        self.joinFilterLabel = QLabel("&Filtro:")
+        self.joinFilterLineEdit = QLineEdit()
+        self.joinFilterLabel.setBuddy(self.joinFilterLineEdit)
             
         meatLayout = QGridLayout()
-        meatLayout.addWidget(baseLabel,0,0)
+
+        meatLayout.addWidget(self.joinListArray,0,0,3,4)
+        #
+        meatLayout.addWidget(self.baseLabel,0,0)
         meatLayout.addWidget(self.baseTableCombo,0,1)
-        #meatLayout.addWidget(self.baseFieldCombo,0,2)
-        #meatLayout.addWidget(viaLabel,1,0)
-        #meatLayout.addWidget(self.joinTableCombo,1,1)
-        meatLayout.addWidget(joinFilterLabel,8,0)
-        meatLayout.addWidget(self.joinFilterLineEdit,8,1)
-        meatLayout.addWidget(self.joinClauseArray,3,0,1,3)
-
-        meatLayout.addWidget(destLabel,1,0)
+        meatLayout.addWidget(self.destLabel,1,0)
         meatLayout.addWidget(self.destTableCombo,1,1)
-        #meatLayout.addWidget(self.destFieldCombo,1,2)
+        meatLayout.addWidget(self.joinClauseArray,2,0,3,4)
+        meatLayout.addWidget(self.joinFilterLabel,6,0)
+        meatLayout.addWidget(self.joinFilterLineEdit,6,1)
 
-
-        #meatLayout.addWidget(joinTableLabel,0,0)
-        #meatLayout.addWidget(self.joinTableCombo,0,1)
-        #meatLayout.addWidget(joinFilterLabel,1,0)
-        #meatLayout.addWidget(self.joinFilterLineEdit,1,1)
-        #meatLayout.addWidget(self.joinClauseArray,2,0,1,2)
         self.setLayout(meatLayout)
 
-        
+        self.joinListArray.hide()
+        self.baseLabel.hide()
+        self.baseTableCombo.hide()
+        self.destLabel.hide()
+        self.destTableCombo.hide()
+        self.joinClauseArray.hide()
+        self.joinFilterLabel.hide()
+        self.joinFilterLineEdit.hide()
 
-    
     def initializePage(self):
-        base = self.wizard().page(ixWzProdBase) 
-        if not base:
-            self.iterator = 0
-        else:
-            self.iterator = base.iterations
-        self.iterator +1
+
         obj = self.wizard().obj
-
-        if obj.text() == obj.type():
-            self.midict = self.wizard().diccionario[self.iterator -1]
-        else:
-            self.midict = self.wizard().diccionario
-
+        self.iterator = None
         if obj.type() == 'prod':
-            domain = self.midict
-        elif obj.type() in ('link via','clause'): 
-            pai = obj
-            while pai.type() != 'prod':
-                pai = pai.parent()
-            domain = tree2dict(pai,isDictionaryEntry)
-        
-        if obj.type() == 'link via' and obj.text() == obj.type():
-            pass
+            self.tipo = 'LinkList'
+            base = self.wizard().page(ixWzProdBase) 
+            if not base:
+                self.iterator = 0
+            else:
+                self.iterator = base.iterations
+            self.iterator +1
+            if obj.text() == obj.type():
+                self.midict = self.wizard().diccionario[self.iterator -1].get('link via',[])
+            else:
+                self.midict = self.wizard().diccionario.get('link via',[])
+            self.initializePageLinkList()
+            
         elif obj.type() == 'link via':
+            if obj.text() == obj.type():
+                self.tipo = 'LinkList'
+                self.midict = self.wizard().diccionario 
+                self.initializePageLinkList()
+            else:
+                # aqui viene el proceso de una sola entrada. De momento lo dejo
+                self.tipo = 'LinkEntry'
+                self.midict = self.wizard().diccionario 
+                self.initializePageLinkEntry()
+            
+        if len(self.midict) == 0:
+            # no hay elementos. No deberia ocurrir (si es nueva creacion debe hacerse uno con los datos del prod)
             pass
-        elif obj.type() == 'clause' and obj.text() == obj.type():
-            pass
-        elif obj.type() == 'clause':
-            pass
         
-        #destField = domain.get('domain').get('code',domain.get('elem'))
-        self.targetTable = domain.get('domain').get('table')
-        self.baseTable = self.cache['tabla_ref']
-        
-        baseField = [ item.get('base_elem') for item in domain.get('link via')[0].get('clause') ]
+        if self.tipo == 'LinkList':
+            self.joinListArray.show()
+        elif self.tipo == 'LinkEntry':
+            self.baseLabel.show()
+            self.baseTableCombo.show()
+            self.destLabel.show()
+            self.destTableCombo.show()
+            self.joinClauseArray.show()
+            self.joinFilterLabel.show()
+            self.joinFilterLineEdit.show()
 
-        
-        pos = setAddComboElem(self.targetTable,self.destTableCombo,self.listOfTablesCode,self.listOfTables)
-
-        #setAddComboElem(destField,self.destFieldCombo,self.listOfFieldsCode,self.listOfFields)
-        #self.destTableCombo.setEnabled(False)
-        #self.destFieldCombo.setEnabled(False)
-        
-        pos = setAddComboElem(self.baseTable,self.baseTableCombo,self.listOfTablesCode,self.listOfTables)
-
-        #setAddComboElem(baseField,self.baseFieldCombo,self.listOfFieldsCode,self.listOfFields)
-        #self.baseTableCombo.setEnabled(False)
-        #self.destFieldCombo.setEnabled(False)
-        
-        
-
-        pass
 
     def nextId(self):
         return -1
 
     def validatePage(self):
+        if self.tipo == 'LinkList':
+            return self.validatePageLinkList()
+        elif self.tipo == 'LinkEntry':
+            return self.validatePageLinkEntry()
+    
+      
+    def initializePageLinkEntry(self):
         obj = self.wizard().obj
-        if obj.type() == 'prod':
-            if obj.text() == obj.type():
-                pass
-            else:
-                pass
-        elif obj.type() == 'link via' and obj.text() == obj.type():
-            pass
-        elif obj.type() == 'link via':
-            pass
-        elif obj.type() == 'clause' and obj.text() == obj.type():
-            pass
-        elif obj.type() == 'clause':
-            pass
+        pos = obj.getPos()
+        auxobj = obj.getPrevious()
+        if auxobj is not None:
+            origTable = auxobj.getChildrenByName('table')
+        else:
+            origTable = self.cache['tabla_ref']
+        destTable = self.midict.get('table')
+        #self.baseTableCombo.show()
+        baseField = [ item.get('base_elem') for item in self.midict.get('clause') ]
+        relField = [ item.get('rel_elem') for item in self.midict.get('clause') ]
         
-        if self.isFinalPage() and self.iterator < self.wizard().prodIters:
-            self.wizard().setStartId(ixWzProdBase);
-            self.wizard().restart()        
-            return False
-        return True
-
-    def tablaElegida(self,idx,widget=None):
-        print('Algo encuentra',idx)
-        tabname = self.listOfTablesCode[idx]
-        listOfFields = [ item[1] for item in getFieldsFromTable(tabname,self.cache,self.cube) ]
-        listOfFieldsCode = [ item[0] for item in getFieldsFromTable(tabname,self.cache,self.cube) ]
-        numrows = self.joinClauseArray.rowCount()
-        numcols = self.joinClauseArray.columnCount()
+       
+        pos = setAddComboElem(origTable,self.baseTableCombo,self.listOfTablesCode,self.listOfTables)
+        self.baseTableCombo.setEnabled(False)
+        self.sourceFields = [ item[1] for item in getFieldsFromTable(origTable,self.cache,self.cube) ]
+        self.sourceFieldsBase= [ item[0] for item in getFieldsFromTable(origTable,self.cache,self.cube) ]
+        column = 1
+        self.clauseContext[column][2] = ['',] + list(self.sourceFields)
+        self.joinClauseArray.changeContextColumn(self.clauseContext[column],column)
         
-        if widget == 'base':
-            column = 1
-            self.sourceFields = listOfFields
-            self.sourceFieldsBase = listOfFieldsCode
-        elif widget == 'target':
-            column = 3
-            self.targetFields = listOfFields
-            self.targetFieldsBase = listOfFieldsCode
-        
-        self.context[column][2] = ['',] + list(listOfFields)
-        
-        self.joinClauseArray.changeContextColumn(self.context[column],column)
-        #for k in range(numrows):
-            #self.joinClauseArray.set(k,1,3) #igual es el defecto
+        pos = setAddComboElem(destTable,self.destTableCombo,self.listOfTablesCode,self.listOfTables)
+        self.destTableCombo.setEnabled(False)
+        self.targetFields = [ item[1] for item in getFieldsFromTable(destTable,self.cache,self.cube) ]
+        self.targetFieldsBase= [ item[0] for item in getFieldsFromTable(destTable,self.cache,self.cube) ]
+        column = 3
+        self.clauseContext[column][2] = ['',] + list(self.targetFields)
+        self.joinClauseArray.changeContextColumn(self.clauseContext[column],column)
+ 
+        #self.joinClauseArray.resizeColumnsToContents()
             
         if self.midict.get('clause'):
             for i,clausula in enumerate(self.midict.get('clause')):
                 setAddComboElem(clausula.get('condition','='),
                                 self.joinClauseArray.cellWidget(i,1),
                                 LOGICAL_OPERATOR,LOGICAL_OPERATOR)
+                setAddComboElem(clausula.get('base_elem',''),
+                                self.joinClauseArray.cellWidget(i,0),
+                                self.sourceFieldsBase,self.sourceFields,1)
 
-                if widget == 'base':
-                    setAddComboElem(clausula.get('base_elem',''),
-                                    self.joinClauseArray.cellWidget(i,0),
-                                    listOfFieldsCode,listOfFields,1)
-                elif widget == 'target':
-                    setAddComboElem(clausula.get('rel_elem',''),
-                                    self.joinClauseArray.cellWidget(i,2),
-                                    listOfFieldsCode,listOfFields,1)
-            self.joinClauseArray.resizeColumnsToContents()
+                setAddComboElem(clausula.get('rel_elem',''),
+                                self.joinClauseArray.cellWidget(i,2),
+                                self.targetFieldsBase,self.targetFields,1)
+        
+        
+
+        self.joinFilterLineEdit.setText(self.midict.get('filter',''))
+    
+    def initializePageLinkList(self):
+        for i in range(len(self.midict)):
+            #TODO  que pasa si tengo mas de cinco ocurrencias
+            setAddComboElem(self.midict[i -1].get('table') if i != 0 else self.cache['tabla_ref'],
+                            self.joinListArray.cellWidget(i,0),
+                            self.listOfTablesCode,self.listOfTables)
+            setAddComboElem(self.midict[i].get('table'),
+                            self.joinListArray.cellWidget(i,2),
+                            self.listOfTablesCode,self.listOfTables)
+            
+            # ahora los campos ya modificado el combos
+            base_elems = [ item.get('base_elem') for item in self.midict[i].get('clause') ]
+            self.joinListArray.cellWidget(i,1).set(base_elems)
+            tgt_elems = [ item.get('rel_elem') for item in self.midict[i].get('clause') ]
+            self.joinListArray.cellWidget(i,3).set(tgt_elems)
+            self.joinListArray.resizeColumnsToContents()
+
+    def validatePageLinkEntry(self):
+        resultado = self.joinClauseArray.values()
+        # ser pestiño pero primero tengo que eliminar los huecos
+        resultado = self.joinClauseArray.values()
+        lastNonEmpty = len(resultado) -1
+        for k in range(len(resultado) -1,-1,-1):
+            if resultado[k][0] != 0:
+                lastNonEmpty = k
+                break
+        try:
+            pos = [ linea[0] for linea in resultado[0:lastNonEmpty +1]].index(0)
+            self.joinClauseArray.removeRow(pos)
+            return False
+        except ValueError:
+            pass
+
+        baseFlds = [ linea[0] for linea in resultado if linea[0] != 0]
+        tgtFlds = [ linea[2] for linea in resultado if linea[2] != 0]
+        if len(baseFlds) != len(tgtFlds) :
+            return False
+        
+            
+        self.midict['table'] = self.listOfTablesCode[self.destTableCombo.currentIndex()]
+        self.midict['filter'] = self.joinFilterLineEdit.text()
+        self.midict['clause'].clear()
+        for linea in resultado:
+            if linea[0] == 0:
+                continue  #deberia ser break, pero por si acaso no funciona lo de arriba
+            entry = {}
+            entry['base_elem'] = self.sourceFieldsBase[linea[0] -1]
+            entry['rel_elem'] = self.targetFieldsBase[linea[2] -1]
+            if linea[1] != 3:
+                entry['condition'] = LOGICAL_OPERATOR[linea[1]]
+            self.midict['clause'].append(entry)
+        return True
+    
+    def validatePageLinkList(self):
+        #TODO eliminar lineas en blanco
+        # ser pestiño pero primero tengo que eliminar los huecos
+        resultado = self.joinListArray.values()
+        lastNonEmpty = len(resultado) -1
+        for k in range(len(resultado) -1,-1,-1):
+            if resultado[k][0] != 0:
+                lastNonEmpty = k
+                break
+        try:
+            pos = [ linea[0] for linea in resultado[0:lastNonEmpty +1]].index(0)
+            self.joinListArray.removeRow(pos)
+            return False
+        except ValueError:
+            pass
+            
+        #ahora verifico que los ficheros estan correctamente enlazados    
+        #ahora las validaciones complicadas
+        # si i != 0 si base != target(-1) insert row  target[-1] -> base
+        # si i == 0 si base != referencia insert row  referencia -> base
+            #self.joinClauseArray.addRow(0)
+            #fillrow
+        # si i != -1 si target != base[+1] append row
+
+        baseIdx = self.listOfTablesCode.index(self.cache['tabla_ref'])
+        for row,linea in enumerate(resultado):
+            #if linea[0] == 0:
+                #continue
+            ##print(linea)
+            if row == 0:
+                if linea[0] != baseIdx:
+                    #inserta linea
+                    self.joinListArray.appendRow(row )
+                    self.defineSlots(row)
+                    self.joinListArray.cellWidget(row ,0).setCurrentIndex(baseIdx)
+                    self.joinListArray.cellWidget(row ,2).setCurrentIndex(linea[0])
+                    #self.tablaElegidaLinkList(baseIdx,row,'base')
+                    self.setBaseFK(row,baseIdx,linea[0])
+                    return False
+            else:
+                if linea[0] != resultado[row -1][2]:
+                    #inserta linea
+                    self.joinListArray.appendRow(row )
+                    self.defineSlots(row)
+                    self.joinListArray.cellWidget(row ,0).setCurrentIndex(resultado[row -1][2])
+                    self.joinListArray.cellWidget(row ,2).setCurrentIndex(linea[0])
+                    self.setBaseFK(row,resultado[row -1][2],linea[0])
+                    return False
+
+            if row == lastNonEmpty:
+                pass
+            elif linea[2] != resultado[row +1][0]:
+                #inserta linea
+                self.joinListArray.appendRow(row +1)
+                self.defineSlots(row + 1)
+                self.joinListArray.cellWidget(row +1 ,0).setCurrentIndex(linea[2])
+                self.joinListArray.cellWidget(row +1,2).setCurrentIndex(resultado[row +1][0])
+                self.setBaseFK(row +1,linea[2],resultado[row +1][0])
+                return False
+            
+        # ahora compruebo los campos de enlace
+        for row,linea in enumerate(resultado):
+            if linea[1] == '' or linea[2] == '':
+                #FIXME posicionar el cursor en esa posicion
+                return False
+            if len(norm2List(linea[1])) != len(norm2List(linea[3])):
+                return False
+                                                                            
+            self.midict.clear() #esto es muy valiente
+            for row,linea in enumerate(resultado):
+                entry = {}
+                entry['table'] = self.listOfTablesCode[linea[2]]
+                entry['filter'] = ''
+                entry['clause'] = []
+                base = norm2List(linea[1])
+                ref  = norm2List(linea[3])
+                for k in range(len(base)):
+                    entry['clause'].append({'base_elem':base[k],
+                                            'rel_elem':ref[k]})
+                self.midict.append(entry)
                 
-                                         
+        #if self.isFinalPage() and self.iterator < self.wizard().prodIters:
+            #self.wizard().setStartId(ixWzProdBase);
+            #self.wizard().restart()        
+            #return False
+        return True
 
+        return True
+
+    def defineSlots(self,row):
+        self.joinListArray.cellWidget(row,0).currentIndexChanged[int].connect(
+            lambda p,i=row,w='base' : self.tablaElegidaLinkList(p,i,w))
+        self.joinListArray.cellWidget(row,2).currentIndexChanged[int].connect(
+            lambda p,i=row,w='tgt' : self.tablaElegidaLinkList(p,i,w))
+        
+    def setBaseFK(self,row,fromTableIdx,toTableIdx):
+        fromTable = self.listOfTablesCode[fromTableIdx]
+        toTable = self.listOfTablesCode[toTableIdx]
+        claves = self.cache['info'][fromTable].get('FK')
+        if not claves:
+            return 
+        for fkey in claves:
+            #FIXME si hay varias solo coge la primera
+            if fkey.get('parent table') == toTable:
+                setAddComboElem(fkey.get('ref field'),
+                                self.joinListArray.cellWidget(row,1),
+                                ['',]+[ entry['name'] for entry in self.cache['info'][fromTable]['Fields']],
+                                ['',]+[ entry['basename'] for entry in self.cache['info'][fromTable]['Fields']])
+                setAddComboElem(fkey.get('parent field'),
+                                self.joinListArray.cellWidget(row,3),
+                                ['',]+[ entry['name'] for entry in self.cache['info'][toTable]['Fields']],
+                                ['',]+[ entry['basename'] for entry in self.cache['info'][toTable]['Fields']])
+
+    def tablaElegidaLinkList(self,idx,row,status):
+        #if status == 'base' and idx == 0:
+            #self.joinClauseArray.removeRow(row)
+            #return 
+        tabname = self.listOfTablesCode[idx]
+        listOfFields = [ item[1] for item in getFieldsFromTable(tabname,self.cache,self.cube) ]
+        listOfFieldsCode = [ item[0] for item in getFieldsFromTable(tabname,self.cache,self.cube) ]
+        numrows = self.joinListArray.rowCount()
+        numcols = self.joinListArray.columnCount()
+        
+        if status == 'base':
+            column = 1
+        elif status == 'tgt':
+            column = 3
+        self.joinListArray.cellWidget(row,column).load(listOfFieldsCode,listOfFields)    
+        
 class WzProdBase(QWizardPage):
     def __init__(self,parent=None,cube=None,cache=None):
         super(WzProdBase,self).__init__(parent)
@@ -1315,50 +1485,59 @@ class WzProdBase(QWizardPage):
         prodNameLabel.setBuddy(self.prodName)
         self.prodName.setStyleSheet("background-color:khaki;")
  
-        joinTableLabel = QLabel("&Tabla")
-        self.joinTableCombo = QComboBox()
+        domainTableLabel = QLabel("&Tabla de definición de valores")
+        self.domainTableCombo = QComboBox()
         #MARK VERY CAREFULLY. If has default value, DON'T make it mandatory in wizard
         #                     Use a null value in combos if mandatory
-        self.joinTableCombo.addItems(self.listOfTables)
-        self.joinTableCombo.setCurrentIndex(0)
-        joinTableLabel.setBuddy(self.joinTableCombo)
-        self.joinTableCombo.currentIndexChanged[int].connect(self.tablaElegida)
+        self.domainTableCombo.addItems(self.listOfTables)
+        self.domainTableCombo.setCurrentIndex(0)
+        domainTableLabel.setBuddy(self.domainTableCombo)
+        self.domainTableCombo.currentIndexChanged[int].connect(lambda i,w='domain' : self.tablaElegida(i,w))
 
         #
-        guideFldLabel = QLabel("&Campo guia:")
-        self.guidFldCombo = WMultiCombo()
+        domainGuideLabel = QLabel("Campo &guia:")
+        self.domainFieldCombo = WMultiCombo()
         #self.guidFldCombo.addItems(self.listOfFields)
-        self.guidFldCombo.setEditable(True)
-        guideFldLabel.setBuddy(self.guidFldCombo)
-        self.guidFldCombo.currentIndexChanged[int].connect(self.campoElegido)
-        self.guidFldCombo.setStyleSheet("background-color:khaki;")
+        self.domainFieldCombo.setEditable(True)
+        domainGuideLabel.setBuddy(self.domainFieldCombo)
+        self.domainFieldCombo.currentIndexChanged[int].connect(self.campoElegido)
+        self.domainFieldCombo.setStyleSheet("background-color:khaki;")
  
         #
-        guideDescLabel = QLabel("&Campo Descriptivo:")
-        self.guideDescCombo = WMultiCombo()
+        domainDescLabel = QLabel("&Campo &Descriptivo:")
+        self.domainDescCombo = WMultiCombo()
         #self.guideDescCombo.addItems(self.listOfFields)
-        self.guideDescCombo.setEditable(True)
-        guideDescLabel.setBuddy(self.guideDescCombo)
-        #self.guideDescCombo.currentIndexChanged[int].connect(self.campoElegido)
+        self.domainDescCombo.setEditable(True)
+        domainDescLabel.setBuddy(self.domainDescCombo)
+        #self.domainDescCombo.currentIndexChanged[int].connect(self.campoElegido)
 
         #TODO algo para poder construir links complejos. Es necesario en la interfaz
-        self.guideLinkLabel = QLabel("&Campo de enlace en \n" + cache['tabla_ref'].split('.')[-1])
-        self.guideLinkLabel.setAlignment(Qt.AlignRight)
-        self.guideLinkLabel.setWordWrap(True)  
-        self.guideLinkCombo = WMultiCombo()
-        self.guideLinkCombo.load(self.listOfLinkFieldsCode,self.listOfLinkFields)
-        self.guideLinkCombo.setEditable(True)
-        self.guideLinkLabel.setBuddy(self.guideLinkCombo)
-        #self.guideLinkCombo.currentIndexChanged[int].connect(self.campoElegido)
-        self.guideLinkCombo.setStyleSheet("background-color:khaki;")
+        
+        guideDataTableLabel = QLabel("&Tabla de datos")
+        self.guideDataTableCombo = QComboBox()
+        #MARK VERY CAREFULLY. If has default value, DON'T make it mandatory in wizard
+        #                     Use a null value in combos if mandatory
+        self.guideDataTableCombo.addItems(self.listOfTables)
+        self.guideDataTableCombo.setCurrentIndex(self.listOfTablesCode.index(cache['tabla_ref']))
+        guideDataTableLabel.setBuddy(self.guideDataTableCombo)
+        self.guideDataTableCombo.currentIndexChanged[int].connect(lambda i,w='data' : self.tablaElegida(i,w))
+
+        #
+        guideDataGuideLabel = QLabel("Campo &guia:")
+        self.guideDataFieldCombo = WMultiCombo()
+        self.guideDataFieldCombo.load(self.listOfLinkFieldsCode,self.listOfLinkFields)
+        #self.guidFldCombo.addItems(self.listOfFields)
+        self.guideDataFieldCombo.setEditable(True)
+        guideDataGuideLabel.setBuddy(self.guideDataFieldCombo)
+        self.guideDataFieldCombo.currentIndexChanged[int].connect(self.campoElegido)
+        self.guideDataFieldCombo.setStyleSheet("background-color:khaki;")
+        
         self.linkCTorRB = QRadioButton("Con tablas intermedias")
-        self.guideLinkLabel.hide()
-        self.guideLinkCombo.hide()
         self.linkCTorRB.hide()
         #
-        sp_retain = self.guideLinkCombo.sizePolicy()
-        sp_retain.setRetainSizeWhenHidden(True)
-        self.guideLinkCombo.setSizePolicy(sp_retain)
+        #sp_retain = self.guideLinkCombo.sizePolicy()
+        #sp_retain.setRetainSizeWhenHidden(True)
+        #self.guideLinkCombo.setSizePolicy(sp_retain)
         
         self.catCtorRB = QRadioButton("Agrupado en Categorias")
         self.caseCtorRB = QRadioButton("Directamente via código SQL")
@@ -1392,16 +1571,18 @@ class WzProdBase(QWizardPage):
         meatLayout = QGridLayout()
         meatLayout.addWidget(prodNameLabel,0,0)
         meatLayout.addWidget(self.prodName,0,1,1,3)
-        meatLayout.addWidget(joinTableLabel,1,0)
-        meatLayout.addWidget(self.joinTableCombo,1,1)
-        meatLayout.addWidget(guideFldLabel,1,2)
-        meatLayout.addWidget(self.guidFldCombo,1,3)
-        meatLayout.addWidget(guideDescLabel,2,2)
-        meatLayout.addWidget(self.guideDescCombo,2,3)
-        meatLayout.addWidget(self.guideLinkLabel,3,0,1,2)
-        meatLayout.addWidget(self.guideLinkCombo,3,2)
-        meatLayout.addWidget(self.linkCTorRB,3,3)
-        meatLayout.addWidget(groupBox, 4, 0, 1, 4)
+        meatLayout.addWidget(domainTableLabel,1,0)
+        meatLayout.addWidget(self.domainTableCombo,1,1)
+        meatLayout.addWidget(domainGuideLabel,1,2)
+        meatLayout.addWidget(self.domainFieldCombo,1,3)
+        meatLayout.addWidget(domainDescLabel,2,2)
+        meatLayout.addWidget(self.domainDescCombo,2,3)
+        meatLayout.addWidget(guideDataTableLabel,3,0)
+        meatLayout.addWidget(self.guideDataTableCombo,3,1)
+        meatLayout.addWidget(guideDataGuideLabel,3,2)
+        meatLayout.addWidget(self.guideDataFieldCombo,3,3)
+        meatLayout.addWidget(self.linkCTorRB,4,3)
+        meatLayout.addWidget(groupBox, 5, 0, 1, 4)
 
         #meatLayout.addWidget(self.joinClauseArray,2,0,1,2)
         self.setLayout(meatLayout)
@@ -1426,33 +1607,33 @@ class WzProdBase(QWizardPage):
         if self.midict.get('domain'):
             #TODO elementos multiples
             setAddComboElem(self.midict['domain'].get('table'),
-                            self.joinTableCombo,
+                            self.domainTableCombo,
                             self.listOfTablesCode,self.listOfTables)
             #es valido porque la señal de cambio de tabla se dispara internamente con el setCurrentIndex
-            self.guidFldCombo.set(norm2String(self.midict['domain'].get('code')))
-            self.guideDescCombo.set(norm2String(self.midict['domain'].get('desc')))
+            self.domainFieldCombo.set(norm2String(self.midict['domain'].get('code')))
+            self.domainDescCombo.set(norm2String(self.midict['domain'].get('desc')))
             if self.midict.get('link via'):
                 self.linkCTorRB.setChecked(True)
-                self.guideLinkLabel.show()
-                self.guideLinkCombo.show()
                 self.linkCTorRB.show()
                 #TODO multiples criterios 
-                ultimo_filipinas = [ item.get('base_elem') for item in self.midict['link via'][0]['clause'] ]
-                self.guideLinkCombo.set(norm2String(ultimo_filipinas))
-                
-            else:
-                self.guideLinkCombo.set(norm2String(self.midict.get('elem')))
+                setAddComboElem(self.midict['link via'][-1].get('table'),
+                                self.guideDataTableCombo,
+                            self.listOfTablesCode,self.listOfTables)
+            self.guideDataFieldCombo.set(norm2String(self.midict.get('elem')))
+            self.guideDataFieldCombo.show()
+            self.guideDataTableCombo.show()
         else:    
             setAddComboElem(self.cache['tabla_ref'],
-                            self.joinTableCombo,
+                            self.domainTableCombo,
                             self.listOfTablesCode,self.listOfTables)
             #es valido porque la señal de cambio de tabla se dispara internamente con el setCurrentIndex
             if self.midict.get('elem'):
-                self.guidFldCombo.set(norm2String(self.midict.get('elem')))
+                self.domainFieldCombo.set(norm2String(self.midict.get('elem')))
             else:
-                self.guidFldCombo.setCurrentIndex(0)  #FIXME
-            self.guideDescCombo.setCurrentIndex(0)  #FIXME
-            self.guideLinkCombo.setCurrentIndex(0) 
+                self.domainFieldCombo.setCurrentIndex(0)  #FIXME
+            self.domainDescCombo.setCurrentIndex(0)  #FIXME
+            self.guideDataFieldCombo.hide()
+            self.guideDataTableCombo.hide()
             
         clase=self.midict.get('class','o')
         if clase == 'd' or self.midict.get('fmt','txt') == 'date':
@@ -1500,23 +1681,18 @@ class WzProdBase(QWizardPage):
             return False
         return True
 
-    def tablaElegida(self,idx):
+    def tablaElegida(self,idx,tipo):
         tabname = self.listOfTablesCode[idx]
         self.baseFieldList = getFieldsFromTable(tabname,self.cache,self.cube,'fmt')
         self.listOfFields = [ item[1] for item in self.baseFieldList ]
         self.listOfFieldsCode = [ item[0] for item in self.baseFieldList ]
-        self.guidFldCombo.load(self.listOfFieldsCode,self.listOfFields)
-        self.guideDescCombo.load(self.listOfFieldsCode,self.listOfFields)
-
-
-        if tabname != self.cache['tabla_ref']:
-            self.guideLinkLabel.show()
-            self.guideLinkCombo.show()
-            self.linkCTorRB.show()
-        #self.targetCodeList.clear()
-        #self.targetDescList.clear()
-        #self.targetCodeList.addItems(self.listOfFields)
-        #self.targetDescList.addItems(self.listOfFields) 
+        if tipo == 'domain':
+            self.domainFieldCombo.load(self.listOfFieldsCode,self.listOfFields)
+            self.domainDescCombo.load(self.listOfFieldsCode,self.listOfFields)
+        elif tipo == 'data':
+            self.guideDataFieldCombo.load(self.listOfFieldsCode,self.listOfFields)
+            if tabname != self.cache['tabla_ref']:
+                self.linkCTorRB.show()
 
 
     def formatoInterno2Enum(self,format):
@@ -1568,7 +1744,7 @@ class CubeWizard(QWizard):
             self.setPage(ixWzDomain, WzDomain(cube=cubeMgr,cache=cache_data))
         elif tipo in ('case_sql'):
             self.setPage(ixWzRowEditor, WzRowEditor(cache=cache_data))
-        elif tipo in ('link via','clause'):
+        elif tipo in ('link via'):
             self.setPage(ixWzLink, WzLink(cube=cubeMgr,cache=cache_data))
         elif tipo in ('guides','prod'): #== 'prod':
             self.prodIters = 1

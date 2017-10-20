@@ -240,6 +240,20 @@ class CubeItem(QStandardItem):
                 break
         return pos
     
+    def getPrevious(self):
+        pos = self.getPos()
+        if pos == 0:
+            return None
+        else:
+            return self.parent().getChildByPos(pos -1)
+        
+    def getNext(self):
+        pos = self.getPos()
+        if pos == self.parent().rowCount() -1:
+            return None
+        else:
+            return self.parent().getChildByPos(pos +1)
+        
     def getChildByPos(self,pos):
         return self.child(pos)
                 

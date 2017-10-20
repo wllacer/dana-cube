@@ -39,6 +39,8 @@ class WMultiCombo(QComboBox):
         self.setModel(model)
 
     def updateHeader(self,status,item):
+        if not self.Head:
+            self.Head = self.model().item(0).index()
         hdr = self.model().itemFromIndex(self.Head)
         extra = set(norm2List(hdr.data()))
         if status == 'add':
@@ -87,15 +89,15 @@ class WMultiCombo(QComboBox):
 
     def set(self,values):
         elementos = norm2List(values)
-        for item in elementos:
-            idx = self.checkElemText(item)
+        for entry in elementos:
+            idx = self.checkElemText(entry)
             if idx < 0:
-                item = QStandardItem(elementos)
+                item = QStandardItem(entry)
                 item.setData(Qt.Checked,Qt.CheckStateRole)
                 item.setFlags(Qt.ItemIsEnabled)
-                item.setData(elementos,Qt.UserRole+1)
+                item.setData(entry,Qt.UserRole+1)
                 self.model().appendRow(item)
-                idx = self.model().count() -1
+                idx = self.model().rowCount() -1
                 
             self.setItemData(idx,Qt.Checked,Qt.CheckStateRole)
             self.updateHeader('add',self.model().item(idx))
@@ -270,7 +272,10 @@ class WPowerTable(QTableWidget):
             return self.cellWidget(x,y).text()
         
    
-
+    def appendRow(self,row):
+       self.insertRow(row)
+       self.addRow(row)
+       
 class WDataSheet(WPowerTable):
     """
         Version del TableWidget para simular hojas de entrada de datos
@@ -303,7 +308,7 @@ class WDataSheet(WPowerTable):
         self.setHorizontalHeaderLabels(cabeceras)
         
 
-        self.resizeColumnsToContents()
+        #self.resizeColumnsToContents()
 
     def changeContext(self,context):
         #FIXME y que pasa con el contenido actual
