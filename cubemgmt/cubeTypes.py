@@ -151,10 +151,11 @@ NO_ADD_LIST = set([
     u'base filter',u'connect',u'dbuser',u'dbhost',u'driver',u'dbname',u'dbpass',
     u'date class',u'date period',u'date range',
     u'domain',
+    u'link via',u'clause'
     ])
 
 
-NO_EDIT_LIST = set([u'base',])
+NO_EDIT_LIST = set([u'base',u'clause'])
 NO_DELETE_LIST = set([u'base',u'cubo',u'vista',u'row',u'col',u'agregado',u'elemento',
     u'base filter',u'connect',u'dbuser',u'dbhost',u'driver',u'dbname',u'dbpass',])
 """

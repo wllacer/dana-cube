@@ -1481,6 +1481,7 @@ class WzProdBase(QWizardPage):
         self.setSubTitle(""" Introduzca la localización donde estan los valores por los que vamos a agrupar """)
 
         prodNameLabel = QLabel("&Nombre:")
+        self.prodIterator  = QLabel("")
         self.prodName = QLineEdit()
         prodNameLabel.setBuddy(self.prodName)
         self.prodName.setStyleSheet("background-color:khaki;")
@@ -1569,8 +1570,9 @@ class WzProdBase(QWizardPage):
         #self.joinClauseArray.resizeColumnToContents(0)
             
         meatLayout = QGridLayout()
-        meatLayout.addWidget(prodNameLabel,0,0)
-        meatLayout.addWidget(self.prodName,0,1,1,3)
+        meatLayout.addWidget(self.prodIterator,0,0)
+        meatLayout.addWidget(prodNameLabel,0,1)
+        meatLayout.addWidget(self.prodName,0,2,1,2)
         meatLayout.addWidget(domainTableLabel,1,0)
         meatLayout.addWidget(self.domainTableCombo,1,1)
         meatLayout.addWidget(domainGuideLabel,1,2)
@@ -1595,10 +1597,10 @@ class WzProdBase(QWizardPage):
         if isinstance(self.wizard().diccionario,(list,tuple)):
             #varias entradas
             self.midict = self.wizard().diccionario[self.iterations]
+            self.prodIterator.setText("entrada {}/{}".format(self.iterations +1,self.wizard().prodIters))
         else:
             self.midict = self.wizard().diccionario
-        
-            
+            self.prodIterator.setText("")
             
         #vamos ahora al proceso de add
         #TODO si no esta en la lista
@@ -1674,7 +1676,60 @@ class WzProdBase(QWizardPage):
 
 
     def validatePage(self):
-
+        #TODO realmente no hacemos ninguna validaciones
+        if self.prodName.text() != str(self.iterations -1):
+            self.midict['name'] = self.prodName.text()
+        #self.domainTableCombo
+        if self.listOfTablesCode[self.domainTableCombo.currentIndex()] == self.cache['tabla_ref']:
+            # no requiere dominio
+            if self.midict.get('domain'):
+                del self.midict['domain']
+                self.midict['elem'] = norm2List(self.domainFieldCombo.get())
+        else:
+            if self.midict.get('domain') is None:
+                self.midict['domain'] = {}
+            self.midict['domain']['code'] = norm2List(self.domainFieldCombo.get())
+            self.midict['domain']['desc'] = norm2List(self.domainDescCombo.get())
+            self.midict['domain']['table'] = self.listOfTablesCode[self.domainTableCombo.currentIndex()]
+            self.midict['elem'] = norm2List(self.guideDataFieldCombo.get())
+            # self.midict['domain']['filter'] 
+            pass
+        tablaDatos = self.listOfTablesCode[self.guideDataTableCombo.currentIndex()]
+        if ( self.guideDataTableCombo.isVisible() 
+            and tablaDatos != cache['tabla_ref'] ):
+            #necesitamos un data link
+            if not self.midict.get('link via'):
+                self.midict['link via'] = []
+                entry = {}
+                entry['table'] = tablaDatos
+                entry['filter'] = ''
+                self.setBaseFK(entry,self.cache['tabla_ref'],tablaDatos)
+                self.linkCTorRB.setChecked(True)
+                self.midict['link via'].append(entry)
+            else:
+                ultimaTabla = self.short2FullName(self.midict['link via'][-1]['table'])
+                if tablaDatos == ultimaTabla :
+                    pass
+                else:
+                    try:
+                        pos = [ self.short2FullName(entry['table']) for entry in self.midict['link via']].index(tablaDatos)
+                        del self.midict['link via'][pos +1:]
+                    except ValueError:
+                        entry = {}
+                        entry['table'] = tablaDatos
+                        entry['filter'] = ''
+                        self.setBaseFK(entry,ultimaTabla,tablaDatos)
+                        self.midict['link via'].append(entry)
+                        self.linkCTorRB.setChecked(True)
+        #class
+        #TODO falta modificar la regla de produccion de acuerdo con ello    
+        if self.dateCtorRB.isChecked():
+            self.midict['class'] = 'd'
+            self.midict['fmt'] == 'date'
+        elif self.catCtorRB.isChecked() or self.caseCtorRB.isChecked():
+            self.midict['class'] = 'c'        
+        #
+        
         if self.isFinalPage() and self.iterations < self.wizard().prodIters:
             self.wizard().setStartId(ixWzProdBase);
             self.wizard().restart()        
@@ -1710,7 +1765,31 @@ class WzProdBase(QWizardPage):
             self.fmtEnum = 'txt'
         if self.fmtEnum in ('date',):
             self.dateCtorRB.setChecked(True)
-
+            
+    def setBaseFK(self,entry,fromTable,toTable):
+        claves = self.cache['info'][fromTable].get('FK')
+        if not claves:
+            return 
+        for fkey in claves:
+            #FIXME si hay varias solo coge la primera
+            if fkey.get('parent table') == toTable:
+                base = norm2List(fkey.get('ref field'))
+                dest = norm2List(fkey.get('parent field'))
+                entry['clause'] = []
+                for i in len(base):  #mas vale que coincidan
+                    entry['clause'].append({'base_elem':base[i],'ref elem':dest[i]})
+                    break
+    def short2FullName(self,file):
+        if file not in self.listOfTablesCode:
+            try:
+                idx = self.listOfTables.index(file)
+                return self.listOfTablesCode(idx)
+            except ValueError:
+                return None
+        else:
+            return file
+        pass
+    
 class CubeWizard(QWizard):
     def __init__(self,obj,cubeMgr,action,cube_root,cube_ref,cache_data):
         super(CubeWizard,self).__init__()
@@ -1722,7 +1801,7 @@ class CubeWizard(QWizard):
         self.action = action
         self.cube_root = cube_root
         self.cache_data = cache_data
-        #
+
         tipo = obj.type()
         if action == 'add date filter':
             self.diccionario = {'date filter':[]}
