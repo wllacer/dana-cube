@@ -115,6 +115,7 @@ class WzConnect(QWizardPage):
             self.midict = self.wizard().diccionario
         for k,clave in enumerate(('driver','dbname','dbhost','dbuser','dbpass','port','debug')):
             if self.context[k][1] == QComboBox:
+                print(self.midict.get(clave))
                 self.sheet.set(k,0,self.context[k][3].index(self.midict.get(clave)))
             self.sheet.set(k,0,self.midict.get(clave))
         
@@ -295,215 +296,6 @@ def toCodeDescList(origin,codeId,descId,withBlank=False):
     return code,desc
 
 
-class WzProdBaseOld(QWizardPage):
-    def __init__(self,parent=None,cache=None):
-        #TODO campos obligatorios fondo amarillo, por convencion
-        #TODO class y fmt. eliminar si no aparecen en el origen
-        super(WzProdBaseOld,self).__init__(parent)
-    
-        self.iterations = 0
-        
-        baseTable = cache['tabla_ref']
-        self.baseFieldList = cache['info'][baseTable]['Fields']
-        formatArray = [None , ] + [elem[1] for elem in ENUM_FORMAT ]
-        self.formatArrayCode = [None , ] + [elem[0] for elem in ENUM_FORMAT ]
-        fieldArray = [None , ] + [ '{}  ({})'.format(item['basename'],item['format']) for item in self.baseFieldList]
-        self.fieldArrayCode = [None , ] + [ item['name'] for item in self.baseFieldList]
-        
-        self.setTitle("Definicion basica de la guía")
-        self.setSubTitle(""" Introduzca el campo por el que desea agrupar los resultados y como determinar el texto  """)
-
-        valueFormatLabel = QLabel("&Formato:")
-        self.valueFormatCombo = QComboBox()
-        self.valueFormatCombo.addItems(formatArray)
-        self.valueFormatCombo.setCurrentIndex(1)
-        valueFormatLabel.setBuddy(self.valueFormatCombo)
-        #desactivo las jerarquias por defecto, de momento
-        #self.valueFormatCombo.model().item(3).setEnabled(False)
-        #self.valueFormatCombo.currentIndexChanged[int].connect(self.tipoElegido)
-
-        prodNameLabel = QLabel("&Nombre:")
-        self.prodName = QLineEdit()
-        prodNameLabel.setBuddy(self.prodName)
-        
-        #TODO el campo debe de ser editable. Como actuar ver en editaCombo
-        guideFldLabel = QLabel("&Campo guia:")
-        self.guidFldCombo = QComboBox()
-        self.guidFldCombo.addItems(fieldArray)
-        self.guidFldCombo.setEditable(True)
-        guideFldLabel.setBuddy(self.guidFldCombo)
-        self.guidFldCombo.currentIndexChanged[int].connect(self.campoElegido)
-        self.guidFldCombo.setStyleSheet("background-color:khaki;")
-        
-        groupBox = QGroupBox("C&onstructor de textos ")
-
-        self.directCtorRB = QRadioButton("&Directa")
-        self.catCtorRB = QRadioButton("Agrupado en Categorias, enunciando &valores")
-        self.caseCtorRB = QRadioButton("Directamente via código SQL")
-        self.dateCtorRB = QRadioButton("Agrupaciones de intervalos de fecha")
-        #self.dateCtorRB.setDisabled(True)
-        self.linkCtorRB = QRadioButton("A traves de otra tabla")            
-
-        self.directCtorRB.setChecked(True)
-        self.directCtorRB.toggled.connect(self.setFinalPage)
-
-        groupBoxLayout = QVBoxLayout()
-        groupBoxLayout.addWidget(self.directCtorRB)
-        groupBoxLayout.addWidget(self.catCtorRB)
-        groupBoxLayout.addWidget(self.caseCtorRB)
-        groupBoxLayout.addWidget(self.dateCtorRB)
-        groupBoxLayout.addWidget(self.linkCtorRB)
-
-        groupBox.setLayout(groupBoxLayout)
-        
-        meatLayout = QGridLayout()
-        meatLayout.addWidget(valueFormatLabel, 0, 0)
-        meatLayout.addWidget(self.valueFormatCombo, 0, 1)
-        meatLayout.addWidget(prodNameLabel, 1, 0)
-        meatLayout.addWidget(self.prodName, 1, 1)
-        meatLayout.addWidget(guideFldLabel, 2, 0)
-        meatLayout.addWidget(self.guidFldCombo, 2, 1)
-        meatLayout.addWidget(groupBox, 3, 0, 1, 2)
-        
-        self.setLayout(meatLayout)
-    
-    def initializePage(self):
-        #TODO maxima longitud del diccionario actual como indice en add
-        if isinstance(self.wizard().diccionario,(list,tuple)):
-            #varias entradas
-            self.midict = self.wizard().diccionario[self.iterations]
-        else:
-            self.midict = self.wizard().diccionario
-
-        self.fmtEnum = 'txt'
-        if self.midict.get('elem'):
-            try:
-                indice = self.fieldArrayCode.index(self.midict['elem'])
-                self.guidFldCombo.setCurrentIndex(indice)
-                self.fmtEnum = self.formatoInterno2Enum(self.baseFieldList[indice -1]['format'])
-            except ValueError :
-                self.guidFldCombo.addItem(self.midict['elem'])
-                self.formatArrayCode.append(self.midict['elem'])
-                self.guidFldCombo.setCurrentIndex(self.guidFldCombo.count() -1)
-            
-
-        #TODO valor de defecto en funcion del formato del campo
-        self.valueFormatCombo.setCurrentIndex(self.formatArrayCode.index(self.midict.get('fmt',self.fmtEnum)))
-        self.prodName.setText(self.midict.get('name',str(self.iterations)))
-        
-            
-        if self.midict.get('domain') or self.midict.get('link_via'):
-            self.linkCtorRB.setChecked(True)
-        elif self.midict.get('categorias'):
-            self.catCtorRB.setChecked(True)
-        elif self.midict.get('case_sql'):
-            self.caseCtorRB.setChecked(True)
-            
-        self.iterator = self.iterations
-        self.iterations += 1  #OJO 
-        
-    def nextId(self):
-        print('invocamos nextId')
-        nextPage = -1
-        if self.directCtorRB.isChecked():
-            # Fin de todo
-            nextPage =  -1 #ixWzLink
-        elif self.catCtorRB.isChecked():
-            nextPage =  ixWzCategory
-        elif self.caseCtorRB.isChecked():
-            nextPage =  ixWzRowEditor
-        elif self.dateCtorRB.isChecked():
-            nextPage =  ixWzTime
-        elif self.linkCtorRB.isChecked():
-            nextPage =  ixWzDomain
-        else:
-            nextPage =  -1
-        return nextPage
-    
-    def validatePage(self):
-        print('invocamos validatePage')
-        #TODO ¿como devuelvo el cursor al campo correspondiente'
-        #if self.resultDefaultLineEdit.text() == '':
-            #self.resultDefaultLineEdit.setFocus()
-            #return False
-        if self.guidFldCombo.currentIndex() == 0:
-            self.guidFldCombo.setFocus()
-            return False
-        
-        #Hago los arreglos que son necesarios en la entrada
-        
-        formato = self.formatArrayCode[self.valueFormatCombo.currentIndex()]
-        if self.midict.get('fmt') or formato != 'txt':
-            self.midict['fmt'] = formato
-        if self.prodName.text() != str(self.iterator):
-            self.midict['name'] = self.prodName.text()
-        try:
-            self.midict['elem'] = self.fieldArrayCode[self.guidFldCombo.currentIndex()]
-        except IndexError: 
-            self.midict['elem'] = self.guidFldCombo.currentText()
-
-        if self.directCtorRB.isChecked():
-            if self.midict.get('class'):
-                self.midict['class'] = 'o'
-            for key in ('domain','categorias','case_sql','link_via','mask'):
-                if self.midict.get(key):
-                    del self.midict[key]
-        elif self.catCtorRB.isChecked():
-            self.midict['class'] = 'c'
-            self.midict['enum_fmt'] = self.fmtEnum
-            for key in ('domain','case_sql','link_via','mask'):
-                if self.midict.get(key):
-                    del self.midict[key]
-        elif self.caseCtorRB.isChecked():
-            for key in ('domain','categorias','link_via','mask'):
-                if self.midict.get(key):
-                    del self.midict[key]
-        elif self.dateCtorRB.isChecked():
-            self.midict['class'] = 'd'
-            for key in ('domain','categorias','case_sql','link_via'):
-                if self.midict.get(key):
-                    del self.midict[key]
-        elif self.linkCtorRB.isChecked():
-            for key in ('categorias','case_sql','mask'):
-                if self.midict.get(key):
-                    del self.midict[key]
-        
-        
-        if self.isFinalPage() and self.iterations < self.wizard().prodIters:
-            self.wizard().setStartId(ixWzProdBase);
-            self.wizard().restart()        
-            return False
-        return True
-    
-    def tipoElegido(self,ind):
-                # control parcial tipo y cosas que se pueden hacer.
-        # el tipo se normalizara al generar el arbol
-        if   ind in (0,1,3): # nomral jerarquia
-            self.directCtorRB.setChecked(True)
-        elif ind == 2: # categorias
-            self.catCtorRB.setChecked(True)
-        elif ind == 4: #fecha
-            self.dateCtorRB.setChecked(True)
-
-    def formatoInterno2Enum(self,format):
-        if format in ('texto',):
-            return 'txt'
-        elif format in ('fecha','fechahora','hora'):
-            return 'date'
-        else:
-            return 'num'
-        
-    def campoElegido(self,ind):
-        try:
-            self.fmtEnum = self.formatoInterno2Enum(self.baseFieldList[ind -1]['format'])
-        except IndexError:
-            self.fmtEnum = 'txt'
-        if self.fmtEnum in ('date',):
-            self.dateCtorRB.setChecked(True)
-        ##else:
-            ##self.tipoElegido(self.valueFormatCombo.currentIndex()) 
-
-    
 class WzCategory(QWizardPage):
     def __init__(self,parent=None,cache=None):
         super(WzCategory,self).__init__(parent)
@@ -677,7 +469,7 @@ class WzCategory(QWizardPage):
                 self.midict['categories'] = []
             resultado = self.sheet.values()
             for entry in resultado:
-                if entry[0] == '':
+                if entry[0] == '' or entry[2] == '':
                     continue
                 self.midict['categories'].append({'result':entry[0],'condition':LOGICAL_OPERATOR[entry[1]],'values':norm2List(entry[2])})
             
@@ -713,14 +505,13 @@ class WzCategory(QWizardPage):
                         self.midict[clave] = values[k]
                         print(self.midict,self.wizard().diccionario)
 
-
-                
-        
+        if self.iterator == -1:
+            return True
             
-        #if self.isFinalPage() and  (self.iterator == -1 or self.iterator < self.wizard().prodIters ):
-            #self.wizard().setStartId(ixWzProdBase);
-            #self.wizard().restart()        
-            #return False
+        if self.isFinalPage() and self.iterator < self.wizard().prodIters:
+            self.wizard().setStartId(ixWzProdBase);
+            self.wizard().restart()        
+            return False
 
         return True
     
@@ -779,10 +570,6 @@ class WzRowEditor(QWizardPage):
     def nextId(self):
         return -1
     def validatePage(self):
-        #if self.isFinalPage() and self.iterator < self.wizard().prodIters:
-            #self.wizard().setStartId(ixWzProdBase);
-            #self.wizard().restart()        
-            #return False
         
         texto = self.editArea.document().toPlainText()
         if isinstance(self.midict,dict):
@@ -795,7 +582,17 @@ class WzRowEditor(QWizardPage):
             area += texto.split('\n')
         elif self.midict is not None: 
             area.clear()
-        return True
+        
+        if self.iterator == -1:
+            return True
+            
+        if self.isFinalPage() and self.iterator < self.wizard().prodIters:
+            self.wizard().setStartId(ixWzProdBase);
+            self.wizard().restart()        
+            return False
+
+
+
 
 class WzTime(QWizardPage):
     def __init__(self,parent=None,cache=None):
@@ -982,11 +779,11 @@ class WzDomain(QWizardPage):
         self.setLayout(meatLayout)
     
     def initializePage(self):
-        base = self.wizard().page(ixWzProdBase) 
-        if not base:
-            self.iterator = -1
-        else:
-            self.iterator = self.wizard().page(ixWzProdBase).iterations
+        #base = self.wizard().page(ixWzProdBase) 
+        #if not base:
+            #self.iterator = -1
+        #else:
+            #self.iterator = self.wizard().page(ixWzProdBase).iterations
 
         if isinstance(self.wizard().diccionario,(list,tuple)):
             #varias entradas
@@ -1055,7 +852,7 @@ class WzDomain(QWizardPage):
          
         domain['filter'] = self.targetFilterLineEdit.text()
          
-        #if self.isFinalPage() and (self.iterator == -1 or self.iterator < self.wizard().prodIters):
+        #if self.isFinalPage() and (self.iterator != -1 or self.iterator < self.wizard().prodIters):
             #self.wizard().setStartId(ixWzProdBase);
             #self.wizard().restart()        
             #return False
@@ -1174,7 +971,7 @@ class WzLink(QWizardPage):
     def initializePage(self):
 
         obj = self.wizard().obj
-        self.iterator = None
+        self.iterator = -1
         if obj.type() == 'prod':
             self.tipo = 'LinkList'
             base = self.wizard().page(ixWzProdBase) 
@@ -1227,6 +1024,7 @@ class WzLink(QWizardPage):
     
       
     def initializePageLinkEntry(self):
+        
         obj = self.wizard().obj
         pos = obj.getPos()
         auxobj = obj.getPrevious()
@@ -1353,7 +1151,7 @@ class WzLink(QWizardPage):
         # si i != -1 si target != base[+1] append row
 
         baseIdx = self.listOfTablesCode.index(self.cache['tabla_ref'])
-        for row,linea in enumerate(resultado):
+        for row,linea in enumerate(resultado[:lastNonEmpty +1]):
             #if linea[0] == 0:
                 #continue
             ##print(linea)
@@ -1389,30 +1187,34 @@ class WzLink(QWizardPage):
                 return False
             
         # ahora compruebo los campos de enlace
-        for row,linea in enumerate(resultado):
+        for row,linea in enumerate(resultado[:lastNonEmpty +1]):
             if linea[1] == '' or linea[2] == '':
                 #FIXME posicionar el cursor en esa posicion
                 return False
             if len(norm2List(linea[1])) != len(norm2List(linea[3])):
                 return False
                                                                             
-            self.midict.clear() #esto es muy valiente
-            for row,linea in enumerate(resultado):
-                entry = {}
-                entry['table'] = self.listOfTablesCode[linea[2]]
-                entry['filter'] = ''
-                entry['clause'] = []
-                base = norm2List(linea[1])
-                ref  = norm2List(linea[3])
-                for k in range(len(base)):
-                    entry['clause'].append({'base_elem':base[k],
-                                            'rel_elem':ref[k]})
-                self.midict.append(entry)
-                
-        #if self.isFinalPage() and self.iterator < self.wizard().prodIters:
-            #self.wizard().setStartId(ixWzProdBase);
-            #self.wizard().restart()        
-            #return False
+        self.midict.clear() #esto es muy valiente
+        for row,linea in enumerate(resultado):
+            if linea[0] == 0 or linea[2] == 0:
+                continue
+            entry = {}
+            entry['table'] = self.listOfTablesCode[linea[2]]
+            entry['filter'] = ''
+            entry['clause'] = []
+            base = norm2List(linea[1])
+            ref  = norm2List(linea[3])
+            for k in range(len(base)):
+                entry['clause'].append({'base_elem':base[k],
+                                        'rel_elem':ref[k]})
+            self.midict.append(entry)
+    
+        if self.iterator == -1:
+           return True
+        if self.isFinalPage() and self.iterator < self.wizard().prodIters:
+            self.wizard().setStartId(ixWzProdBase);
+            self.wizard().restart()        
+            return False
         return True
 
         return True
@@ -1473,8 +1275,8 @@ class WzProdBase(QWizardPage):
         self.listOfTablesCode = ['',] + [ item[0] for item in tableArray]
         self.listOfFields = []
         self.listOfFieldsCode = []
-        self.listOfLinkFields = [ item[1] for item in getFieldsFromTable(cache['tabla_ref'],self.cache,self.cube) ]
-        self.listOfLinkFieldsCode = [ item[0] for item in getFieldsFromTable(cache['tabla_ref'],self.cache,self.cube) ]
+        self.listOfLinkFields = [ item[1] for item in getFieldsFromTable(self.cache['tabla_ref'],self.cache,self.cube) ]
+        self.listOfLinkFieldsCode = [ item[0] for item in getFieldsFromTable(self.cache['tabla_ref'],self.cache,self.cube) ]
 
         
         self.setTitle("Definición del dominio de la guía")
@@ -1519,7 +1321,7 @@ class WzProdBase(QWizardPage):
         #MARK VERY CAREFULLY. If has default value, DON'T make it mandatory in wizard
         #                     Use a null value in combos if mandatory
         self.guideDataTableCombo.addItems(self.listOfTables)
-        self.guideDataTableCombo.setCurrentIndex(self.listOfTablesCode.index(cache['tabla_ref']))
+        self.guideDataTableCombo.setCurrentIndex(self.listOfTablesCode.index(self.cache['tabla_ref']))
         guideDataTableLabel.setBuddy(self.guideDataTableCombo)
         self.guideDataTableCombo.currentIndexChanged[int].connect(lambda i,w='data' : self.tablaElegida(i,w))
 
@@ -1696,7 +1498,7 @@ class WzProdBase(QWizardPage):
             pass
         tablaDatos = self.listOfTablesCode[self.guideDataTableCombo.currentIndex()]
         if ( self.guideDataTableCombo.isVisible() 
-            and tablaDatos != cache['tabla_ref'] ):
+            and tablaDatos != self.cache['tabla_ref'] ):
             #necesitamos un data link
             if not self.midict.get('link via'):
                 self.midict['link via'] = []

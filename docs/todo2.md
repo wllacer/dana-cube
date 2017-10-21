@@ -1,6 +1,26 @@
+
 # ToDo list
 __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/todo2.md "Title")
 
+## Verificacion de los wizard
+*  __DONE__ eliminar qsqlite como driver
+*  retornar el cursor al elemento editado
+*  s/fieldEditor/WMultiBox
+*  add guia (en general edicion completa de guia)
+*  __DONE__ normalizar uso de self.cache
+*  ? Que tablas entran en el cache. Como añadir tablas en el cache dinamicamento o entrar todo el esquema
+*  grouped by en domain
+*  no perder elementos auxiliares en link via
+*  __DONE__ wzdomain no forma parte de las cadenas de produccion ya
+*  en arrays de un solo elemento no presentarlo como un array (fields y elem)
+*  date filter con campos forzados
+*  __BUG__ date filter campos bloqueados no funciona
+*  wzFieldList wGuideList no se usa. EN general __FALTA__ la creacion "ex nihilo" de un cubo o guia
+*  __DONE__ __BUG__ wzCategories. cierre
+*  __DONE__ wzCategories. Huecos y borrado de lineas
+*  ver comportamiento reglas enlazadas con paginas de detalle
+*  Nombre == valor en la presentacion
+*  __DONE__ salida de wzLink
 ## Grandes TODO (para pasar de serie)
 
 * __DONE__ Completar la distribucion de codigo sobre danabrowse (una vez hecha se taggea como version base )
