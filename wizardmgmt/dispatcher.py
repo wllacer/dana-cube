@@ -243,9 +243,11 @@ def manage(item,cubeMgr,action):
         print(text[0])
         if text[0] and text[0] != '':
             item.setData(text[0],Qt.EditRole)
-            nombre = item.getChildrenByName('name')
-            if nombre:
-                item.setColumnData(1,text[0],Qt.EditRole)
+            for elemento in ('name','result','default'):
+                nombre = item.getChildrenByName(elemento)
+                if nombre:
+                    nombre.setColumnData(1,text[0],Qt.EditRole)
+                    break
             else:
                 item.appendRow((CubeItem('name'),CubeItem(text[0],)))
 

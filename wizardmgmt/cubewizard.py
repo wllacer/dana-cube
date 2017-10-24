@@ -1027,8 +1027,8 @@ class WzLink(QWizardPage):
         
     def loadPageLinkEntry(self,origTable,destTable,entry_data):    
         #self.baseTableCombo.show()
-        baseField = [ item.get('base_elem') for item in entry_data.get('clause') ]
-        relField = [ item.get('rel_elem') for item in entry_data.get('clause') ]
+        baseField = [ item.get('base_elem') for item in entry_data.get('clause',[]) ]
+        relField = [ item.get('rel_elem') for item in entry_data.get('clause',[]) ]
         
        
         pos = setAddComboElem(origTable,self.baseTableCombo,self.listOfTablesCode,self.listOfTables)
@@ -1085,7 +1085,10 @@ class WzLink(QWizardPage):
             
         entry_data['table'] = self.listOfTablesCode[self.destTableCombo.currentIndex()]
         entry_data['filter'] = self.joinFilterLineEdit.text()
-        entry_data['clause'].clear()
+        if entry_data.get('clause'):
+            entry_data['clause'].clear()
+        else:
+            entry_data['clause'] = []
         for linea in resultado:
             if linea[0] <= 0:
                 continue  #deberia ser break, pero por si acaso no funciona lo de arriba
@@ -1577,7 +1580,7 @@ class WzProdBase(QWizardPage):
         #TODO falta modificar la regla de produccion de acuerdo con ello    
         if self.dateCtorRB.isChecked():
             self.midict['class'] = 'd'
-            self.midict['fmt'] == 'date'
+            self.midict['fmt'] = 'date'
         elif self.catCtorRB.isChecked() or self.caseCtorRB.isChecked():
             self.midict['class'] = 'c'        
         #

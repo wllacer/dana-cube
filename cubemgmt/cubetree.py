@@ -292,8 +292,13 @@ def recTreeLoader(parent,key,data,tipo=None):
             if not isinstance(elem,(list,tuple,dict)):
                 #continue
                 newparent.appendRow((CubeItem(None),CubeItem(str(elem)),))
-            elif isinstance(elem,dict) and elem.get('name'):
-                clave = elem.get('name')
+            elif isinstance(elem,dict): #and elem.get('name'):
+                for texto in ('name','result','default'):
+                    if elem.get(texto):
+                        clave = elem.get(texto)
+                        break
+                else:
+                    clave = str(idx)
                 datos = elem
                 #datos['pos'] = idx
                 recTreeLoader(newparent,clave,datos,tipo)

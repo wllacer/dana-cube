@@ -10,7 +10,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 *  __DONE__ normalizar uso de self.cache
 *  ? Que tablas entran en el cache. Como añadir tablas en el cache dinamicamento o entrar todo el esquema
 *  grouped by en domain
-*  no perder elementos auxiliares en link via
+*  __DONE__ no perder elementos auxiliares en link via
 *  __DONE__ wzdomain no forma parte de las cadenas de produccion ya
 *  en arrays de un solo elemento no presentarlo como un array (fields y elem)
 *  date filter con campos forzados
@@ -19,9 +19,10 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 *  __DONE__ __BUG__ wzCategories. cierre
 *  __DONE__ wzCategories. Huecos y borrado de lineas
 *  ver comportamiento reglas enlazadas con paginas de detalle
-*  Nombre == valor en la presentacion
+*  __DONE__ Nombre == valor en la presentacion
 *  __DONE__ salida de wzLink
-*  Rename es errático
+*  __DONE__ Rename es errático
+*  prod de sin domain a domain ¿como?
 
 
 
