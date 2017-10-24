@@ -323,6 +323,7 @@ def setAddComboElem(dataValue,widget,codeArray,descArray,offset=0):
         else:
             pos = descArray.index(fieldValue)
         widget.setCurrentIndex(pos +offset)  #FIXME
+        widget.setStyleSheet("")
     except ValueError:
         widget.addItem(fieldValue)
         codeArray.append(fieldValue)

@@ -21,6 +21,10 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 *  ver comportamiento reglas enlazadas con paginas de detalle
 *  Nombre == valor en la presentacion
 *  __DONE__ salida de wzLink
+*  Rename es errático
+
+
+
 ## Grandes TODO (para pasar de serie)
 
 * __DONE__ Completar la distribucion de codigo sobre danabrowse (una vez hecha se taggea como version base )
