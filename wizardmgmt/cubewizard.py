@@ -1120,11 +1120,6 @@ class WzLink(QWizardPage):
 
         return True
 
-    #def defineSlots(self,row):
-        #self.joinListArray.cellWidget(row,0).currentIndexChanged[int].connect(
-            #lambda p,i=row,w='base' : self.tablaElegidaLinkList(p,i,w))
-        #self.joinListArray.cellWidget(row,2).currentIndexChanged[int].connect(
-            #lambda p,i=row,w='tgt' : self.tablaElegidaLinkList(p,i,w))
         
     def setBaseFK(self,fromTableIdx,toTableIdx):
         fromTable = self.listOfTablesCode[fromTableIdx]
@@ -1232,31 +1227,12 @@ class WzLink(QWizardPage):
             self.clauseContext[column][2] = ['',] + list(self.targetFields)
             self.joinClauseArray.changeContextColumn(self.clauseContext[column],column)
  
-    #def tablaElegidaLinkList(self,idx,row,status):
-        ##if status == 'base' and idx == 0:
-            ##self.joinClauseArray.removeRow(row)
-            ##return 
-        #tabname = self.listOfTablesCode[idx]
-        #listOfFields = [ item[1] for item in getFieldsFromTable(tabname,self.cache,self.cube) ]
-        #listOfFieldsCode = [ item[0] for item in getFieldsFromTable(tabname,self.cache,self.cube) ]
-        #numrows = self.joinListArray.rowCount()
-        #numcols = self.joinListArray.columnCount()
-        
-        #if status == 'base':
-            #column = 1
-        #elif status == 'tgt':
-            #column = 3
-        #self.joinListArray.cellWidget(row,column).load(listOfFieldsCode,listOfFields)    
     
     def openContextMenu(self,position):
         """
         """
         row = self.joinListArray.currentRow()
         menuActions = []
-        #indexes = self.view.selectedIndexes()
-        #if len(indexes) > 0:
-            #index = indexes[0]
-            #item = self.baseModel.itemFromIndex(index)
         menu = QMenu()
         menuActions.append(menu.addAction("Append",lambda item=row:self.execAction(item,"append")))
         if row != len(self.midict) -1:
@@ -1333,9 +1309,6 @@ class WzLink(QWizardPage):
                 self.joinListArray.item(row,0).setBackground(Qt.white)
                 self.joinListArray.item(row,1).setBackground(Qt.white)
 
-    def test(self,idx):
-        
-        print('test',idx)
 class WzProdBase(QWizardPage):
     def __init__(self,parent=None,cube=None,cache=None):
         super(WzProdBase,self).__init__(parent)
