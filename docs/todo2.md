@@ -3,28 +3,28 @@
 __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/todo2.md "Title")
 
 ## Verificacion de los wizard
-*  __DONE__ eliminar qsqlite como driver
 *  retornar el cursor al elemento editado
 *  s/fieldEditor/WMultiBox
-*  add guia (en general edicion completa de guia)
+*  __FALTA__ la creacion "ex nihilo" de un cubo o guia.(en general edicion completa de guia)
+*  grouped by en domain. Grouped by sera tratado como dato interno ( Sum (prod[0:n-1].elem))
+*  __FALTA__ WzBaseFilter
+*  date filter con campos forzados (es decir no fechas). Para sqlite
+*  wzFieldList wGuideList no se usa.
+*  ver comportamiento reglas enlazadas con paginas de detalle
+*  prod de sin domain a domain ¿como?
+
+*  __DONE__ eliminar qsqlite como driver
 *  __DONE__ normalizar uso de self.cache
-*  ? Que tablas entran en el cache. Como añadir tablas en el cache dinamicamento o entrar todo el esquema
-*  grouped by en domain
+*  __SOLVED__ ? Que tablas entran en el cache. Todas Como añadir tablas en el cache dinamicamento o entrar todo el esquema
 *  __DONE__ no perder elementos auxiliares en link via
 *  __DONE__ wzdomain no forma parte de las cadenas de produccion ya
-*  en arrays de un solo elemento no presentarlo como un array (fields y elem)
-*  date filter con campos forzados
-*  __BUG__ date filter campos bloqueados no funciona
-*  wzFieldList wGuideList no se usa. EN general __FALTA__ la creacion "ex nihilo" de un cubo o guia
+*  __DONT'FIX__ en arrays de un solo elemento no presentarlo como un array (fields y elem).  rompe el caracter generico
+*  __DONE__ __BUG__ date filter campos bloqueados no funciona
 *  __DONE__ __BUG__ wzCategories. cierre
 *  __DONE__ wzCategories. Huecos y borrado de lineas
-*  ver comportamiento reglas enlazadas con paginas de detalle
 *  __DONE__ Nombre == valor en la presentacion
 *  __DONE__ salida de wzLink
 *  __DONE__ Rename es errático
-*  prod de sin domain a domain ¿como?
-
-
 
 ## Grandes TODO (para pasar de serie)
 

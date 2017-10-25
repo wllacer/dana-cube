@@ -256,7 +256,7 @@ Con esta clausula determinamos el dominio de definición, con __table__ denotand
 
 __filter__ nos permite reducir el conjunto de registros de la tabla que queramos procesaran
 
-En dominios jerarquicos puede ser necesario incluir un descriptor que nos indique que campo de un dominio intermedio corresponde al dominio de nivel superior. Para ello utilizamos la clausula __grouped by__, p.e. en
+En dominios jerarquicos puede ser necesario incluir un descriptor que nos indique en los nuveles de jerarquia un campo de agrupación previo que corresponde al nivel anterior. Este campo(s) debe pertenecer a la tabla de datos (no de dominios) . Para ello utilizamos la clausula __grouped by__, p.e. en. De hecho __grouped by__ corresponde a la agregación de los __elem__ de las reglas de producción anteriores.
 
 ```
                "prod": [
@@ -280,7 +280,7 @@ En dominios jerarquicos puede ser necesario incluir un descriptor que nos indiqu
                     }
                 ]
 ```
-denotamos que en el dominio de provincia la región (el primer nivel de jerarquía) esta definida en la columna "region" (notesé que ambos niveles utilizan la misma tabla con distintos criterios de selección ) __filter__) para cada uno de los dominios, actuando como vistas separadas
+Nótese que ambos niveles utilizan la misma tabla con distintos criterios de selección  __filter__) para cada uno de los dominios, actuando como vistas separadas
 
 
 * \<categories\> ::= \<defaut value\> \<category item\>+

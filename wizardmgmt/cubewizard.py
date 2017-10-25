@@ -160,34 +160,157 @@ class WzBaseFilter(QWizardPage):
     def validatePage(self):
         pass
 class WzDateFilter(QWizardPage):
-    #TODO falta validaciones cruzadas como en el dialogo
-    #TODO falta aceptar un campo no fecha (para sqlite) ya definido
+    """
+    codigo robado absolutamente de dialogs.dateFilterDialog()
+    FIXME como reutilizar ambos  
+    """
+    
     def __init__(self,parent=None,cache=None):
         super(WzDateFilter,self).__init__(parent)
         baseTable = cache['tabla_ref']
         self.baseFieldList = cache['info'][baseTable]['Fields']
-        fieldList = ['',] + [item['basename'] for item in self.baseFieldList if item['format'] in ('fecha','fechahora') ]
-        self.fqnfields = ['',] + [ item['name'] for item in self.baseFieldList if item['format'] in ('fecha','fechahora') ]
-        numrows = len(fieldList) -1
-        context = []
-        context.append(('campo','Clase','Rango','Numero','Desde','Hasta'))
-        context.append((QComboBox,None,fieldList))
-        context.append((QComboBox,None,CLASES_INTERVALO))
-        context.append((QComboBox,None,TIPOS_INTERVALO))
-        context.append((QSpinBox,{"setRange":(1,366)},None,1))
-        context.append((QLineEdit,{"setEnabled":False},None))
-        context.append((QLineEdit,{"setEnabled":False},None))
-
-        self.setTitle("Filtro Fechas")
-        self.setSubTitle(""" Introduzca los criterios dinámicos de fecha por los que filtrar la tabla base """)
-
-        self.sheet=self.sheet = WDataSheet(context,numrows)
-
-        meatLayout = QGridLayout()
-        meatLayout.addWidget(self.sheet,0,0,1,0)
+        self.fieldList = [ item['basename'] for item in self.baseFieldList if item['format'] in ('fecha','fechahora') ]
+        self.fieldListCore = [ item['name'] for item in self.baseFieldList if item['format'] in ('fecha','fechahora') ]
         
+            
+        numrows = len(self.fieldList) 
+
+        self.cache = cache
+        
+        self.single = False
+            
+        # cargando parametros de defecto
+        self.context = []
+
+        for k in self.fieldList:
+            self.context.append(('\t {}'.format(k),
+                                  (QComboBox,None,CLASES_INTERVALO),
+                                  (QComboBox,None,TIPOS_INTERVALO),
+                                  (QSpinBox,{"setRange":(1,366)},None,1),
+                                  (QLineEdit,{"setEnabled":False},None),
+                                  (QLineEdit,{"setEnabled":False},None),
+                                  )
+                        )
+        rows = len(self.context)
+        cols = 5 #max( [len(item) -1 for item in self.context ])  #FIXME
+        self.sheet1=WPowerTable(rows,cols)
+
+        for i,linea in enumerate(self.context):
+            for j in range(1,len(linea)):
+                self.sheet1.addCell(i,j -1,linea[j])
+                #self.sheet1.set(i,j -1,self.data[i][j-1])
+            self.sheet1.cellWidget(i,0).currentIndexChanged[int].connect(lambda j,idx=i:self.seleccionCriterio(j,idx))
+            self.sheet1.cellWidget(i,1).currentIndexChanged[int].connect(lambda j,idx=i:self.seleccionIntervalo(j,idx))
+            self.sheet1.cellWidget(i,2).valueChanged[int].connect(lambda j,idx=i:self.seleccionIntervalo(j,idx))
+            self.flipFlop(i,self.sheet1.get(i,0))
+
+       #FIXME valor inicial        
+        campos = [ k[0] for k in self.context ]
+        self.sheet1.setVerticalHeaderLabels(campos)
+        self.sheet1.resizeColumnsToContents()
+        cabeceras = ('Tipo Intervalo','Periodo intervalo','Numero Intervalos','F. inicio Inter. ','F. final Inter.')
+        self.sheet1.setHorizontalHeaderLabels(cabeceras)
+        self.sheet1.resizeColumnsToContents()
+        #
+        InicioLabel1 = QLabel('Filtre el rango temporal que desea')
+
+
+        meatLayout = QVBoxLayout()
+        
+        meatLayout.addWidget(InicioLabel1)
+        meatLayout.addWidget(self.sheet1)
+       
         self.setLayout(meatLayout)
-        self.midict = None
+        self.setMinimumSize(QSize(800,200))
+
+        self.setWindowTitle("Date Filter editor")
+        
+    def initializePage(self):
+        # TODO tablas sin fecha explicita (en sqlite)
+        if len(self.fieldList) == 0:
+            self.wizard().back()
+
+        if 'date filter' in self.wizard().diccionario:
+            self.midict = self.wizard().diccionario['date filter']
+        else:
+            self.midict = self.wizard().diccionario
+        if isinstance(self.midict,dict):
+            self.single = True
+            datos = [self.midict,]
+        else:
+            datos = self.midict
+            
+        for entrada in datos:
+            campo = entrada.get('elem')
+            # TODO cuando hay un campo NO fecha
+            try:
+                row = self.fieldListCore.index(campo)
+            except ValueError:
+                row = self.fieldList.index(campo)
+            self.sheet1.set(row,0,CLASES_INTERVALO.index(entrada.get('date class'))) # date class
+            self.sheet1.set(row,1,TIPOS_INTERVALO.index(entrada.get('date range'))) # date range
+            self.sheet1.set(row,2,int(entrada.get('date period'))) # date period
+            self.sheet1.set(row,3,entrada.get('date start')) # date start11
+            self.sheet1.set(row,4,entrada.get('date end')) # date end
+            if self.single:
+                for k in range(self.sheet1.rowCount()):
+                    if k == row:
+                        continue
+                    for j in range(self.sheet1.columnCount()):
+                        self.sheet1.cellWidget(k,j).setEnabled(False)
+            
+    def flipFlop(self,line,value):
+        # puede ser un poco repetitivo, pero no se si es mas costoso el enable/disable que comprobar cada
+        # vez si lo esta. Por lo menos el codigo es menos complejo y todavia no veo una razon para modificarlo
+        if value == 0:
+            self.sheet1.cellWidget(line,1).setEnabled(False)
+            self.sheet1.cellWidget(line,2).setEnabled(False)
+        elif value == 1: 
+            self.sheet1.cellWidget(line,1).setEnabled(True)
+            self.sheet1.cellWidget(line,2).setEnabled(False)
+        else:
+            self.sheet1.cellWidget(line,1).setEnabled(True)
+            self.sheet1.cellWidget(line,2).setEnabled(True)
+        # ponemos los valores ejemplo
+
+    def seleccionCriterio(self,value,idx):
+        self.flipFlop(idx,value)
+        self.seleccionIntervalo(value,idx)
+            
+    def seleccionIntervalo(self,value,idx):
+        if self.sheet1.get(idx,0)  == 0:
+            self.sheet1.set(idx,3,None)
+            self.sheet1.set(idx,4,None)
+        else:
+            desde,hasta = dateRange(self.sheet1.get(idx,0),self.sheet1.get(idx,1),periodo=self.sheet1.get(idx,2))
+            self.sheet1.set(idx,3,str(desde))
+            self.sheet1.set(idx,4,str(hasta))
+
+    def validatePage(self):
+        data = self.sheet1.values()
+        if self.single:
+            campo = self.midict.get('elem')
+            # TODO cuando hay un campo NO fecha
+            try:
+                row = self.fieldListCore.index(campo)
+            except ValueError:
+                row = self.fieldList.index(campo)
+            entrada = data[row]
+            self.midict['date class'] = CLASES_INTERVALO[entrada[0]]
+            self.midict['date range'] = TIPOS_INTERVALO[entrada[1]]
+            self.midict['date period'] = entrada[2]
+        else:
+            self.midict.clear()
+            for row,entrada in enumerate(data):
+                if entrada[0] <= 0:
+                    continue
+                self.midict.append({'elem':self.fieldListCore[row],
+                                    'date class':CLASES_INTERVALO[entrada[0]],
+                                    'date range':TIPOS_INTERVALO[entrada[1]],
+                                    'date period':entrada[2],
+                                    'date format':self.getFormat(self.fieldListCore[row])
+                                })
+        return True
         
     def getFormat(self,fieldName):
         formato = 'fecha'
@@ -196,56 +319,7 @@ class WzDateFilter(QWizardPage):
                 formato = item['formato']
                 break
         return formato
-
-    def initializePage(self):
-        if 'date filter' in self.wizard().diccionario:
-            self.midict = self.wizard().diccionario['date filter']
-        else:
-            self.midict = self.wizard().diccionario
-        if len(self.midict) > 0:
-            for k,entry in enumerate(self.midict):
-                #'elem':entry[0],
-                #'date class': CLASES_INTERVALO[entry[1]],
-                #'date range': TIPOS_INTERVALO[entry[2]],
-                #'date period': entry[3],
-                #'date start': None,
-                #'date end': None,
-                #'date format': formato
-
-                campo = self.fqnfields.index(entry['elem'])
-                self.sheet.set(k,0,campo)
-                self.sheet.set(k,1,CLASES_INTERVALO.index(entry['date class']))
-                self.sheet.set(k,2,TIPOS_INTERVALO.index(entry['date range']))
-                self.sheet.set(k,3,int(entry['date period']))
-                formato = 'fechahora'
-                if not entry.get('date format'):
-                    formato = self.getFormat(entry['elem'])
-                else:
-                    formato = entry['date format']
-
-                if not entry.get('date start'):
-                    intervalo = dateRange(self.sheet.get(k,1),self.sheet.get(k,2),periodo=int(entry['date period']),fmt=entry['date format'])
-                else:
-                    intervalo = tuple([entry['date start'],entry['date end']] )
-                self.sheet.set(k,4,str(intervalo[0]))
-                self.sheet.set(k,5,str(intervalo[1]))
-                    
-    def validatePage(self):
-        values = self.sheet.values()
-        guiaCamposVal = [item[0] for item in values]
-        guiaCamposDic = [item['elem'] for item in self.midict]
-        self.midict.clear()
-        for entrada in values:
-            print(entrada)
-            if entrada[0] == 0 or entrada[1] == 0:
-                continue
-            self.midict.append({'elem':self.fqnfields[entrada[0]],
-                                'date class':CLASES_INTERVALO[entrada[1]],
-                                'date range':TIPOS_INTERVALO[entrada[2]],
-                                'date period':entrada[3],
-                                'date format':self.getFormat(self.fqnfields[entrada[0]])
-                               })
-        return True
+    
    
 class WzFieldList(QWizardPage):
     def __init__(self,parent=None,cache=None):
