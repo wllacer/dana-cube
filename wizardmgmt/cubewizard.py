@@ -132,33 +132,6 @@ class WzConnect(QWizardPage):
                 self.midict[clave] = values[k]
         return True
     
-class WzBaseFilter(QWizardPage):
-    def __init__(self,parent=None,cache=None):
-        super(WzBaseFilter,self).__init__(parent)
-        numrows = 5
-        context=[]
-        fieldList = ['','Uno','Dos','Tres']
-        context.append(('campo','condicion','valores'))
-        context.append((QComboBox,None,fieldList))
-        context.append((QComboBox,None,tuple(LOGICAL_OPERATOR)))
-        context.append((QLineEdit,None,None))
-
-        self.setTitle("Filtro Base")
-        self.setSubTitle(""" Introduzca la condicion SQL por el que filtrar la tabla base """)
-
-        self.sheet = WDataSheet(context,numrows)
-        self.editArea = QPlainTextEdit()
-        #TODO una linea pura de codigo. O mejor alterar los tamaños
-        meatLayout = QGridLayout()
-        meatLayout.addWidget(self.sheet,0,0,1,0)
-        meatLayout.addWidget(self.editArea,5,0,8,0)
-        
-        self.setLayout(meatLayout)
-        
-    def initializePage(self):
-        pass
-    def validatePage(self):
-        pass
 class WzDateFilter(QWizardPage):
     """
     codigo robado absolutamente de dialogs.dateFilterDialog()
@@ -243,10 +216,8 @@ class WzDateFilter(QWizardPage):
         for entrada in datos:
             campo = entrada.get('elem')
             # TODO cuando hay un campo NO fecha
-            try:
-                row = self.fieldListCore.index(campo)
-            except ValueError:
-                row = self.fieldList.index(campo)
+            row = self.name2row(campo)
+                    
             self.sheet1.set(row,0,CLASES_INTERVALO.index(entrada.get('date class'))) # date class
             self.sheet1.set(row,1,TIPOS_INTERVALO.index(entrada.get('date range'))) # date range
             self.sheet1.set(row,2,int(entrada.get('date period'))) # date period
@@ -259,6 +230,51 @@ class WzDateFilter(QWizardPage):
                     for j in range(self.sheet1.columnCount()):
                         self.sheet1.cellWidget(k,j).setEnabled(False)
             
+    def name2row(self,campo):
+        try:
+            row = self.fieldListCore.index(campo)
+            return row
+        except ValueError:
+            pass
+        try:
+            row = self.fieldList.index(campo)
+            return row
+        except ValueError:
+            pass
+
+        nombresBase =[ item['basename'] for item in self.baseFieldList ]
+        nombres     =[ item['name'] for item in self.baseFieldList ]
+        idx = None
+        try:
+            idx = nombresBase.index(campo)
+        except ValueError:
+            pass
+        if not idx:
+            idx = nombres.index(campo)
+            # aqui dejo cascar el proceso. Es un fallo lo suficiente
+        self.context.append(('\t {}'.format(nombres[idx]),
+                        (QComboBox,None,CLASES_INTERVALO),
+                        (QComboBox,None,TIPOS_INTERVALO),
+                        (QSpinBox,{"setRange":(1,366)},None,1),
+                        (QLineEdit,{"setEnabled":False},None),
+                        (QLineEdit,{"setEnabled":False},None),
+                        )
+                        )
+        self.fieldListCore.append(campo)
+        self.fieldList.append(campo)
+        row = self.sheet1.rowCount()
+        self.sheet1.insertRow(row)
+        linea = self.context[-1]
+        self.sheet1.setVerticalHeaderItem(row,QTableWidgetItem(nombres[idx]))
+        for j in range(1,len(linea)):
+            self.sheet1.addCell(row,j -1,linea[j])
+        self.sheet1.cellWidget(row,0).currentIndexChanged[int].connect(lambda j,idx=row:self.seleccionCriterio(j,idx))
+        self.sheet1.cellWidget(row,1).currentIndexChanged[int].connect(lambda j,idx=row:self.seleccionIntervalo(j,idx))
+        self.sheet1.cellWidget(row,2).valueChanged[int].connect(lambda j,idx=row:self.seleccionIntervalo(j,idx))
+        self.flipFlop(row,self.sheet1.get(row,0))
+        
+        return row
+        
     def flipFlop(self,line,value):
         # puede ser un poco repetitivo, pero no se si es mas costoso el enable/disable que comprobar cada
         # vez si lo esta. Por lo menos el codigo es menos complejo y todavia no veo una razon para modificarlo
@@ -291,10 +307,7 @@ class WzDateFilter(QWizardPage):
         if self.single:
             campo = self.midict.get('elem')
             # TODO cuando hay un campo NO fecha
-            try:
-                row = self.fieldListCore.index(campo)
-            except ValueError:
-                row = self.fieldList.index(campo)
+            row = self.name2row(campo)
             entrada = data[row]
             self.midict['date class'] = CLASES_INTERVALO[entrada[0]]
             self.midict['date range'] = TIPOS_INTERVALO[entrada[1]]
@@ -316,8 +329,10 @@ class WzDateFilter(QWizardPage):
         formato = 'fecha'
         for item in self.baseFieldList:
             if item['basename'] == fieldName:
-                formato = item['formato']
+                formato = item['format']
                 break
+        if formato not in ('fecha','fechahora'):
+            formato = 'fecha'
         return formato
     
    

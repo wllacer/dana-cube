@@ -7,8 +7,6 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 *  s/fieldEditor/WMultiBox
 *  __FALTA__ la creacion "ex nihilo" de un cubo o guia.(en general edicion completa de guia)
 *  grouped by en domain. Grouped by sera tratado como dato interno ( Sum (prod[0:n-1].elem))
-*  __FALTA__ WzBaseFilter
-*  date filter con campos forzados (es decir no fechas). Para sqlite
 *  wzFieldList wGuideList no se usa.
 *  ver comportamiento reglas enlazadas con paginas de detalle
 *  prod de sin domain a domain ¿como?
@@ -18,13 +16,15 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 *  __SOLVED__ ? Que tablas entran en el cache. Todas Como añadir tablas en el cache dinamicamento o entrar todo el esquema
 *  __DONE__ no perder elementos auxiliares en link via
 *  __DONE__ wzdomain no forma parte de las cadenas de produccion ya
-*  __DONT'FIX__ en arrays de un solo elemento no presentarlo como un array (fields y elem).  rompe el caracter generico
+*  __WON'T FIX__ en arrays de un solo elemento no presentarlo como un array (fields y elem).  rompe el caracter generico
 *  __DONE__ __BUG__ date filter campos bloqueados no funciona
 *  __DONE__ __BUG__ wzCategories. cierre
 *  __DONE__ wzCategories. Huecos y borrado de lineas
 *  __DONE__ Nombre == valor en la presentacion
 *  __DONE__ salida de wzLink
 *  __DONE__ Rename es errático
+*  __WON'T FIX__ WzBaseFilter no activado. Debe hacerse directamente de DanaCube o edición libre
+*  __DONE__ date filter con campos forzados (es decir no fechas). Para sqlite
 
 ## Grandes TODO (para pasar de serie)
 
