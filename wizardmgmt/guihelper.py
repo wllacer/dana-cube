@@ -159,7 +159,6 @@ def getAvailableTables(cubeMgr,cache_data):
     
 def getFieldsFromTable(fqn_table_name,cache_data,cube,tipo_destino=None):
     # obtenemos la lista de campos
-    #TODO falta por evaluar que ocurre si el fichero no esta en el cache de datos
     if fqn_table_name not in cache_data['info']:
         basename = fqn_table_name.split('.')[-1]
         tmpTabInfo = TableInfo(cube.dataDict,cache_data['confName'],cache_data['schema'],basename,maxlevel=0)

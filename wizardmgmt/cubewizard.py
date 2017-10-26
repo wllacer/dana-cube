@@ -173,7 +173,7 @@ class WzDateFilter(QWizardPage):
     def __init__(self,parent=None,cache=None):
         super(WzDateFilter,self).__init__(parent)
         baseTable = cache['tabla_ref']
-        self.baseFieldList = cache['info'][baseTable]['Fields']
+        self.baseFieldList = getFieldsFromTable(baseTable)
         self.fieldList = [ item['basename'] for item in self.baseFieldList if item['format'] in ('fecha','fechahora') ]
         self.fieldListCore = [ item['name'] for item in self.baseFieldList if item['format'] in ('fecha','fechahora') ]
         
@@ -1257,12 +1257,12 @@ class WzLink(QWizardPage):
             if fkey.get('parent table') == toTable:
                 setAddComboElem(fkey.get('ref field'),
                                 self.joinClauseArray.cellWidget(0,0),
-                                ['',]+[ entry['name'] for entry in self.cache['info'][fromTable]['Fields']],
-                                ['',]+[ entry['basename'] for entry in self.cache['info'][fromTable]['Fields']])
+                                ['',]+[ entry['name'] for entry in getFieldsFromTable(fromTable)],
+                                ['',]+[ entry['basename'] for entry in getFieldsFromTable(fromTable)])
                 setAddComboElem(fkey.get('parent field'),
                                 self.joinClauseArray.cellWidget(0,2),
-                                ['',]+[ entry['name'] for entry in self.cache['info'][toTable]['Fields']],
-                                ['',]+[ entry['basename'] for entry in self.cache['info'][toTable]['Fields']])
+                                ['',]+[ entry['name'] for entry in getFieldsFromTable(toTable)],
+                                ['',]+[ entry['basename'] for entry in getFieldsFromTable(toTable)])
         for row in range(1,self.joinClauseArray.rowCount()):
             self.joinClauseArray.set(row,0,None)
             self.joinClauseArray.set(row,2,None)
@@ -1415,8 +1415,8 @@ class WzLink(QWizardPage):
                     correcta = False
             
             if correcta:
-                baseFields = [ item['name'] for item in self.cache['info'][base]['Fields']]  #solo FQN si no puede haber diplicidades
-                destFields = [ item['name'] for item in self.cache['info'][dest]['Fields']]  #solo FQN si no puede haber
+                baseFields = [ item['name'] for item in getFieldsFromTable(base)]  #solo FQN si no puede haber diplicidades
+                destFields = [ item['name'] for item in getFieldsFromTable(dest)]  #solo FQN si no puede haber
                 
                 for clausula in entry.get('clause'):
                     if clausula['base_elem'] not in baseFields:

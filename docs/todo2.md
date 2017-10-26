@@ -13,7 +13,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 *  ver comportamiento reglas enlazadas con paginas de detalle
 *  prod de sin domain a domain ¿como?
 *  unificar los traverse
-*  uso inadecuado de acceso a campos en el cache
+*  __DONE__ uso inadecuado de acceso a campos en el cache
 
 *  __DONE__ eliminar qsqlite como driver
 *  __DONE__ normalizar uso de self.cache
