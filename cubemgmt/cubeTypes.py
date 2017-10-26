@@ -214,18 +214,26 @@ STATIC_COMBO_ITEMS = dict({
      u'date range':[ (k,item) for k,item in enumerate(TIPOS_INTERVALO)],
     })
 
-DYNAMIC_COMBO_ITEMS = set([
+TABLE_ITEMS = set([
+     u'table',     #
+    ])
+
+COLUMN_ITEMS = set([
      u'base_elem', #             field of  Reference  table
      u'code',      #             field of FK table (key)
-     u'col',       # number (a guide of base)
      u'cubo',      # uno de los cubos del fichero
      u'desc',       #             field of FK table (values)
      u'elem',      #              field of table, or derived value 
      u'elemento',  # FIELD of cube
      u'fields',    #
      u'grouped by',#              field of FK table or derived value ??
-     u'mask',
      u'rel_elem',  #              field of FK table
-     u'row',       # uno de los cubos del fichero
      u'table',     #
     ])
+
+OTHER_DYNAMIC_ITEMS = set([
+     u'col',       # number (a guide of base)
+     u'row',       # uno de los cubos del fichero
+    ])
+
+DYNAMIC_COMBO_ITEMS = TABLE_ITEMS | COLUMN_ITEMS | OTHER_DYNAMIC_ITEMS

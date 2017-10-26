@@ -3,13 +3,16 @@
 __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/todo2.md "Title")
 
 ## Verificacion de los wizard
+*  __PARTIAL__ Integrar funciones de REBASE en cubebrowse (vide infra)
+*  COPY UP/DOWN de guia
 *  retornar el cursor al elemento editado
 *  s/fieldEditor/WMultiBox
-*  __FALTA__ la creacion "ex nihilo" de un cubo o guia.(en general edicion completa de guia)
+*  __FALTA__ la creacion "ex nihilo" de guia.(en general edicion completa de guia)
 *  grouped by en domain. Grouped by sera tratado como dato interno ( Sum (prod[0:n-1].elem))
 *  wzFieldList wGuideList no se usa.
 *  ver comportamiento reglas enlazadas con paginas de detalle
 *  prod de sin domain a domain ¿como?
+*  unificar los traverse
 
 *  __DONE__ eliminar qsqlite como driver
 *  __DONE__ normalizar uso de self.cache
@@ -25,6 +28,8 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 *  __DONE__ Rename es errático
 *  __WON'T FIX__ WzBaseFilter no activado. Debe hacerse directamente de DanaCube o edición libre
 *  __DONE__ date filter con campos forzados (es decir no fechas). Para sqlite
+*  __WONT'FIX__ creacion "ex nihilo" de cubo. los cubos deben crearse via Danabrowse o funcion de copia
+*  __PARTIAL__ creadas en cubemgmt.cubeutil funcioes para cambiar esquemas y nombres de tabla. Dudas sobre como usarlo en el codigo (implica entre otras cosas anular la cache)
 
 ## Grandes TODO (para pasar de serie)
 

@@ -263,4 +263,51 @@ def getFldTable(exec_object,obj,refTable=None):
         print(connURL,'NO ESTA A MANO')
     return None
 
+def traverseFiltered(root,funcion):
+    if isinstance(root,CubeItem):
+        if funcion(root):
+            yield root
+        queue = root.listChildren() 
+    else:
+        queue = [ root.child(i) for i in range(0,root.rowCount()) ]
+        #print(queue)
+        #print('')
+    while queue :
+        if funcion(queue[0]):
+            yield queue[0]
+        expansion = queue[0].listChildren() 
+        if expansion is None:
+            del queue[0]
+        else:
+            queue = expansion  + queue[1:]    
 
+def changeTableName(root,oldName,newName):
+    matchpattern=r'(\W*\w*\.)?('+oldName+')'
+    filematch = matchpattern+'$'
+    filerepl  = r'\1'+ newName
+    fieldmatch=matchpattern+r'(\..*)'
+    fieldrepl = r'\1' + newName +r'\3'
+    changeDD(root,filematch,filerepl,fieldmatch,fieldrepl)
+        
+def changeSchema(root,oldSchema,newSchema):
+    matchpattern=r'('+oldSchema+'\.)'
+    filematch = matchpattern+'(\w.*)'
+    filerepl  = newSchema +r'.\2'
+    fieldmatch= filematch
+    fieldrepl = filerepl
+    changeDD(root,filematch,filerepl,fieldmatch,fieldrepl)
+
+def changeDD(root,filematch,filerepl,fieldmatch,fieldrepl):
+    import re
+    
+    for node in traverseFiltered(root,lambda x:x.type()=='table'):
+        pai = node.parent()
+        fichero = node.getColumnData(1,Qt.EditRole)
+        if re.search(filematch,fichero): #.find(oldFile) >= 0:
+            for dnode in traverseFiltered(pai,lambda x:x.type() in COLUMN_ITEMS):
+                if dnode.getColumnData(1) is None:
+                    continue
+                campo = dnode.getColumnData(1,Qt.EditRole)
+                if re.search(fieldmatch,campo):# 
+                    dnode.setColumnData(1,re.sub(fieldmatch,fieldrepl,campo),Qt.EditRole)
+            node.setColumnData(1,re.sub(filematch,filerepl,fichero),Qt.EditRole)
