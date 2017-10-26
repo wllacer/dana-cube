@@ -93,20 +93,24 @@ def accion():
     confName = 'Pagila'
     schema = 'public'
     table = 'rental'
-    dataDict=DataDict(conName=confName,schema=schema)
+    dataDict=DataDict() #conName=confName) #,schema=schema)
     cubo = info2cube(dataDict,confName,schema,table,2) 
-    model = QStandardItemModel()
-    hiddenRoot = model.invisibleRootItem()
-    parent = hiddenRoot
-    for entrada in cubo:
-        if entrada == 'default':
-            tipo = 'default_base'
-        #elif entrada in types:
-            #tipo = entrada
-        else:
-            tipo = 'base'
-        recTreeLoader(parent,entrada,cubo[entrada],tipo)
-    raiz = None
+    print(dataDict)
+    hiddenRoot = dataDict.hiddenRoot
+    for item in traverse(hiddenRoot,lambda x:isinstance(x,SchemaTreeItem)):
+        print(item.type(),item.text())
+    #model = QStandardItemModel()
+    #hiddenRoot = model.invisibleRootItem()
+    #parent = hiddenRoot
+    #for entrada in cubo:
+        #if entrada == 'default':
+            #tipo = 'default_base'
+        ##elif entrada in types:
+            ##tipo = entrada
+        #else:
+            #tipo = 'base'
+        #recTreeLoader(parent,entrada,cubo[entrada],tipo)
+    #raiz = None
     
     
 def miniCube():

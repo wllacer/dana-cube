@@ -385,6 +385,8 @@ class WPropertySheet(WPowerTable):
                 self.addCell(k,0,context[k][1:],None)
                 if data:
                     self.set(k,0,data[k])
+                else:
+                    self.set(k,0,None)
         self.setVerticalHeaderLabels(cabeceras)
         #no necesito cabeceras horizontales en este caso
         self.horizontalHeader().hide()

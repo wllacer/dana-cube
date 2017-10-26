@@ -98,7 +98,7 @@ def preparaCombo(obj,valueTable,valorActual):
         comboList = [ item[1] for item in valueTable ]
         claveList = [ str(item[0]) for item in valueTable ]
     else:
-        claveList = comboList = tuple(valueTable)
+        claveList = comboList = list(valueTable)
 
     if valorActual:
         try:
@@ -151,6 +151,8 @@ def getAvailableTables(cubeMgr,cache_data):
     dd=cubeMgr.dataDict
     conn = dd.getConnByName(cache_data['confName'])
     schema = conn.getChildrenByName(cache_data['schema'])
+    if schema is None: #Puede ocurrir en algunos casos de manipulacion
+        return ['',]
     hijos = schema.listChildren()
     array = [ (item.fqn(),item.text()) for item in hijos ]
     return array

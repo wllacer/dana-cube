@@ -3,7 +3,7 @@
 __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/todo2.md "Title")
 
 ## Verificacion de los wizard
-*  __PARTIAL__ Integrar funciones de REBASE en cubebrowse (vide infra)
+*  __PARTIAL__ change schema en conexion. NO se verifican la validez de los cambios. Caveat Emptor
 *  COPY UP/DOWN de guia
 *  retornar el cursor al elemento editado
 *  s/fieldEditor/WMultiBox
@@ -13,6 +13,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 *  ver comportamiento reglas enlazadas con paginas de detalle
 *  prod de sin domain a domain ¿como?
 *  unificar los traverse
+*  uso inadecuado de acceso a campos en el cache
 
 *  __DONE__ eliminar qsqlite como driver
 *  __DONE__ normalizar uso de self.cache
@@ -29,7 +30,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 *  __WON'T FIX__ WzBaseFilter no activado. Debe hacerse directamente de DanaCube o edición libre
 *  __DONE__ date filter con campos forzados (es decir no fechas). Para sqlite
 *  __WONT'FIX__ creacion "ex nihilo" de cubo. los cubos deben crearse via Danabrowse o funcion de copia
-*  __PARTIAL__ creadas en cubemgmt.cubeutil funcioes para cambiar esquemas y nombres de tabla. Dudas sobre como usarlo en el codigo (implica entre otras cosas anular la cache)
+*  __PARTIAL__ creadas en cubemgmt.cubeutil funcioes para cambiar esquemas y nombres de tabla. Dudas sobre como usarlo en el codigo. Cambio de fichero realizado (implica entre otras cosas anular la cache). Cambio de esquema en cambio de conexion
 
 ## Grandes TODO (para pasar de serie)
 

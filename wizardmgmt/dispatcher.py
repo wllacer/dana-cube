@@ -227,6 +227,8 @@ def manage(item,cubeMgr,action):
             resultado = leaf_management(item,cubeMgr,action,cube_root,cube_ref,cache_data)
         else:
             resultado = block_management(item,cubeMgr,action,cube_root,cube_ref,cache_data)
+    if action in ('change schema'):
+        pass
     elif action == 'delete':
 
         if item.type() == 'base': #no puedo borrarlo pero si vaciarlo, es un probleam de logica. ver cubebrowewin.close()
@@ -387,7 +389,40 @@ def CubeWizardExec(obj,cubeMgr,wizard,action,cube_root,cube_ref,cache_data):
     tipo = obj.type()
     texto = obj.text() 
     padre = obj.parent()
-    if action == 'add date filter':
+    if tipo == 'connect':
+        """"
+        TODO por el momento no se realiza la verificación de mas abajo
+           si solo cambio el esquema ---> reprocesar
+           si se cambio algo
+           si la conexion existe
+
+           si no existe
+                si puede conectarse
+                    añadir a conexiones posibles
+                elif preguntar si deseo proceder
+           realizar los cambios necesarios (esquema. fechas manipuladas ¿?)
+        """
+        schema = wizard.diccionario['schema']
+        del wizard.diccionario['schema']
+        added, removed, modified, same = dict_compare(wizard.diccionario,tree2dict(obj,isDictionaryEntry))
+        if schema != cache_data['schema']:
+            pai = obj.parent()
+            changeSchema(pai,cache_data['schema'],schema)
+            if pai.type() == 'base':
+                del cubeMgr.cache[pai.text()]
+                info_cache(cubeMgr,pai)
+
+            if pai.type() == 'base':
+                del cubeMgr.cache[pai.text()]
+                info_cache(cubeMgr,pai)
+        if len(modified) == 0 :
+            return
+        else:
+            nudict = {texto:wizard.diccionario }
+            obj.suicide()
+
+
+    elif action == 'add date filter':
         padre = obj
         texto = tipo = 'date filter'     
         if texto in wizard.diccionario:
@@ -399,7 +434,6 @@ def CubeWizardExec(obj,cubeMgr,wizard,action,cube_root,cube_ref,cache_data):
             return
     #TODO aqui tengo que realizar la vuelta de una regla de produccion
     elif tipo in TYPE_LIST_DICT:
-        print(obj.getPos(),wizard.diccionario)
         if tipo != texto:
             yayo = padre.parent()
             nudict = tree2dict(yayo,isDictionaryEntry)
