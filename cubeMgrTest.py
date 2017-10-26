@@ -107,57 +107,6 @@ def accion():
             tipo = 'base'
         recTreeLoader(parent,entrada,cubo[entrada],tipo)
     raiz = None
-    changeTableName(hiddenRoot,'public.rental','alquileres')
-
-    for node in traverse(hiddenRoot,lambda x:x.type()=='table' or x.type() in TIPOS):
-        if isinstance(node,CubeItem):
-            padd = '    '*node.depth()
-            print(padd,node.text(),node.getColumnData(1),node.type())
-        else:
-            print('<root>')    
-
-    exit()
-
-    
-    for cubo in childItems(hiddenRoot):
-        if cubo.text() == 'rental':
-            raiz = cubo
-            break
-    #rebase(cubo,oldFile,newFile)
-    oldSchema = 'public'
-    newSchema = 'muyprivado'
-    moveSchema(cubo,oldSchema,newSchema)
-    pprint(tree2dict(hiddenRoot,isDictionaryEntry))
-
-def moveSchema(treeRoot,oldFile,newFile):
-    viejo = oldFile + '.'
-    nuevo = newFile + '.'
-    for node in traverseTree(treeRoot):
-        if node.type() in TIPOS or node.type() == 'table':
-            string = node.getColumnData(1,Qt.EditRole)
-            if not string:
-                continue
-            #FIXME quedaria mejor controlando la posicion exacta (menos errores tontos)
-            if string.find(viejo) >= 0:
-                node.setColumnData(1,string.replace(viejo,nuevo),Qt.EditRole)
-
-def rebase(treeRoot,oldFile,newFile):
-    viejo = oldFile + '.'
-    nuevo = newFile + '.'
-    for node in traverseTree(treeRoot):
-        if node.type() in ('table',):
-            string = node.getColumnData(1,Qt.EditRole)
-            if not string:
-                continue
-            if string.find(oldFile) >= 0:
-                node.setColumnData(1,string.replace(oldFile,newFile),Qt.EditRole)
-                
-        elif node.type() in TIPOS :
-            string = node.getColumnData(1,Qt.EditRole)
-            if not string:
-                continue
-            if string.find(viejo) >= 0:
-                node.setColumnData(1,string.replace(viejo,nuevo),Qt.EditRole)
     
     
 def miniCube():
@@ -192,13 +141,6 @@ if __name__ == '__main__':
         sys.setdefaultencoding('utf-8')
 
     #app = QApplication(sys.argv)
-    #miniCube()
+    miniCube()
     #miniWizard()
-    accion()
-    #for node in traverse(hiddenRoot,lambda x:x.type()=='table'):
-        #if isinstance(node,CubeItem):
-            #padd = '\t'*node.depth()
-            #print(padd,node.text(),node.getColumnData(1),node.type())
-        #else:
-            #print(node.text())
-    #exit()
+    #accion()

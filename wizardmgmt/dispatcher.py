@@ -57,6 +57,7 @@ DELIMITER=':'
 #from core import Cubo
 
 #from cubemgmt.cubeutil import info2cube,isDictionaryEntry,action_class,getCubeList,getCubeItemList
+from cubemgmt.cubeutil import changeSchema,changeTableName
 #from cubemgmt.cubetree import *
 from cubemgmt.cubeTypes import *
 #from cubemgmt.cubeCRUD import insertInList
@@ -252,6 +253,62 @@ def manage(item,cubeMgr,action):
                 item.appendRow((CubeItem('name'),CubeItem(text[0],)))
 
 
+def leaf_management(obj,cubeMgr,action,cube_root,cube_ref,cache_data):
+    tipo = obj.type()
+    modo = action_class(obj)
+    if action == 'edit':
+        value = obj.getColumnData(1)
+    else:
+        value = None
+        
+    specs,values = getInputWidget(obj,cubeMgr,cube_root,cube_ref,cache_data)
+    
+    result = None
+    context = []
+    context.append(specs[0:4])
+
+    parmDialog = propertySheetDlg('Edite '+obj.text(),context,values)
+    if parmDialog.exec_():
+        retorno = parmDialog.sheet.values()[0]
+        
+        if specs[1] == QLineEdit :
+            result = retorno
+        elif specs[5]: #descriptivo
+            comboList = specs[3]
+            claveList = specs[4]
+            #print(retorno,comboList,claveList)
+            # en un combo tengo que tener cuidado que no se hayan añadido/modificado
+            # entradas durante la ejecucion (p.e de campo a funcion(campo)
+            if retorno >= len(comboList):  #nueva entrada dinamica en el combo
+                result = parmDialog.sheet.cellWidget(0,0).currentText() 
+            elif parmDialog.sheet.cellWidget(0,0).currentText() != comboList[retorno]:
+                result = parmDialog.sheet.cellWidget(0,0).currentText()
+            else:
+                result = claveList[retorno] 
+        else:
+           result = parmDialog.sheet.cellWidget(0,0).currentText()  #pues no lo tengo tan claro
+   
+
+    if result:   
+        if tipo in TABLE_ITEMS:
+            oldFile = obj.getColumnData(1,Qt.EditRole)
+            changeTableName(obj,oldFile,result)
+            pai = obj.parent()
+            if pai.type() == 'base':
+                del cubeMgr.cache[pai.text()]
+                info_cache(cubeMgr,pai)
+
+        if tipo in TYPE_LIST and action == 'add': #TODO ojillo a la accion
+            insertInList(obj,tipo,result)
+        else:
+            if result and result != value:
+                obj.setColumnData(1,result,Qt.EditRole) 
+        return result
+    else:
+        return None
+    # efectos secundarios
+    # 1) referencia en conexion
+    # 2) table name
 def block_management(obj,cubeMgr,action,cube_root,cube_ref,cache_data):
     tipo = obj.type()
     texto = obj.text() 
