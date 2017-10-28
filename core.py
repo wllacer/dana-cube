@@ -213,8 +213,8 @@ class Cubo:
               desc_fld = len(desc_tup)
         else:
           sqlDef['tables'] = self.definition['table']
-          if len(self.definition['base filter'].strip()) > 0:
-             sqlDef['base filter']=self.definition['base_filter']
+          if len(self.definition.get('base filter','')) > 0:
+             sqlDef['base filter']=self.definition['base filter']
           if self.definition.get('date filter'):
              sqlDef['where'] = self.setDateFilter()
           sqlDef['fields'] = norm2List(entrada['elem'])
@@ -232,7 +232,7 @@ class Cubo:
         #REFINE creo que fields sobra
         sqlDef=dict()
         sqlDef['tables'] = self.definition['table']
-        if len(self.definition['base filter'].strip()) > 0:
+        if len(self.definition.get('base filter','')) > 0:
            sqlDef['base_filter']=self.definition['base filter']
         
         if self.definition.get('date filter'):
@@ -568,7 +568,7 @@ class Vista:
         sqlDef = dict()
         sqlDef['tables']=self.cubo.definition['table']
         #sqlDef['select_modifier']=None
-        sqlDef['base_filter']=mergeString(self.filtro,self.cubo.definition['base filter'],'AND')
+        sqlDef['base_filter']=mergeString(self.filtro,self.cubo.definition.get('base filter',''),'AND')
         sqlDef['where'] = []
         
         sqlDef['where'] += self.__setDateFilter()
@@ -654,7 +654,7 @@ class Vista:
             #sqlDef['select_modifier']=None
             sqlDef['fields']= self.cubo.lista_guias[self.col_id]['rules'][j]['elem'] + \
                                 [(self.campo,self.agregado)]
-            sqlDef['base_filter']=mergeString(self.filtro,self.cubo.definition['base filter'],'AND')
+            sqlDef['base_filter']=mergeString(self.filtro,self.cubo.definition.get('base filter',''),'AND')
 
             sqlDef['where'] = []
 
