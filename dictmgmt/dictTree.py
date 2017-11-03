@@ -565,7 +565,7 @@ class TableTreeItem(BaseTreeItem):
             for column in inspector.get_columns(table_name,schema):
                 try:
                     name = BaseTreeItem(column['name'])
-                    tipo = BaseTreeItem(typeHandler(column.get('type','TEXT')))
+                    tipo = BaseTreeItem(typeHandler(column.get('type',types.Text())))
                     curTableFields.appendRow((name,tipo))
                     #FIXME el rendimiento es intolerable para poer hacerlo para todas las columnas
                     #curTableFields.lastChild().getValueSpread()
@@ -574,7 +574,7 @@ class TableTreeItem(BaseTreeItem):
                     if DEBUG:
                         print('Columna sin tipo',schema,' ',table_name,' ',name)
                     if name and name != '':
-                        tipo = BaseTreeItem(typeHandler('TEXT'))
+                        tipo = BaseTreeItem(typeHandler(types.Text()))
                         curTableFields.appendRow((name,tipo))
                         
             for fk in inspector.get_foreign_keys(table_name,schema):

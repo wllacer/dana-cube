@@ -113,6 +113,13 @@ def escanos(provincia):
     else:
         return asignacion[provincia]
 
+def escanosCat(provincia):
+    # cambi 46 son 16, 24 pasa a 4
+    asignacion = {"08":85,"17":17,"25":15,"43":18 }
+    if provincia is None or provincia not in asignacion:
+        return None
+    else:
+        return asignacion[provincia]
 """
 Funciones de usuario genéricas
 
@@ -300,6 +307,16 @@ def asigna(*parms,**kwparms):
     else:
         item.setPayload(dhont(puestos,item.getPayload()))
 
+def asignaCat(*parms,**kwparms):
+    item = parms[0]
+    prov = item['key'].split(':')[-1]
+    puestos = escanosCat(prov)
+    if puestos is None:
+        item.setPayload([ None for k in range(item.lenPayload())])
+        return
+    else:
+        item.setPayload(dhont(puestos,item.getPayload()))
+
 """
 Registro de funciones y secuencias
 """
@@ -321,6 +338,9 @@ def register(contexto):
     ufm.registro_funcion(contexto,name='asigna',entry=asigna,type='item,leaf',seqnr=10,
                          text='Asignacion de escaños',
                          db='datos locales')
+    ufm.registro_funcion(contexto,name='asignaCat',entry=asignaCat,type='item,leaf',seqnr=10,
+                         text='Asignacion de escaños',
+                         db='datos catalonia')
     ufm.registro_funcion(contexto,name='Senado',entry=senado,type='item,leaf',seqnr=11,sep=True,
                          db='datos locales')
 
@@ -335,7 +355,7 @@ def register(contexto):
     ufm.registro_funcion(contexto,name='unPodemos',entry=consolida,
                          aux_parm={'desde':('5008','5041','5033'),'hacia':('3736',)},type='colkey',seqnr=20,
                          text='Agrupa en uno las candidaturas de Podemos',
-                         db='datos locales')
+                         db='datos locales,datos catalonia')
     ufm.registro_secuencia(contexto,name='Podemos',list=('borraIU','borraMes','unPodemos'),seqnr=23,sep=True,
                            text='Todo lo anterior',
                            db='datos locales,datos light')

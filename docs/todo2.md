@@ -2,6 +2,16 @@
 # ToDo list
 __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/todo2.md "Title")
 
+## catatonia
+*  __BUG__crash con datos incompletos en definicion de vista. 
+*  copiar guia de otro cuvbo
+*  en cambio de fichero se me ha escapado uno en un filtro
+
+## Nueva base de datos electoral
+*  Incluir FileSelector en conexiones (danabrowse) para sqlite
+*  __NO REPRO PROV__ Generacion cubo en vista trae campos no existentes en la vista (SQLITE)
+*  __problema en sqlite: no campos numericos para Fields (de hecho, campos sin tipo)
+
 ## Verificacion de los wizard
 *  __PARTIAL__ change schema en conexion. NO se verifican la validez de los cambios. Caveat Emptor
 *  COPY UP/DOWN de guia
