@@ -473,9 +473,19 @@ class Cubo:
 class Vista:
     #TODO falta documentar
     #TODO falta implementar la five points metric
-    def __init__(self, cubo,row, col,  agregado, campo, filtro='',totalizado=True, stats=True):
-        
+    def __init__(self, cubo,prow, pcol,  agregado, campo, filtro='',totalizado=True, stats=True):
         self.cubo = cubo
+        # acepto tanto nombre como nuero de columna y fila.
+        # NO Controlo el error en este caso. Es lo suficientemente serio para abendar
+        if isinstance(prow,int):
+            row = prow
+        else:
+            row = [ item['name'] for item in cubo.lista_guias].index(prow)
+        if isinstance(pcol,int):
+            col = pcol
+        else:
+            col = [ item['name'] for item in cubo.lista_guias].index(pcol)
+        
         # deberia verificar la validez de estos datos
         self.agregado=agregado
         self.campo = campo
@@ -497,7 +507,17 @@ class Vista:
         
         self.setNewView(row, col)
         
-    def setNewView(self,row, col, agregado=None, campo=None, filtro='',totalizado=True, stats=True, force=False):
+    def setNewView(self,prow, pcol, agregado=None, campo=None, filtro='',totalizado=True, stats=True, force=False):
+        # acepto tanto nombre como nuero de columna y fila.
+        # NO Controlo el error en este caso. Es lo suficientemente serio para abendar
+        if isinstance(prow,int):
+            row = prow
+        else:
+            row = [ item['name'] for item in self.cubo.lista_guias].index(prow)
+        if isinstance(pcol,int):
+            col = pcol
+        else:
+            col = [ item['name'] for item in self.cubo.lista_guias].index(pcol)
         
         dim_max = len(self.cubo.lista_guias)
         
@@ -1218,8 +1238,8 @@ def experimental():
         #elem = guia[key]
         #print (ind,key,elem.ord,elem.desc)
         #ind += 1
-
-    vista=Vista(cubo,6,0,'sum','votes_presential')
+    vista=Vista(cubo,'fecha','partidos importantes','sum','votes_presential')
+    #vista=Vista(cubo,6,0,'sum','votes_presential')
     arbol = vista.row_hdr_idx
     #raiz = arbol.rootItem
     for item in arbol.traverse(output=1):
