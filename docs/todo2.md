@@ -2,25 +2,31 @@
 # ToDo list
 __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/todo2.md "Title")
 
+## nuevo wizard guia
+*  __DONE__ añadir entradas en categorias
+*  __DONE__ no salva categoria ??
+*  plantearnos el filtro y el grouped by
+*  algun sistema de comprobación que son correctas las definciones de guia
+
 ## catatonia
 *  __BUG__crash con datos incompletos en definicion de vista. 
 *  copiar guia de otro cuvbo
-*  en cambio de fichero se me ha escapado uno en un filtro
+*  __DONE__ en cambio de fichero se me ha escapado uno en un filtro. fin de cadena cubeutil.changeTable
 
 ## Nueva base de datos electoral
 *  Incluir FileSelector en conexiones (danabrowse) para sqlite
 *  __NO REPRO PROV__ Generacion cubo en vista trae campos no existentes en la vista (SQLITE)
-*  __problema en sqlite: no campos numericos para Fields (de hecho, campos sin tipo)
+*  __3D PARTY__ problema en sqlite: no campos numericos para Fields (de hecho, campos sin tipo)
 
 ## Verificacion de los wizard
 *  __PARTIAL__ change schema en conexion. NO se verifican la validez de los cambios. Caveat Emptor
 *  COPY UP/DOWN de guia
 *  retornar el cursor al elemento editado
 *  s/fieldEditor/WMultiBox
-*  __FALTA__ la creacion "ex nihilo" de guia.(en general edicion completa de guia)
+*  __WIP__ la creacion "ex nihilo" de guia.(en general edicion completa de guia)
 *  grouped by en domain. Grouped by sera tratado como dato interno ( Sum (prod[0:n-1].elem))
 *  wzFieldList wGuideList no se usa.
-*  ver comportamiento reglas enlazadas con paginas de detalle
+*  __WIP__ ver comportamiento reglas enlazadas con paginas de detalle
 *  prod de sin domain a domain ¿como?
 *  unificar los traverse
 *  __DONE__ uso inadecuado de acceso a campos en el cache

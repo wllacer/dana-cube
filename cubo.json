@@ -1,4 +1,195 @@
 {
+    "datos catalonia": {
+        "base filter": "",
+        "connect": {
+            "dbhost": "None",
+            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
+            "dbpass": "None",
+            "dbuser": "None",
+            "driver": "sqlite"
+        },
+        "fields": [
+            "votes_presential",
+            "votes_percent",
+            "seats",
+            "ord"
+        ],
+        "guides": [
+            {
+                "class": "o",
+                "name": "partido",
+                "prod": [
+                    {
+                        "domain": {
+                            "code": "code",
+                            "desc": "acronym",
+                            "filter": "code in (select distinct partido_id from votos_catalonia where votes_percent is not null)",
+                            "table": "main.partidos"
+                        },
+                        "elem": "partido_id",
+                        "fmt": "txt"
+                    }
+                ]
+            },
+            {
+                "class": "o",
+                "name": "provincia",
+                "prod": [
+                    {
+                        "domain": {
+                            "code": "provincia",
+                            "desc": "nombre",
+                            "filter": "region = 'CA09' and provincia <> '' and municipio = '' and isla = ''",
+                            "table": "main.localidades"
+                        },
+                        "elem": "provincia",
+                        "fmt": "txt"
+                    }
+                ]
+            },
+            {
+                "class": "o",
+                "name": "partidos importantes",
+                "prod": [
+                    {
+                        "domain": {
+                            "code": "code",
+                            "desc": "acronym",
+                            "filter": "code in (select distinct partido_id from votos_catalonia where votes_percent >= 3)",
+                            "table": "main.partidos"
+                        },
+                        "elem": "partido_id",
+                        "fmt": "txt"
+                    }
+                ]
+            },
+            {
+                "class": "c",
+                "name": "ideologia",
+                "prod": [
+                    {
+                        "categories": [
+                            {
+                                "default": "otros"
+                            },
+                            {
+                                "condition": "in",
+                                "result": "Derecha",
+                                "values": [
+                                    "3316",
+                                    "4688"
+                                ]
+                            },
+                            {
+                                "condition": "in",
+                                "result": "Centro",
+                                "values": [
+                                    "1079",
+                                    "4475"
+                                ]
+                            },
+                            {
+                                "condition": "in",
+                                "result": "Izquierda",
+                                "values": [
+                                    "3484"
+                                ]
+                            },
+                            {
+                                "condition": "in",
+                                "result": "Extrema Izquierda",
+                                "values": [
+                                    "3736",
+                                    "5033",
+                                    "4850",
+                                    "5008",
+                                    "5041",
+                                    "2744",
+                                    "5026"
+                                ]
+                            },
+                            {
+                                "condition": "in",
+                                "result": "Separatistas",
+                                "values": [
+                                    "5063",
+                                    "4991",
+                                    "1528"
+                                ]
+                            },
+                            {
+                                "condition": "in",
+                                "result": "Nacionalistas",
+                                "values": [
+                                    "1533",
+                                    "4744",
+                                    "4223"
+                                ]
+                            }
+                        ],
+                        "elem": "partido_id",
+                        "fmt": "txt"
+                    }
+                ]
+            },
+            {
+                "class": "c",
+                "name": "bloque",
+                "prod": [
+                    {
+                        "categories": [
+                            {
+                                "default": "otros"
+                            },
+                            {
+                                "condition": "in",
+                                "result": "Constitucionalista",
+                                "values": [
+                                    "3316",
+                                    "4688",
+                                    "1079",
+                                    "4475",
+                                    "3484"
+                                ]
+                            },
+                            {
+                                "condition": "in",
+                                "result": "En Comu",
+                                "values": [
+                                    "3736",
+                                    "5033",
+                                    "4850",
+                                    "5008",
+                                    "5041"
+                                ]
+                            },
+                            {
+                                "condition": "in",
+                                "result": "Separatistas",
+                                "values": [
+                                    "5063",
+                                    "4991",
+                                    "1528"
+                                ]
+                            },
+                            {
+                                "condition": "in",
+                                "result": "Nacionalistas",
+                                "values": [
+                                    "1533",
+                                    "4744",
+                                    "4223"
+                                ]
+                            }
+                        ],
+                        "elem": "partido_id",
+                        "fmt": "txt"
+                    }
+                ]
+            }
+        ],
+        "table": "main.votos_catalonia"
+    },
     "datos light": {
         "base filter": "",
         "connect": {
@@ -137,7 +328,7 @@
         "table": "main.votos_locales"
     },
     "datos locales": {
-        "base filter": "",
+        "base filter": "partido_id LIKE '1079'",
         "connect": {
             "dbhost": "None",
             "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
@@ -423,12 +614,12 @@
         "table": "main.votos_provincia"
     },
     "default": {
-        "cubo": "datos locales",
+        "cubo": "datos catalonia",
         "vista": {
             "agregado": "sum",
-            "col": "1",
+            "col": "4",
             "elemento": "votes_presential",
-            "row": "3"
+            "row": "1"
         }
     },
     "experimento": {
@@ -551,6 +742,96 @@
         ],
         "table": "main.votos_provincia"
     },
+    "provincia_resumido": {
+        "base filter": "",
+        "connect": {
+            "dbhost": "",
+            "dbname": "/home/werner/elecciones/inebase.db",
+            "dbpass": "",
+            "dbport": "",
+            "dbuser": "",
+            "debug": false,
+            "driver": "sqlite"
+        },
+        "fields": [
+            "main.voto_provincia.votos",
+            "main.voto_provincia.escanos"
+        ],
+        "name": "provincia_resumido",
+        "table": "main.voto_provincia",
+        "guides": [
+            {
+                "class": "o",
+                "name": "anyo_elec",
+                "prod": [
+                    {
+                        "elem": "main.voto_provincia.anyo_elec"
+                    }
+                ]
+            },
+            {
+                "class": "o",
+                "name": "comunidad",
+                "prod": [
+                    {
+                        "domain": {
+                            "code": [
+                                "main.supramunicipal.comunidad"
+                            ],
+                            "desc": [
+                                "main.supramunicipal.nombre"
+                            ],
+                            "filter": "provincia = '99' and anyo_elec = '2016'",
+                            "table": "main.supramunicipal"
+                        },
+                        "elem": [
+                            "main.voto_provincia.comunidad"
+                        ],
+                        "name": "region"
+                    }
+                ]
+            },
+            {
+                "class": "o",
+                "name": "provincia",
+                "prod": [
+                    {
+                        "elem": [
+                            "main.voto_provincia.provincia"
+                        ],
+                        "domain": {
+                            "code": [
+                                "main.supramunicipal.provincia"
+                            ],
+                            "desc": [
+                                "main.supramunicipal.nombre"
+                            ],
+                            "filter": "anyo_elec = '2016' and provincia != '99'",
+                            "table": "main.supramunicipal"
+                        }
+                    }
+                ]
+            },
+            {
+                "class": "o",
+                "name": "candidatura",
+                "prod": [
+                    {
+                        "elem": "main.voto_provincia.candidatura"
+                    }
+                ]
+            },
+            {
+                "class": "o",
+                "name": "partido",
+                "prod": [
+                    {
+                        "elem": "main.voto_provincia.partido"
+                    }
+                ]
+            }
+        ]
+    },
     "rental": {
         "base filter": "",
         "connect": {
@@ -561,6 +842,26 @@
             "debug": false,
             "driver": "postgresql"
         },
+        "date filter": [
+            {
+                "date class": "intervalo",
+                "date end": "None",
+                "date format": "fechahora",
+                "date period": "3",
+                "date range": "trimestre",
+                "date start": "None",
+                "elem": "public.rental.rental_date"
+            },
+            {
+                "date class": "intervalo",
+                "date end": "None",
+                "date format": "fechahora",
+                "date period": "3",
+                "date range": "trimestre",
+                "date start": "None",
+                "elem": "public.rental.rental_id"
+            }
+        ],
         "fields": [
             "public.rental.inventory_id",
             "public.rental.customer_id",

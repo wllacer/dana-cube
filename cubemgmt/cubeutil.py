@@ -283,7 +283,7 @@ def traverseFiltered(root,funcion):
 
 def changeTableName(root,oldName,newName):
     matchpattern=r'(\W*\w*\.)?('+oldName+')'
-    filematch = matchpattern+'$'
+    filematch = matchpattern+'\W'
     filerepl  = r'\1'+ newName
     fieldmatch=matchpattern+r'(\..*)'
     fieldrepl = r'\1' + newName +r'\3'

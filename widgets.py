@@ -143,7 +143,21 @@ class WPowerTable(QTableWidget):
         #self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum);
         #self.resizeRowsToContents()
         #self.resizeColumnsToContents()
+
         
+    def openContextMenu(self,position):
+        print('abro menu')
+        row = self.currentRow()
+        menuActions = []
+        menu = QMenu()
+        menuActions.append(menu.addAction("Append lines",lambda item=row:self.execAction(item,"append")))
+        action = menu.exec_(self.viewport().mapToGlobal(position))
+        
+    def execAction(self,row,action):
+        print('exec menu')
+        if action == 'append':
+            self.appendRow(self.rowCount())
+
     def addCell(self,x,y,colDef,defVal=None):
         item = defVal
         type = colDef[0]
@@ -213,6 +227,8 @@ class WPowerTable(QTableWidget):
                 shoot(*parms)
 
         self.setCellWidget(x,y,editItem)
+        self.cellWidget(x,y).setContextMenuPolicy(Qt.CustomContextMenu)
+        self.cellWidget(x,y).customContextMenuRequested.connect(self.openContextMenu)
 
     def values(self):
         valores=[]
@@ -394,6 +410,8 @@ class WPropertySheet(WPowerTable):
 
         self.resizeRowsToContents()
         self.horizontalHeader().setStretchLastSection(True)
+
+        
     def values(self,col=0):
         """
            devuelve los valores actuales para la columna

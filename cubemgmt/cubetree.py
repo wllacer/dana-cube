@@ -293,7 +293,7 @@ def recTreeLoader(parent,key,data,tipo=None):
                 #continue
                 newparent.appendRow((CubeItem(None),CubeItem(str(elem)),))
             elif isinstance(elem,dict): #and elem.get('name'):
-                for texto in ('name','result','default'):
+                for texto in ('name','result'):
                     if elem.get(texto):
                         clave = elem.get(texto)
                         break

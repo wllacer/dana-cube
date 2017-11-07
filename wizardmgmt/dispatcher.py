@@ -246,7 +246,7 @@ def manage(item,cubeMgr,action):
         print(text[0])
         if text[0] and text[0] != '':
             item.setData(text[0],Qt.EditRole)
-            for elemento in ('name','result','default'):
+            for elemento in ('name','result'): #,'default'):
                 nombre = item.getChildrenByName(elemento)
                 if nombre:
                     nombre.setColumnData(1,text[0],Qt.EditRole)
@@ -404,7 +404,6 @@ def CubeWizardExec(obj,cubeMgr,wizard,action,cube_root,cube_ref,cache_data):
         """
         schema = wizard.diccionario['schema']
         del wizard.diccionario['schema']
-        added, removed, modified, same = dict_compare(wizard.diccionario,tree2dict(obj,isDictionaryEntry))
         if schema != cache_data['schema']:
             pai = obj.parent()
             changeSchema(pai,cache_data['schema'],schema)
@@ -415,6 +414,7 @@ def CubeWizardExec(obj,cubeMgr,wizard,action,cube_root,cube_ref,cache_data):
             if pai.type() == 'base':
                 del cubeMgr.cache[pai.text()]
                 info_cache(cubeMgr,pai)
+        added, removed, modified, same = dict_compare(wizard.diccionario,tree2dict(obj,isDictionaryEntry))
         if len(modified) == 0 :
             return
         else:
