@@ -268,6 +268,8 @@ def setAddComboElem(dataValue,widget,codeArray,descArray,offset=0):
     offset      por si es necesario para los espacios en blanco
     """
     #FIXME codigo trapacer para evitar problemas con arrays
+    if not dataValue:
+        return None
     fieldValue = norm2String(dataValue)
     if isinstance(widget,WMultiCombo):
         widget.set(fieldValue)

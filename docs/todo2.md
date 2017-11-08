@@ -7,6 +7,8 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 *  __DONE__ no salva categoria ??
 *  plantearnos el filtro y el grouped by
 *  algun sistema de comprobación que son correctas las definciones de guia
+*  plantearse ocultar el dominio en las complejas
+*  joe con los links
 
 ## catatonia
 *  __BUG__crash con datos incompletos en definicion de vista. 
