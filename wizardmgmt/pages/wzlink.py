@@ -46,8 +46,7 @@ ixWzGuideBase = ixWzProdBase
 class WzLink(QWizardPage):
     def __init__(self,parent=None,cube=None,cache=None):
         super(WzLink,self).__init__(parent)
-        
-        #self.setFinalPage(True)        
+               
         self.cube = cube
         self.cache = cache
 
@@ -129,6 +128,7 @@ class WzLink(QWizardPage):
         self.joinListArray.hide()
 
     def initializePage(self):
+
         obj = self.wizard().obj
         self.iterator = -1
         if obj.type() in ('prod','guides'):

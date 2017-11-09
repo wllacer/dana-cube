@@ -48,10 +48,12 @@ from wizardmgmt.pages.wzconnect  import WzConnect
 from wizardmgmt.pages.wzdatefilter import WzDateFilter
 from wizardmgmt.pages.wzdomain import WzDomain
 from wizardmgmt.pages.wzlink import WzLink
-from wizardmgmt.pages.wzother import WzFieldList,WzGuideList
+from wizardmgmt.pages.wzother import WzFieldList,WzGuideList,uno,dos
 from wizardmgmt.pages.wzperiod import WzTime
 from wizardmgmt.pages.wzrowedit import WzRowEditor
 from wizardmgmt.pages.wzprodbase import WzProdBase
+
+
 
 class CubeWizard(QWizard):
     def __init__(self,obj,cubeMgr,action,cube_root,cube_ref,cache_data):
@@ -103,9 +105,11 @@ class CubeWizard(QWizard):
                     self.prodIters = len(self.diccionario)
                     pass
             
-            self.setPage(ixWzProdBase, WzProdBase(cube=cubeMgr,cache=cache_data))
+            #self.setPage(ixWzProdBase, uno(cube=cubeMgr,cache=cache_data))
+            #self.setPage(ixWzLink, dos(cube=cubeMgr,cache=cache_data))
+
             self.setPage(ixWzLink, WzLink(cube=cubeMgr,cache=cache_data))
-            
+            self.setPage(ixWzProdBase, WzProdBase(cube=cubeMgr,cache=cache_data))
         texto_pantalla = obj.text() if obj.text() != tipo else obj.parent().text()
         self.setWindowTitle('Mantenimiento de ' + tipo + ' ' + texto_pantalla.split('.')[-1])
         self.show()

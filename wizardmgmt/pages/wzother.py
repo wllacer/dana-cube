@@ -85,4 +85,70 @@ class WzGuideList(QWizardPage):
     def validatePage(self):
         return True
 
+class uno(QWizardPage):
+    def __init__(self,parent=None,cube=None,cache=None):
+        super().__init__(parent)
+        prodNameLabel = QLabel("Nombre ...")
+        self.prodNameLE = QLineEdit()
+        
+        dataLabel   = QLabel("Especifique los datos que desea agrupar")
+        domainLabel = QLabel("Especifique el dominio de de valores de la guia")
+ 
+        self.iterations = 0
+        self.cube = cube
+        self.cache = cache
+        
+        tableArray = getAvailableTables(self.cube,self.cache)
+        
+        
+        self.listOfTables = ['Tabla ...',] + [ item[1] for item in tableArray]
+        self.listOfTablesCode = ['',] + [ item[0] for item in tableArray]
+        self.datalistOfFields = []
+        self.datalistOfFieldsCode = []
+        self.baseIdx = self.listOfTablesCode.index(cache['tabla_ref'])
+
+        self.dataTableCombo = QComboBox()
+        self.dataTableCombo.addItems(self.listOfTables)
+        self.dataFieldCombo = WMultiCombo()
+        
+        
+        self.linkCheck = QCheckBox("¿Requiere de un enlace externo?")
+
+        meatLayout = QGridLayout()
+        meatLayout.addWidget(self.dataTableCombo,0,0)
+        meatLayout.addWidget(self.dataFieldCombo,0,1)
+        meatLayout.addWidget(self.linkCheck,1,1)
+        
+        self.setLayout(meatLayout)
+        
+        self.dataTableCombo.currentIndexChanged[int].connect(self.amaga)
+        self.linkCheck.stateChanged.connect(self.dispara)
+      
+    def initializePage(self):
+        self.setFinalPage(True)
+        self.completeChanged.emit()
+        
+    def dispara(self,idx):
+        if idx == 2:
+            self.setFinalPage(False)
+        else:
+            self.setFinalPage(True)
+            
+        self.completeChanged.emit()
+    
+    def amaga(self,idx):
+        if idx < 1:
+            return
+        if idx != self.baseIdx:
+            self.linkCheck.setChecked(True)
+      
+    def nextId(self):
+        if self.linkCheck.isChecked():
+            return ixWzLink
+        else:
+            return -1
+        
+class dos(QWizardPage):
+    def __init__(self,parent=None,cube=None,cache=None):
+        super().__init__(parent)
 

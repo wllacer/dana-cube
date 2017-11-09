@@ -200,6 +200,9 @@ class WzProdBase(QWizardPage):
         
     def initializePage(self):
 
+        self.setFinalPage(True)
+        self.completeChanged.emit()
+
         self.iterator = 0
         obj = self.wizard().obj
         if obj.type() == 'guides':
@@ -258,7 +261,7 @@ class WzProdBase(QWizardPage):
         self.domainCodeList.setCurrentIndex(0)
         self.domainDescList.setCurrentIndex(0)
         self.domainFilterLE.setText(None)
-        self.linkCheck.setChecked(False)
+        #self.linkCheck.setChecked(False)
         self.noneRB.setChecked(True)
 
         dataContext = self.listaProd[numEntry]
@@ -296,13 +299,7 @@ class WzProdBase(QWizardPage):
             caseEditorFormLoad(self,dataContext)
         self.setDetail() #el set Checked no lo dispara
 
-
-    def nextId(self):
-        if self.linkCheck.isChecked():
-            return ixWzLink
-        else:
-            return -1
-
+        
     def validatePage(self):
         # falta el nombre y la clase en el padre
         # verificar que los campos obligatorios estan rellenos
@@ -322,7 +319,7 @@ class WzProdBase(QWizardPage):
             if len(self.listaProd) > 1:
                 self.midict['class'] = 'h'
                 
-        self.estadoLink(self.iterator)
+        #self.estadoLink(self.iterator)
         return True
     
     def validateEntry(self,row):
@@ -454,11 +451,18 @@ class WzProdBase(QWizardPage):
             self.Stack.show()
             self.Stack.setCurrentIndex(2)
 
-    def estadoLink(self,idx):
-        if not self.linkCheck.isChecked():
-            self.setFinalPage(True)
+    def nextId(self):
+        if self.linkCheck.isChecked():
+            return ixWzLink
         else:
+            return -1
+        
+    def estadoLink(self,newState):
+        if newState == 2:  #True
             self.setFinalPage(False)
+        else:
+            self.setFinalPage(True)
+            
         self.completeChanged.emit()
         
     def dataTablaElegida(self,idx):
