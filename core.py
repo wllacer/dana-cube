@@ -1202,6 +1202,7 @@ class Vista:
     #return lineas
 
 def experimental():
+    from cubemgmt.cubetree import recTreeLoader,dict2tree,navigateTree,CubeItem,traverseTree
     from util.jsonmgr import load_cubo
     def presenta(vista):
         guia=vista.row_hdr_idx
@@ -1211,8 +1212,20 @@ def experimental():
             print (ind,key,elem.ord,elem.desc,elem.parentItem.key)
             ind += 1
     vista = None
+    cubo = 'datos catalonia'
+    guia = 'ideologia'
     mis_cubos = load_cubo()
-    cubo = Cubo(mis_cubos['datos locales'])
+    arbol = QStandardItemModel()
+    raiz = arbol.invisibleRootItem()
+    recTreeLoader(raiz,cubo,mis_cubos[cubo],'base')
+    cuboItem = raiz.child(0)
+    guiaItem = cuboItem.getChildrenByName('guides').getChildrenByName(guia)
+    for node in traverseTree(guiaItem):
+        if isinstance(node,CubeItem):
+            padd = '\t'*node.depth()
+            print(padd,node.text(),node.getColumnData(1),node.type())
+        else:
+            print(node.text())
     #pprint(cubo.definition)
     #pprint(cubo.definition)
     #pprint(cubo.lista_funciones)
