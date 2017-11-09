@@ -22,22 +22,6 @@ from tablebrowse import *
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QColor
 from  PyQt5.QtWidgets import QApplication, QMainWindow, QWizard,QWizardPage,QLabel,QComboBox,QGridLayout,QGroupBox,QRadioButton,QVBoxLayout,QGridLayout,QPlainTextEdit,QListWidget,QCheckBox
-
-#def traverse(root,base=None):
-    #if base is not None:
-       #yield base
-       #queue = base.listChildren() 
-    #else:
-        #queue = [ root.child(i) for i in range(0,root.rowCount()) ]
-        ##print(queue)
-        ##print('')
-    #while queue :
-        #yield queue[0]
-        #expansion = queue[0].listChildren() 
-        #if expansion is None:
-            #del queue[0]
-        #else:
-            #queue = expansion  + queue[1:]             
     
 
 DEBUG = True
@@ -45,29 +29,10 @@ TRACE=True
 DELIMITER=':'
 
 from util.record_functions import *
-#from util.tree import *
-
-#from datalayer.access_layer import *
-#from datalayer.query_constructor import *
-
-#from util.numeros import stats
-
-#from datalayer.datemgr import getDateIndex,getDateEntry
-#from pprint import *
-
-#from core import Cubo
 
 from cubemgmt.cubeutil import info2cube,isDictionaryEntry,action_class,getCubeList,getCubeItemList
 from cubemgmt.cubetree import *
 from cubemgmt.cubeTypes import *
-#from cubemgmt.cubeCRUD import insertInList
-#from dictmgmt.tableInfo import FQName2array,TableInfo
-
-#from dialogs import propertySheetDlg
-
-#import cubebrowse as cb
-
-#import time
 
 from wizardmgmt.guihelper import *
 
@@ -410,13 +375,7 @@ class WzGuideList(QWizardPage):
         pass
     def validatePage(self):
         return True
-def toCodeDescList(origin,codeId,descId,withBlank=False):
-    code = [ item[codeId] for item in origin ]
-    desc = [ item[descId] for item in origin ]
-    if withBlank:
-        code.insert(0,'')
-        desc.insert(0,'')
-    return code,desc
+
 
 def catAddLines(wP,numLines):
     count = wP.catSheet.rowCount()
@@ -540,10 +499,6 @@ def categoriesFormLoad(wP,dataContext):
                     wP.catSimpleSheet.set(k,0,wP.simpleContext[k][3].index(dataContext.get(clave,'in')))
                 wP.catSimpleSheet.set(k,0,norm2String(dataContext.get(clave)))
     
-    #if dataContext.get('categories'):
-        #wP.wizard().setOptions(QWizard.HaveCustomButton1)
-        #wP.setButtonText(QWizard.CustomButton1,'Mas entradas')
-        #wP.wizard().customButtonClicked.connect(addCatEntry)
         
 def categoriesFormValidate(wP,dataContext):
         resultado = wP.catSheet.values()
@@ -601,14 +556,14 @@ def categoriesFormValidate(wP,dataContext):
 
         return True
 
-def rowEditorForm(wP):
+def caseEditorForm(wP):
     #FIXME no admite mandatory
     wP.editArea = QPlainTextEdit()
     meatLayout = QGridLayout()
     meatLayout.addWidget(wP.editArea,0,0,1,0)
     return meatLayout
 
-def rowEditorFormLoad(wP,dataContext):
+def caseEditorFormLoad(wP,dataContext):
     if wP.wizard().obj.type() not in TYPE_EDIT :
         caseStmt = dataContext.get('case_sql')
     else:
@@ -620,7 +575,7 @@ def rowEditorFormLoad(wP,dataContext):
         wP.editArea.setPlainText(caseStmt)
     pass
 
-def rowEditorFormValidate(wP,dataContext):
+def caseEditorFormValidate(wP,dataContext):
     texto = wP.editArea.document().toPlainText()
     if isinstance(dataContext,dict):
         area = dataContext.get('case_sql')
@@ -635,7 +590,7 @@ def rowEditorFormValidate(wP,dataContext):
         
     return True
 
-def defTimeItemComboBox(wP,k):
+def defPeriodItemComboBox(wP,k):
     # para que coja valores distintos de k en cada ejecucion !!???
     wP.formFechaLabel[k] = QLabel("Formato del {}er nivel:".format(k))
     wP.formFechaCombo[k] = QComboBox()
@@ -645,9 +600,9 @@ def defTimeItemComboBox(wP,k):
         wP.formFechaCombo[k].addItems(['',] + wP.fmtFecha[k:])
     wP.formFechaCombo[k].setCurrentIndex(0)
     wP.formFechaLabel[k].setBuddy(wP.formFechaCombo[k])
-    wP.formFechaCombo[k].currentIndexChanged.connect(lambda:timeSeleccion(wP,k))
+    wP.formFechaCombo[k].currentIndexChanged.connect(lambda:periodSeleccion(wP,k))
 
-def timeSeleccion(wP,idx):
+def periodSeleccion(wP,idx):
     #TODO sería mas interesante pasar tambien el valor, pero sigo sin acertar
     if idx < 0:
         return 
@@ -676,7 +631,7 @@ def timeSeleccion(wP,idx):
             wP.formFechaCombo[k].addItems(['',] + wP.fmtFecha[posActual + j :])
             wP.formFechaCombo[k].blockSignals(False)  
 
-def timeForm(wP):
+def periodForm(wP):
     wP.fmtFecha = [ item[1] for item in FECHADOR ]
     wP.fmtFechaCode = [ item[0] for item in FECHADOR ]
     wP.maxTImeLevel = 4  
@@ -684,7 +639,7 @@ def timeForm(wP):
     wP.formFechaCombo = [None for k in range(wP.maxTImeLevel)]
     
     for k in range(wP.maxTImeLevel):
-        defTimeItemComboBox(wP,k)
+        defPeriodItemComboBox(wP,k)
 
     meatLayout = QGridLayout()
     for k in range(wP.maxTImeLevel):
@@ -693,7 +648,7 @@ def timeForm(wP):
     
     return meatLayout
     
-def timeFormLoad(wP,dataContext):
+def periodFormLoad(wP,dataContext):
     mascara = ''
     if dataContext.get('mask'):
         mascara = dataContext['mask']
@@ -701,7 +656,7 @@ def timeFormLoad(wP,dataContext):
         mascara = dataContext['type']
     for k,letra in enumerate(mascara):
         wP.formFechaCombo[k].setCurrentIndex(wP.fmtFechaCode.index(letra))
-        timeSeleccion(wP,k)
+        periodSeleccion(wP,k)
     wP.iterator = wP.wizard().page(ixWzProdBase).iterations
     if isinstance(wP.wizard().diccionario,(list,tuple)):
         #varias entradas
@@ -710,7 +665,7 @@ def timeFormLoad(wP,dataContext):
         dataContext = wP.wizard().diccionario
     pass
 
-def timeFormValidate(wP,dataContext):
+def periodFormValidate(wP,dataContext):
     mask = ''
     for k in range(wP.maxTImeLevel):
         if wP.formFechaCombo[k].currentText() != '':
@@ -750,222 +705,7 @@ def short2FullName(wP,file):
         return file
     pass
     
-def prodOrigBaseForm(wP):
-    """
-    """
-    prodNameLabel = QLabel("&Nombre:")
-    wP.prodIterator  = QLabel("")
-    wP.prodName = QLineEdit()
-    prodNameLabel.setBuddy(wP.prodName)
-    wP.prodName.setStyleSheet("background-color:khaki;")
 
-    domainTableLabel = QLabel("&Tabla de definición de valores")
-    wP.domainTableCombo = QComboBox()
-    wP.domainTableCombo.addItems(wP.listOfTables)
-    wP.domainTableCombo.setCurrentIndex(0)
-    domainTableLabel.setBuddy(wP.domainTableCombo)
-    wP.domainTableCombo.currentIndexChanged[int].connect(lambda i,w='domain' : wP.tablaElegida(i,w))
-
-    #
-    domainGuideLabel = QLabel("Campo &guia:")
-    wP.domainFieldCombo = WMultiCombo()
-    #wP.guidFldCombo.addItems(wP.listOfFields)
-    wP.domainFieldCombo.setEditable(True)
-    domainGuideLabel.setBuddy(wP.domainFieldCombo)
-    wP.domainFieldCombo.currentIndexChanged[int].connect(wP.campoElegido)
-    wP.domainFieldCombo.setStyleSheet("background-color:khaki;")
-
-    #
-    domainDescLabel = QLabel("&Campo &Descriptivo:")
-    wP.domainDescCombo = WMultiCombo()
-    #wP.guideDescCombo.addItems(wP.listOfFields)
-    wP.domainDescCombo.setEditable(True)
-    domainDescLabel.setBuddy(wP.domainDescCombo)
-    #wP.domainDescCombo.currentIndexChanged[int].connect(wP.campoElegido)
-
-    #TODO algo para poder construir links complejos. Es necesario en la interfaz
-    
-    guideDataTableLabel = QLabel("&Tabla de datos")
-    wP.guideDataTableCombo = QComboBox()
-    #MARK VERY CAREFULLY. If has default value, DON'T make it mandatory in wizard
-    #                     Use a null value in combos if mandatory
-    wP.guideDataTableCombo.addItems(wP.listOfTables)
-    wP.guideDataTableCombo.setCurrentIndex(wP.listOfTablesCode.index(wP.cache['tabla_ref']))
-    guideDataTableLabel.setBuddy(wP.guideDataTableCombo)
-    wP.guideDataTableCombo.currentIndexChanged[int].connect(lambda i,w='data' : wP.tablaElegida(i,w))
-
-    #
-    guideDataGuideLabel = QLabel("Campo &guia:")
-    wP.guideDataFieldCombo = WMultiCombo()
-    wP.guideDataFieldCombo.load(wP.listOfLinkFieldsCode,wP.listOfLinkFields)
-    #wP.guidFldCombo.addItems(wP.listOfFields)
-    wP.guideDataFieldCombo.setEditable(True)
-    guideDataGuideLabel.setBuddy(wP.guideDataFieldCombo)
-    wP.guideDataFieldCombo.currentIndexChanged[int].connect(wP.campoElegido)
-    wP.guideDataFieldCombo.setStyleSheet("background-color:khaki;")
-    
-    wP.linkCTorRB = QRadioButton("Con tablas intermedias")
-    wP.linkCTorRB.hide()
-    #
-    #sp_retain = wP.guideLinkCombo.sizePolicy()
-    #sp_retain.setRetainSizeWhenHidden(True)
-    #wP.guideLinkCombo.setSizePolicy(sp_retain)
-    
-    wP.catCtorRB = QRadioButton("Agrupado en Categorias")
-    wP.caseCtorRB = QRadioButton("Directamente via código SQL")
-    wP.dateCtorRB = QRadioButton("Agrupaciones de fechas")
-    
-    
-    groupBox = QGroupBox("Criterios de agrupacion manuales ")
-    groupBoxLayout = QHBoxLayout()
-    groupBoxLayout.addWidget(wP.catCtorRB)
-    groupBoxLayout.addWidget(wP.caseCtorRB)
-    groupBoxLayout.addWidget(wP.dateCtorRB)
-    groupBox.setLayout(groupBoxLayout)
-
-    meatLayout = QGridLayout()
-    meatLayout.addWidget(wP.prodIterator,0,0)
-    meatLayout.addWidget(prodNameLabel,0,1)
-    meatLayout.addWidget(wP.prodName,0,2,1,2)
-    meatLayout.addWidget(domainTableLabel,1,0)
-    meatLayout.addWidget(wP.domainTableCombo,1,1)
-    meatLayout.addWidget(domainGuideLabel,1,2)
-    meatLayout.addWidget(wP.domainFieldCombo,1,3)
-    meatLayout.addWidget(domainDescLabel,2,2)
-    meatLayout.addWidget(wP.domainDescCombo,2,3)
-    meatLayout.addWidget(guideDataTableLabel,3,0)
-    meatLayout.addWidget(wP.guideDataTableCombo,3,1)
-    meatLayout.addWidget(guideDataGuideLabel,3,2)
-    meatLayout.addWidget(wP.guideDataFieldCombo,3,3)
-    meatLayout.addWidget(wP.linkCTorRB,4,3)
-    meatLayout.addWidget(groupBox, 5, 0, 1, 4)
-    
-    return meatLayout
-
-def formatoInterno2Enum(format):
-    if format in ('texto',):
-        return 'txt'
-    elif format in ('fecha','fechahora','hora'):
-        return 'date'
-    else:
-        return 'num'
-    
-def prodOrigBaseFormLoad(wP,dataContext):
-    if isinstance(wP.wizard().diccionario,(list,tuple)):
-        #varias entradas
-        wP.prodIterator.setText("entrada {}/{}".format(wP.iterations +1,wP.wizard().prodIters))
-    else:
-        wP.prodIterator.setText("")
-    #limipiamos todo
-
-    wP.domainTableCombo.setCurrentIndex(-1)
-    wP.domainFieldCombo.setCurrentIndex(-1)
-    wP.domainDescCombo.setCurrentIndex(-1)
-    wP.guideDataTableCombo.setCurrentIndex(-1)
-    wP.guideDataFieldCombo.setCurrentIndex(-1)
-    wP.linkCTorRB.setChecked(False)
-
-
-    #vamos ahora al proceso de add
-    #TODO si no esta en la lista
-    wP.prodName.setText(dataContext.get('name',str(wP.iterations)))
-        
-    if dataContext.get('domain'):
-        #TODO elementos multiples
-        setAddComboElem(dataContext['domain'].get('table'),
-                        wP.domainTableCombo,
-                        wP.listOfTablesCode,wP.listOfTables)
-        #es valido porque la señal de cambio de tabla se dispara internamente con el setCurrentIndex
-        wP.domainFieldCombo.set(norm2String(dataContext['domain'].get('code')))
-        wP.domainDescCombo.set(norm2String(dataContext['domain'].get('desc')))
-        if dataContext.get('link via'):
-            wP.linkCTorRB.setChecked(True)
-            wP.linkCTorRB.show()
-            #TODO multiples criterios 
-            setAddComboElem(dataContext['link via'][-1].get('table'),
-                            wP.guideDataTableCombo,
-                        wP.listOfTablesCode,wP.listOfTables)
-        wP.guideDataFieldCombo.set(norm2String(dataContext.get('elem')))
-        wP.guideDataFieldCombo.show()
-        wP.guideDataTableCombo.show()
-    else:    
-        setAddComboElem(wP.cache['tabla_ref'],
-                        wP.domainTableCombo,
-                        wP.listOfTablesCode,wP.listOfTables)
-        #es valido porque la señal de cambio de tabla se dispara internamente con el setCurrentIndex
-        if dataContext.get('elem'):
-            wP.domainFieldCombo.set(norm2String(dataContext.get('elem')))
-        else:
-            wP.domainFieldCombo.setCurrentIndex(0)  #FIXME
-        wP.domainDescCombo.setCurrentIndex(0)  #FIXME
-        #wP.guideDataFieldCombo.hide()
-        #wP.guideDataTableCombo.hide()
-        
-    clase=dataContext.get('class','o')
-    if clase == 'd' or dataContext.get('fmt','txt') == 'date':
-        wP.dateCtorRB.setChecked(True)
-    
-    if dataContext.get('categories'):
-        wP.catCtorRB.setChecked(True)
-    elif dataContext.get('case_sql'):
-        wP.caseCtorRB.setChecked(True)
-
-def prodOrigBaseFormValidate(wP,dataContext):
-    #TODO realmente no hacemos ninguna validaciones
-    #FIXME hacemos wP.iterations es la entrada en guide y entrada +1 en prod
-    if not wP.prodName.text().strip().isnumeric():
-        dataContext['name'] = wP.prodName.text()
-    #wP.domainTableCombo
-    if wP.listOfTablesCode[wP.domainTableCombo.currentIndex()] == wP.cache['tabla_ref']:
-        # no requiere dominio
-        if dataContext.get('domain'):
-            del dataContext['domain']
-            dataContext['elem'] = norm2List(wP.domainFieldCombo.get())
-    else:
-        if dataContext.get('domain') is None:
-            dataContext['domain'] = {}
-        dataContext['domain']['code'] = norm2List(wP.domainFieldCombo.get())
-        dataContext['domain']['desc'] = norm2List(wP.domainDescCombo.get())
-        dataContext['domain']['table'] = wP.listOfTablesCode[wP.domainTableCombo.currentIndex()]
-        dataContext['elem'] = norm2List(wP.guideDataFieldCombo.get())
-        # dataContext['domain']['filter'] 
-        pass
-    tablaDatos = wP.listOfTablesCode[wP.guideDataTableCombo.currentIndex()]
-    #FIXME probablemente no sea necesario. Hay que ver la integracion con el wizard de Link
-    if ( wP.guideDataTableCombo.currentIndex() > 0 and tablaDatos != wP.cache['tabla_ref'] ):
-        #necesitamos un data link
-        if not dataContext.get('link via'):
-            dataContext['link via'] = []
-            entry = {}
-            entry['table'] = tablaDatos
-            entry['filter'] = ''
-            setBaseFK(wP,entry,wP.cache['tabla_ref'],tablaDatos)
-            wP.linkCTorRB.setChecked(True)
-            dataContext['link via'].append(entry)
-        else:
-            ultimaTabla = short2FullName(wP,dataContext['link via'][-1]['table'])
-            if tablaDatos == ultimaTabla :
-                pass
-            else:
-                try:
-                    pos = [ short2FullName(wP,entry['table']) for entry in dataContext['link via']].index(tablaDatos)
-                    del dataContext['link via'][pos +1:]
-                except ValueError:
-                    entry = {}
-                    entry['table'] = tablaDatos
-                    entry['filter'] = ''
-                    setBaseFK(wP,entry,ultimaTabla,tablaDatos)
-                    dataContext['link via'].append(entry)
-                    wP.linkCTorRB.setChecked(True)
-    #class
-    #TODO falta modificar la regla de produccion de acuerdo con ello    
-    if wP.dateCtorRB.isChecked():
-        dataContext['class'] = 'd'
-        dataContext['fmt'] = 'date'
-    elif wP.catCtorRB.isChecked() or wP.caseCtorRB.isChecked():
-        dataContext['class'] = 'c'    
-        
-    return True
 
 class WzCategory(QWizardPage):
     def __init__(self,parent=None,cache=None):
@@ -1018,11 +758,6 @@ class WzCategory(QWizardPage):
 
         return True
     
-def addCatEntry(wP,buttonId):
-    #FIXME da algunos problemas de presentacion ¿Bug upstream?
-    if buttonId == QWizard.CustomButton1:
-        catAddLines(self,3)
-                        
 class WzRowEditor(QWizardPage):
     def __init__(self,parent=None,cache=None):
         #TODO hay que buscar/sustituir nombres de campos
@@ -1035,7 +770,7 @@ class WzRowEditor(QWizardPage):
         self.setSubTitle(""" Introduzca el codigo SQL que desea utilizar para agrupar.
         Recuerde sustituir el nombre del campo guia por $$1 """)
         
-        self.setLayout(rowEditorForm(self))
+        self.setLayout(caseEditorForm(self))
     
     def initializePage(self):
         self.iterator = -1
@@ -1049,13 +784,13 @@ class WzRowEditor(QWizardPage):
         else:
             self.midict = self.wizard().diccionario
             
-        rowEditorFormLoad(self,self.midict)
+        caseEditorFormLoad(self,self.midict)
         
     def nextId(self):
         return -1
     def validatePage(self):
         
-        if not rowEditorFormValidate(self,self.midict):
+        if not caseEditorFormValidate(self,self.midict):
             return False
         
         if self.iterator == -1:
@@ -1076,7 +811,7 @@ class WzTime(QWizardPage):
         self.setSubTitle(""" Introduzca la jerarquía de criteros temporales que desea  """)
 
         
-        self.setLayout(timeForm(self))
+        self.setLayout(periodForm(self))
     
     def initializePage(self):
         #TODO no inicializa si no esta en la regla de produccion
@@ -1092,13 +827,13 @@ class WzTime(QWizardPage):
         else:
             self.midict = self.wizard().diccionario
         
-        timeFormLoad(self,self.midict)
+        periodFormLoad(self,self.midict)
     
     def nextId(self):
         return -1
 
     def validatePage(self):
-        if not timeFormValidate(self,self.midict):
+        if not periodFormValidate(self,self.midict):
             return False
 
             
@@ -1206,38 +941,11 @@ class WzDomain(QWizardPage):
         
     
     def initializePage(self):
-        #base = self.wizard().page(ixWzProdBase) 
-        #if not base:
-            #self.iterator = -1
-        #else:
-            #self.iterator = self.wizard().page(ixWzProdBase).iterations
-        #START creo que estas lineas son irrelevantes
-        #if isinstance(self.wizard().diccionario,(list,tuple)):
-            ##varias entradas
-            #self.midict = self.wizard().diccionario[self.iterator -1]
-        #else:
-            #self.midict = self.wizard().diccionario
-        #if self.midict.get('domain'):
-            #domain = self.midict['domain']
-        #else:
-            #domain = self.midict
-        #STOP si no me equivoco entonces es    
 
         self.midict = self.wizard().diccionario
         domain = self.midict
         domainFormLoad(self,domain)
 
-        #if self.wizard().obj.type() == 'domain':
-            #pai = self.wizard().obj.parent()
-            #link = pai.getChildrenByName('link via')
-            
-        #if link is not None:
-            #self.linkCheck.setChecked(True)
-            #self.setFinalPage(False)
-        #else:
-            #self.linkCheck.setChecked(False)
-            #self.setFinalPage(True)
-        #pass
 
     def nextId(self):
         return -1
@@ -1251,32 +959,8 @@ class WzDomain(QWizardPage):
         if len(self.domainCodeList.selectedItems()) == 0:
             self.domainCodeList.setFocus()
             return False
-        ## otra vez creo que no es necesaria    
-        ##if not self.midict.get('domain'):
-            ##domain = self.midict
-        ##else:
-            ##domain = self.midict['domain']
-        
-        #tabidx =self.domainTableCombo.currentIndex()
-        #self.midict['table'] = self.listOfTablesCode[tabidx]
-        
-        #self.midict['code'] = norm2List(self.domainCodeList.get())
-        
-        #self.midict['desc'] = norm2List(self.domainDescList.get())
-         
-        #self.midict['filter'] = self.domainFilterLE.text()
-         
-        #if self.isFinalPage() and (self.iterator != -1 or self.iterator < self.wizard().prodIters):
-            #self.wizard().setStartId(ixWzProdBase);
-            #self.wizard().restart()        
-            #return False
         return domainFormValidate(self,self.midict)
 
-    #def estadoLink(self,idx):
-        #if self.linkCheck.isChecked():
-            #self.setFinalPage(False)
-        #else:
-            #self.setFinalPage(True)
             
     def domainTablaElegida(self,idx):
         print('Algo encuentra',idx)
@@ -1410,14 +1094,6 @@ class WzLink(QWizardPage):
         if self.tipo == 'LinkList':
             self.joinListArray.show()
             self.joinListArray.cellChanged[int,int].connect(self.checkList)
-        #elif self.tipo == 'LinkEntry':
-            #self.baseLabel.show()
-            #self.baseTableCombo.show()
-            #self.destLabel.show()
-            #self.destTableCombo.show()
-            #self.joinClauseArray.show()
-            #self.joinFilterLabel.show()
-            #self.joinFilterLineEdit.show()
 
 
     #def nextId(self):
@@ -1802,9 +1478,9 @@ class WzProdBase(QWizardPage):
         #self.prodTB.currentCellChanged[int,int,int,int].connect(self.currentCellChanged)
 
         self.rowEditor = QWidget()
-        self.rowEditor.setLayout(rowEditorForm(self))
+        self.rowEditor.setLayout(caseEditorForm(self))
         self.timeEditor = QWidget()
-        self.timeEditor.setLayout(timeForm(self))
+        self.timeEditor.setLayout(periodForm(self))
         self.categoryEditor = QWidget()
         self.categoryEditor.setLayout(categoriesForm(self))
         
@@ -1940,13 +1616,13 @@ class WzProdBase(QWizardPage):
         clase=dataContext.get('class','o')
         if clase == 'd' or dataContext.get('fmt','txt') == 'date':
             self.dateCtorRB.setChecked(True)   
-            timeFormLoad(self,dataContext)
+            periodFormLoad(self,dataContext)
         if dataContext.get('categories'):
             self.catCtorRB.setChecked(True)
             categoriesFormLoad(self,dataContext)
         elif dataContext.get('case_sql'):
             self.caseCtorRB.setChecked(True)
-            rowEditorFormLoad(self,dataContext)
+            caseEditorFormLoad(self,dataContext)
         self.setDetail() #el set Checked no lo dispara
 
 
@@ -2054,7 +1730,7 @@ class WzProdBase(QWizardPage):
             if 'mask' in dataContext:
                 del dataContext['mask']        
         elif self.caseCtorRB.isChecked():
-            if not rowEditorFormValidate(self,dataContext):
+            if not caseEditorFormValidate(self,dataContext):
                 return False
             dataContext['class'] = 'c'
             if 'categories' in dataContext:
@@ -2063,7 +1739,7 @@ class WzProdBase(QWizardPage):
                 del dataContext['mask']
         elif self.dateCtorRB.isChecked():
             dataContext['class'] = 'd'
-            if not timeFormValidate(self,dataContext):
+            if not periodFormValidate(self,dataContext):
                 return False
             if 'categories' in dataContext:
                 del dataContext['categories']
