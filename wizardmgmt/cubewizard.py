@@ -735,7 +735,7 @@ def setBaseFK(wP,entry,fromTable,toTable):
             base = norm2List(fkey.get('ref field'))
             dest = norm2List(fkey.get('parent field'))
             entry['clause'] = []
-            for i in len(base):  #mas vale que coincidan
+            for i in range(len(base)):  #mas vale que coincidan
                 entry['clause'].append({'base_elem':base[i],'ref elem':dest[i]})
                 break
             
@@ -1240,7 +1240,7 @@ class WzDomain(QWizardPage):
         #pass
 
     def nextId(self):
-            return -1
+        return -1
 
     def validatePage(self):
         # verificar que los campos obligatorios estan rellenos
@@ -1289,7 +1289,8 @@ class WzDomain(QWizardPage):
 class WzLink(QWizardPage):
     def __init__(self,parent=None,cube=None,cache=None):
         super(WzLink,self).__init__(parent)
-        self.setFinalPage(True)        
+        
+        #self.setFinalPage(True)        
         self.cube = cube
         self.cache = cache
 
@@ -1419,8 +1420,8 @@ class WzLink(QWizardPage):
             #self.joinFilterLineEdit.show()
 
 
-    def nextId(self):
-        return -1
+    #def nextId(self):
+        #return -1
 
     def validatePage(self):
         if self.tipo == 'LinkList':
@@ -1904,11 +1905,11 @@ class WzProdBase(QWizardPage):
         
     def initializeEntry(self,numEntry):
         
-        self.dataFieldCombo.setCurrentIndex(-1)
-        #self.dataTableCombo.setCurrentIndex(-1)   #si no lo elimino no funciona correctamente
-        self.domainTableCombo.setCurrentIndex(-1)
-        self.domainCodeList.setCurrentIndex(-1)
-        self.domainDescList.setCurrentIndex(-1)
+        #self.dataFieldCombo.setCurrentIndex(0)
+        #self.dataTableCombo.setCurrentIndex(0)   #si no lo elimino no funciona correctamente
+        self.domainTableCombo.setCurrentIndex(0)
+        self.domainCodeList.setCurrentIndex(0)
+        self.domainDescList.setCurrentIndex(0)
         self.domainFilterLE.setText(None)
         self.linkCheck.setChecked(False)
         self.noneRB.setChecked(True)
@@ -1933,8 +1934,8 @@ class WzProdBase(QWizardPage):
             #es valido porque la señal de cambio de tabla se dispara internamente con el setCurrentIndex
             if dataContext.get('elem'):
                 self.dataFieldCombo.set(norm2String(dataContext.get('elem')))
-            else:
-                self.dataFieldCombo.setCurrentIndex(-1)  #FIXME
+            #else:
+                #self.dataFieldCombo.setCurrentIndex(-1)  #FIXME
 
         clase=dataContext.get('class','o')
         if clase == 'd' or dataContext.get('fmt','txt') == 'date':
@@ -1959,12 +1960,24 @@ class WzProdBase(QWizardPage):
         # falta el nombre y la clase en el padre
         # verificar que los campos obligatorios estan rellenos
         
-        return self.validateEntry(self.iterator)
-    
+        if not self.validateEntry(self.iterator):
+            return False
+        
         self.wizard().iterations = self.iterator
-        if len(self.listaProd) > 1:
-            self.midict['class'] = 'h'
-
+        
+        obj = self.wizard().obj
+        if obj.type() == 'guides':
+            if self.nombreLE.text().strip() == '':
+                self.nombreLE.setFocus()
+                return False
+            self.midict['name'] = self.nombreLE.text()
+            self.midict['class'] = GUIDE_CLASS[self.claseCB.currentIndex()][0]
+            if len(self.listaProd) > 1:
+                self.midict['class'] = 'h'
+                
+        self.estadoLink(self.iterator)
+        return True
+    
     def validateEntry(self,row):
         if self.dataTableCombo.currentIndex() <= 0:
             self.dataTableCombo.setFocus()
@@ -2095,9 +2108,7 @@ class WzProdBase(QWizardPage):
             self.Stack.setCurrentIndex(2)
 
     def estadoLink(self,idx):
-        if self.linkCheck.isChecked():
-            self.setFinalPage(False)
-        else:
+        if not self.linkCheck.isChecked():
             self.setFinalPage(True)
             
     def dataTablaElegida(self,idx):
@@ -2238,10 +2249,6 @@ class CubeWizard(QWizard):
             
             
             self.setPage(ixWzProdBase, WzProdBase(cube=cubeMgr,cache=cache_data))
-            #self.setPage(ixWzCategory, WzCategory(cache=cache_data))
-            #self.setPage(ixWzRowEditor, WzRowEditor(cache=cache_data))
-            #self.setPage(ixWzTime, WzTime(cache=cache_data))
-            #self.setPage(ixWzDomain, WzDomain(cube=cubeMgr,cache=cache_data))
             self.setPage(ixWzLink, WzLink(cube=cubeMgr,cache=cache_data))
             
         texto_pantalla = obj.text() if obj.text() != tipo else obj.parent().text()

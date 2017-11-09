@@ -315,74 +315,9 @@ def block_management(obj,cubeMgr,action,cube_root,cube_ref,cache_data):
     tipo = obj.type()
     texto = obj.text() 
     padre = obj.parent()
-    #if tipo == 'base':
-        #children = ('base_filter','date_filter','fields','guides')
-    #elif tipo == 'default_base':
-        #children = ('cubo','vista')
-    #elif tipo == 'connect':
-        #children = ('driver','dbname','dbhost','dbuser','dbpass','port','debug')
-    #elif tipo == 'domain':
-        #children == ('table','code','desc','filter','grouped_by')
-    #elif tipo == 'vista':
-        #children = ('agregado','elemento','row','col')
-    #elif tipo == 'categories':
-        #children = ('elem','default','condition','values','result','enum_fmt')
-    #elif tipo == 'clause':
-        #children = ('base_elem','rel_elem'),
-    #elif tipo == 'guides':
-        #children = ('class','name','prod'),
-    #elif tipo == 'prod':
-        #children = ('elem','class','domain','link_via','case_sql','type','fmt','categorias')
-    #elif tipo == 'link via':
-        #children = ('table','clause','filter'),
-    #elif tipo == 'date filter':
-        #children = ('elem','date class','date period','date range','date start','date end')
-
     wizard = CubeWizard(obj,cubeMgr,action,cube_root,cube_ref,cache_data)
     if wizard.exec_() :
         CubeWizardExec(obj,cubeMgr,wizard,action,cube_root,cube_ref,cache_data)
-        ##print('Milagro',wizard.page(1).contador,wizard.page(2).contador,wizard.page(3).contador)
-        #if action == 'add date filter':
-            #padre = obj
-            #texto = tipo = 'date filter'     
-            #if texto in wizard.diccionario:
-                #nudict = {texto:wizard.diccionario[texto]}
-            #else:
-                #nudict = {texto:wizard.diccionario }
-            #if len(nudict[texto]) == 0:
-                #print('tengo que escapar')
-                #return
-        ##TODO aqui tengo que realizar la vuelta de una regla de produccion
-        #elif tipo in TYPE_LIST_DICT:
-            #print(obj.getPos(),wizard.diccionario)
-            #if tipo != texto:
-                #yayo = padre.parent()
-                #nudict = tree2dict(yayo,isDictionaryEntry)
-                #lista = nudict[tipo]
-                #if obj.getPos() is not None:
-                    #print('pille entrada')
-                    #lista[obj.getPos()] = wizard.diccionario
-                #else: #hay que retocar cosas aqui para append e insert before
-                    #print('no pille entrada')
-                    #lista.append(wizard.diccionario)
-                #padre.suicide()
-                #padre= yayo
-                #texto = tipo
-
-            #elif action == 'add' :
-                #nudict = tree2dict(padre,isDictionaryEntry)
-                #lista = nudict[tipo]
-                #lista.append(wizard.diccionario)
-                #obj.suicide()
-                ##padre= yayo
-                ##texto = tipo
-            #else:
-                #nudict = {texto:wizard.diccionario }
-                #obj.suicide()
-        #else:
-            #nudict = {texto:wizard.diccionario }
-            #obj.suicide()
-        #dict2tree(padre,tipo,nudict[texto])
 
 @model_change_control(1)
 def CubeWizardExec(obj,cubeMgr,wizard,action,cube_root,cube_ref,cache_data):
