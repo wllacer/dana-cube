@@ -68,6 +68,37 @@ def getDateIndexElement(max_date, min_date, char):
 
     return minidx
 
+def getDateIndexNew(max_date,  min_date, fmt, **opciones):     
+    ''' 
+       TODO supera los intervalos mínimos
+       TODO esta clarisimo que ademas admite seria optimizacion
+       TODO como verificar que van a introducirse valores correctos HINT pasar a fecha python y provocar excepcion
+    '''
+    #DELIMITER = '.'
+    previous = []
+    next = []
+    ranges = []
+    for k,char in  enumerate(fmt):  
+        # obtenemos el abanico de valores para este elemento
+        ranges = getDateIndexElement(max_date, min_date, char)
+        # si es el primer elemento creamos un cursor (list of list) con los valores
+        if len(previous) == 0 :  #es el primer elemento
+            previous = [ [item,] for item in ranges ]
+            next = previous[:]
+        else:
+            # partiendo de los resultados de la iteracion anterior creamos un nuevo cursor con un atributo mas y 
+            # lo rellenamos con el cruce anterior X rango de ese elemento
+            previous = next[:]
+            next = []
+            for entrada in previous:
+                for rango in ranges:
+                    entry = list(entrada[:])
+                    # TODO garantizar que eso sea una fecha valida
+                    entry.append(entry[-1]+DELIMITER+ rango)  #k empieza en 0
+                    next.append(entry)
+        
+    pprint(next)   
+    return next
 def getDateIndex(max_date,  min_date, fmt, **opciones):     
     ''' 
        TODO supera los intervalos mínimos

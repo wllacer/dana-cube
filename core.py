@@ -33,7 +33,7 @@ from datalayer.query_constructor import *
 
 from util.numeros import stats,num2text
 
-from datalayer.datemgr import getDateIndex,getDateEntry
+from datalayer.datemgr import getDateIndex,getDateEntry, getDateIndexNew
 from pprint import *
 
 import time
@@ -604,7 +604,7 @@ class Cubo:
                 # TODO, desplegarlo todo
 
                 kmask = produccion.get('mask')              
-                cursor = getDateIndex(date_cache[campo][0]  #max_date
+                cursor = getDateIndexNew(date_cache[campo][0]  #max_date
                                             , date_cache[campo][1]  #min_date
                                             , kmask,
                                             nkeys = 1)
