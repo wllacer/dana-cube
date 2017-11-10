@@ -45,6 +45,10 @@ try:
 except ImportError:
     XLSOUTPUT = False
 
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QStandardItemModel, QStandardItem
+from cubemgmt.cubetree import CubeItem,traverseTree
+
 
 def mergeString(string1,string2,connector):
     if not string1 :
@@ -468,7 +472,9 @@ class Cubo:
             
                 #print(time.strftime("%H:%M:%S"),dir_row[0])
                 #print(time.strftime("%H:%M:%S"),dir_row[0])
-
+    """
+       aqui las nuevas rutinas
+    """
     def fillNewGuias(self):
         for k,entrada in enumerate(self.lista_guias):
             entrada['dir_row']=self.fillNewGuia(k)
@@ -498,23 +504,12 @@ class Cubo:
                 datefilter = self.setDateFilter()
         return table_name,basefilter,datefilter
             
-    
-    def fillNewGuia(self,guidId):
-        from PyQt5.QtCore import Qt
-        from PyQt5.QtGui import QStandardItemModel, QStandardItem
-        from cubemgmt.cubetree import CubeItem,traverseTree
-        # para simplificar el codigo
-        cubo = self.definition
-        guia = self.definition['guides'][guidId]
-        
-        date_cache = {}
-        contexto = []
-        
-        arbol = QStandardItemModel()
-        raiz = arbol.invisibleRootItem()
-        
+   
+    def _expandDateProductions(self,guidID):
         #las producciones tipo date son abreviaturas de jerarquias internas. Ahora es el momento de dedoblarlas
         prodExpandida = []
+        guia = self.definition['guides'][guidID]
+        
         for prodId,produccion in enumerate(guia['prod']):
             produccion['origID'] = prodId
             if produccion.get('class','o') == 'd' or produccion.get('fmt','txt') == 'date':
@@ -530,8 +525,98 @@ class Cubo:
                     prodExpandida.append(datosfecha)
             else:
                 prodExpandida.append(produccion)
+                
+        return prodExpandida
 
+    def _getProdCursor(self,contexto,basefilter,datefilter):
+        table = contexto['table']
+        columns = contexto['columns']
+        code = contexto['code']
+        filter = contexto['filter']
+        sqlDef = {}
+        sqlDef['tables'] = table
+        sqlDef['fields'] = columns
+        if basefilter is not None:
+            sqlDef['base_filter'] = filter
+        if datefilter is not None:
+            sqlDef['where'] = datefilter
+        sqlDef['order'] = [ str(x + 1) for x in range(len(code))]
+        sqlDef['select_modifier']='DISTINCT'
+        sqlDef['driver'] = self.dbdriver
+        try:
+            sqlString = queryConstructor(**sqlDef)
+        except:
+            print('Zasss')
+            pprint(columns)
+            pprint(filter)
+            pprint(sqlDef)
+        print(sqlString)
+        cursor=getCursor(self.db,sqlString)
+        return cursor
 
+    def _createProdModel(self,raiz,cursor,contexto,prodId):
+        columns = contexto['columns']
+        code = contexto['code']
+        desc = contexto['desc']
+        groupby = contexto['groupby']
+        def localizaHijo(treeItem,valor):
+            for k in range(treeItem.rowCount()):
+                if treeItem.child(k).data() == valor:
+                    return treeItem.child(k)
+            return treeItem
+
+        ngroupby = len(groupby)
+        cache_parents = [ None for i in range(ngroupby)]
+        ncode = len(code) -ngroupby
+        ndesc = len(desc)
+        ncols = len(columns)
+        for row in cursor:
+            if prodId == 0:
+                papid = []
+                resto = row
+            else:
+                papid = row[0:ngroupby]
+                resto = row[ngroupby:]
+            key = ' '.join(resto[0:ncode])  #OJO fechas
+            if ncode < len(resto):
+                value = ' '.join(resto[ncode:])
+            else:
+                value = key
+            #print(row,ngroupby,ncode,ndesc,key,value)    
+            parent = raiz
+            #TODO  sigo sn contemplar que la clave no exista. y asum que las claves son monovalor
+            for k in range(len(papid)):
+                if cache_parents[k] is not None and cache_parents[k].data() == papid[k]:
+                    parent = cache_parents[k]
+                    continue
+                else:
+                    parent = localizaHijo(parent,papid[k])
+                    cache_parents[k] = parent
+            item = QStandardItem()
+            item.setData(key)
+            item.setData(value,Qt.DisplayRole)
+            #print(parent.data(),'/',item.data(),'->',item.data(Qt.EditRole))
+            parent.appendRow(item)
+        for item in traverseTree(raiz):
+            if not item.parent():
+                print('Raiz -->',item.data(),item.data(Qt.DisplayRole))
+            else:
+                print(item.parent().data(),item.data(),item.data(Qt.DisplayRole))
+        
+    def fillNewGuia(self,guidId):
+        # para simplificar el codigo
+        cubo = self.definition
+        guia = self.definition['guides'][guidId]
+        
+        date_cache = {}
+        contexto = []
+        
+        arbol = QStandardItemModel()
+        raiz = arbol.invisibleRootItem()
+        
+        
+        prodExpandida = self._expandDateProductions(guidId)
+        
         for prodId,produccion in enumerate(prodExpandida):
             origId = produccion['origID']
             clase = produccion.get('class',guia.get('class','o'))
@@ -543,7 +628,10 @@ class Cubo:
             code = []
             desc = []
             columns = []
+            filter = None
             isSQL = True
+            cursor = None
+            
             print(guia['name'],nombre)
             if clase == 'o':
                 if 'domain' in produccion:
@@ -561,10 +649,8 @@ class Cubo:
                 cursor = []
                 for entrada in produccion['categories']:
                     if 'result' in entrada:
-                        print('\t',entrada.get('result'))
                         cursor.append([entrada.get('result'),])
                     else:
-                        print('\t',entrada.get('default'))     
                         cursor.append([entrada.get('default'),])
                 
             elif clase == 'c' and 'case_sql' in produccion:
@@ -606,9 +692,9 @@ class Cubo:
                 kmask = produccion.get('mask')              
                 cursor = getDateIndexNew(date_cache[campo][0]  #max_date
                                             , date_cache[campo][1]  #min_date
-                                            , kmask,
-                                            nkeys = 1)
-                pprint(cursor)
+                                            , kmask)
+
+
 
 
             if prodId != 0 and len(groupby) == 0:
@@ -619,70 +705,11 @@ class Cubo:
                         columns = code + desc
                     else:
                         code = desc = columns = groupby + code
-            contexto.append({'table':table,'code':code,'desc':desc,'groupby':groupby})
+            contexto.append({'table':table,'code':code,'desc':desc,'groupby':groupby,'columns':columns,'filter':filter})
             if isSQL:
-                sqlDef = {}
-                sqlDef['tables'] = table
-                sqlDef['fields'] = columns
-                if basefilter is not None:
-                    sqlDef['base_filter'] = filter
-                if datefilter is not None:
-                    sqlDef['where'] = datefilter
-                sqlDef['order'] = [ str(x + 1) for x in range(len(code))]
-                sqlDef['select_modifier']='DISTINCT'
-                sqlDef['driver'] = self.dbdriver
-                try:
-                    sqlString = queryConstructor(**sqlDef)
-                except:
-                    print('Zasss',guia['name'],nombre)
-                    pprint(columns)
-                    pprint(filter)
-                    pprint(sqlDef)
-                print(sqlString)
-                cursor=getCursor(self.db,sqlString)
+                cursor = self._getProdCursor(contexto[-1],basefilter,datefilter)
             
-            ngroupby = len(groupby)
-            cache_parents = [ None for i in range(ngroupby)]
-            ncode = len(code) -ngroupby
-            ndesc = len(desc)
-            ncols = len(columns)
-            for row in cursor:
-                if prodId == 0:
-                    papid = []
-                    resto = row
-                else:
-                    papid = row[0:ngroupby]
-                    resto = row[ngroupby:]
-                key = ' '.join(resto[0:ncode])  #OJO fechas
-                if ncode < len(resto):
-                    value = ' '.join(resto[ncode:])
-                else:
-                    value = key
-                #print(row,ngroupby,ncode,ndesc,key,value)    
-                parent = raiz
-                def localizaHijo(treeItem,valor):
-                    for k in range(treeItem.rowCount()):
-                        if treeItem.child(k).data() == valor:
-                            return treeItem.child(k)
-                    return treeItem
-                #TODO  sigo sn contemplar que la clave no exista. y asum que las claves son monovalor
-                for k in range(len(papid)):
-                    if cache_parents[k] is not None and cache_parents[k].data() == papid[k]:
-                        parent = cache_parents[k]
-                        continue
-                    else:
-                        parent = localizaHijo(parent,papid[k])
-                        cache_parents[k] = parent
-                item = QStandardItem()
-                item.setData(key)
-                item.setData(value,Qt.DisplayRole)
-                #print(parent.data(),'/',item.data(),'->',item.data(Qt.EditRole))
-                parent.appendRow(item)
-            for item in traverseTree(raiz):
-                if not item.parent():
-                    print('Raiz -->',item.data(),item.data(Qt.DisplayRole))
-                else:
-                    print(item.parent().data(),item.data(),item.data(Qt.DisplayRole))
+            self._createProdModel(raiz,cursor,contexto[-1],prodId)
 class Vista:
     #TODO falta documentar
     #TODO falta implementar la five points metric
@@ -1425,13 +1452,13 @@ def experimental():
             print (ind,key,elem.ord,elem.desc,elem.parentItem.key)
             ind += 1
     vista = None
-    micubo = 'rental'
-    #cubo = 'datos catalonia'
+    #micubo = 'rental'
+    micubo = 'datos catalonia'
     #micubo = 'datos light'
     guia = 'ideologia'
     mis_cubos = load_cubo()
     cubo = Cubo(mis_cubos[micubo])
-    cubo.fillNewGuia(0)
+    cubo.fillNewGuias()
     #pprint(cubo.definition)
     #pprint(cubo.definition)
     #pprint(cubo.lista_funciones)

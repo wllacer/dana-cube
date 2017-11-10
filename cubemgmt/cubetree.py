@@ -23,7 +23,7 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem
 #from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QSplitter, QMenu, \
      #QDialog, QInputDialog, QLineEdit, QComboBox
 
-from models import TreeModel
+#from models import TreeModel
 #from datadict import *    
 #from datalayer.query_constructor import *
 #from datalayer.access_layer import DRIVERS, AGR_LIST, dbDict2Url
@@ -224,10 +224,10 @@ class CubeItem(QStandardItem):
      
     def getModel(self):
         """
-        probablemente innecesario
+        probablemente innecesario. No se usa de hecho
         """
         item = self
-        while item is not None and type(item) is not TreeModel:
+        while item is not None: # and type(item) is not TreeModel: quito para poder abstraer 
             item = item.parent()
         return item
 
