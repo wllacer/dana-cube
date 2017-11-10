@@ -851,15 +851,6 @@
                 "date range": "trimestre",
                 "date start": "None",
                 "elem": "public.rental.rental_date"
-            },
-            {
-                "date class": "intervalo",
-                "date end": "None",
-                "date format": "fechahora",
-                "date period": "3",
-                "date range": "trimestre",
-                "date start": "None",
-                "elem": "public.rental.rental_id"
             }
         ],
         "fields": [

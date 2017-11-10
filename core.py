@@ -469,7 +469,94 @@ class Cubo:
                 #print(time.strftime("%H:%M:%S"),dir_row[0])
                 #print(time.strftime("%H:%M:%S"),dir_row[0])
 
-                
+    def fillNewGuias(self):
+        for k,entrada in enumerate(self.lista_guias):
+            entrada['dir_row']=self.fillNewGuia(k)
+    
+    def _setTableName(self,guia,idx):
+        """
+        input
+           guia  definicion de la guia correspondiente
+           idx   indice de la produccion
+        output
+           table_name nombre de la tabla
+           filter filtro asociado
+        """
+        basefilter = None
+        datefilter = None
+        entrada = guia['prod'][idx]
+        if 'domain' in entrada:
+            table_name = entrada['domain'].get('table')  # se supone que tiene que existir
+            basefilter = entrada['domain'].get('filter')
+        elif 'link via' in entrada:
+            table_name = entrada['link via'][-1].get('table')
+        else:
+            table_name = self.definition.get('table')
+            if len(self.definition.get('base filter','')) > 0:
+                basefilter = self.definition['base filter']
+            if 'date filter' in self.definition:
+                datefilter = self.setDateFilter()
+        return table_name,basefilter,datefilter
+            
+    def fillNewGuia(self,guidId):
+        # para simplificar el codigo
+        cubo = self.definition
+        guia = self.definition['guides'][guidId]
+        
+        guideSql = []
+        
+        for prodId,produccion in enumerate(guia['prod']):
+            clase = produccion.get('class',guia.get('class','o'))
+            if clase == 'h':
+                clase = 'o'
+            nombre = produccion.get('name',guia.get('name')+'_'+str(prodId).replace(' ','_').strip())
+            table,basefilter,datefilter  = self._setTableName(guia,prodId)
+            code = []
+            desc = []
+            columns = []
+            isSQL = True
+            print(guia['name'],nombre)
+            if clase == 'o':
+                if 'domain' in produccion:
+                    code = norm2List(produccion['domain'].get('grouped by')) + norm2List(produccion['domain'].get('code')) 
+                    desc = norm2List(produccion['domain'].get('desc'))
+                    columns = code + desc
+                    filter = produccion['domain'].get('filter','')
+                else:
+                    columns = code = desc = norm2List(produccion.get('elem'))
+            elif clase == 'c' and 'categories' in produccion:
+                isSQL = False
+            elif clase == 'c' and 'case_sql' in produccion:
+                campos = norm2List(produccion.get('elem')) + [nombre, ]
+                transformado = []
+                for linea in produccion['case_sql']:
+                    for k,campo in enumerate(campos):
+                        linea = linea.replace('$${}'.format(str(k +1)),campo)
+                    transformado.append(linea)
+                code = desc = columns = [' '.join(transformado),]
+            elif clase == 'd':
+                isSQL = False
+
+            if isSQL:
+                sqlDef = {}
+                sqlDef['tables'] = table
+                sqlDef['fields'] = columns
+                if basefilter is not None:
+                    sqlDef['base_filter'] = filter
+                if datefilter is not None:
+                    sqlDef['where'] = datefilter
+                sqlDef['order'] = [ str(x + 1) for x in range(len(code))]
+                sqlDef['select_modifier']='DISTINCT'
+                sqlDef['driver'] = self.dbdriver
+                try:
+                    sqlString = queryConstructor(**sqlDef)
+                except:
+                    print('Zasss',guia['name'],nombre)
+                    pprint(columns)
+                    pprint(filter)
+                    pprint(sqlDef)
+                print(sqlString)
+
 class Vista:
     #TODO falta documentar
     #TODO falta implementar la five points metric
@@ -1212,27 +1299,18 @@ def experimental():
             print (ind,key,elem.ord,elem.desc,elem.parentItem.key)
             ind += 1
     vista = None
-    cubo = 'datos catalonia'
+    cubo = 'rental'
     guia = 'ideologia'
     mis_cubos = load_cubo()
-    arbol = QStandardItemModel()
-    raiz = arbol.invisibleRootItem()
-    recTreeLoader(raiz,cubo,mis_cubos[cubo],'base')
-    cuboItem = raiz.child(0)
-    guiaItem = cuboItem.getChildrenByName('guides').getChildrenByName(guia)
-    for node in traverseTree(guiaItem):
-        if isinstance(node,CubeItem):
-            padd = '\t'*node.depth()
-            print(padd,node.text(),node.getColumnData(1),node.type())
-        else:
-            print(node.text())
+    micubo = Cubo(mis_cubos[cubo])
+    micubo.fillNewGuias()
     #pprint(cubo.definition)
     #pprint(cubo.definition)
     #pprint(cubo.lista_funciones)
     #pprint(cubo.lista_campos)
     #pprint(cubo.lista_guias[6])
-    for ind,guia in enumerate(cubo.lista_guias):
-        print(ind,guia['name'])
+    #for ind,guia in enumerate(cubo.lista_guias):
+        #print(ind,guia['name'])
     #cubo.fillGuias()
     #ind= 5
     #cubo.fillGuia(ind)
@@ -1251,15 +1329,15 @@ def experimental():
         #elem = guia[key]
         #print (ind,key,elem.ord,elem.desc)
         #ind += 1
-    vista=Vista(cubo,'fecha','partidos importantes','sum','votes_presential')
-    #vista=Vista(cubo,6,0,'sum','votes_presential')
-    arbol = vista.row_hdr_idx
-    #raiz = arbol.rootItem
-    for item in arbol.traverse(output=1):
-        print(item.key,item)
-        #print(item,item.getRoot(),item.model())
-    print(arbol.count())
-    print(arbol.len())
+    #vista=Vista(cubo,'fecha','partidos importantes','sum','votes_presential')
+    ##vista=Vista(cubo,6,0,'sum','votes_presential')
+    #arbol = vista.row_hdr_idx
+    ##raiz = arbol.rootItem
+    #for item in arbol.traverse(output=1):
+        #print(item.key,item)
+        ##print(item,item.getRoot(),item.model())
+    #print(arbol.count())
+    #print(arbol.len())
     #pprint(vista.grandTotal())
     #tabla = vista.toKeyedTable()
     #vista.toTree2D()
