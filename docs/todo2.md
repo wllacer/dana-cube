@@ -8,7 +8,8 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 *  plantearnos el filtro y el grouped by
 *  algun sistema de comprobación que son correctas las definciones de guia
 *  plantearse ocultar el dominio en las complejas
-*  joe con los links
+*  __DONE__joe con los links
+*  Comprobar los selectores de fechas un poco raros (cuatrimestres, etc, ...)
 
 ## catatonia
 *  __BUG__crash con datos incompletos en definicion de vista. 
