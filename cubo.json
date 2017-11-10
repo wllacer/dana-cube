@@ -842,17 +842,6 @@
             "debug": false,
             "driver": "postgresql"
         },
-        "date filter": [
-            {
-                "date class": "intervalo",
-                "date end": "None",
-                "date format": "fechahora",
-                "date period": "3",
-                "date range": "trimestre",
-                "date start": "None",
-                "elem": "public.rental.rental_date"
-            }
-        ],
         "fields": [
             "public.rental.inventory_id",
             "public.rental.customer_id",

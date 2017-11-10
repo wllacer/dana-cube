@@ -504,6 +504,7 @@ class Cubo:
         guia = self.definition['guides'][guidId]
         
         guideSql = []
+        date_cache = {}
         
         for prodId,produccion in enumerate(guia['prod']):
             clase = produccion.get('class',guia.get('class','o'))
@@ -526,6 +527,14 @@ class Cubo:
                     columns = code = desc = norm2List(produccion.get('elem'))
             elif clase == 'c' and 'categories' in produccion:
                 isSQL = False
+                # esto no es necesario en esta fase
+                #code = desc= columns = [caseConstructor(nombre,produccion),]
+                for entrada in produccion['categories']:
+                    if 'result' in entrada:
+                        print('\t',entrada.get('result'))
+                    else:
+                        print('\t',entrada.get('default'))      
+                
             elif clase == 'c' and 'case_sql' in produccion:
                 campos = norm2List(produccion.get('elem')) + [nombre, ]
                 transformado = []
@@ -536,6 +545,42 @@ class Cubo:
                 code = desc = columns = [' '.join(transformado),]
             elif clase == 'd':
                 isSQL = False
+                code = norm2List(produccion.get('elem'))
+                campo = code[0] #solo podemos trabajar con un campo
+                # si no existe por lo que sea mask, defecto es año y mes
+                mascara = produccion.get('mask','Ym')
+                # obtengo la fecha minima y maxima
+                if campo in date_cache:
+                    pass
+                else:
+                    #TODO solo se requiere consulta a la base de datos si el formato incluye 'Y'
+                    #REFINE creo que fields sobra
+                    sqlDefDate=dict()
+                    sqlDefDate['tables'] = table
+                    if basefilter is not None:
+                        sqlDefDate['base_filter'] = filter
+                    if datefilter is not None:
+                        sqlDefDate['where'] = datefilter
+                    sqlDefDate['fields'] = [[campo,'max'],[campo,'min'],]
+                    sqlDefDate['driver'] = self.dbdriver
+                    sqlStringDate = queryConstructor(**sqlDefDate) 
+                    row=getCursor(self.db,sqlStringDate)
+                    if not row[0][0]:
+                        # un bypass para que no se note 
+                        date_cache[campo] = [datetime.date.today(),datetime.date.today()]
+                    else:
+                        date_cache[campo] = [row[0][0], row[0][1]] 
+                    #
+                # ahora toca generar las fechas
+                for k in range(len(mascara)):
+                    kmask = mascara[0:k+1]                   
+                    datosfecha= getDateEntry(campo,kmask,self.dbdriver)
+                    cursor = getDateIndex(date_cache[campo][0]  #max_date
+                                                , date_cache[campo][1]  #min_date
+                                                , kmask,
+                                                nkeys = 1)
+                    pprint(cursor)
+
 
             if isSQL:
                 sqlDef = {}
@@ -1300,6 +1345,7 @@ def experimental():
             ind += 1
     vista = None
     cubo = 'rental'
+    #cubo = 'datos catalonia'
     guia = 'ideologia'
     mis_cubos = load_cubo()
     micubo = Cubo(mis_cubos[cubo])
