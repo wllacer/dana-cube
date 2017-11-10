@@ -498,20 +498,48 @@ class Cubo:
                 datefilter = self.setDateFilter()
         return table_name,basefilter,datefilter
             
+    
     def fillNewGuia(self,guidId):
+        from PyQt5.QtCore import Qt
+        from PyQt5.QtGui import QStandardItemModel, QStandardItem
+        from cubemgmt.cubetree import CubeItem,traverseTree
         # para simplificar el codigo
         cubo = self.definition
         guia = self.definition['guides'][guidId]
         
-        guideSql = []
         date_cache = {}
+        contexto = []
         
+        arbol = QStandardItemModel()
+        raiz = arbol.invisibleRootItem()
+        
+        #las producciones tipo date son abreviaturas de jerarquias internas. Ahora es el momento de dedoblarlas
+        prodExpandida = []
         for prodId,produccion in enumerate(guia['prod']):
+            produccion['origID'] = prodId
+            if produccion.get('class','o') == 'd' or produccion.get('fmt','txt') == 'date':
+                code = norm2List(produccion.get('elem'))
+                campo = code[0] #solo podemos trabajar con un campo
+                # si no existe por lo que sea mask, defecto es año y mes
+                mascara = produccion.get('mask','Ym')
+                for kmask in [ mascara[0:k+1] for k in range(len(mascara)) ]:
+                    datosfecha= getDateEntry(campo,kmask,self.dbdriver)
+                    datosfecha['class'] = 'd'
+                    datosfecha['campo_base'] = campo  #estrictamente temporal
+                    datosfecha['origID'] = prodId
+                    prodExpandida.append(datosfecha)
+            else:
+                prodExpandida.append(produccion)
+
+
+        for prodId,produccion in enumerate(prodExpandida):
+            origId = produccion['origID']
             clase = produccion.get('class',guia.get('class','o'))
             if clase == 'h':
                 clase = 'o'
             nombre = produccion.get('name',guia.get('name')+'_'+str(prodId).replace(' ','_').strip())
-            table,basefilter,datefilter  = self._setTableName(guia,prodId)
+            table,basefilter,datefilter  = self._setTableName(guia,origId)
+            groupby= []
             code = []
             desc = []
             columns = []
@@ -519,7 +547,8 @@ class Cubo:
             print(guia['name'],nombre)
             if clase == 'o':
                 if 'domain' in produccion:
-                    code = norm2List(produccion['domain'].get('grouped by')) + norm2List(produccion['domain'].get('code')) 
+                    groupby = norm2List(produccion['domain'].get('grouped by'))
+                    code = groupby + norm2List(produccion['domain'].get('code')) 
                     desc = norm2List(produccion['domain'].get('desc'))
                     columns = code + desc
                     filter = produccion['domain'].get('filter','')
@@ -528,12 +557,15 @@ class Cubo:
             elif clase == 'c' and 'categories' in produccion:
                 isSQL = False
                 # esto no es necesario en esta fase
-                #code = desc= columns = [caseConstructor(nombre,produccion),]
+                code = desc= columns = [caseConstructor(nombre,produccion),]
+                cursor = []
                 for entrada in produccion['categories']:
                     if 'result' in entrada:
                         print('\t',entrada.get('result'))
+                        cursor.append([entrada.get('result'),])
                     else:
-                        print('\t',entrada.get('default'))      
+                        print('\t',entrada.get('default'))     
+                        cursor.append([entrada.get('default'),])
                 
             elif clase == 'c' and 'case_sql' in produccion:
                 campos = norm2List(produccion.get('elem')) + [nombre, ]
@@ -545,11 +577,9 @@ class Cubo:
                 code = desc = columns = [' '.join(transformado),]
             elif clase == 'd':
                 isSQL = False
-                code = norm2List(produccion.get('elem'))
-                campo = code[0] #solo podemos trabajar con un campo
-                # si no existe por lo que sea mask, defecto es año y mes
-                mascara = produccion.get('mask','Ym')
+                code = desc = columns = norm2List(produccion.get('elem'))
                 # obtengo la fecha minima y maxima
+                campo = produccion.get('campo_base') #solo podemos   trabajar con un campo
                 if campo in date_cache:
                     pass
                 else:
@@ -571,17 +601,25 @@ class Cubo:
                     else:
                         date_cache[campo] = [row[0][0], row[0][1]] 
                     #
-                # ahora toca generar las fechas
-                for k in range(len(mascara)):
-                    kmask = mascara[0:k+1]                   
-                    datosfecha= getDateEntry(campo,kmask,self.dbdriver)
-                    cursor = getDateIndex(date_cache[campo][0]  #max_date
-                                                , date_cache[campo][1]  #min_date
-                                                , kmask,
-                                                nkeys = 1)
-                    pprint(cursor)
+                # TODO, desplegarlo todo
+
+                kmask = produccion.get('mask')              
+                cursor = getDateIndex(date_cache[campo][0]  #max_date
+                                            , date_cache[campo][1]  #min_date
+                                            , kmask,
+                                            nkeys = 1)
+                pprint(cursor)
 
 
+            if prodId != 0 and len(groupby) == 0:
+                if contexto[prodId -1]['table'] == table:  #por coherencia sin groop by es imposible sino
+                    groupby = contexto[prodId -1]['code']
+                    if code != desc:
+                        code = groupby + code
+                        columns = code + desc
+                    else:
+                        code = desc = columns = groupby + code
+            contexto.append({'table':table,'code':code,'desc':desc,'groupby':groupby})
             if isSQL:
                 sqlDef = {}
                 sqlDef['tables'] = table
@@ -601,7 +639,50 @@ class Cubo:
                     pprint(filter)
                     pprint(sqlDef)
                 print(sqlString)
-
+                cursor=getCursor(self.db,sqlString)
+            
+            ngroupby = len(groupby)
+            cache_parents = [ None for i in range(ngroupby)]
+            ncode = len(code) -ngroupby
+            ndesc = len(desc)
+            ncols = len(columns)
+            for row in cursor:
+                if prodId == 0:
+                    papid = []
+                    resto = row
+                else:
+                    papid = row[0:ngroupby]
+                    resto = row[ngroupby:]
+                key = ' '.join(resto[0:ncode])  #OJO fechas
+                if ncode < len(resto):
+                    value = ' '.join(resto[ncode:])
+                else:
+                    value = key
+                #print(row,ngroupby,ncode,ndesc,key,value)    
+                parent = raiz
+                def localizaHijo(treeItem,valor):
+                    for k in range(treeItem.rowCount()):
+                        if treeItem.child(k).data() == valor:
+                            return treeItem.child(k)
+                    return treeItem
+                #TODO  sigo sn contemplar que la clave no exista. y asum que las claves son monovalor
+                for k in range(len(papid)):
+                    if cache_parents[k] is not None and cache_parents[k].data() == papid[k]:
+                        parent = cache_parents[k]
+                        continue
+                    else:
+                        parent = localizaHijo(parent,papid[k])
+                        cache_parents[k] = parent
+                item = QStandardItem()
+                item.setData(key)
+                item.setData(value,Qt.DisplayRole)
+                #print(parent.data(),'/',item.data(),'->',item.data(Qt.EditRole))
+                parent.appendRow(item)
+            for item in traverseTree(raiz):
+                if not item.parent():
+                    print('Raiz -->',item.data(),item.data(Qt.DisplayRole))
+                else:
+                    print(item.parent().data(),item.data(),item.data(Qt.DisplayRole))
 class Vista:
     #TODO falta documentar
     #TODO falta implementar la five points metric
@@ -1344,17 +1425,18 @@ def experimental():
             print (ind,key,elem.ord,elem.desc,elem.parentItem.key)
             ind += 1
     vista = None
-    cubo = 'rental'
+    micubo = 'rental'
     #cubo = 'datos catalonia'
+    #micubo = 'datos light'
     guia = 'ideologia'
     mis_cubos = load_cubo()
-    micubo = Cubo(mis_cubos[cubo])
-    micubo.fillNewGuias()
+    cubo = Cubo(mis_cubos[micubo])
+    cubo.fillNewGuia(0)
     #pprint(cubo.definition)
     #pprint(cubo.definition)
     #pprint(cubo.lista_funciones)
     #pprint(cubo.lista_campos)
-    #pprint(cubo.lista_guias[6])
+    #pprint(cubo.getGuideNames())
     #for ind,guia in enumerate(cubo.lista_guias):
         #print(ind,guia['name'])
     #cubo.fillGuias()
