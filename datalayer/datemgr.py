@@ -18,6 +18,22 @@ import datetime
 import time
 from util.record_functions import norm2List
 
+def validate(date_text,fmt):  
+    # Solo formatos ordinarios
+    formato = ''
+    for char in fmt:
+        if formato == '':
+            formato += '%'+char
+        else:
+            formato += ':%'+char
+        
+    try:
+        if date_text != datetime.datetime.strptime(date_text, formato).strftime(formato):
+            raise ValueError
+        return True
+    except ValueError:
+        return False
+
 def getDateIndexElement(max_date, min_date, char):
     #TODO formatos todavia usan %
     minidx = []
@@ -94,8 +110,9 @@ def getDateIndexNew(max_date,  min_date, fmt, **opciones):
                 for rango in ranges:
                     entry = list(entrada[:])
                     # TODO garantizar que eso sea una fecha valida
-                    entry.append(entry[-1]+DELIMITER+ rango)  #k empieza en 0
-                    next.append(entry)
+                    if validate(entry[-1]+DELIMITER+ rango,fmt[0:k+1]):
+                        entry.append(entry[-1]+DELIMITER+ rango)  #k empieza en 0
+                        next.append(entry)
         
     pprint(next)   
     return next

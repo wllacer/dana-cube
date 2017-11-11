@@ -545,6 +545,7 @@ class Cubo:
         sqlDef['driver'] = self.dbdriver
         try:
             sqlString = queryConstructor(**sqlDef)
+            print(sqlString)
         except:
             print('Zasss')
             pprint(columns)
@@ -571,6 +572,9 @@ class Cubo:
         ndesc = len(desc)
         ncols = len(columns)
         for row in cursor:
+            for k in range(len(row)):
+                if row[k] is None:
+                    row[k] = 'NULL'
             if prodId == 0:
                 papid = []
                 resto = row
@@ -597,11 +601,6 @@ class Cubo:
             item.setData(value,Qt.DisplayRole)
             #print(parent.data(),'/',item.data(),'->',item.data(Qt.EditRole))
             parent.appendRow(item)
-        for item in traverseTree(raiz):
-            if not item.parent():
-                print('Raiz -->',item.data(),item.data(Qt.DisplayRole))
-            else:
-                print(item.parent().data(),item.data(),item.data(Qt.DisplayRole))
         
     def fillNewGuia(self,guidId):
         # para simplificar el codigo
@@ -710,6 +709,13 @@ class Cubo:
                 cursor = self._getProdCursor(contexto[-1],basefilter,datefilter)
             
             self._createProdModel(raiz,cursor,contexto[-1],prodId)
+            
+        for item in traverseTree(raiz):
+            if not item.parent():
+                print('Raiz -->',item.data(),item.data(Qt.DisplayRole))
+            else:
+                print(item.parent().data(),item.data(),item.data(Qt.DisplayRole))
+
 class Vista:
     #TODO falta documentar
     #TODO falta implementar la five points metric
@@ -1452,13 +1458,13 @@ def experimental():
             print (ind,key,elem.ord,elem.desc,elem.parentItem.key)
             ind += 1
     vista = None
-    #micubo = 'rental'
-    micubo = 'datos catalonia'
+    micubo = 'rental'
+    #micubo = 'datos catalonia'
     #micubo = 'datos light'
     guia = 'ideologia'
     mis_cubos = load_cubo()
     cubo = Cubo(mis_cubos[micubo])
-    cubo.fillNewGuias()
+    cubo.fillNewGuia(3)
     #pprint(cubo.definition)
     #pprint(cubo.definition)
     #pprint(cubo.lista_funciones)
