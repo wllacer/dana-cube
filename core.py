@@ -571,37 +571,52 @@ class Cubo:
         ncode = len(code) -ngroupby
         ndesc = len(desc)
         ncols = len(columns)
-        for row in cursor:
-            for k in range(len(row)):
-                if row[k] is None:
-                    row[k] = 'NULL'
-            if prodId == 0:
-                papid = []
-                resto = row
-            else:
-                papid = row[0:ngroupby]
-                resto = row[ngroupby:]
-            key = ' '.join(resto[0:ncode])  #OJO fechas
-            if ncode < len(resto):
-                value = ' '.join(resto[ncode:])
-            else:
-                value = key
-            #print(row,ngroupby,ncode,ndesc,key,value)    
-            parent = raiz
-            #TODO  sigo sn contemplar que la clave no exista. y asum que las claves son monovalor
-            for k in range(len(papid)):
-                if cache_parents[k] is not None and cache_parents[k].data() == papid[k]:
-                    parent = cache_parents[k]
-                    continue
+        if isinstance(raiz,QStandardItem):
+            for row in cursor:
+                for k in range(len(row)):
+                    if row[k] is None:
+                        row[k] = 'NULL'
+                if prodId == 0:
+                    papid = []
+                    resto = row
                 else:
-                    parent = localizaHijo(parent,papid[k])
-                    cache_parents[k] = parent
-            item = QStandardItem()
-            item.setData(key)
-            item.setData(value,Qt.DisplayRole)
-            #print(parent.data(),'/',item.data(),'->',item.data(Qt.EditRole))
-            parent.appendRow(item)
-        
+                    papid = row[0:ngroupby]
+                    resto = row[ngroupby:]
+                key = ' '.join(resto[0:ncode])  #OJO fechas
+                if ncode < len(resto):
+                    value = ' '.join(resto[ncode:])
+                else:
+                    value = key
+                #print(row,ngroupby,ncode,ndesc,key,value)    
+                parent = raiz
+                #TODO  sigo sn contemplar que la clave no exista. y asum que las claves son monovalor
+                for k in range(len(papid)):
+                    if cache_parents[k] is not None and cache_parents[k].data() == papid[k]:
+                        parent = cache_parents[k]
+                        continue
+                    else:
+                        parent = localizaHijo(parent,papid[k])
+                        cache_parents[k] = parent
+                item = QStandardItem()
+                item.setData(key)
+                item.setData(value,Qt.DisplayRole)
+                #print(parent.data(),'/',item.data(),'->',item.data(Qt.EditRole))
+                parent.appendRow(item)
+        elif isinstance(raiz,TreeDict):
+            for entryNum,row in enumerate(cursor):
+                for k in range(len(row)):
+                    if row[k] is None:
+                        row[k] = 'NULL'
+                    else:
+                        row[k] = row[k].replace(DELIMITER,'/')
+                if ndesc == 0:
+                    desc=' '.join(row)
+                else:
+                    desc=' '.join(row[-ndesc:])
+                key=DELIMITER.join(row[0:len(code)])   #con las fechas puede ser tremendo
+                parentId = getParentKey(key)
+                raiz.append(TreeItem(key,entryNum,desc),parentId)
+            
     def fillNewGuia(self,guidId):
         # para simplificar el codigo
         cubo = self.definition
@@ -612,6 +627,8 @@ class Cubo:
         
         arbol = QStandardItemModel()
         raiz = arbol.invisibleRootItem()
+        tree=TreeDict()
+        tree.name = guia['name']
         
         
         prodExpandida = self._expandDateProductions(guidId)
@@ -709,12 +726,17 @@ class Cubo:
                 cursor = self._getProdCursor(contexto[-1],basefilter,datefilter)
             
             self._createProdModel(raiz,cursor,contexto[-1],prodId)
-            
+            self._createProdModel(tree,cursor,contexto[-1],prodId)
+        print('Arbol')    
         for item in traverseTree(raiz):
             if not item.parent():
-                print('Raiz -->',item.data(),item.data(Qt.DisplayRole))
+                print('Raiz ->',item.data(),': ',item.data(Qt.DisplayRole))
             else:
-                print(item.parent().data(),item.data(),item.data(Qt.DisplayRole))
+                print(item.parent().data(),' ->',item.data(),': ',item.data(Qt.DisplayRole))
+        print('Ahora Treedict')
+        tree.display()
+        
+        return tree #arbol
 
 class Vista:
     #TODO falta documentar
@@ -1458,13 +1480,15 @@ def experimental():
             print (ind,key,elem.ord,elem.desc,elem.parentItem.key)
             ind += 1
     vista = None
-    micubo = 'rental'
+    #micubo = 'rental'
     #micubo = 'datos catalonia'
-    #micubo = 'datos light'
+    micubo = 'datos light'
     guia = 'ideologia'
     mis_cubos = load_cubo()
     cubo = Cubo(mis_cubos[micubo])
-    cubo.fillNewGuia(3)
+    cubo.fillNewGuia(5)
+    tree = cubo.fillGuia(5)
+    pprint(tree.content)
     #pprint(cubo.definition)
     #pprint(cubo.definition)
     #pprint(cubo.lista_funciones)
