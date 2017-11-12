@@ -153,7 +153,7 @@ def regHasher2D(record,**kwargs):
             pos_ini = dimension['init']
         else:
             pos_ini = 0
-        trecord = list(map(str,record[pos_ini:pos_ini+num_components]))
+        trecord = list(map(lambda x:str(x).replace(DELIMITER,'/'),record[pos_ini:pos_ini+num_components]))
         indice[k] = DELIMITER.join(trecord)
         #indice[k] = DELIMITER.join(record[pos_ini:pos_ini+num_components])
         

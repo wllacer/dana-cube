@@ -288,7 +288,6 @@ def _selConstructor(**kwargs):
             statement += modifier + ' '
             
     entrada=norm2List(kwargs[definicion])
-      
     ind = 0
     num_elem = len(entrada)
     for kelem in entrada:
@@ -316,9 +315,11 @@ def _fromConstructor(**kwargs):
     if definicion not in kwargs:
        return ''
     entrada=norm2List(kwargs[definicion])
+    num_elem = len(entrada)    
+    if num_elem == 0:
+        return ''
 
     ind = 0
-    num_elem = len(entrada)
     texto = []
     
     for ind,kelem in enumerate(entrada):
@@ -385,9 +386,11 @@ def _groupConstructor(**kwargs):
        return ''
     
     entrada=norm2List(kwargs[definicion])
-      
+    num_elem = len(entrada)    
+    if num_elem == 0:
+        return ''
+    
     ind = 0
-    num_elem = len(entrada)
     texto = []
     for elemento in entrada:
       # en el caso de las categorias se pasa el AS al group y eso no funciona y hay que quitarlo GENERADOR
@@ -419,9 +422,11 @@ def _orderConstructor(**kwargs):
        return ''
     
     entrada=norm2List(kwargs[definicion])
-      
-    ind = 0
     num_elem = len(entrada)
+    if num_elem == 0:
+        return ''
+    ind = 0
+
     texto = []
     for kelem in entrada:
       elemento,adfijo=slicer(kelem)
@@ -435,11 +440,12 @@ def searchConstructor(definicion,kwargs):
        return ''    
     
     entrada=norm2List(kwargs[definicion])
-      
+    num_elem = len(entrada)    
+    if num_elem == 0:
+        return ''
+  
     ind = 0
-    num_elem = len(entrada)
     #print(num_elem,entrada)
-    
     texto = []
     for ind,kelem in enumerate(entrada):
         ltype=None
@@ -469,10 +475,13 @@ def _joinConstructor(**kwargs):
     if kwargs[definicion] is None:
         return ''
     entrada=norm2List(kwargs[definicion])
+    num_elem = len(entrada)    
+    if num_elem == 0:
+        return ''
+
     #DEBUG print(kwargs[definicion],entrada)
     statement = ''
     ind = 0
-    num_elem = len(entrada)
     texto = []
     definicion = 'join_clause'
     for elemento in entrada:

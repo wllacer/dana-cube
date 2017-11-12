@@ -108,7 +108,7 @@ class Cubo:
         
         self.dbdriver = self.db.dialect.name #self.definition['connect']['driver']
         
-        self.__setGuias()
+        #self.__setGuias()
         
         self.lista_funciones = getAgrFunctions(self.db,self.lista_funciones)
         # no se usa en core. No se todavia en la parte GUI
@@ -165,72 +165,6 @@ class Cubo:
                     sqlClause.append((item['elem'],'BETWEEN',intervalo,'f'))
         return sqlClause
     
-    def __setGuidesSqlStatement(self, entrada, fields):
-        '''
-          entrada es definition[guides][i][prod][j]: Contiene array
-              -> source
-                  -> code
-                  -> desc
-                  -> table
-                  -> filter
-                  -> grouped by (no usada excepto en join en una misma tabla)
-              -> related_via (para joins)
-                  -> table
-                    "table": "geo_rel",
-                    "parent_elem":"padre",
-                    "child_elem":"hijo",
-                    "filter": "geo_rel.tipo_padre = 'P'"
-
-              -> fmt
-              -> elem
-            parametros implicitos  (para campos sin source, es decir base general
-              -> definition.table
-              -> definition.base_filter
-              -> entrada.elem
-          TODO fields son campos auxiliares a incluir en la query
-        '''
-        code_fld = 0
-        desc_fld = 0
-        
-        sqlDef=dict()
-
-        if 'domain' in entrada.keys():
-          sqlDef['tables'] = entrada['domain']['table']
-          
-          if 'filter' in entrada['domain']:
-              sqlDef['base_filter']=entrada['domain']['filter']
-              
-          sqlDef['fields'] = []
-          #REFINE grouped by determina la jerarquia explicitamente.
-          #     hay que hallar la manera de determinarla implicitamente
-          if 'grouped by' in entrada['domain']:
-              sqlDef['fields'] += norm2List(entrada['domain']['grouped by'])
-          if len(fields) > 0:
-              sqlDef['fields'] += fields[:]
-            
-          sqlDef['fields'] += norm2List(entrada['domain']['code'])
-          
-            
-          if 'desc' in entrada['domain']:
-              desc_tup = norm2List(entrada['domain']['desc'])
-              sqlDef['fields'] += desc_tup
-              desc_fld = len(desc_tup)
-        else:
-          sqlDef['tables'] = self.definition['table']
-          if len(self.definition.get('base filter','')) > 0:
-             sqlDef['base filter']=self.definition['base filter']
-          if self.definition.get('date filter'):
-             sqlDef['where'] = self.setDateFilter()
-          sqlDef['fields'] = norm2List(entrada['elem'])
-          
-        
-        code_fld = len(sqlDef['fields']) - desc_fld  
-        sqlDef['order'] = [ str(x + 1) for x in range(code_fld)]
-        
-        sqlDef['select_modifier']='DISTINCT'
-        sqlDef['driver'] = self.dbdriver
-        sqlString = queryConstructor(**sqlDef)
-        return sqlString, code_fld,desc_fld 
     
     def __setGuidesDateSqlStatement(self, entrada, fields=None):
         #REFINE creo que fields sobra
@@ -248,236 +182,12 @@ class Cubo:
         sqlDef['driver'] = self.dbdriver
         return queryConstructor(**sqlDef) 
 
-    def __setGuias(self):
-        '''
-           Crea la estructura lista_guias para cada una de las guias (dimensiones) que hemos definido en el cubo.
-           Proceden de las reglas de produccion (prod) de la definicion
-           Es una tupla con una entrada (diccionario) por cada guia con los siguientes elementos:
-           *  name   nombre con el que aparece en la interfaz de usuario (de la definicion)
-           *   class    '' normal, 'd' fecha (Opcional)
-           *  elem   lista con los campos de la TABLA PRINCIPAL que cubren esa guia (de la definicion en la prod
-           *  rules  lista con cada una de las reglas de produccion de los niveles. Contiene
-                *   name
-                *   string   cadena sql para crear el dominio de la guia (de prod )
-                *   case_string para categorias
-                *   ncode    numero de campos que forman la clave de la iteracion
-                *   ndesc    numero de campso de la descripción
-                *   elem     lista con los campos de la TABLA PRINCIPAL que cubren ese nivel
-                *   date_fmt      (solo fechas) estructura de fecha que deseo
-                *   enum     (solo categorias) estructura de enumeracion
-                *   fmt      (opcional). Formato especial para los valores del campo 
-                *   enum_fmt (opcional)  en categorias formato de los elementos a enumerar si no son el defecto
-                *   base_date (solo fechas) campo original de fechas
- 
-
-           * dir_row el array indice (para realizar busquedas)
-
-           
-           Estos tres últimos elemnentos se cargan en self.fillGuias; separado para poder refrescarlo en cualquier
-           momento
-           
-           El comportamiento para guias de formato fecha es totalmente distinto del resto. TODO documentar proceso
-           
-           FIXME Funciona perfectamente con el ejemplo que uso, necesito explorar otras posibilidades de definicion
-           
-        '''
-        #TODO indices con campos elementales no son problema, pero no se si funciona con definiciones raras
-
-        
-        self.lista_guias = []
-        ind = 0
-        #para un posible backtrace
-        nombres = [ entrada['name'] for entrada in self.definition['guides'] ]
-        
-        for entrada in self.definition['guides']:
-            guia = {'name':entrada['name'],'class':entrada['class'],'rules':[],'elem':[]}
-            self.lista_guias.append(guia)
-            #FIXME produccion = entrada['prod']   GENERADOR  
-            produccion = entrada.get('prod',dict())
-            for componente in produccion:
-                if 'name' in componente:
-                    nombre = componente['name']
-                else:
-                    nombre = guia['name']
-                if 'class' in componente:
-                    clase = componente['class']
-                else:
-                    clase = guia['class']
-                ##TODO hay que normalizar lo de los elementos
-                if clase != 'd':  #las fechas generan dinamicamente guias jerarquicas
-                    guia['elem'] +=norm2List(componente['elem'])
-                if clase == 'd':
-                    base_date = norm2List(componente['elem'])[-1]
-                    #toda esta parafernalia es para mantener la compatibilidad con versiones antiguas de los cubos
-                    if 'mask' not in componente:
-                        if 'type' in componente:
-                            componente['mask'] = componente['type']
-                        elif 'type' in entrada:
-                            componente['mask'] = entrada['type']
-                        else:
-                            componente['mask'] = 'Ym'  #(agrupado en año mes dia por defecto'
-                    #    base_date = norm2List(componente['elem'])[-1]
-                    #
-                    for k in range(len(componente['mask'])):
-                        kmask = componente['mask'][0:k+1]                   
-                        datosfecha= getDateEntry(componente['elem'],kmask,self.dbdriver)
-                        guia['elem'] += [datosfecha['elem'],]
-                        guia['rules'].append({'string':'',
-                                    'ncode':len(guia['elem']),
-                                    'ndesc':0,
-                                    'elem':[datosfecha['elem'],],
-                                    'name': nombre +'_'+ kmask,
-                                    'date_fmt': datosfecha['mask'],
-                                    'class':clase,
-                                    'base_date':base_date
-                                    })
-
-                elif clase == 'c':
-                    #TODO falta por documentar lo especifico de las categorias
-                    #FIXME la generacion del CASE requiere unos parametros que se calculan luego.
-                    #      eso entorpece el codigo
-                    elem=norm2List(componente['elem'])
-                    # en lugar de una defincion compleja tengo algo suave
-                    if 'case_sql' in componente:
-                        k1 =' '.join(componente['case_sql']).replace('$$1',elem[-1]).replace('$$2',nombre)
-                        elem[-1]= k1
-                    else:
-                        elem[-1] = [caseConstructor(nombre,componente),]
-                          
-                    if 'domain' in componente:  #TODO no usada. No parece tener sentido
-                        (sqlString,code_fld,desc_fld) = self.__setGuidesSqlStatement(componente,[])
-                        enum = None
-                    elif 'categories' not in componente:
-                        aux_entrada = { 'elem':elem }
-                        (sqlString,code_fld,desc_fld) = self.__setGuidesSqlStatement(aux_entrada,[])
-                        enum = None
-                    else:
-                        sqlString= ''
-                        code_fld = len(guia['elem'])
-                        desc_fld = 0
-                        enum=componente['categories']
-
-                    guia['rules'].append({'string':sqlString,
-                                'ncode':code_fld,
-                                'ndesc':desc_fld,
-                                'elem': elem,
-                                #'elem':caseConstructor(guia['rules'][-1])
-                                'name':nombre,
-                                'class':clase,
-                                'enum':enum
-                                })
-
-                    if 'enum_fmt' in componente:
-                        guia['rules'][-1]['enum_fmt']=componente['enum_fmt']
-                    if 'categories' not in componente:
-                       aux_entrada = { 'elem':guia['rules'][-1]['elem'][-1]}
-                       (sqlString,code_fld,desc_fld) = self.__setGuidesSqlStatement(aux_entrada,[])
-                       print(queryFormat(sqlString))
-                    else:
-                       guia['rules'][-1]['enum']=componente['categories'] 
-                else:
-                    (sqlString,code_fld,desc_fld) = self.__setGuidesSqlStatement(componente,[])
-
-                    guia['rules'].append({'string':sqlString,
-                                                    'ncode':code_fld,
-                                                    'ndesc':desc_fld,
-                                                    'elem':guia['elem'][:],
-                                                    'name':nombre,
-                                                    'class':clase})
-                if 'link via' in componente:
-                    guia['rules'][-1]['join']=componente['link via']
-                if 'fmt' in componente:
-                    guia['rules'][-1]['fmt']=componente['fmt']
-                
-    def fillGuias(self):
-        for k,entrada in enumerate(self.lista_guias):
-            entrada['dir_row']=self.fillGuia(k)
-            
-    def fillGuia(self,guiaId):
-        # TODO documentar y probablemente separar en funciones
-        # TODO ahora debo de poder integrar fechas y categorias dentro de una jerarquia
-        #      probablemente el cursor += no es lo que se necesita en estos casos
-        date_cache = {}
-        #print(time.time(),'A procesar ',len(self.lista_guias))
-
-        entrada = self.lista_guias[guiaId]
-        cursor = []
-        idx = 0 #para evitar los casos en que rules esta vacio GENERADOR
-        for idx,componente in enumerate(entrada['rules']):
-            sqlString=''
-            lista_compra={'nkeys':componente['ncode'],'ndesc':componente['ndesc']}
-            if componente['ncode'] < len(entrada['elem']):
-                lista_compra['nholder']=len(entrada['elem'])-componente['ncode']
-                if  componente['ndesc'] == 0:
-                    lista_compra['ndesc']= componente['ncode']
-                elif componente['ndesc'] != 1:
-                    lista_compra['pholder'] = - componente['ndesc']
-                
-                    
-            if componente['class'] == 'd':
-                #TODO demasiadas vueltas                
-                #REFINE asumo que solo existe un elemento origen en los campos fecha
-                #campo = componente['elem'][-1]
-                campo= componente['base_date']
-                # obtengo la fecha mayor y menor
-                if campo in date_cache:
-                    pass
-                else:
-                    #TODO solo se requiere consulta a la base de datos si el formato incluye 'Y'
-                    sqlString = self.__setGuidesDateSqlStatement(componente)
-                    row=getCursor(self.db,sqlString)
-                    print(row)
-                    if not row[0][0]:
-                        # un bypass para que no se note 
-                        date_cache[campo] = [datetime.date.today(),datetime.date.today()]
-                    else:
-                        date_cache[campo] = [row[0][0], row[0][1]] 
-                    
-                cursor += getDateIndex(date_cache[campo][0]  #max_date
-                                                , date_cache[campo][1]  #min_date
-                                                , componente['date_fmt'],
-                                                **lista_compra)
-                
-            elif componente['class'] == 'c':
-                if componente['string'] != '':
-                    sqlString=componente['string']
-                    cursor += getCursor(self.db,sqlString,regHashFill,**lista_compra)
-                else:
-                    nombres = [ [item['result'] if 'result' in item else item['default'],] for item in componente['enum']]
-                    for elem in nombres:
-                        regHashFill(elem,**lista_compra)
-                    cursor += sorted(nombres)
-
-            else:  
-                sqlString=componente['string']
-                cursor += getCursor(self.db,sqlString,regHashFill,**lista_compra)
-            if DEBUG:
-                print(time.time(),guiaId,idx,queryFormat(sqlString))
-        cursor = sorted(cursor)
-        tree=TreeDict()
-        tree.name = entrada['name']
-        for entryNum,elem in enumerate(cursor):
-            if componente['ndesc'] == 0:
-                desc=[elem[0],] 
-            else:
-                desc=elem[-componente['ndesc']:] 
-            key=elem[0]
-            parentId = getParentKey(key)
-            tree.append(TreeItem(key,entryNum,desc),parentId)
-            
-        if DEBUG:              
-            print(time.time(),guiaId,idx,'creada')
-        #entrada['dir_row']=tree
-        return tree
-            
-                #print(time.strftime("%H:%M:%S"),dir_row[0])
-                #print(time.strftime("%H:%M:%S"),dir_row[0])
     """
        aqui las nuevas rutinas
     """
-    def fillNewGuias(self):
+    def fillGuias(self):
         for k,entrada in enumerate(self.lista_guias):
-            entrada['dir_row'],entrada['contexto']=self.fillNewGuia(k)
+            entrada['dir_row'],entrada['contexto']=self.fillGuia(k)
     
     def _setTableName(self,guia,idx):
         """
@@ -638,7 +348,7 @@ class Cubo:
                 parentId = getParentKey(key)
                 raiz.append(TreeItem(key,entryNum,value),parentId)
             
-    def fillNewGuia(self,guidId):
+    def fillGuia(self,guidId):
         # para simplificar el codigo
         cubo = self.definition
         guia = self.definition['guides'][guidId]
@@ -800,7 +510,7 @@ class Cubo:
 class Vista:
     #TODO falta documentar
     #TODO falta implementar la five points metric
-    def __init__(self, cubo,prow, pcol,  agregado, campo, filtro='',totalizado=True, stats=True,nuevo=False):
+    def __init__(self, cubo,prow, pcol,  agregado, campo, filtro='',totalizado=True, stats=True):
         self.cubo = cubo
         # acepto tanto nombre como nuero de columna y fila.
         # NO Controlo el error en este caso. Es lo suficientemente serio para abendar
@@ -832,11 +542,9 @@ class Vista:
         #self.hierarchy= False
         self.array = []
         
-        if nuevo:
-            self.setNewView(row, col)
-        else:
-            self.setNewView(row, col,nuevo=True)
-    def setNewView(self,prow, pcol, agregado=None, campo=None, filtro='',totalizado=True, stats=True, force=False,nuevo=False):
+        self.setNewView(row, col)
+
+    def setNewView(self,prow, pcol, agregado=None, campo=None, filtro='',totalizado=True, stats=True, force=False):
         # acepto tanto nombre como nuero de columna y fila.
         # NO Controlo el error en este caso. Es lo suficientemente serio para abendar
         if isinstance(prow,int):
@@ -903,10 +611,7 @@ class Vista:
             self.row_hdr_idx = self.cubo.fillGuia(row) #self.cubo.lista_guias[row]['dir_row']
             self.col_hdr_idx = self.cubo.fillGuia(col) #self.cubo.lista_guias[col]['dir_row']
         
-            if nuevo:
-                self.__setDataMatrixNew()
-            else:
-                self.__setDataMatrix()
+            self.__setDataMatrix()
             
 
     def  __setDateFilter(self):
@@ -922,101 +627,24 @@ class Vista:
         #sqlDef['select_modifier']=None
         sqlDef['base_filter']=mergeString(self.filtro,self.cubo.definition.get('base filter',''),'AND')
         sqlDef['where'] = []
-        
         sqlDef['where'] += self.__setDateFilter()
         
-        #sqlDef['having']=None
-        #sqlDef['order']=None
+        # si no copio tengo sorpresas
+        contexto_row = self.cubo.lista_guias[self.row_id]['contexto'][:]
+        contexto_col = self.cubo.lista_guias[self.col_id]['contexto'][:]
+        if self.totalizado:
+            contexto_row.insert(0,{'elems':[],'linkvia':[]})
+            contexto_col.insert(0,{'elems':[],'linkvia':[]})
+        maxRowElem = len(contexto_row[-1]['elems'])
+        maxColElem = len(contexto_col[-1]['elems'])
+        pprint(contexto_row)
+        pprint(contexto_col)
         
-        for i in range(0,self.dim_row):
-            # el group by en las categorias ya no necesita
-            group_row = self.cubo.lista_guias[self.row_id]['rules'][i]['elem']
-
-            for j in range(0,self.dim_col):
-
-                sqlDef['fields']= self.cubo.lista_guias[self.row_id]['rules'][i]['elem'] + \
-                                  self.cubo.lista_guias[self.col_id]['rules'][j]['elem'] + \
-                                  [(self.campo,self.agregado)]
-
-                sqlDef['join']=[]
-                #TODO claro candidato a ser incluido en una funcion
-                if 'join' in self.cubo.lista_guias[self.row_id]['rules'][i]:
-                    row_join = self.cubo.lista_guias[self.row_id]['rules'][i]['join']
-                    for entry in row_join:
-                        join_entry = dict()
-                        join_entry['table'] = entry.get('table')
-                        join_entry['join_filter'] = entry.get('filter')
-                        join_entry['join_clause'] = []
-                        for clausula in entry['clause']:
-                            entrada = (clausula.get('rel_elem'),'=',clausula.get('base_elem'))
-                            join_entry['join_clause'].append(entrada)
-                        sqlDef['join'].append(join_entry)
-                    print(sqlDef['join'])
-                if 'join' in self.cubo.lista_guias[self.col_id]['rules'][j]:
-                   col_join = self.cubo.lista_guias[self.col_id]['rules'][j]['join']
-                   for entry in col_join:
-                       join_entry = dict()
-                       join_entry['table'] = entry.get('table')
-                       join_entry['join_filter'] = entry.get('filter')
-                       join_entry['join_clause'] = []
-                       for clausula in entry['clause']:
-                           entrada = (clausula.get('rel_elem'),'=',clausula.get('base_elem'))
-                           join_entry['join_clause'].append(entrada)
-                       sqlDef['join'].append(join_entry)
-
-                group_col = self.cubo.lista_guias[self.col_id]['rules'][j]['elem']
-
-                sqlDef['group']= group_row + group_col
-                sqlDef['driver'] = self.cubo.dbdriver
-                sqlstring=queryConstructor(**sqlDef)
-                
-                #
-                lista_compra={'row':{'nkeys':len(self.cubo.lista_guias[self.row_id]['rules'][i]['elem']),},
-                              'rdir':self.row_hdr_idx,
-                              'col':{'nkeys':len(self.cubo.lista_guias[self.col_id]['rules'][j]['elem']),
-                                     'init':-1-len(self.cubo.lista_guias[self.col_id]['rules'][j]['elem']),},
-                              'cdir':self.col_hdr_idx
-                              }
-                
-                #cursor_data=getCursor(self.cubo.db,sqlstring,regHasher2D,**lista_compra)
-                self.array +=getCursor(self.cubo.db,sqlstring,regTree,**lista_compra)
-                if DEBUG:
-                    print(time.time(),'Datos ',queryFormat(sqlstring))
-                #self.dataDict = dict()
-                #for item in self.array:
-                    ##if item[0] not in self.dataDict:
-                        ##self.dataDict[item[0]] = dict()
-                    #try:
-                        #self.dataDict[item[0]][item[1]]=item[2]
-                    #except KeyError:
-                        #self.dataDict[item[0]] = dict()
-                        #self.dataDict[item[0]][item[1]]=item[2]
-            if self.totalizado:
-                self.row_hdr_idx.rebaseTree()
-                tabla = self.__grandTotal()
-                for item in tabla:
-                    item.insert(0,self.row_hdr_idx['//'])
-                self.array += tabla
-
-    def  __setDataMatrixNew(self):
-         #TODO clarificar el codigo
-         #REFINE solo esperamos un campo de datos. Hay que generalizarlo
-        #self.array = [ [None for k in range(len(self.col_hdr_idx))] for j in range(len(self.row_hdr_idx))]
-        self.array = []
-        sqlDef = dict()
-        sqlDef['tables']=self.cubo.definition['table']
-        #sqlDef['select_modifier']=None
-        sqlDef['base_filter']=mergeString(self.filtro,self.cubo.definition.get('base filter',''),'AND')
-        sqlDef['where'] = []
-        
-        sqlDef['where'] += self.__setDateFilter()
-        
-        contexto_row = self.cubo.lista_guias[self.row_id]['contexto']
-        contexto_col = self.cubo.lista_guias[self.col_id]['contexto']
-        
-        for row in contexto_row:
-            for col in contexto_col:
+        for x,row in enumerate(contexto_row):
+            for y,col in enumerate(contexto_col):
                 sqlDef['group'] = row['elems'] + col['elems']
+                numRowElems = len(row['elems'])
+                numColElems = len(col['elems'])
                 sqlDef['fields'] = sqlDef['group']  + [(self.campo,self.agregado)]
                 joins = row['linkvia'] + col['linkvia']
                 sqlDef['join'] = []
@@ -1036,59 +664,17 @@ class Vista:
                 sqlDef['order'] = [ str(x + 1) for x in range(len(sqlDef['group']))]
                 sqlDef['driver'] = self.cubo.dbdriver
                 sqlstring=queryConstructor(**sqlDef)
-                print(queryFormat(sqlstring))
-                cursor = getCursor(self.cubo.db,sqlstring) 
-                if len(cursor) == 0:
-                    print('NO encuentra nada o error')
-                else:
-                    pprint(cursor[0])
-                
-    def __grandTotal(self):
-        array = []
-        for j in range(0,self.dim_col):
-            sqlDef=dict()
-            sqlDef['tables']=self.cubo.definition['table']
-            #sqlDef['select_modifier']=None
-            sqlDef['fields']= self.cubo.lista_guias[self.col_id]['rules'][j]['elem'] + \
-                                [(self.campo,self.agregado)]
-            sqlDef['base_filter']=mergeString(self.filtro,self.cubo.definition.get('base filter',''),'AND')
+                lista_compra={'row':{'nkeys':len(row['elems']),},
+                              'rdir':self.row_hdr_idx,
+                              'col':{'nkeys':len(col['elems']),
+                                     'init':-1-len(row['elems']),},
+                              'cdir':self.col_hdr_idx
+                              }
+                self.array +=getCursor(self.cubo.db,sqlstring,regTree,**lista_compra)
+                if DEBUG:
+                    print(time.time(),'Datos ',queryFormat(sqlstring))
 
-            sqlDef['where'] = []
-
-            sqlDef['where'] += self.__setDateFilter()
-        
-            sqlDef['join']=[]
-            #TODO claro candidato a ser incluido en una funcion
-            if 'join' in self.cubo.lista_guias[self.col_id]['rules'][j]:
-                col_join = self.cubo.lista_guias[self.col_id]['rules'][j]['join']
-                for entry in col_join:
-                    join_entry = dict()
-                    join_entry['table'] = entry.get('table')
-                    join_entry['join_filter'] = entry.get('filter')
-                    join_entry['join_clause'] = []
-                    for clausula in entry['clause']:
-                        entrada = (clausula.get('rel_elem'),'=',clausula.get('base_elem'))
-                        join_entry['join_clause'].append(entrada)
-                    sqlDef['join'].append(join_entry)
-            # esta desviacion es por las categorias
-            group_col = self.cubo.lista_guias[self.col_id]['rules'][j]['elem']
-            sqlDef['group']= group_col
-            #sqlDef['having']=None
-            sqlDef['order'] = [ str(x + 1) for x in range(len(sqlDef['fields']) -1)]
-            sqlDef['driver'] = self.cubo.dbdriver
-            sqlstring=queryConstructor(**sqlDef)
-            
-            #
-            lista_compra={'nkeys':len(self.cubo.lista_guias[self.col_id]['rules'][j]['elem']),
-                          'init':-1-len(self.cubo.lista_guias[self.col_id]['rules'][j]['elem']),
-                          'dir':self.col_hdr_idx
-                         }
-            
-            #cursor_data=getCursor(self.cubo.db,sqlstring,regHasher2D,**lista_compra)
-            array +=getCursor(self.cubo.db,sqlstring,regTree1D,**lista_compra)
-            if DEBUG:
-                print(time.time(),'Datos ',queryFormat(sqlstring))
-        return array
+        pprint(self.array)
         
     def toTable(self):
         """
@@ -1590,25 +1176,24 @@ def experimental():
             ind += 1
     vista = None
     micubo = 'rental'
-    #micubo = 'datos catalonia'
+    micubo = 'datos catalonia'
     #micubo = 'datos light'
     guia = 'ideologia'
     mis_cubos = load_cubo()
-    #cubo = Cubo(mis_cubos[micubo])
-    #cubo.nombre = micubo
-    #cubo.fillNewGuias()
-    ##vista = Vista(cubo,0,0,'sum',cubo.lista_campos[0])
+    cubo = Cubo(mis_cubos[micubo])
+    cubo.nombre = micubo
+    vista = Vista(cubo,0,0,'sum',cubo.lista_campos[0])
     #for k,guia in enumerate(cubo.lista_guias):
         #vista = Vista(cubo,k,0,'sum',cubo.lista_campos[0])
 
-    for micubo in mis_cubos:
-        if micubo == 'default':
-            continue
-        cubo = Cubo(mis_cubos[micubo])
-        cubo.nombre = micubo
-        cubo.fillNewGuias()
-        for k,guia in enumerate(cubo.lista_guias):
-            vista = Vista(cubo,k,0,'sum',cubo.lista_campos[0])
+    #for micubo in mis_cubos:
+        #if micubo == 'default':
+            #continue
+        #cubo = Cubo(mis_cubos[micubo])
+        #cubo.nombre = micubo
+        #cubo.fillNewGuias()
+        #for k,guia in enumerate(cubo.lista_guias):
+            #vista = Vista(cubo,k,0,'sum',cubo.lista_campos[0])
             
         #cubo.nombre = micubo
         #cubo.fillNewGuias()
