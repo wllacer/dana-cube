@@ -114,7 +114,6 @@ def getDateIndexNew(max_date,  min_date, fmt, **opciones):
                         entry.append(entry[-1]+DELIMITER+ rango)  #k empieza en 0
                         next.append(entry)
         
-    pprint(next)   
     return next
 def getDateIndex(max_date,  min_date, fmt, **opciones):     
     ''' 

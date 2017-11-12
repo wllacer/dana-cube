@@ -477,7 +477,7 @@ class Cubo:
     """
     def fillNewGuias(self):
         for k,entrada in enumerate(self.lista_guias):
-            entrada['dir_row']=self.fillNewGuia(k)
+            entrada['dir_row'],entrada['contexto']=self.fillNewGuia(k)
     
     def _setTableName(self,guia,idx):
         """
@@ -532,12 +532,12 @@ class Cubo:
         table = contexto['table']
         columns = contexto['columns']
         code = contexto['code']
-        filter = contexto['filter']
+        #filter = contexto.get('filter','')
         sqlDef = {}
         sqlDef['tables'] = table
         sqlDef['fields'] = columns
         if basefilter is not None:
-            sqlDef['base_filter'] = filter
+            sqlDef['base_filter'] = basefilter
         if datefilter is not None:
             sqlDef['where'] = datefilter
         sqlDef['order'] = [ str(x + 1) for x in range(len(code))]
@@ -545,13 +545,15 @@ class Cubo:
         sqlDef['driver'] = self.dbdriver
         try:
             sqlString = queryConstructor(**sqlDef)
-            print(sqlString)
         except:
             print('Zasss')
+            pprint(sqlDef)
+            pprint(table)
             pprint(columns)
             pprint(filter)
-            pprint(sqlDef)
-        print(sqlString)
+            pprint
+            raise
+        print(queryFormat(sqlString))
         cursor=getCursor(self.db,sqlString)
         return cursor
 
@@ -560,6 +562,7 @@ class Cubo:
         code = contexto['code']
         desc = contexto['desc']
         groupby = contexto['groupby']
+        
         def localizaHijo(treeItem,valor):
             for k in range(treeItem.rowCount()):
                 if treeItem.child(k).data() == valor:
@@ -567,28 +570,49 @@ class Cubo:
             return treeItem
 
         ngroupby = len(groupby)
-        cache_parents = [ None for i in range(ngroupby)]
-        ncode = len(code) -ngroupby
-        ndesc = len(desc)
         ncols = len(columns)
-        if isinstance(raiz,QStandardItem):
-            for row in cursor:
-                for k in range(len(row)):
-                    if row[k] is None:
-                        row[k] = 'NULL'
-                if prodId == 0:
-                    papid = []
-                    resto = row
+        ndesc = len(columns) - len(code)
+        cache_parents = [ None for i in range(len(code))]
+        ncode = len(code) -ngroupby
+        #ndesc = len(columns) - len(code)
+
+        for entryNum,row in enumerate(cursor):
+            # renormalizamos el contenido del cursor
+            for k in range(len(row)):
+                if row[k] is None:
+                    row[k] = ''
                 else:
-                    papid = row[0:ngroupby]
-                    resto = row[ngroupby:]
-                key = ' '.join(resto[0:ncode])  #OJO fechas
-                if ncode < len(resto):
-                    value = ' '.join(resto[ncode:])
-                else:
-                    value = key
-                #print(row,ngroupby,ncode,ndesc,key,value)    
+                    row[k] = str(row[k]).replace(DELIMITER,'/')  #OJO todas las claves son Alfanumericas
+            if ndesc == 0:
+                value = ', '.join(row[-ncode:])
+            else:
+                value = ', '.join(row[-ndesc:])
+            """
+            lo comentado a contiuacion es con entradas individuales.
+            Deberia mejorarse para entradas multiples
+            LO sustituyo por el equivalente al caso TreeDict. cada campo genera un nivel de agrupacion
+            """
+            #if prodId == 0:
+                #papid = []
+                #resto = row
+            #else:
+                #papid = row[0:ngroupby]
+                #resto = row[ngroupby:]
+            #key = ' '.join(resto[0:ncode])  #OJO fechas
+            #if ncode < len(resto):
+                #value = ' '.join(resto[ncode:])
+            #else:
+                #value = key
+            """
+            fin del caso original
+            """
+            #print(row,ngroupby,ncode,ndesc,key,value)    
+            if isinstance(raiz,QStandardItem):
+                papid = row[0:len(code)]
                 parent = raiz
+                key = papid[-1]
+                del papid[-1]
+                #parent = raiz
                 #TODO  sigo sn contemplar que la clave no exista. y asum que las claves son monovalor
                 for k in range(len(papid)):
                     if cache_parents[k] is not None and cache_parents[k].data() == papid[k]:
@@ -602,20 +626,17 @@ class Cubo:
                 item.setData(value,Qt.DisplayRole)
                 #print(parent.data(),'/',item.data(),'->',item.data(Qt.EditRole))
                 parent.appendRow(item)
-        elif isinstance(raiz,TreeDict):
-            for entryNum,row in enumerate(cursor):
+            elif isinstance(raiz,TreeDict):
                 for k in range(len(row)):
                     if row[k] is None:
                         row[k] = 'NULL'
-                    else:
-                        row[k] = row[k].replace(DELIMITER,'/')
                 if ndesc == 0:
-                    desc=' '.join(row)
+                    value=', '.join(row)
                 else:
-                    desc=' '.join(row[-ndesc:])
-                key=DELIMITER.join(row[0:len(code)])   #con las fechas puede ser tremendo
+                    value=', '.join(row[-ndesc:])
+                key=DELIMITER.join(row[0:len(code)])   #asi creo una jerarquia automatica en claves multiples
                 parentId = getParentKey(key)
-                raiz.append(TreeItem(key,entryNum,desc),parentId)
+                raiz.append(TreeItem(key,entryNum,value),parentId)
             
     def fillNewGuia(self,guidId):
         # para simplificar el codigo
@@ -640,24 +661,33 @@ class Cubo:
                 clase = 'o'
             nombre = produccion.get('name',guia.get('name')+'_'+str(prodId).replace(' ','_').strip())
             table,basefilter,datefilter  = self._setTableName(guia,origId)
+            cumgroup = []
             groupby= []
             code = []
             desc = []
             columns = []
-            filter = None
+            #filter = None
             isSQL = True
             cursor = None
+            elems = []
+            linkvia = []
             
-            print(guia['name'],nombre)
+            print(self.nombre,guia['name'],nombre)
             if clase == 'o':
                 if 'domain' in produccion:
                     groupby = norm2List(produccion['domain'].get('grouped by'))
                     code = groupby + norm2List(produccion['domain'].get('code')) 
                     desc = norm2List(produccion['domain'].get('desc'))
                     columns = code + desc
-                    filter = produccion['domain'].get('filter','')
+                    #filter = produccion['domain'].get('filter','')
                 else:
                     columns = code = desc = norm2List(produccion.get('elem'))
+                   
+                if prodId == 0:    
+                    elems = norm2List(produccion.get('elem'))
+                else:
+                    elems = contexto[prodId -1]['elems'] + norm2List(produccion.get('elem'))
+                
             elif clase == 'c' and 'categories' in produccion:
                 isSQL = False
                 # esto no es necesario en esta fase
@@ -669,6 +699,11 @@ class Cubo:
                     else:
                         cursor.append([entrada.get('default'),])
                 
+                if prodId == 0:    
+                    elems = code
+                else:
+                    elems = contexto[prodId -1]['elems'] + code
+
             elif clase == 'c' and 'case_sql' in produccion:
                 campos = norm2List(produccion.get('elem')) + [nombre, ]
                 transformado = []
@@ -677,6 +712,12 @@ class Cubo:
                         linea = linea.replace('$${}'.format(str(k +1)),campo)
                     transformado.append(linea)
                 code = desc = columns = [' '.join(transformado),]
+
+                if prodId == 0:    
+                    elems = code
+                else:
+                    elems = contexto[prodId -1]['elems'] + code
+
             elif clase == 'd':
                 isSQL = False
                 code = desc = columns = norm2List(produccion.get('elem'))
@@ -690,12 +731,16 @@ class Cubo:
                     sqlDefDate=dict()
                     sqlDefDate['tables'] = table
                     if basefilter is not None:
-                        sqlDefDate['base_filter'] = filter
+                        sqlDefDate['base_filter'] = basefilter
                     if datefilter is not None:
                         sqlDefDate['where'] = datefilter
                     sqlDefDate['fields'] = [[campo,'max'],[campo,'min'],]
                     sqlDefDate['driver'] = self.dbdriver
-                    sqlStringDate = queryConstructor(**sqlDefDate) 
+                    try:
+                        sqlStringDate = queryConstructor(**sqlDefDate) 
+                    except:
+                        pprint(sqlDefDate)
+                        raise()
                     row=getCursor(self.db,sqlStringDate)
                     if not row[0][0]:
                         # un bypass para que no se note 
@@ -710,6 +755,10 @@ class Cubo:
                                             , date_cache[campo][1]  #min_date
                                             , kmask)
 
+                if prodId == 0:    
+                    elems = norm2List(produccion.get('elem'))
+                else:
+                    elems = contexto[prodId -1]['elems'] + norm2List(produccion.get('elem'))
 
 
 
@@ -721,27 +770,37 @@ class Cubo:
                         columns = code + desc
                     else:
                         code = desc = columns = groupby + code
-            contexto.append({'table':table,'code':code,'desc':desc,'groupby':groupby,'columns':columns,'filter':filter})
+            if prodId != 0:
+                cumgroup.append(code)
+           
+            if prodId == 0:
+                linkvia = produccion.get('link via',[]) 
+            else:
+                linkvia = contexto[prodId -1]['linkvia'] + produccion.get('link via',[])
+            
+            contexto.append({'table':table,'code':code,'desc':desc,'groupby':groupby,'columns':columns,
+                             #'acumgrp':cumgroup,'filter':basefilter,
+                             'elems':elems,'linkvia':linkvia})
             if isSQL:
                 cursor = self._getProdCursor(contexto[-1],basefilter,datefilter)
             
             self._createProdModel(raiz,cursor,contexto[-1],prodId)
             self._createProdModel(tree,cursor,contexto[-1],prodId)
-        print('Arbol')    
-        for item in traverseTree(raiz):
-            if not item.parent():
-                print('Raiz ->',item.data(),': ',item.data(Qt.DisplayRole))
-            else:
-                print(item.parent().data(),' ->',item.data(),': ',item.data(Qt.DisplayRole))
-        print('Ahora Treedict')
-        tree.display()
+        #print('Arbol')    
+        #for item in traverseTree(raiz):
+            #if not item.parent():
+                #print('Raiz ->',item.data(),': ',item.data(Qt.DisplayRole))
+            #else:
+                #print(item.parent().data(),' ->',item.data(),': ',item.data(Qt.DisplayRole))
+        #print('Ahora Treedict')
+        #tree.display()
         
-        return tree #arbol
+        return tree,contexto
 
 class Vista:
     #TODO falta documentar
     #TODO falta implementar la five points metric
-    def __init__(self, cubo,prow, pcol,  agregado, campo, filtro='',totalizado=True, stats=True):
+    def __init__(self, cubo,prow, pcol,  agregado, campo, filtro='',totalizado=True, stats=True,nuevo=False):
         self.cubo = cubo
         # acepto tanto nombre como nuero de columna y fila.
         # NO Controlo el error en este caso. Es lo suficientemente serio para abendar
@@ -773,9 +832,11 @@ class Vista:
         #self.hierarchy= False
         self.array = []
         
-        self.setNewView(row, col)
-        
-    def setNewView(self,prow, pcol, agregado=None, campo=None, filtro='',totalizado=True, stats=True, force=False):
+        if nuevo:
+            self.setNewView(row, col)
+        else:
+            self.setNewView(row, col,nuevo=True)
+    def setNewView(self,prow, pcol, agregado=None, campo=None, filtro='',totalizado=True, stats=True, force=False,nuevo=False):
         # acepto tanto nombre como nuero de columna y fila.
         # NO Controlo el error en este caso. Es lo suficientemente serio para abendar
         if isinstance(prow,int):
@@ -842,7 +903,10 @@ class Vista:
             self.row_hdr_idx = self.cubo.fillGuia(row) #self.cubo.lista_guias[row]['dir_row']
             self.col_hdr_idx = self.cubo.fillGuia(col) #self.cubo.lista_guias[col]['dir_row']
         
-            self.__setDataMatrix()
+            if nuevo:
+                self.__setDataMatrixNew()
+            else:
+                self.__setDataMatrix()
             
 
     def  __setDateFilter(self):
@@ -933,6 +997,51 @@ class Vista:
                 for item in tabla:
                     item.insert(0,self.row_hdr_idx['//'])
                 self.array += tabla
+
+    def  __setDataMatrixNew(self):
+         #TODO clarificar el codigo
+         #REFINE solo esperamos un campo de datos. Hay que generalizarlo
+        #self.array = [ [None for k in range(len(self.col_hdr_idx))] for j in range(len(self.row_hdr_idx))]
+        self.array = []
+        sqlDef = dict()
+        sqlDef['tables']=self.cubo.definition['table']
+        #sqlDef['select_modifier']=None
+        sqlDef['base_filter']=mergeString(self.filtro,self.cubo.definition.get('base filter',''),'AND')
+        sqlDef['where'] = []
+        
+        sqlDef['where'] += self.__setDateFilter()
+        
+        contexto_row = self.cubo.lista_guias[self.row_id]['contexto']
+        contexto_col = self.cubo.lista_guias[self.col_id]['contexto']
+        
+        for row in contexto_row:
+            for col in contexto_col:
+                sqlDef['group'] = row['elems'] + col['elems']
+                sqlDef['fields'] = sqlDef['group']  + [(self.campo,self.agregado)]
+                joins = row['linkvia'] + col['linkvia']
+                sqlDef['join'] = []
+                for entrada in joins:
+                    if len(entrada) == 0:
+                        continue
+                    join_entrada = dict()
+                    join_entrada['join_modifier']='LEFT'
+                    join_entrada['table'] = entrada.get('table')
+                    join_entrada['join_filter'] = entrada.get('filter')
+                    join_entrada['join_clause'] = []
+                    for clausula in entrada['clause']:
+                        entrada = (clausula.get('rel_elem'),'=',clausula.get('base_elem'))
+                        join_entrada['join_clause'].append(entrada)
+                    sqlDef['join'].append(join_entrada)
+                
+                sqlDef['order'] = [ str(x + 1) for x in range(len(sqlDef['group']))]
+                sqlDef['driver'] = self.cubo.dbdriver
+                sqlstring=queryConstructor(**sqlDef)
+                print(queryFormat(sqlstring))
+                cursor = getCursor(self.cubo.db,sqlstring) 
+                if len(cursor) == 0:
+                    print('NO encuentra nada o error')
+                else:
+                    pprint(cursor[0])
                 
     def __grandTotal(self):
         array = []
@@ -1480,15 +1589,31 @@ def experimental():
             print (ind,key,elem.ord,elem.desc,elem.parentItem.key)
             ind += 1
     vista = None
-    #micubo = 'rental'
+    micubo = 'rental'
     #micubo = 'datos catalonia'
-    micubo = 'datos light'
+    #micubo = 'datos light'
     guia = 'ideologia'
     mis_cubos = load_cubo()
-    cubo = Cubo(mis_cubos[micubo])
-    cubo.fillNewGuia(5)
-    tree = cubo.fillGuia(5)
-    pprint(tree.content)
+    #cubo = Cubo(mis_cubos[micubo])
+    #cubo.nombre = micubo
+    #cubo.fillNewGuias()
+    ##vista = Vista(cubo,0,0,'sum',cubo.lista_campos[0])
+    #for k,guia in enumerate(cubo.lista_guias):
+        #vista = Vista(cubo,k,0,'sum',cubo.lista_campos[0])
+
+    for micubo in mis_cubos:
+        if micubo == 'default':
+            continue
+        cubo = Cubo(mis_cubos[micubo])
+        cubo.nombre = micubo
+        cubo.fillNewGuias()
+        for k,guia in enumerate(cubo.lista_guias):
+            vista = Vista(cubo,k,0,'sum',cubo.lista_campos[0])
+            
+        #cubo.nombre = micubo
+        #cubo.fillNewGuias()
+    #tree = cubo.fillGuia(5)
+    #pprint(tree.content)
     #pprint(cubo.definition)
     #pprint(cubo.definition)
     #pprint(cubo.lista_funciones)
