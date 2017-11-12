@@ -755,8 +755,10 @@ class Vista:
         contexto_row = self.cubo.lista_guias[self.row_id]['contexto'][:]
         contexto_col = self.cubo.lista_guias[self.col_id]['contexto'][:]
         if self.totalizado:
-            contexto_row.insert(0,{'elems':[],'linkvia':[]})
-            contexto_col.insert(0,{'elems':[],'linkvia':[]})
+            self.row_hdr_idx.rebaseTree()
+            self.col_hdr_idx.rebaseTree()
+            contexto_row.insert(0,{'elems':["'//'",],'linkvia':[]})
+            contexto_col.insert(0,{'elems':["'//'",],'linkvia':[]})
         maxRowElem = len(contexto_row[-1]['elems'])
         maxColElem = len(contexto_col[-1]['elems'])
         pprint(contexto_row)
@@ -1304,7 +1306,7 @@ def experimental():
     mis_cubos = load_cubo()
     cubo = Cubo(mis_cubos[micubo])
     cubo.nombre = micubo
-    vista = Vista(cubo,0,0,'sum',cubo.lista_campos[0])
+    vista = Vista(cubo,0,0,'sum',cubo.lista_campos[0],totalizado=True)
     #for k,guia in enumerate(cubo.lista_guias):
         #vista = Vista(cubo,k,0,'sum',cubo.lista_campos[0])
 
