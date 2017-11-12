@@ -108,7 +108,7 @@ class Cubo:
         
         self.dbdriver = self.db.dialect.name #self.definition['connect']['driver']
         
-        #self.__setGuias()
+        self.__setGuias()
         
         self.lista_funciones = getAgrFunctions(self.db,self.lista_funciones)
         # no se usa en core. No se todavia en la parte GUI
@@ -181,6 +181,125 @@ class Cubo:
                             ]
         sqlDef['driver'] = self.dbdriver
         return queryConstructor(**sqlDef) 
+
+    def __setGuias(self):
+        '''
+           Crea la estructura lista_guias para cada una de las guias (dimensiones) que hemos definido en el cubo.
+           Proceden de las reglas de produccion (prod) de la definicion
+           Es una tupla con una entrada (diccionario) por cada guia con los siguientes elementos:
+           *  name   nombre con el que aparece en la interfaz de usuario (de la definicion)
+           *   class    '' normal, 'd' fecha (Opcional)
+           *  contexto 
+           * dir_row el array indice (para realizar busquedas)
+           El contexto se crea directamente durante el fill guia
+        '''
+        #TODO indices con campos elementales no son problema, pero no se si funciona con definiciones raras
+
+        
+        self.lista_guias = []
+        ind = 0
+        #para un posible backtrace
+        nombres = [ entrada['name'] for entrada in self.definition['guides'] ]
+        
+        for entrada in self.definition['guides']:
+            guia = {'name':entrada['name'],'class':entrada['class'],'rules':[],'elem':[]}
+            self.lista_guias.append(guia)
+            #FIXME produccion = entrada['prod']   GENERADOR  
+            #produccion = entrada.get('prod',dict())
+            #for componente in produccion:
+                #if 'name' in componente:
+                    #nombre = componente['name']
+                #else:
+                    #nombre = guia['name']
+                #if 'class' in componente:
+                    #clase = componente['class']
+                #else:
+                    #clase = guia['class']
+                ###TODO hay que normalizar lo de los elementos
+                #if clase != 'd':  #las fechas generan dinamicamente guias jerarquicas
+                    #guia['elem'] +=norm2List(componente['elem'])
+                #if clase == 'd':
+                    #base_date = norm2List(componente['elem'])[-1]
+                    ##toda esta parafernalia es para mantener la compatibilidad con versiones antiguas de los cubos
+                    #if 'mask' not in componente:
+                        #if 'type' in componente:
+                            #componente['mask'] = componente['type']
+                        #elif 'type' in entrada:
+                            #componente['mask'] = entrada['type']
+                        #else:
+                            #componente['mask'] = 'Ym'  #(agrupado en año mes dia por defecto'
+                    ##    base_date = norm2List(componente['elem'])[-1]
+                    ##
+                    #for k in range(len(componente['mask'])):
+                        #kmask = componente['mask'][0:k+1]                   
+                        #datosfecha= getDateEntry(componente['elem'],kmask,self.dbdriver)
+                        #guia['elem'] += [datosfecha['elem'],]
+                        #guia['rules'].append({'string':'',
+                                    #'ncode':len(guia['elem']),
+                                    #'ndesc':0,
+                                    #'elem':[datosfecha['elem'],],
+                                    #'name': nombre +'_'+ kmask,
+                                    #'date_fmt': datosfecha['mask'],
+                                    #'class':clase,
+                                    #'base_date':base_date
+                                    #})
+
+                #elif clase == 'c':
+                    ##TODO falta por documentar lo especifico de las categorias
+                    ##FIXME la generacion del CASE requiere unos parametros que se calculan luego.
+                    ##      eso entorpece el codigo
+                    #elem=norm2List(componente['elem'])
+                    ## en lugar de una defincion compleja tengo algo suave
+                    #if 'case_sql' in componente:
+                        #k1 =' '.join(componente['case_sql']).replace('$$1',elem[-1]).replace('$$2',nombre)
+                        #elem[-1]= k1
+                    #else:
+                        #elem[-1] = [caseConstructor(nombre,componente),]
+                          
+                    #if 'domain' in componente:  #TODO no usada. No parece tener sentido
+                        #(sqlString,code_fld,desc_fld) = self.__setGuidesSqlStatement(componente,[])
+                        #enum = None
+                    #elif 'categories' not in componente:
+                        #aux_entrada = { 'elem':elem }
+                        #(sqlString,code_fld,desc_fld) = self.__setGuidesSqlStatement(aux_entrada,[])
+                        #enum = None
+                    #else:
+                        #sqlString= ''
+                        #code_fld = len(guia['elem'])
+                        #desc_fld = 0
+                        #enum=componente['categories']
+
+                    #guia['rules'].append({'string':sqlString,
+                                #'ncode':code_fld,
+                                #'ndesc':desc_fld,
+                                #'elem': elem,
+                                ##'elem':caseConstructor(guia['rules'][-1])
+                                #'name':nombre,
+                                #'class':clase,
+                                #'enum':enum
+                                #})
+
+                    #if 'enum_fmt' in componente:
+                        #guia['rules'][-1]['enum_fmt']=componente['enum_fmt']
+                    #if 'categories' not in componente:
+                       #aux_entrada = { 'elem':guia['rules'][-1]['elem'][-1]}
+                       #(sqlString,code_fld,desc_fld) = self.__setGuidesSqlStatement(aux_entrada,[])
+                       #print(queryFormat(sqlString))
+                    #else:
+                       #guia['rules'][-1]['enum']=componente['categories'] 
+                #else:
+                    #(sqlString,code_fld,desc_fld) = self.__setGuidesSqlStatement(componente,[])
+
+                    #guia['rules'].append({'string':sqlString,
+                                                    #'ncode':code_fld,
+                                                    #'ndesc':desc_fld,
+                                                    #'elem':guia['elem'][:],
+                                                    #'name':nombre,
+                                                    #'class':clase})
+                #if 'link via' in componente:
+                    #guia['rules'][-1]['join']=componente['link via']
+                #if 'fmt' in componente:
+                    #guia['rules'][-1]['fmt']=componente['fmt']
 
     """
        aqui las nuevas rutinas
@@ -347,7 +466,8 @@ class Cubo:
                 key=DELIMITER.join(row[0:len(code)])   #asi creo una jerarquia automatica en claves multiples
                 parentId = getParentKey(key)
                 raiz.append(TreeItem(key,entryNum,value),parentId)
-            
+    
+    
     def fillGuia(self,guidId):
         # para simplificar el codigo
         cubo = self.definition
@@ -602,14 +722,16 @@ class Vista:
             self.row_id = row
             self.col_id = col
             
-            self.dim_row = len(self.cubo.lista_guias[row]['rules'])
-            self.dim_col = len(self.cubo.lista_guias[col]['rules'])
-            #for guia in self.cubo.lista_guias:
-                #if 'dir_row' in guia:
-                    #del guia['dir_row']
+                    
+            #for k,entrada in enumerate(self.lista_guias):
+            for item in (row,col):
+                self.cubo.lista_guias[item]['dir_row'],self.cubo.lista_guias[item]['contexto']=self.cubo.fillGuia(item)
+
+            self.dim_row = len(self.cubo.lista_guias[row]['contexto'])
+            self.dim_col = len(self.cubo.lista_guias[col]['contexto'])
                 
-            self.row_hdr_idx = self.cubo.fillGuia(row) #self.cubo.lista_guias[row]['dir_row']
-            self.col_hdr_idx = self.cubo.fillGuia(col) #self.cubo.lista_guias[col]['dir_row']
+            self.row_hdr_idx = self.cubo.lista_guias[row]['dir_row']
+            self.col_hdr_idx = self.cubo.lista_guias[col]['dir_row']
         
             self.__setDataMatrix()
             
