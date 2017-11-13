@@ -92,7 +92,15 @@ def getOrderedText(desc,sparse=True,separator=None):
     
           
 class Cubo:
-    def __init__(self, definicion):
+    def __init__(self, definicion,nombre=None,dbConn=None):
+        """
+        Inicialización del cubo 
+        Parametros
+        definicion -> estructura diccionario con la configuración del cubo
+        nombre     -> (opcional) nombre del cubo
+        dbConn     -> (opciona) puede usarse para invocarlo en situaciones en que la conexion de la BD.
+                    ya esta activa. Pensado para pruebas en cubebrowse
+        """
         if definicion is None :
             print('No se especifico definicion valida ')
             sys.exit(-1)
@@ -100,24 +108,36 @@ class Cubo:
         # los datos siguientes son la definicion externa del cubo
         #pprint(definicion)
         self.definition = definicion
-        self.db = dbConnect(self.definition['connect'])
+        self.nombre = nombre
+        if not dbConn:
+            self.db = dbConnect(self.definition['connect'])
+        else:
+            self.db = dbConn
         # inicializo (y cargo a continuacion) los otros atributos       
         self.lista_guias= []
+        self.__setGuias()
+        
         self.lista_funciones = []
+        self.lista_funciones = getAgrFunctions(self.db,self.lista_funciones)
+        
         self.lista_campos = []
+        self.lista_campos = self.getFields()
         
         self.dbdriver = self.db.dialect.name #self.definition['connect']['driver']
         
-        self.__setGuias()
         
-        self.lista_funciones = getAgrFunctions(self.db,self.lista_funciones)
+        
+        
         # no se usa en core. No se todavia en la parte GUI
-        self.lista_campos = self.getFields()
+        
         
         #self.__fillGuias()  #LLENADO GUIAS
       
     #
     def getGuideNames(self):
+        """
+        crea un array con los nombres de las guias
+        """
         tabla = []
         for guia in self.lista_guias:
             tabla.append(guia['name'])
@@ -132,22 +152,20 @@ class Cubo:
            
     def getFields(self):
         '''
-           crea/devuelve el atributo cubo.lista_campos
+           crea/devuelve el atributo cubo.lista_campos.
+           No se espera que varia durante la vida del cubo
         '''
         if len(self.lista_campos) == 0:
             lista_campos = self.definition['fields'][:]
-            # este añadido no parece tener sentido por ahora. comentado FIXME
-            #for entry in self.definition['guides']:
-                #for regla in entry['prod']:
-                    #if 'fmt' in regla.keys():
-                        #if regla['fmt'] in ('txt', 'date'):
-                            #continue
-                    #lista_campos.append(regla['elem'])
         else:
             lista_campos = self.lista_campos [ : ]
         return lista_campos
 
     def setDateFilter(self):
+        '''
+        convierte la clausula date filter en codigo que puede utilizarse como una clausula where 
+        Retorna una tupla de condiciones campo BETWEEN x e y, con un indicador de formato apropiado (fecha/fechahora(
+        '''
         sqlClause = []
         filtros = self.definition.get('date filter')
         if not filtros:
@@ -165,22 +183,6 @@ class Cubo:
                     sqlClause.append((item['elem'],'BETWEEN',intervalo,'f'))
         return sqlClause
     
-    
-    def __setGuidesDateSqlStatement(self, entrada, fields=None):
-        #REFINE creo que fields sobra
-        sqlDef=dict()
-        sqlDef['tables'] = self.definition['table']
-        if len(self.definition.get('base filter','')) > 0:
-           sqlDef['base_filter']=self.definition['base filter']
-        
-        if self.definition.get('date filter'):
-             sqlDef['where'] = self.setDateFilter()
-
-        sqlDef['fields'] = [[entrada['base_date'],'max'],
-                            [entrada['base_date'],'min'],
-                            ]
-        sqlDef['driver'] = self.dbdriver
-        return queryConstructor(**sqlDef) 
 
     def __setGuias(self):
         '''
@@ -191,32 +193,36 @@ class Cubo:
            *   class    '' normal, 'd' fecha (Opcional)
            *  contexto 
            * dir_row el array indice (para realizar busquedas)
-           El contexto se crea directamente durante el fill guia
+           El contexto y dir_row se crea directamente durante el fill guia
         '''
-        #TODO indices con campos elementales no son problema, pero no se si funciona con definiciones raras
-
-        
         self.lista_guias = []
         ind = 0
         #para un posible backtrace
         nombres = [ entrada['name'] for entrada in self.definition['guides'] ]
         
         for entrada in self.definition['guides']:
-            guia = {'name':entrada['name'],'class':entrada['class'],'rules':[],'elem':[]}
+            guia = {'name':entrada['name'],'class':entrada['class'],'contexto':[],'elem':[]}
             self.lista_guias.append(guia)
 
-    """
-       aqui las nuevas rutinas
-    """
     def fillGuias(self):
+        """
+           De una sola operacion generamos toda la información sobre las guias -incluidos los arboles-
+           el diccionario ha sigo generado en __setGuias
+           
+           No se usa internamente, ya que puede consumir recursos excesivos en la inicialización del cubo.
+           En otros momentos lo he activado. Lo dejo como opcion a los usuarios
+        """
         for k,entrada in enumerate(self.lista_guias):
             entrada['dir_row'],entrada['contexto']=self.fillGuia(k)
     
     def _setTableName(self,guia,idx):
         """
+        Para una regla de producción concreta en una guia obtiene la tabla base que corresponde para 
+        el dominio de definición que deseo
+        
         input
            guia  definicion de la guia correspondiente
-           idx   indice de la produccion
+           idx   indice de la produccion en la tupla de contextos
         output
            table_name nombre de la tabla
            filter filtro asociado
@@ -239,7 +245,13 @@ class Cubo:
             
    
     def _expandDateProductions(self,guidID):
-        #las producciones tipo date son abreviaturas de jerarquias internas. Ahora es el momento de dedoblarlas
+        """
+        las producciones tipo date son abreviaturas de jerarquias internas. Ahora es el momento de dedoblarlas
+        Quedan como entradas simples en la tabla de contextos de la guia (bien marcadas como dates);
+        tienen dos pequeñas peculiaridades:
+        los atributos campo_base con el nombre del campo original y
+        origID con el numero de la regla de producción original (para trazas)
+        """
         prodExpandida = []
         guia = self.definition['guides'][guidID]
         
@@ -251,6 +263,8 @@ class Cubo:
                 # si no existe por lo que sea mask, defecto es año y mes
                 mascara = produccion.get('mask','Ym')
                 for kmask in [ mascara[0:k+1] for k in range(len(mascara)) ]:
+                    # esta llamada me devuelve una estructura como el contexto,especialmente el atributo
+                    # correctamente formateado  TODO faltan los atributos calculados (Cuatrimestres,trimestres y quincenas)
                     datosfecha= getDateEntry(campo,kmask,self.dbdriver)
                     datosfecha['class'] = 'd'
                     datosfecha['campo_base'] = campo  #estrictamente temporal
@@ -262,6 +276,16 @@ class Cubo:
         return prodExpandida
 
     def _getProdCursor(self,contexto,basefilter,datefilter):
+        """
+        De una regla de produccion ampliada (de su contexto mas bien) y con los filtros generales de la tabla (o dominio)
+        creo la sentencia SQL y obtengo el cursor correspondiente
+        INput
+           contexto de una regla de produccion (cf. fillGuia)
+           basefilter
+           datefilter   los filtros de defecto y fecha de la tabla del cubo o dominio
+        Output
+            cursor   un cursor sql
+        """
         table = contexto['table']
         columns = contexto['columns']
         code = contexto['code']
@@ -293,12 +317,28 @@ class Cubo:
         return cursor
 
     def _createProdModel(self,raiz,cursor,contexto,prodId):
+        """
+        De cursor al modelo que utilizamos para definir la guia
+        Input
+            raiz    (sobrecarga) la raiz del modelo QStandardItemModel o el modelo TreeDict  (version base del cubo)
+            cursor  el cursor a integrar en el modelo
+            contexto contexto de la regla de produccion
+            prodId identificación de la regla
+            
+        Ahora mismo este codigo tiene el efecto secundario que en claves multicampo se crea implicitamente una jerarquia de valores
+        TODO contemplar el caso contrario
+        """
         columns = contexto['columns']
         code = contexto['code']
         desc = contexto['desc']
         groupby = contexto['groupby']
         
         def localizaHijo(treeItem,valor):
+            '''
+            localización manual de entradas en QStandardItemModel por valor (leer la secuencia y chequear. Horrorosa)
+            Es una funciion local porque solo tiene sentido aqui y porque pasado el periodo experimental 
+            TODO se integrara a nivel superior
+            '''
             for k in range(treeItem.rowCount()):
                 if treeItem.child(k).data() == valor:
                     return treeItem.child(k)
@@ -322,26 +362,10 @@ class Cubo:
                 value = ', '.join(row[-ncode:])
             else:
                 value = ', '.join(row[-ndesc:])
-            """
-            lo comentado a contiuacion es con entradas individuales.
-            Deberia mejorarse para entradas multiples
-            LO sustituyo por el equivalente al caso TreeDict. cada campo genera un nivel de agrupacion
-            """
-            #if prodId == 0:
-                #papid = []
-                #resto = row
-            #else:
-                #papid = row[0:ngroupby]
-                #resto = row[ngroupby:]
-            #key = ' '.join(resto[0:ncode])  #OJO fechas
-            #if ncode < len(resto):
-                #value = ' '.join(resto[ncode:])
-            #else:
-                #value = key
-            """
-            fin del caso original
-            """
-            #print(row,ngroupby,ncode,ndesc,key,value)    
+            #
+            # ahora debo localizar donde en la jerarquia tiene que encontrarse. Eso varia por tipo
+            # Notese que para QStandardItemModel utilizo un sistema de cache para reducir el numero de busquedas
+            #
             if isinstance(raiz,QStandardItem):
                 papid = row[0:len(code)]
                 parent = raiz
@@ -356,44 +380,76 @@ class Cubo:
                     else:
                         parent = localizaHijo(parent,papid[k])
                         cache_parents[k] = parent
+                
                 item = QStandardItem()
                 item.setData(key)
                 item.setData(value,Qt.DisplayRole)
-                #print(parent.data(),'/',item.data(),'->',item.data(Qt.EditRole))
                 parent.appendRow(item)
+                
             elif isinstance(raiz,TreeDict):
+                # problemas inesperados con valores nulos
                 for k in range(len(row)):
                     if row[k] is None:
                         row[k] = 'NULL'
+                #descripcion
                 if ndesc == 0:
-                    value=', '.join(row)
+                    value=', '.join(row)  
                 else:
                     value=', '.join(row[-ndesc:])
+                #clave separada jeraruqicamnet por DELIMITER
                 key=DELIMITER.join(row[0:len(code)])   #asi creo una jerarquia automatica en claves multiples
                 parentId = getParentKey(key)
                 raiz.append(TreeItem(key,entryNum,value),parentId)
     
     
-    def fillGuia(self,guidId):
-        # para simplificar el codigo
+    def fillGuia(self,guidIdentifier,qtModel = None):
+        '''
+        Es el metodo con el que creamos la guia; de paso generamos informacion complementaria, el contexto
+        Como campo de entrada
+        guidIdentifier  es la gua a procesar. sobrecargada como el número de la guia en la lista o el nombre
+        qtModel (Experimental) tipo de modelo que genera. Por defecto TreeDict que no es qt
+        El contexto que genera para cada produccion es
+            {'table':table,   -> tabla del dominio de la guia
+            'code':code,      -> lista de campos que contienen el code (valor interno) de la produccion
+            'desc':desc,      -> id. de la descripcion (valor externo). SI no hay es igual que el code
+            'groupby':groupby,_> campos que se requieren en una jerarquia para enlazar los niveles. Forma parte
+                                 de code
+            'columns':columns, _> Lista cmpleta de todos los campos que deben aparecer en la clausula select de la guia
+            'elems':elems,    -> Lista de campos que se incluyen como criterios de agregacion al solicitar los datos de                             
+                                    la vista con esa guia
+            'linkvia':linkvia   _> Clausulas join necesarias para ir de la tabla de datos a donde residen los criterios 
+                                    de agregacion
+            })
+
+        '''
+        
         cubo = self.definition
+        if isinstance(guidIdentifier,int):
+            guidId = guidIdentifier
+        else:
+            guidId = self.lista_guias.index(guidIdentifier)
         guia = self.definition['guides'][guidId]
         
         date_cache = {}
         contexto = []
         
-        arbol = QStandardItemModel()
-        raiz = arbol.invisibleRootItem()
-        tree=TreeDict()
-        tree.name = guia['name']
+        #arbol = QStandardItemModel()
+        #raiz = arbol.invisibleRootItem()
+        if qtModel is None:
+            tree=TreeDict()
+            tree.name = guia['name']
+        else:
+            arbol = QStandardItemModel()
+            tree = arbol.invisibleRootItem()  #para que __createProdModel solo necesite invocarse una vez
         
-        
+        # primero expandimos las entradas tipo fecha
         prodExpandida = self._expandDateProductions(guidId)
         
         for prodId,produccion in enumerate(prodExpandida):
             origId = produccion['origID']
             clase = produccion.get('class',guia.get('class','o'))
-            if clase == 'h':
+            # for backward compatibility
+            if clase == 'h':  
                 clase = 'o'
             nombre = produccion.get('name',guia.get('name')+'_'+str(prodId).replace(' ','_').strip())
             table,basefilter,datefilter  = self._setTableName(guia,origId)
@@ -407,8 +463,16 @@ class Cubo:
             cursor = None
             elems = []
             linkvia = []
+            if DEBUG:
+                print(self.nombre,guia['name'],nombre)
+            """
+            El esquema es comun para cada tipo de guia
+            primero determino los campos codigo, descripciones y groupby para formar la query que crea el dominio
+            (y la obtengo si no implica consulta a la base de datos)
+            El groupby son los campos que necesito arrastrar del nivel jerarquico superior para poder enlazar entre niveles
             
-            print(self.nombre,guia['name'],nombre)
+            Luego determino que campos (elems) seran los que se necesitaran para el group by en la consulta real
+            """
             if clase == 'o':
                 if 'domain' in produccion:
                     groupby = norm2List(produccion['domain'].get('grouped by'))
@@ -457,7 +521,7 @@ class Cubo:
             elif clase == 'd':
                 isSQL = False
                 code = desc = columns = norm2List(produccion.get('elem'))
-                # obtengo la fecha minima y maxima
+                # obtengo la fecha minima y maxima. Para ello tendre que consultar la base de datos
                 campo = produccion.get('campo_base') #solo podemos   trabajar con un campo
                 if campo in date_cache:
                     pass
@@ -485,18 +549,19 @@ class Cubo:
                     #
                 # TODO, desplegarlo todo
 
-                kmask = produccion.get('mask')              
+                kmask = produccion.get('mask')     
+                #FIXME valido fechas pero todos los formatos no son compatibles con esa validacion
                 cursor = getDateIndexNew(date_cache[campo][0]  #max_date
                                             , date_cache[campo][1]  #min_date
                                             , kmask)
-
+                # la correcta asignacion de formatos fecha ha sido hecha al desdoblar
                 if prodId == 0:    
                     elems = norm2List(produccion.get('elem'))
                 else:
                     elems = contexto[prodId -1]['elems'] + norm2List(produccion.get('elem'))
 
 
-
+            # si tengo una jerarquia y no tengo group by cargo uno por defecto si es la misma tabla
             if prodId != 0 and len(groupby) == 0:
                 if contexto[prodId -1]['table'] == table:  #por coherencia sin groop by es imposible sino
                     groupby = contexto[prodId -1]['code']
@@ -505,8 +570,8 @@ class Cubo:
                         columns = code + desc
                     else:
                         code = desc = columns = groupby + code
-            if prodId != 0:
-                cumgroup.append(code)
+            #if prodId != 0:
+                #cumgroup.append(code)
            
             if prodId == 0:
                 linkvia = produccion.get('link via',[]) 
@@ -519,24 +584,15 @@ class Cubo:
             if isSQL:
                 cursor = self._getProdCursor(contexto[-1],basefilter,datefilter)
             
-            #self._createProdModel(raiz,cursor,contexto[-1],prodId)
+ 
             self._createProdModel(tree,cursor,contexto[-1],prodId)
 
-        #print('Arbol')    
-        #for item in traverseTree(raiz):
-            #if not item.parent():
-                #print('Raiz ->',item.data(),': ',item.data(Qt.DisplayRole))
-            #else:
-                #print(item.parent().data(),' ->',item.data(),': ',item.data(Qt.DisplayRole))
-        #print('Ahora Treedict')
-        #tree.display()
-        #
-        # esto para garantizar la unicidad del ord. TreDict es muy debil en ese sentido
-        #
-        k = 0
-        for item in tree.traverse(output=1): #por item
-            item.ord = k
-            k += 1
+        if qtModel is None:
+            # es el unico modo que genere un ordinal unico 
+            k = 0
+            for item in tree.traverse(output=1): #por item
+                item.ord = k
+                k += 1
             
         return tree,contexto
 
@@ -667,7 +723,11 @@ class Vista:
         # si no copio tengo sorpresas
         contexto_row = self.cubo.lista_guias[self.row_id]['contexto'][:]
         contexto_col = self.cubo.lista_guias[self.col_id]['contexto'][:]
-        #TODO de momento solo totales en row, como era la version anterior
+        """
+        TODO de momento solo totales en row, como era la version anterior.
+        Incluir totales de columan tiene una serie de efectos secundarios en todas las operaciones de columna.
+        Debería estudiarlo porque merece la pena
+        """
         if self.totalizado:
             self.row_hdr_idx.rebaseTree()
             #self.col_hdr_idx.rebaseTree()
@@ -1228,7 +1288,10 @@ def experimental():
     #print(vista.row_hdr_idx['CA08:16'])
     #vista.row_hdr_idx.setHeader()
     #vista.row_hdr_idx.getHeader()
-    #vista.col_hdr_idx.setHeader()
+    for item in vista.col_hdr_idx.traverse(output = 1):
+        print('\t'*item.depth(),item.getFullDesc(),item.ord)
+
+    #print(vista.col_hdr_idx.getHeader())
     #for k,guia in enumerate(cubo.lista_guias):
         #vista = Vista(cubo,k,0,'sum',cubo.lista_campos[0])
 
