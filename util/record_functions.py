@@ -171,6 +171,7 @@ def regTree(record,**kwargs):
     triad=[None,None,None]
     regHasher2D(record,**kwargs)
     triad[2]=record[-1] #datos
+    onerror = False
     try:
         triad[0]=kwargs['rdir'][record[0]] #row parent
         triad[1]=kwargs['cdir'][record[1]] #col parent

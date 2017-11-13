@@ -204,102 +204,6 @@ class Cubo:
         for entrada in self.definition['guides']:
             guia = {'name':entrada['name'],'class':entrada['class'],'rules':[],'elem':[]}
             self.lista_guias.append(guia)
-            #FIXME produccion = entrada['prod']   GENERADOR  
-            #produccion = entrada.get('prod',dict())
-            #for componente in produccion:
-                #if 'name' in componente:
-                    #nombre = componente['name']
-                #else:
-                    #nombre = guia['name']
-                #if 'class' in componente:
-                    #clase = componente['class']
-                #else:
-                    #clase = guia['class']
-                ###TODO hay que normalizar lo de los elementos
-                #if clase != 'd':  #las fechas generan dinamicamente guias jerarquicas
-                    #guia['elem'] +=norm2List(componente['elem'])
-                #if clase == 'd':
-                    #base_date = norm2List(componente['elem'])[-1]
-                    ##toda esta parafernalia es para mantener la compatibilidad con versiones antiguas de los cubos
-                    #if 'mask' not in componente:
-                        #if 'type' in componente:
-                            #componente['mask'] = componente['type']
-                        #elif 'type' in entrada:
-                            #componente['mask'] = entrada['type']
-                        #else:
-                            #componente['mask'] = 'Ym'  #(agrupado en año mes dia por defecto'
-                    ##    base_date = norm2List(componente['elem'])[-1]
-                    ##
-                    #for k in range(len(componente['mask'])):
-                        #kmask = componente['mask'][0:k+1]                   
-                        #datosfecha= getDateEntry(componente['elem'],kmask,self.dbdriver)
-                        #guia['elem'] += [datosfecha['elem'],]
-                        #guia['rules'].append({'string':'',
-                                    #'ncode':len(guia['elem']),
-                                    #'ndesc':0,
-                                    #'elem':[datosfecha['elem'],],
-                                    #'name': nombre +'_'+ kmask,
-                                    #'date_fmt': datosfecha['mask'],
-                                    #'class':clase,
-                                    #'base_date':base_date
-                                    #})
-
-                #elif clase == 'c':
-                    ##TODO falta por documentar lo especifico de las categorias
-                    ##FIXME la generacion del CASE requiere unos parametros que se calculan luego.
-                    ##      eso entorpece el codigo
-                    #elem=norm2List(componente['elem'])
-                    ## en lugar de una defincion compleja tengo algo suave
-                    #if 'case_sql' in componente:
-                        #k1 =' '.join(componente['case_sql']).replace('$$1',elem[-1]).replace('$$2',nombre)
-                        #elem[-1]= k1
-                    #else:
-                        #elem[-1] = [caseConstructor(nombre,componente),]
-                          
-                    #if 'domain' in componente:  #TODO no usada. No parece tener sentido
-                        #(sqlString,code_fld,desc_fld) = self.__setGuidesSqlStatement(componente,[])
-                        #enum = None
-                    #elif 'categories' not in componente:
-                        #aux_entrada = { 'elem':elem }
-                        #(sqlString,code_fld,desc_fld) = self.__setGuidesSqlStatement(aux_entrada,[])
-                        #enum = None
-                    #else:
-                        #sqlString= ''
-                        #code_fld = len(guia['elem'])
-                        #desc_fld = 0
-                        #enum=componente['categories']
-
-                    #guia['rules'].append({'string':sqlString,
-                                #'ncode':code_fld,
-                                #'ndesc':desc_fld,
-                                #'elem': elem,
-                                ##'elem':caseConstructor(guia['rules'][-1])
-                                #'name':nombre,
-                                #'class':clase,
-                                #'enum':enum
-                                #})
-
-                    #if 'enum_fmt' in componente:
-                        #guia['rules'][-1]['enum_fmt']=componente['enum_fmt']
-                    #if 'categories' not in componente:
-                       #aux_entrada = { 'elem':guia['rules'][-1]['elem'][-1]}
-                       #(sqlString,code_fld,desc_fld) = self.__setGuidesSqlStatement(aux_entrada,[])
-                       #print(queryFormat(sqlString))
-                    #else:
-                       #guia['rules'][-1]['enum']=componente['categories'] 
-                #else:
-                    #(sqlString,code_fld,desc_fld) = self.__setGuidesSqlStatement(componente,[])
-
-                    #guia['rules'].append({'string':sqlString,
-                                                    #'ncode':code_fld,
-                                                    #'ndesc':desc_fld,
-                                                    #'elem':guia['elem'][:],
-                                                    #'name':nombre,
-                                                    #'class':clase})
-                #if 'link via' in componente:
-                    #guia['rules'][-1]['join']=componente['link via']
-                #if 'fmt' in componente:
-                    #guia['rules'][-1]['fmt']=componente['fmt']
 
     """
        aqui las nuevas rutinas
@@ -382,8 +286,10 @@ class Cubo:
             pprint(filter)
             pprint
             raise
-        print(queryFormat(sqlString))
         cursor=getCursor(self.db,sqlString)
+        if DEBUG:
+            print(time.time(),'Datos ',queryFormat(sqlString))
+
         return cursor
 
     def _createProdModel(self,raiz,cursor,contexto,prodId):
@@ -569,7 +475,6 @@ class Cubo:
                     try:
                         sqlStringDate = queryConstructor(**sqlDefDate) 
                     except:
-                        pprint(sqlDefDate)
                         raise()
                     row=getCursor(self.db,sqlStringDate)
                     if not row[0][0]:
@@ -614,8 +519,9 @@ class Cubo:
             if isSQL:
                 cursor = self._getProdCursor(contexto[-1],basefilter,datefilter)
             
-            self._createProdModel(raiz,cursor,contexto[-1],prodId)
+            #self._createProdModel(raiz,cursor,contexto[-1],prodId)
             self._createProdModel(tree,cursor,contexto[-1],prodId)
+
         #print('Arbol')    
         #for item in traverseTree(raiz):
             #if not item.parent():
@@ -624,7 +530,14 @@ class Cubo:
                 #print(item.parent().data(),' ->',item.data(),': ',item.data(Qt.DisplayRole))
         #print('Ahora Treedict')
         #tree.display()
-        
+        #
+        # esto para garantizar la unicidad del ord. TreDict es muy debil en ese sentido
+        #
+        k = 0
+        for item in tree.traverse(output=1): #por item
+            item.ord = k
+            k += 1
+            
         return tree,contexto
 
 class Vista:
@@ -754,15 +667,14 @@ class Vista:
         # si no copio tengo sorpresas
         contexto_row = self.cubo.lista_guias[self.row_id]['contexto'][:]
         contexto_col = self.cubo.lista_guias[self.col_id]['contexto'][:]
+        #TODO de momento solo totales en row, como era la version anterior
         if self.totalizado:
             self.row_hdr_idx.rebaseTree()
-            self.col_hdr_idx.rebaseTree()
+            #self.col_hdr_idx.rebaseTree()
             contexto_row.insert(0,{'elems':["'//'",],'linkvia':[]})
-            contexto_col.insert(0,{'elems':["'//'",],'linkvia':[]})
+            #contexto_col.insert(0,{'elems':["'//'",],'linkvia':[]})
         maxRowElem = len(contexto_row[-1]['elems'])
         maxColElem = len(contexto_col[-1]['elems'])
-        pprint(contexto_row)
-        pprint(contexto_col)
         
         for x,row in enumerate(contexto_row):
             for y,col in enumerate(contexto_col):
@@ -791,14 +703,15 @@ class Vista:
                 lista_compra={'row':{'nkeys':len(row['elems']),},
                               'rdir':self.row_hdr_idx,
                               'col':{'nkeys':len(col['elems']),
-                                     'init':-1-len(row['elems']),},
+                                     'init':len(row['elems']),},
                               'cdir':self.col_hdr_idx
                               }
-                self.array +=getCursor(self.cubo.db,sqlstring,regTree,**lista_compra)
+                cursor = getCursor(self.cubo.db,sqlstring,regTree,**lista_compra)
+                self.array +=cursor #getCursor(self.cubo.db,sqlstring,regTree,**lista_compra)
                 if DEBUG:
                     print(time.time(),'Datos ',queryFormat(sqlstring))
 
-        pprint(self.array)
+        #pprint(self.array)
         
     def toTable(self):
         """
@@ -924,6 +837,7 @@ class Vista:
 
     def toTree2D(self):
         array = self.toTable()
+        k = 0
         for key in self.row_hdr_idx.traverse(mode=1):
             elem = self.row_hdr_idx[key]
             datos = [ getOrderedText(elem.getFullDesc(),sparse=True,separator=''),] +\
@@ -931,6 +845,8 @@ class Vista:
             elem.setData(datos)
             if self.stats:
                 elem.setStatistics()
+            k += 1
+        k = 0
         for key in self.col_hdr_idx.traverse(mode=1):
             elem = self.col_hdr_idx[key]
             datos = [ getOrderedText(elem.getFullDesc(),sparse=True,separator=''),] +\
@@ -938,7 +854,7 @@ class Vista:
             elem.setData(datos)
             if self.stats:
                 elem.setStatistics()
-
+            k += 1
         #if self.totalizado:
             #self.row_hdr_idx.rebaseTree()
             #tabla = self.__grandTotal()
@@ -1299,14 +1215,20 @@ def experimental():
             print (ind,key,elem.ord,elem.desc,elem.parentItem.key)
             ind += 1
     vista = None
-    micubo = 'rental'
-    micubo = 'datos catalonia'
-    #micubo = 'datos light'
+    #micubo = 'rental'
+    #micubo = 'datos catalonia'
+    micubo = 'datos light'
     guia = 'ideologia'
     mis_cubos = load_cubo()
     cubo = Cubo(mis_cubos[micubo])
     cubo.nombre = micubo
-    vista = Vista(cubo,0,0,'sum',cubo.lista_campos[0],totalizado=True)
+    vista = Vista(cubo,5,0,'sum',cubo.lista_campos[0],totalizado=True)
+    vista.toTree2D()
+    #pprint(vista.row_hdr_idx.content)
+    #print(vista.row_hdr_idx['CA08:16'])
+    #vista.row_hdr_idx.setHeader()
+    #vista.row_hdr_idx.getHeader()
+    #vista.col_hdr_idx.setHeader()
     #for k,guia in enumerate(cubo.lista_guias):
         #vista = Vista(cubo,k,0,'sum',cubo.lista_campos[0])
 
@@ -1360,7 +1282,7 @@ def experimental():
     #pprint(vista.grandTotal())
     #tabla = vista.toKeyedTable()
     #vista.toTree2D()
-    #vista.recalcGrandTotal()
+    vista.recalcGrandTotal()
     #col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
     #print(col_hdr)
     #for key in vista.row_hdr_idx.content:

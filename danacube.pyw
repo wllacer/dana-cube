@@ -277,17 +277,21 @@ class DanaCubeWindow(QMainWindow):
     @waiting_effects
     def summaryGuia(self):
         result = []
+        """
+           este codigo parece no ser utilizado en el resto de danacube y es especialmente costoso.
+           A parte de incompatible con la nueva interfaz
+        """
         #self.cubo.fillGuias()
-        for k,guia in enumerate(self.cubo.lista_guias):
-            arbolGuia = self.cubo.fillGuia(k)
-            dataGuia = []
-            for item in arbolGuia.traverse(mode=1,output=1):
-                dataGuia.append((item.key,item.desc))
-            result.append({'name':guia['name'],'format':guia.get('fmt','texto'),
-                                'source':guia['elem'] if guia['class'] != 'c' else guia['name'] ,
-                                'values':dataGuia,
-                                'class':guia['class']}
-                                )
+        #for k,guia in enumerate(self.cubo.lista_guias):
+            #arbolGuia,dummy = self.cubo.fillGuia(k)
+            #dataGuia = []
+            #for item in arbolGuia.traverse(mode=1,output=1):
+                #dataGuia.append((item.key,item.desc))
+            #result.append({'name':guia['name'],'format':guia.get('fmt','texto'),
+                                #'source':guia['elem'] if guia['class'] != 'c' else guia['name'] ,
+                                #'values':dataGuia,
+                                #'class':guia['class']}
+                                #)
             
         confData = self.cubo.definition['connect']
         confName = '$$TEMP'

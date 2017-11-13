@@ -365,6 +365,8 @@ class TreeDict(object):
         for child in children:
             self.display(child.key, depth)  # recursive call
 
+
+
     def traverse(self, key=None, mode=_DEPTH, output = _KEY):
         # Obtenido de
         # Brett Kromkamp (brett@perfectlearn.com)
@@ -417,13 +419,14 @@ class TreeDict(object):
         for item in self.traverse(output = _ITEM):
             clave = item.getFullDesc()
             try:
-                header[item.ord]=clave
+                header[item.ord] = clave
             except IndexError:
                 print('Canturriazo',self.count(),item,item.ord,item.model().name)
                 exit()
         return header
 
     def getHeader(self,tipo='row',separador='\n',sparse=True):
+        pprint(self.setHeader())
         if sparse:
             cabecera = [ item[-1].replace(DELIMITER,'-') for item in self.setHeader() ]
         else:

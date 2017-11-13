@@ -614,12 +614,12 @@
         "table": "main.votos_provincia"
     },
     "default": {
-        "cubo": "datos catalonia",
+        "cubo": "datos light",
         "vista": {
-            "agregado": "sum",
-            "col": "4",
             "elemento": "votes_presential",
-            "row": "1"
+            "agregado": "sum",
+            "row": 3,
+            "col": 1
         }
     },
     "experimento": {

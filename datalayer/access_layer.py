@@ -249,12 +249,10 @@ def getCursorAlch(db, sql_string,funcion=None,**kwargs):
     resultCursor = db.execute(sqlString)
     for row in resultCursor:
         trow = list(row) #viene en tupla y no me conviene
-        print('antes   ->',trow)
         if callable(funcion):
             funcion(trow,**kwargs)
         if trow != []:
             cursor.append(trow)
-        print('despues ->',trow)
         #if lim:
             #if cont < lim:
                 #cont += 1
