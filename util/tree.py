@@ -426,7 +426,6 @@ class TreeDict(object):
         return header
 
     def getHeader(self,tipo='row',separador='\n',sparse=True):
-        pprint(self.setHeader())
         if sparse:
             cabecera = [ item[-1].replace(DELIMITER,'-') for item in self.setHeader() ]
         else:
