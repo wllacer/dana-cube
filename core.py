@@ -331,7 +331,7 @@ class Cubo:
             TODO se integrara a nivel superior
             '''
             for k in range(treeItem.rowCount()):
-                if treeItem.child(k).data() == valor:
+                if treeItem.child(k).data(Qt.DisplayRole) == valor:
                     return treeItem.child(k)
             return treeItem
 
@@ -365,7 +365,7 @@ class Cubo:
                 #parent = raiz
                 #TODO  sigo sn contemplar que la clave no exista. y asum que las claves son monovalor
                 for k in range(len(papid)):
-                    if cache_parents[k] is not None and cache_parents[k].data() == papid[k]:
+                    if cache_parents[k] is not None and cache_parents[k].data(Qt.DisplayRole) == papid[k]:
                         parent = cache_parents[k]
                         continue
                     else:
@@ -377,7 +377,7 @@ class Cubo:
                 #item.setData(value,Qt.DisplayRole)
                 #parent.appendRow(item)
                 # alternativo
-                parent.appendRow((QStandardItem(value),QStandardItem(key),))
+                parent.appendRow((QStandardItem(key),QStandardItem(value),))
             elif isinstance(raiz,TreeDict):
                 # problemas inesperados con valores nulos
                 for k in range(len(row)):
@@ -587,6 +587,10 @@ class Cubo:
                 k += 1
             return tree,contexto
         else:
+            for item in traverse(tree):
+                print(item.parent().data(Qt.DisplayRole) if item.parent() is not None else '??',
+                      item.data(Qt.DisplayRole))
+                
             return arbol,contexto
 
 class Vista:

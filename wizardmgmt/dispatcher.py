@@ -147,7 +147,6 @@ def execAction(item,context,action):
         form.show()
         if form.exec_():
             pass
-
     else:
         context.model().beginResetModel()
         manage(item,context,action)
