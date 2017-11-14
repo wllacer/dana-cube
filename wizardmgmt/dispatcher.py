@@ -136,18 +136,6 @@ def setMenuActions(menu,context,item):
             
 
 def execAction(item,context,action):
-    if action == 'sample':
-        pos = item.getPos()
-        pai = item.parent()
-        while pai.type() != 'base':
-            pai = pai.parent()
-        cubo = tree2dict(pai,isDictionaryEntry)
-        pprint(cubo)
-        form = guidePreview(cubo,pos)
-        form.show()
-        if form.exec_():
-            pass
-    else:
         context.model().beginResetModel()
         manage(item,context,action)
         context.model().endResetModel()
@@ -241,7 +229,20 @@ def manage(item,cubeMgr,action):
             resultado = leaf_management(item,cubeMgr,action,cube_root,cube_ref,cache_data)
         else:
             resultado = block_management(item,cubeMgr,action,cube_root,cube_ref,cache_data)
-    if action in ('change schema'):
+    
+    if action == 'sample':
+        #dd=cubeMgr.dataDict
+        #conn = dd.getConnByName(cache_data['confName'])
+        pos = item.getPos()
+        pai = item.parent()
+        while pai.type() != 'base':
+            pai = pai.parent()
+        cubo = tree2dict(pai,isDictionaryEntry)
+        form = guidePreview(cubo,pos)
+        form.show()
+        if form.exec_():
+            pass
+    elif action in ('change schema'):
         pass
     elif action == 'delete':
 
