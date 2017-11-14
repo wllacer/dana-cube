@@ -9,15 +9,6 @@ from __future__ import unicode_literals
 '''
 Documentation, License etc.
 
-@package estimaciones
-# 0.3
-TODO si utilizo un filter en la guia ¿deberia que estar en la query?
-FIXME y propagarse en el filtro si es jerarquico
-# FIXED la union de filtros no funcionaba. Faltaba el AND
-# DONE esto es una funcion reutilizable mergeString
-#FIXED ahora si el indice no existe para un valor no se dispara error
-#TODO En ciertas circunstancias debe o no provocarse y/o informar del error
-
 '''
 
 DEBUG = True
@@ -380,12 +371,13 @@ class Cubo:
                     else:
                         parent = localizaHijo(parent,papid[k])
                         cache_parents[k] = parent
-                
-                item = QStandardItem()
-                item.setData(key)
-                item.setData(value,Qt.DisplayRole)
-                parent.appendRow(item)
-                
+                #esto es como deberia ser. pero para pruebas me conviene el alternativo
+                #item = QStandardItem()
+                #item.setData(key)
+                #item.setData(value,Qt.DisplayRole)
+                #parent.appendRow(item)
+                # alternativo
+                parent.appendRow((QStandardItem(value),QStandardItem(key),))
             elif isinstance(raiz,TreeDict):
                 # problemas inesperados con valores nulos
                 for k in range(len(row)):
@@ -593,8 +585,9 @@ class Cubo:
             for item in tree.traverse(output=1): #por item
                 item.ord = k
                 k += 1
-            
-        return tree,contexto
+            return tree,contexto
+        else:
+            return arbol,contexto
 
 class Vista:
     #TODO falta documentar

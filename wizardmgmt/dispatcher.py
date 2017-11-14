@@ -71,6 +71,7 @@ from dictmgmt.tableInfo import FQName2array,TableInfo
 
 
 from wizardmgmt.cubewizard import *
+from wizardmgmt.pages.guidePreview import guidePreview
 
 @keep_tree_layout()
 def openContextMenu(cubeMgr,position):
@@ -122,6 +123,7 @@ def setMenuActions(menu,context,item):
         menuActions[-1].setEnabled(False)
     if item.type() == 'guides' and item.text() != 'guides' : #TODO
         menu.addSeparator()
+        menuActions.append(menu.addAction("Sample",lambda:execAction(item,context,"sample")))
         menuActions.append(menu.addAction("Copy",lambda:execAction(item,context,"copy")))
         menuActions[-1].setEnabled(False)
     if item.type() in (TYPE_LIST | TYPE_LIST_DICT ) and item.type() != item.text() :  #TODO
@@ -134,9 +136,22 @@ def setMenuActions(menu,context,item):
             
 
 def execAction(item,context,action):
-    context.model().beginResetModel()
-    manage(item,context,action)
-    context.model().endResetModel()
+    if action == 'sample':
+        pos = item.getPos()
+        pai = item.parent()
+        while pai.type() != 'base':
+            pai = pai.parent()
+        cubo = tree2dict(pai,isDictionaryEntry)
+        pprint(cubo)
+        form = guidePreview(cubo,pos)
+        form.show()
+        if form.exec_():
+            pass
+
+    else:
+        context.model().beginResetModel()
+        manage(item,context,action)
+        context.model().endResetModel()
 
 def info_cache(cubeMgr,cube_root):
     """
