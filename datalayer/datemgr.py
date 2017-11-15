@@ -22,7 +22,7 @@ DB_DATE_QUIRKS = {
     "sqlite":{
         "function":'strftime',
         "function_mask":"{0}('{2}',{1})" ,   #0 funcion 1 campo 2 formato
-        "cat":"{} ||:||'{}' ",
+        "cat":"{} ||':'||'{}' ",
         "marker":{ "Y":'%Y', "m":'%m', "W":'%W', "d": '%d',"w": '%w',"J": '%J'},
         },
     "mysql":{
@@ -34,7 +34,7 @@ DB_DATE_QUIRKS = {
     "postgresql":{
         "function":'TO_CHAR',
         "function_mask": "{0}({1},'{2}')",
-        "cat":"{} ||:||'{}' ",
+        "cat":"{} ||':'||'{}' ",
         "marker":{ "Y":'YYYY', "m":'MM', "W":'WW', "d": 'DD',"w": 'D',"J": 'DDD'},
         },
     "oracle":{
@@ -157,47 +157,6 @@ def getDateIndexNew(max_date,  min_date, fmt, **opciones):
                         next.append(entry)
         
     return next
-#def getDateIndex(max_date,  min_date, fmt, **opciones):     
-    #''' 
-       #TODO supera los intervalos mínimos
-       #TODO esta clarisimo que ademas admite seria optimizacion
-    #'''
-    ##DELIMITER = '.'
-    #base = []
-    #for char in fmt:
-        #result = getDateIndexElement(max_date, min_date, char)
-        #if len(base) == 0:
-            #base = result
-        #else:
-            #tmp = []
-            #for j in base:     #jerarquia de fechas anterior
-                #for k in result:   #jerarquia actual
-                    #tmp.append(j+DELIMITER+k)
-            #base = tmp      
-    #'''
-    #formateamos ahora de modo consistente a los otros cursores
-    #'''
-    #resultado = []
-    #if 'nholder' in opciones:   
-        #tamanyo = opciones['nkeys']+opciones['nholder']
-    #else:
-        #tamanyo = opciones['nkeys']
-    #for elem in base:
-        #final_record = [elem,] 
-        #temporal = elem.split(DELIMITER)
-        #for k in range(tamanyo):
-            #if k < len(temporal):
-                #final_record.append(DELIMITER.join(temporal[0:k+1]))
-            #else:
-                #final_record.append('')
-        #resultado.append(final_record)              
-    ##resultado = list(map(base,regFiller,**opciones))
-    #return resultado
-    ##normalizado = []
-    ##for i in base:
-        ##normalizado.append([i, ]) #convert into 0 list
-
-    ##return normalizado
         
 def getDateEntry(psource, fmt, driver='sqlite'):
     
@@ -230,79 +189,77 @@ def getDateEntry(psource, fmt, driver='sqlite'):
     
     return entrada
     
-#def getDateSlots(fieldname, driver='QSQLITE', zoom='n'):
-    ##FIXME no se procesa el zoom
-    #"""
-      #fechas julianas excluidas en sqlite  no es lo que quiero
-    #"""
-    #base_collection= []
-    #zoom_collection=[]
-    #if driver  in ('QSQLITE','sqlite'):
-        #base_col=('Y', 'Ym', 'YW', 'YW','m', 'md', 'mw', 'W', 'Ww','d', 'w', )
-        ## base_col=('Y', 'Ym', 'YW', 'YW','m', 'md', 'mw', 'W', 'Ww', 'J', 'd', 'w', )
-    #else:
-        #base_col=('Y', 'Ym', 'YW', 'Ymv','m', 'mv', 'md', 'mw','mvw',  'W', 'Ww', 'J', 'd', 'w','v' )
-    #zoom_col=('Ymd', 'Ymw','YWw')    
-    ##zoom_col=('YJ','Ymd', 'Ymw', 'YmWw','YWw')
-        
-    #for i in base_col:
-        #base_collection.append(getDateEntry(fieldname, i,  driver)) 
-    #for entrada in zoom_col:
-        #tuplas = []
-        #for l in range(len(entrada)):
-            #tuplas.append(getDateEntry(fieldname,entrada[0:l+1],driver))
-        #zoom_collection.append(tuplas)
-        ##print(entrada)
-        ##pprint(tuplas)
-    #return base_collection,zoom_collection
 
-def genPrivateIntervalCode(interval,fieldname,target,driver='sqlite'):
-    selectores = {
+def makeCaseArrayInterval(interval,driver):
+    rangos = {
         "cuatrimestre": (('01','04',),('05','08'),('09','12')),
         "trimestre": (('01','03',),('04','06'),('07','09'),('10','12')),
         "quincena":(('01','15'),('16','31'),)
         }
-def genTrimestreCode(fieldname,driver='QSQLITE'):
-    """
-       TODO ver si se puede simplificar utilizando esta sintaxis
-            cadena_a = '{1}({2},{3})'
-            cadena = cadena_a
-            print(cadena.format('SQL1','FUNC','%x','var'))
-
-    """
-    trimarray = (
-            ("('01','02','03')",'1'),
-            ("('04','05','06')",'2'),
-            ("('07','08','09')",'3'),
-            ("('10','11','12')",'4'),
-            )
     placeholder = '$$1'
     try:
         function = DB_DATE_QUIRKS[driver]['function']
         function_mask = DB_DATE_QUIRKS[driver]['function_mask']
         year_marker= DB_DATE_QUIRKS[driver]['marker']['Y']
         month_marker = DB_DATE_QUIRKS[driver]['marker']['m']
+        day_marker =  DB_DATE_QUIRKS[driver]['marker']['d']
         cat_stmt = DB_DATE_QUIRKS[driver]['cat']
     except KeyError:
         print('Date conversions for driver %s still not implemented'%driver)
         return None
-        
-    year_stmt = function_mask.format(function,fieldname,year_marker)
-    pyear_stmt = function_mask.format(function,placeholder,year_marker)
-    selector = function_mask.format(function,placeholder,month_marker)
-    print(year_stmt,selector)
-    case_array = []
-    case_array.append("case")
-    for entry in trimarray:
-        sel_stmt ='{} in {}'.format(selector,entry[0])
-        concatenation = cat_stmt.format(pyear_stmt,entry[1])
-        
-        cadena="when {} then {}".format(sel_stmt,concatenation)
-        case_array.append(cadena)
-    case_array.append("end as $$2")
 
+    pyear_stmt = function_mask.format(function,placeholder,year_marker)
+
+    if interval == 'C':
+        nombre = 'cuatrimestre'
+        selector = function_mask.format(function,placeholder,month_marker)
+        pyear_stmt = function_mask.format(function,placeholder,year_marker)
+    elif interval == 'Q':
+        nombre = 'trimestre'
+        selector = function_mask.format(function,placeholder,month_marker)
+        pyear_stmt = function_mask.format(function,placeholder,year_marker)
+    elif interval == 'q':
+        selector = function_mask.format(function,placeholder,day_marker)
+        pyear_stmt = function_mask.format(function,placeholder,year_marker+':'+month_marker)
+        cat_stmt = cat_stmt.replace(':','-')
+        nombre = 'quincena'
+    else:
+        return None
+    rango = rangos[nombre]
+    
+    case_array = []
+    case_array.append("CASE")    
+    for k,entry in enumerate(rango):
+        destination = cat_stmt.format(pyear_stmt,str(k +1))
+        sel_stmt ="WHEN {} BETWEEN '{}' AND '{}' THEN {}".format(selector,entry[0],entry[1],destination)
+        case_array.append(sel_stmt)
+    case_array.append("END AS $$2")
+    
+    return case_array
+
+def getIntervalCode(interval,fieldname,driver):
+    if interval == 'C':
+       nombre = 'cuatrimestre'
+    elif interval == 'Q':
+        nombre = 'trimestre'
+    elif interval == 'q':
+        nombre == 'quincena'
+    else:
+        return None
+    
+    try:
+        function = DB_DATE_QUIRKS[driver]['function']
+        function_mask = DB_DATE_QUIRKS[driver]['function_mask']
+        year_marker= DB_DATE_QUIRKS[driver]['marker']['Y']
+    except KeyError:
+        print('Date conversions for driver %s still not implemented'%driver)
+        return None
+    
+    case_array=makeCaseArrayInterval(interval,driver)
+    
+    year_stmt = function_mask.format(function,fieldname,year_marker)
     trimestre = {
-            "name": fieldname+"_trimestre",
+            "name": fieldname+"_"+ nombre,
             "class":"h",
             "prod": [
                 {
@@ -320,6 +277,13 @@ def genTrimestreCode(fieldname,driver='QSQLITE'):
             }
     return trimestre
 
+def genTrimestreCode(fieldname,driver='sqlite'):
+    return getIntervalCode('Q',fieldname,driver)
+def genCuatrimestreCode(fieldname,driver='sqlite'):
+    return getIntervalCode('C',fieldname,driver)
+def genQuincenaCode(fieldname,driver='sqlite'):
+    return getIntervalCode('q',fieldname,driver)
+    
 def oracleDateString(pcadena):
     import re
     delimitadores = ('YYYY','MM','DD','HH24','MI','SS')

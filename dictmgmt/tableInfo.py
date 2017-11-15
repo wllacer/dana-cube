@@ -319,7 +319,7 @@ class TableInfo():
         return sqlContext #
 
     def info2cube(self):
-        from datalayer.datemgr import genTrimestreCode
+        from datalayer.datemgr import genCuatrimestreCode,genTrimestreCode,genQuincenaCode
 
         conn = self.dd.getConnByName(self.confName)
         inspector = conn.inspector
@@ -353,7 +353,9 @@ class TableInfo():
                                         'class':'d',
                                         'prod':[{'fmt':'date','elem':fld['name'],'mask':'Ym'},]
                                         })  #no es completo
+                entrada['guides'].append( genCuatrimestreCode(fld['name'],self.driver.dialect.name))
                 entrada['guides'].append( genTrimestreCode(fld['name'],self.driver.dialect.name))
+                entrada['guides'].append( genQuincenaCode(fld['name'],self.driver.dialect.name))
 
             else:
                 entrada['guides'].append({'name':fld['basename'],
