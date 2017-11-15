@@ -18,8 +18,37 @@ import datetime
 import time
 from util.record_functions import norm2List
 
+DB_DATE_QUIRKS = {
+    "sqlite":{
+        "function":'strftime',
+        "function_mask":"{0}('{2}',{1})" ,   #0 funcion 1 campo 2 formato
+        "cat":"{} ||:||'{}' ",
+        "marker":{ "Y":'%Y', "m":'%m', "W":'%W', "d": '%d',"w": '%w',"J": '%J'},
+        },
+    "mysql":{
+        "function":'DATE_FORMAT',
+        "function_mask": "{0}({1},'{2}')",
+        "cat":"CONCAT_WS(':',{},'{}')",
+        "marker":{ "Y":'%Y', "m":'%m', "W":'%U', "d": '%d',"w": '%w',"J": '%j'},
+        },
+    "postgresql":{
+        "function":'TO_CHAR',
+        "function_mask": "{0}({1},'{2}')",
+        "cat":"{} ||:||'{}' ",
+        "marker":{ "Y":'YYYY', "m":'MM', "W":'WW', "d": 'DD',"w": 'D',"J": 'DDD'},
+        },
+    "oracle":{
+        "function":'TO_CHAR',
+        "function_mask": "{0}({1},'{2}')",
+        "cat":"{} ||:||'{}' ",
+        "marker":{ "Y":'YYYY', "m":'MM', "W":'WW', "d": 'DD',"w": 'D',"J": 'DDD'},
+        },
+    }
+
 def validate(date_text,fmt):  
     # Solo formatos ordinarios
+    if ('C','Q','q') in fmt:
+        return True
     formato = ''
     for char in fmt:
         if formato == '':
@@ -39,7 +68,7 @@ def getDateIndexElement(max_date, min_date, char):
     minidx = []
     if char == 'w':
         min_rg = 0
-        max_rg = 6 +1
+        max_rg = 6 
         format = '%01d'
     elif char == 'v':
         min_rg = 0
@@ -48,20 +77,33 @@ def getDateIndexElement(max_date, min_date, char):
     #
     elif char == 'd':
         min_rg = 1
-        max_rg = 31 +1
+        max_rg = 31 
         format = '%02d'
     elif char == 'J':
         min_rg = 1
-        max_rg = 366 +1
+        max_rg = 366 
         format = '%03d'
     elif char == 'W':
         min_rg = 1
-        max_rg = 53 +1
+        max_rg = 53 
         format = '%02d'
     elif char == 'm':
         min_rg = 1
-        max_rg = 12+1
+        max_rg = 12
         format = '%02d'
+    elif char == 'C':
+        min_rg = 1 
+        max_rg = 3 + 1 
+        format = '%01d'
+    elif char == 'Q':
+        min_rg = 1 
+        max_rg = 4 + 1 
+        format = '%01d'
+    elif char == 'q':
+        min_rg = 1 
+        max_rg = 2 + 1 
+        format = '%01d'
+
     elif char == 'Y':
         # GENERADOR
         if isinstance(min_date,(datetime.time,datetime.date,)):
@@ -75,7 +117,7 @@ def getDateIndexElement(max_date, min_date, char):
         format = '%04d'
         
 
-    for j in range(min_rg, max_rg):
+    for j in range(min_rg, max_rg +1 ):
         #TODO este proceso solo funciona con dias, no con horas. es una limitacion conocida.
         #FIXME tengo la impresion que es un poco lento
         #TODO explorar la posibilidad de utilizar el paquete Dateutil 
@@ -115,81 +157,57 @@ def getDateIndexNew(max_date,  min_date, fmt, **opciones):
                         next.append(entry)
         
     return next
-def getDateIndex(max_date,  min_date, fmt, **opciones):     
-    ''' 
-       TODO supera los intervalos mínimos
-       TODO esta clarisimo que ademas admite seria optimizacion
-    '''
-    #DELIMITER = '.'
-    base = []
-    for char in fmt:
-        result = getDateIndexElement(max_date, min_date, char)
-        if len(base) == 0:
-            base = result
-        else:
-            tmp = []
-            for j in base:     #jerarquia de fechas anterior
-                for k in result:   #jerarquia actual
-                    tmp.append(j+DELIMITER+k)
-            base = tmp      
-    '''
-    formateamos ahora de modo consistente a los otros cursores
-    '''
-    resultado = []
-    if 'nholder' in opciones:   
-        tamanyo = opciones['nkeys']+opciones['nholder']
-    else:
-        tamanyo = opciones['nkeys']
-    for elem in base:
-        final_record = [elem,] 
-        temporal = elem.split(DELIMITER)
-        for k in range(tamanyo):
-            if k < len(temporal):
-                final_record.append(DELIMITER.join(temporal[0:k+1]))
-            else:
-                final_record.append('')
-        resultado.append(final_record)              
-    #resultado = list(map(base,regFiller,**opciones))
-    return resultado
-    #normalizado = []
-    #for i in base:
-        #normalizado.append([i, ]) #convert into 0 list
+#def getDateIndex(max_date,  min_date, fmt, **opciones):     
+    #''' 
+       #TODO supera los intervalos mínimos
+       #TODO esta clarisimo que ademas admite seria optimizacion
+    #'''
+    ##DELIMITER = '.'
+    #base = []
+    #for char in fmt:
+        #result = getDateIndexElement(max_date, min_date, char)
+        #if len(base) == 0:
+            #base = result
+        #else:
+            #tmp = []
+            #for j in base:     #jerarquia de fechas anterior
+                #for k in result:   #jerarquia actual
+                    #tmp.append(j+DELIMITER+k)
+            #base = tmp      
+    #'''
+    #formateamos ahora de modo consistente a los otros cursores
+    #'''
+    #resultado = []
+    #if 'nholder' in opciones:   
+        #tamanyo = opciones['nkeys']+opciones['nholder']
+    #else:
+        #tamanyo = opciones['nkeys']
+    #for elem in base:
+        #final_record = [elem,] 
+        #temporal = elem.split(DELIMITER)
+        #for k in range(tamanyo):
+            #if k < len(temporal):
+                #final_record.append(DELIMITER.join(temporal[0:k+1]))
+            #else:
+                #final_record.append('')
+        #resultado.append(final_record)              
+    ##resultado = list(map(base,regFiller,**opciones))
+    #return resultado
+    ##normalizado = []
+    ##for i in base:
+        ##normalizado.append([i, ]) #convert into 0 list
 
-    #return normalizado
+    ##return normalizado
         
-def getDateEntry(psource, fmt, driver='QSQLITE'):
+def getDateEntry(psource, fmt, driver='sqlite'):
     
     source=norm2List(psource)[-1]  #no esta normalizado el uso de lista o parametros indivudales
     #DRIVERNAME
-    marker = {}
-    if driver in ('QSQLITE','sqlite'):
-        function = 'strftime'
-        marker["Y"] = '%Y'
-        marker["m"]= '%m'
-        marker["W"]= '%W'
-        marker["d"] = '%d'
-        marker["w"] = '%w'
-        marker["J"] = '%J'
-    #elif driver in ('mysql','mariadb','mysqldb','mysqlconnector'):  #GENERADOR
-    elif driver in ('mysql',):  #GENERADOR
-        function = 'DATE_FORMAT' 
-        marker["Y"] = '%Y'
-        marker["m"]= '%m'
-        marker["W"]= '%U'
-        marker["d"] = '%d'
-        marker["w"] = '%w'
-        marker["J"] = '%j'
-    #elif driver in ('postgresql','postgres','pg','psycopg2','oracle'):
-    elif driver in ('postgresql','oracle'):
-        function = 'to_char'   
-        marker["Y"] =  'YYYY'
-        marker["m"]= 'MM'
-        marker["W"]= 'WW'
-        marker['v'] = 'W'
-        marker["d"] = 'DD'
-        marker["w"] = 'D'
-        marker["J"] = 'DDD'
-    else:
+    try:
+        marker = DB_DATE_QUIRKS[driver]['marker']
+        function = DB_DATE_QUIRKS[driver]['function']
+        fmask = DB_DATE_QUIRKS[driver]['function_mask']
+    except KeyError :
         print('Date conversions for driver %s still not implemented'%driver)
         return None
         
@@ -203,12 +221,7 @@ def getDateEntry(psource, fmt, driver='QSQLITE'):
         if fmt_string != '':
             fmt_string += DELIMITER
         fmt_string += marker[char]
-    element = function + "("
-    if driver in ('QSQLITE','sqlite'):
-        element += "'" + fmt_string + "'," + source
-    else:
-        element += source + ",'" + fmt_string +  "'"
-    element += ')'
+    element = fmask.format(function,source,fmt_string)
     
     entrada['fmt'] = 'txt'
     entrada['mask']  = fmt
@@ -217,32 +230,38 @@ def getDateEntry(psource, fmt, driver='QSQLITE'):
     
     return entrada
     
-def getDateSlots(fieldname, driver='QSQLITE', zoom='n'):
-    #FIXME no se procesa el zoom
-    """
-      fechas julianas excluidas en sqlite  no es lo que quiero
-    """
-    base_collection= []
-    zoom_collection=[]
-    if driver  in ('QSQLITE','sqlite'):
-        base_col=('Y', 'Ym', 'YW', 'YW','m', 'md', 'mw', 'W', 'Ww','d', 'w', )
-        # base_col=('Y', 'Ym', 'YW', 'YW','m', 'md', 'mw', 'W', 'Ww', 'J', 'd', 'w', )
-    else:
-        base_col=('Y', 'Ym', 'YW', 'Ymv','m', 'mv', 'md', 'mw','mvw',  'W', 'Ww', 'J', 'd', 'w','v' )
-    zoom_col=('Ymd', 'Ymw','YWw')    
-    #zoom_col=('YJ','Ymd', 'Ymw', 'YmWw','YWw')
+#def getDateSlots(fieldname, driver='QSQLITE', zoom='n'):
+    ##FIXME no se procesa el zoom
+    #"""
+      #fechas julianas excluidas en sqlite  no es lo que quiero
+    #"""
+    #base_collection= []
+    #zoom_collection=[]
+    #if driver  in ('QSQLITE','sqlite'):
+        #base_col=('Y', 'Ym', 'YW', 'YW','m', 'md', 'mw', 'W', 'Ww','d', 'w', )
+        ## base_col=('Y', 'Ym', 'YW', 'YW','m', 'md', 'mw', 'W', 'Ww', 'J', 'd', 'w', )
+    #else:
+        #base_col=('Y', 'Ym', 'YW', 'Ymv','m', 'mv', 'md', 'mw','mvw',  'W', 'Ww', 'J', 'd', 'w','v' )
+    #zoom_col=('Ymd', 'Ymw','YWw')    
+    ##zoom_col=('YJ','Ymd', 'Ymw', 'YmWw','YWw')
         
-    for i in base_col:
-        base_collection.append(getDateEntry(fieldname, i,  driver)) 
-    for entrada in zoom_col:
-        tuplas = []
-        for l in range(len(entrada)):
-            tuplas.append(getDateEntry(fieldname,entrada[0:l+1],driver))
-        zoom_collection.append(tuplas)
-        #print(entrada)
-        #pprint(tuplas)
-    return base_collection,zoom_collection
+    #for i in base_col:
+        #base_collection.append(getDateEntry(fieldname, i,  driver)) 
+    #for entrada in zoom_col:
+        #tuplas = []
+        #for l in range(len(entrada)):
+            #tuplas.append(getDateEntry(fieldname,entrada[0:l+1],driver))
+        #zoom_collection.append(tuplas)
+        ##print(entrada)
+        ##pprint(tuplas)
+    #return base_collection,zoom_collection
 
+def genPrivateIntervalCode(interval,fieldname,target,driver='sqlite'):
+    selectores = {
+        "cuatrimestre": (('01','04',),('05','08'),('09','12')),
+        "trimestre": (('01','03',),('04','06'),('07','09'),('10','12')),
+        "quincena":(('01','15'),('16','31'),)
+        }
 def genTrimestreCode(fieldname,driver='QSQLITE'):
     """
        TODO ver si se puede simplificar utilizando esta sintaxis
@@ -258,31 +277,16 @@ def genTrimestreCode(fieldname,driver='QSQLITE'):
             ("('10','11','12')",'4'),
             )
     placeholder = '$$1'
-    
-    if driver in ('QSQLITE','sqlite'):
-        function = 'strftime'
-        function_mask ="{0}('{2}',{1})"
-        year_marker='%Y'
-        month_marker = '%m'
-        cat_stmt = "{} ||:||'{}' "
-    #elif driver in ('mysql','mariadb','mysqldb','mysqlconnector'):  #GENERADOR
-    elif driver in ('mysql',):
-        function = 'DATE_FORMAT'
-        function_mask ="{0}({1},'{2}')"
-        year_marker='%Y'
-        month_marker = '%m'
-        cat_stmt = "CONCAT_WS(':',{},'{}')"
-    #elif driver in ('postgresql','postgres','pg','psycopg2','oracle'):
-    elif driver in ('postgresql','oracle'):
-        function = 'TO_CHAR'
-        function_mask ="{0}({1},'{2}')"
-        year_marker='YYYY'
-        month_marker = 'MM'
-        cat_stmt = "{} ||':'||'{}' "
-    else:
+    try:
+        function = DB_DATE_QUIRKS[driver]['function']
+        function_mask = DB_DATE_QUIRKS[driver]['function_mask']
+        year_marker= DB_DATE_QUIRKS[driver]['marker']['Y']
+        month_marker = DB_DATE_QUIRKS[driver]['marker']['m']
+        cat_stmt = DB_DATE_QUIRKS[driver]['cat']
+    except KeyError:
         print('Date conversions for driver %s still not implemented'%driver)
         return None
-
+        
     year_stmt = function_mask.format(function,fieldname,year_marker)
     pyear_stmt = function_mask.format(function,placeholder,year_marker)
     selector = function_mask.format(function,placeholder,month_marker)
