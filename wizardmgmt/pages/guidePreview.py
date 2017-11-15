@@ -43,7 +43,7 @@ def traverse(root,base=None):
 class guidePreview(QDialog):
     def __init__(self,cubo,pos=0,parent=None):
         super(guidePreview,self).__init__(parent)
-        self.tree = previewTree(cubo,guia=pos,conexion=conn)
+        self.tree = previewTree(cubo,guia=pos)
         meatLayout=QGridLayout()
         meatLayout.addWidget(self.tree)
         self.setLayout(meatLayout)
@@ -62,7 +62,7 @@ class previewTree(QTreeView):
         print('inicializacion completa')
 
     def setupModel(self,guia):
-
+  
         self.baseModel,dummy = self.cubo.fillGuia(guia,qtModel='yes')
         self.hiddenRoot = self.baseModel.invisibleRootItem()       
         parent = self.hiddenRoot = self.baseModel.invisibleRootItem()

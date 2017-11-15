@@ -243,7 +243,7 @@ def getIntervalCode(interval,fieldname,driver):
     elif interval == 'Q':
         nombre = 'trimestre'
     elif interval == 'q':
-        nombre == 'quincena'
+        nombre = 'quincena'
     else:
         return None
     

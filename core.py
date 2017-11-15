@@ -587,9 +587,9 @@ class Cubo:
                 k += 1
             return tree,contexto
         else:
-            for item in traverse(tree):
-                print(item.parent().data(Qt.DisplayRole) if item.parent() is not None else '??',
-                      item.data(Qt.DisplayRole))
+            #for item in traverse(tree):
+                #print(item.parent().data(Qt.DisplayRole) if item.parent() is not None else '??',
+                      #item.data(Qt.DisplayRole))
                 
             return arbol,contexto
 
