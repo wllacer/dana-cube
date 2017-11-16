@@ -114,7 +114,8 @@ class BaseTreeItem(QStandardItem):
             self.setColumnData(2,result[0][0],Qt.EditRole)
         else:
             return  
-        
+    
+
     def getBrotherByName(self,name): 
         # getSibling esta cogido para los elementos de la fila, asi que tengo que inventar esto para obtener
         # un 'hermano' por nomnbre

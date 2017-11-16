@@ -616,10 +616,10 @@
     "default": {
         "cubo": "datos light",
         "vista": {
-            "elemento": "votes_presential",
             "agregado": "sum",
-            "row": 3,
-            "col": 1
+            "col": "1",
+            "elemento": "votes_presential",
+            "row": "3"
         }
     },
     "experimento": {
@@ -757,8 +757,6 @@
             "main.voto_provincia.votos",
             "main.voto_provincia.escanos"
         ],
-        "name": "provincia_resumido",
-        "table": "main.voto_provincia",
         "guides": [
             {
                 "class": "o",
@@ -796,9 +794,6 @@
                 "name": "provincia",
                 "prod": [
                     {
-                        "elem": [
-                            "main.voto_provincia.provincia"
-                        ],
                         "domain": {
                             "code": [
                                 "main.supramunicipal.provincia"
@@ -808,7 +803,10 @@
                             ],
                             "filter": "anyo_elec = '2016' and provincia != '99'",
                             "table": "main.supramunicipal"
-                        }
+                        },
+                        "elem": [
+                            "main.voto_provincia.provincia"
+                        ]
                     }
                 ]
             },
@@ -830,7 +828,9 @@
                     }
                 ]
             }
-        ]
+        ],
+        "name": "provincia_resumido",
+        "table": "main.voto_provincia"
     },
     "rental": {
         "base filter": "",

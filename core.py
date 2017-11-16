@@ -38,9 +38,67 @@ except ImportError:
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from cubemgmt.cubetree import CubeItem,traverseTree
+#from cubemgmt.cubetree import CubeItem,traverseTree
 
+def searchStandardItem(item,value,role):
+    """
+       modelo general de funcion de busqueda binaria en hijos de un QStandardItem o derivados
+       como funcion generica porque se repite en varias circunstancias
+       SOLO vale con children ordenados por el valor de busqueda (eso es muy importante)
+    """
+    lower = 0
+    upper = item.rowCount()
+    while lower < upper:   # use < instead of <=
+        x = lower + (upper - lower) // 2
+        val = item.child(x).data(role)
+        if value == val:
+            return item.child(x)
+        elif value > val:
+            if lower == x:   # this two are the actual lines
+                break        # you're looking for
+            lower = x
+        elif value < val:
+            upper = x
+    return None
 
+class GuideItemModel(QStandardItemModel):
+    def __init__(self,parent=None):
+        super(GuideItemModel, self).__init__(parent)
+
+    def traverse(self,base=None):
+        if base is not None:
+            yield base
+            queue = [ base.child(i) for i in range(0,base.rowCount()) ]
+        else:
+            root = self.invisibleRootItem()
+            queue = [ root.child(i) for i in range(0,root.rowCount()) ]
+        while queue :
+            yield queue[0]
+            expansion = [ queue[0].child(i) for i in range(0,queue[0].rowCount()) ]
+            if expansion is None:
+                del queue[0]
+            else:
+                queue = expansion  + queue[1:]            
+       
+    def searchHierarchy(self,valueList,role=None):
+        """
+          busco el elemento padre con toda la jerarquia de una tacada. No se con los grandes totales
+        """
+        parent = self.invisibleRootItem()
+        for k,value in enumerate(valueList):
+            elem = searchStandardItem(parent,value,role)
+            if not elem:
+                return None
+            parent = elem
+        return elem
+    
+class GuideItem(QStandardItem):
+    def __init__(self,*args):  #solo usamos valor (str o standarItem)
+        super(GuideItem, self).__init__(*args)
+    
+    def searchChildren(self,value,role=None):
+        return searchStandardItem(self,value,role)
+        
 def mergeString(string1,string2,connector):
     if not string1 :
         merge = string2
@@ -324,17 +382,6 @@ class Cubo:
         desc = contexto['desc']
         groupby = contexto['groupby']
         
-        def localizaHijo(treeItem,valor):
-            '''
-            localización manual de entradas en QStandardItemModel por valor (leer la secuencia y chequear. Horrorosa)
-            Es una funciion local porque solo tiene sentido aqui y porque pasado el periodo experimental 
-            TODO se integrara a nivel superior
-            '''
-            for k in range(treeItem.rowCount()):
-                if treeItem.child(k).data(Qt.DisplayRole) == valor:
-                    return treeItem.child(k)
-            return treeItem
-
         ngroupby = len(groupby)
         ncols = len(columns)
         ndesc = len(columns) - len(code)
@@ -355,29 +402,41 @@ class Cubo:
                 value = ', '.join(row[-ndesc:])
             #
             # ahora debo localizar donde en la jerarquia tiene que encontrarse. Eso varia por tipo
-            # Notese que para QStandardItemModel utilizo un sistema de cache para reducir el numero de busquedas
+            # Notese que para GuideItemModel utilizo un sistema de cache para reducir el numero de busquedas
             #
             if isinstance(raiz,QStandardItem):
+#                parent = raiz
+#                key = papid[-1]
+#                del papid[-1]
+#                #parent = raiz
+#                #TODO  sigo sn contemplar que la clave no exista. y asum que las claves son monovalor
+#                for k in range(len(papid)):
+#                    if cache_parents[k] is not None and cache_parents[k].data(Qt.DisplayRole) == papid[k]:
+#                        parent = cache_parents[k]
+#                        continue
+#                    else:
+#                        parent = localizaHijo(parent,papid[k])
+#                        cache_parents[k] = parent
+#                #esto es como deberia ser. pero para pruebas me conviene el alternativo
+#                #item = QStandardItem()
+#                #item.setData(key)
+#                #item.setData(value,Qt.DisplayRole)
+#                #parent.appendRow(item)
+#                # alternativo
+#                parent.appendRow((QStandardItem(key),QStandardItem(value),))
+
                 papid = row[0:len(code)]
-                parent = raiz
                 key = papid[-1]
                 del papid[-1]
-                #parent = raiz
-                #TODO  sigo sn contemplar que la clave no exista. y asum que las claves son monovalor
-                for k in range(len(papid)):
-                    if cache_parents[k] is not None and cache_parents[k].data(Qt.DisplayRole) == papid[k]:
-                        parent = cache_parents[k]
-                        continue
+                #TODO cache sigue siendo necesario
+                if len(papid) == 0:
+                    raiz.appendRow((GuideItem(key),GuideItem(value),))
+                else:
+                    parent = raiz.model().searchHierarchy(papid,Qt.DisplayRole)
+                    if not parent:
+                        print('Ilocalizable',papid)
                     else:
-                        parent = localizaHijo(parent,papid[k])
-                        cache_parents[k] = parent
-                #esto es como deberia ser. pero para pruebas me conviene el alternativo
-                #item = QStandardItem()
-                #item.setData(key)
-                #item.setData(value,Qt.DisplayRole)
-                #parent.appendRow(item)
-                # alternativo
-                parent.appendRow((QStandardItem(key),QStandardItem(value),))
+                        parent.appendRow((GuideItem(key),GuideItem(value),))
             elif isinstance(raiz,TreeDict):
                 # problemas inesperados con valores nulos
                 for k in range(len(row)):
@@ -431,7 +490,7 @@ class Cubo:
             tree=TreeDict()
             tree.name = guia['name']
         else:
-            arbol = QStandardItemModel()
+            arbol = GuideItemModel()
             tree = arbol.invisibleRootItem()  #para que __createProdModel solo necesite invocarse una vez
         
         # primero expandimos las entradas tipo fecha

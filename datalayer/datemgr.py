@@ -47,10 +47,10 @@ DB_DATE_QUIRKS = {
 
 def validate(date_text,fmt):  
     # Solo formatos ordinarios
-    if ('C','Q','q') in fmt:
-        return True
     formato = ''
     for char in fmt:
+        if char in ('C','Q','q'):  #no debe entrar por aqui pero queda. No valido tipos generados
+            return True
         if formato == '':
             formato += '%'+char
         else:

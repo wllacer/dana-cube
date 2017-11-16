@@ -24,21 +24,21 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import QApplication, QDialog, QTreeView, QSplitter, QMenu, \
      QDialog, QInputDialog, QLineEdit, QComboBox, QMessageBox,QGridLayout
 
-from core import Cubo
+from core import Cubo,GuideItemModel,GuideItem
 
-def traverse(root,base=None):
-    if base is not None:
-        yield base
-        queue = [ base.child(k)  for k in range(base.rowCount()) ]
-    else:
-        queue = [ root.child(i) for i in range(0,root.rowCount()) ]
-    while queue :
-        yield queue[0]
-        expansion = [queue[0].child(k)  for k in range(queue[0].rowCount()) ]
-        if expansion is None:
-            del queue[0]
-        else:
-            queue = expansion  + queue[1:]   
+#def traverse(root,base=None):
+    #if base is not None:
+        #yield base
+        #queue = [ base.child(k)  for k in range(base.rowCount()) ]
+    #else:
+        #queue = [ root.child(i) for i in range(0,root.rowCount()) ]
+    #while queue :
+        #yield queue[0]
+        #expansion = [queue[0].child(k)  for k in range(queue[0].rowCount()) ]
+        #if expansion is None:
+            #del queue[0]
+        #else:
+            #queue = expansion  + queue[1:]   
 
 class guidePreview(QDialog):
     def __init__(self,cubo,pos=0,parent=None):
@@ -66,8 +66,6 @@ class previewTree(QTreeView):
         self.baseModel,dummy = self.cubo.fillGuia(guia,qtModel='yes')
         self.hiddenRoot = self.baseModel.invisibleRootItem()       
         parent = self.hiddenRoot = self.baseModel.invisibleRootItem()
-
-            
         
     def setupView(self):
         self.view.setModel(self.baseModel)

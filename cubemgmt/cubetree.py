@@ -77,7 +77,7 @@ class CubeItem(QStandardItem):
             colind = indice.sibling(indice.row(),2)
             if colind:
                 colind.setData(True)
-                
+            
     def getBrotherByName(self,name): 
         # getSibling esta cogido para los elementos de la fila, asi que tengo que inventar esto para obtener
         # un 'hermano' por nomnbre
@@ -96,7 +96,7 @@ class CubeItem(QStandardItem):
             else:
                 return item
         return None
-
+    
     def getFullDesc(self):
         fullDesc = [] #let the format be done outside
         if not self.isAuxiliar():

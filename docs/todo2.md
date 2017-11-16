@@ -2,14 +2,17 @@
 # ToDo list
 __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/todo2.md "Title")
 
+## TODOLIST
+*  querybrowser limitado
+*  unificar QStandardItemModels (en CubeTree, TableBrowse y DictTree)
 ## nuevo wizard guia
 *  __DONE__ añadir entradas en categorias
 *  __DONE__ no salva categoria ??
-*  plantearnos el filtro y el grouped by
-*  algun sistema de comprobación que son correctas las definciones de guia
+*  plantearnos el filtro __DONE__ y el grouped by
+*  __DONE__ algun sistema de comprobación que son correctas las definciones de guia
 *  plantearse ocultar el dominio en las complejas
-*  __DONE__joe con los links
-*  Comprobar los selectores de fechas un poco raros (cuatrimestres, etc, ...)
+*  __DONE__ joe con los links
+*  __DONE__ (Parcialmente desestimado) Comprobar los selectores de fechas un poco raros (cuatrimestres, etc, ...)
 
 ## catatonia
 *  __BUG__crash con datos incompletos en definicion de vista. 
