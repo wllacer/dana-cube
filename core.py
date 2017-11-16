@@ -405,25 +405,6 @@ class Cubo:
             # Notese que para GuideItemModel utilizo un sistema de cache para reducir el numero de busquedas
             #
             if isinstance(raiz,QStandardItem):
-#                parent = raiz
-#                key = papid[-1]
-#                del papid[-1]
-#                #parent = raiz
-#                #TODO  sigo sn contemplar que la clave no exista. y asum que las claves son monovalor
-#                for k in range(len(papid)):
-#                    if cache_parents[k] is not None and cache_parents[k].data(Qt.DisplayRole) == papid[k]:
-#                        parent = cache_parents[k]
-#                        continue
-#                    else:
-#                        parent = localizaHijo(parent,papid[k])
-#                        cache_parents[k] = parent
-#                #esto es como deberia ser. pero para pruebas me conviene el alternativo
-#                #item = QStandardItem()
-#                #item.setData(key)
-#                #item.setData(value,Qt.DisplayRole)
-#                #parent.appendRow(item)
-#                # alternativo
-#                parent.appendRow((QStandardItem(key),QStandardItem(value),))
 
                 papid = row[0:len(code)]
                 key = papid[-1]
