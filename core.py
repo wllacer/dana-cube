@@ -419,7 +419,7 @@ class Cubo:
         if isinstance(guidIdentifier,int):
             guidId = guidIdentifier
         else:
-            guidId = self.lista_guias.index(guidIdentifier)
+            guidId = [ item['name'] for item in self.lista_guias].index(guidIdentifier)
         guia = self.definition['guides'][guidId]
         
         date_cache = {}
