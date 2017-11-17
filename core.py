@@ -95,7 +95,18 @@ class GuideItemModel(QStandardItemModel):
 class GuideItem(QStandardItem):
     def __init__(self,*args):  #solo usamos valor (str o standarItem)
         super(GuideItem, self).__init__(*args)
-    
+ 
+    def setColumn(self,col,value):
+        row = self.index().row()
+        if self.parent() is None:
+            pai = self.model().invisibleRootItem()
+        else:
+            pai = self.parent()
+        colItem = GuideItem()
+        colItem.setData(value,Qt.UserRole +1)
+        colItem.setData(value,Qt.DisplayRole)
+        pai.setChild(row,col,colItem)
+        
     def searchChildren(self,value,role=None):
         return searchStandardItem(self,value,role)
         
@@ -411,13 +422,13 @@ class Cubo:
                 del papid[-1]
                 #TODO cache sigue siendo necesario
                 if len(papid) == 0:
-                    raiz.appendRow((GuideItem(key),GuideItem(value),))
+                    parent = raiz
                 else:
                     parent = raiz.model().searchHierarchy(papid,Qt.DisplayRole)
                     if not parent:
                         print('Ilocalizable',papid)
-                    else:
-                        parent.appendRow((GuideItem(key),GuideItem(value),))
+                parent.appendRow((GuideItem(key),GuideItem(value),))
+                
             elif isinstance(raiz,TreeDict):
                 # problemas inesperados con valores nulos
                 for k in range(len(row)):
