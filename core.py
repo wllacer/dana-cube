@@ -36,115 +36,10 @@ try:
 except ImportError:
     XLSOUTPUT = False
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
+#from PyQt5.QtCore import Qt
+#from PyQt5.QtGui import QStandardItemModel, QStandardItem
 #from cubemgmt.cubetree import CubeItem,traverseTree
 
-def searchStandardItem(item,value,role):
-    """
-       modelo general de funcion de busqueda binaria en hijos de un QStandardItem o derivados
-       como funcion generica porque se repite en varias circunstancias
-       SOLO vale con children ordenados por el valor de busqueda (eso es muy importante)
-    """
-    lower = 0
-    upper = item.rowCount()
-    while lower < upper:   # use < instead of <=
-        x = lower + (upper - lower) // 2
-        val = item.child(x).data(role)
-        try:
-            if value == val:
-                return item.child(x)
-            elif value > val:
-                if lower == x:   # this two are the actual lines
-                    break        # you're looking for
-                lower = x
-            elif value < val:
-                upper = x
-        except TypeError:
-            print(value,item.data(),item.rowCount(),'castañazo')
-            raise
-    return None
-
-class GuideItemModel(QStandardItemModel):
-    def __init__(self,parent=None):
-        super(GuideItemModel, self).__init__(parent)
-
-                                   
-    def traverse(self,base=None):
-        if base is not None:
-            yield base
-            queue = [ base.child(i) for i in range(0,base.rowCount()) ]
-        else:
-            root = self.invisibleRootItem()
-            queue = [ root.child(i) for i in range(0,root.rowCount()) ]
-        while queue :
-            yield queue[0]
-            expansion = [ queue[0].child(i) for i in range(0,queue[0].rowCount()) ]
-            if expansion is None:
-                del queue[0]
-            else:
-                queue = expansion  + queue[1:]            
-       
-    def searchHierarchy(self,valueList,role=None):
-        """
-          busco el elemento padre con toda la jerarquia de una tacada. No se con los grandes totales
-        """
-        if role is None:
-            prole = Qt.UserRole +1
-        else:
-            prole = role
-        elem = self.invisibleRootItem()
-        parent = self.invisibleRootItem()
-        for k,value in enumerate(valueList):
-            elem = searchStandardItem(parent,value,prole)
-            if not elem:
-                return None
-            parent = elem
-        return elem
-    
-class GuideItem(QStandardItem):
-    def __init__(self,*args):  #solo usamos valor (str o standarItem)
-        super(GuideItem, self).__init__(*args)
-    
-    
-    def depth(self):
-        depth = 0
-        pai = self.parent()
-        while pai is not None and pai != self.model().invisibleRootItem():
-            pai = pai.parent()
-            depth += 1
-        return depth
-    
-    def getFullKey(self):
-        clave = self.data(Qt.UserRole +1)
-        pai = self.parent()
-        while pai is not None and pai != self.model().invisibleRootItem():
-            clave = pai.data(Qt.UserRole +1) + DELIMITER + clave
-        return clave
-        
-    def searchChildren(self,value,role=None):
-        if role is None:
-            prole = Qt.UserRole +1
-        else:
-            prole = role
-        return searchStandardItem(self,value,prole)
-
-    def setColumn(self,col,value):
-        row = self.index().row()
-        if self.parent() is None:
-            pai = self.model().invisibleRootItem()
-        else:
-            pai = self.parent()
-        colItem = GuideItem()
-        colItem.setData(value,Qt.UserRole +1)
-        colItem.setData(value,Qt.DisplayRole)
-        pai.setChild(row,col,colItem)
-
-    def __str__(self):
-        return "<" + self.text() + ">"
-
-    def __repr__(self):
-        return "<" + self.data(Qt.DisplayRole) + ">"
 
 def mergeString(string1,string2,connector):
     if not string1 :
@@ -1308,13 +1203,12 @@ def experimental():
     #for item in guiax.traverse():
         #print('\t'*item.depth(),item.data(Qt.UserRole +1))
     
-    vista = Vista(cubo,5,0,'sum',cubo.lista_campos[0],totalizado=True)
+    vista = Vista(cubo,5,1,'sum',cubo.lista_campos[0],totalizado=True)
     vista.toNewTree()
     for item in vista.row_hdr_idx.traverse():
-        if item is not None:
-            print('\t'*item.depth(),item.data(Qt.UserRole +1),item.columnCount())
-    
-    #vista.toTree2D()
+#        if item is not None:
+        print('\t'*item.depth(),item.data(Qt.UserRole +1),item.lenPayload(),item.getPayload())
+        print('\t'*item.depth(),item.data(Qt.UserRole +1),item.gpi(2))
     #pprint(vista.row_hdr_idx.content)
     #print(vista.row_hdr_idx['CA08:16'])
     #vista.row_hdr_idx.setHeader()

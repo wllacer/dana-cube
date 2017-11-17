@@ -453,9 +453,342 @@ class TreeDict(object):
                     clave[k]=''
             lista.append((item,clave,))
         return lista
+        
+from PyQt5.QtCore import Qt 
+from PyQt5.QtGui import QStandardItemModel, QStandardItem
+from PyQt5.QtGui import QColor
+from util.numeros import isOutlier,fmtNumber
+
+def searchStandardItem(item,value,role):
+    """
+       modelo general de funcion de busqueda binaria en hijos de un QStandardItem o derivados
+       como funcion generica porque se repite en varias circunstancias
+       SOLO vale con children ordenados por el valor de busqueda (eso es muy importante)
+    """
+    lower = 0
+    upper = item.rowCount()
+    while lower < upper:   # use < instead of <=
+        x = lower + (upper - lower) // 2
+        val = item.child(x).data(role)
+        try:
+            if value == val:
+                return item.child(x)
+            elif value > val:
+                if lower == x:   # this two are the actual lines
+                    break        # you're looking for
+                lower = x
+            elif value < val:
+                upper = x
+        except TypeError:
+            print(value,item.data(),item.rowCount(),'castañazo')
+            raise
+    return None
+
+
+class TreeFormat(object):
+    """
+    Esta clase solo tiene propiedades de formateo del modelo (unado se usa en uan view)
+    La forma actual es por compatibilidad con implementaciones anteriores
+    """
+    def __init__(self,**opciones):
+        self.format = {}
+        if 'stats' in opciones:
+            self.stats = opciones['stats']
+        else:
+            self.stats = False
+        if 'format' in opciones:
+            self.format = opciones['format']
+        else:
+            self.format['yellowoutliers'] = True
+            self.format['rednegatives'] = True
+            self.format['thousandsseparator'] = "."
+            self.format['decimalmarker'] = ","
+            self.format['decimalplaces'] = 0
             
         
+class GuideItemModel(QStandardItemModel):
+    def __init__(self,parent=None):
+        super(GuideItemModel, self).__init__(parent)
+        self.name = None
+        self.datos = TreeFormat()  #es por compatibilidad, son formatos
+                                   
+    def traverse(self,base=None):
+        if base is not None:
+            yield base
+            queue = [ base.child(i) for i in range(0,base.rowCount()) ]
+        else:
+            root = self.invisibleRootItem()
+            queue = [ root.child(i) for i in range(0,root.rowCount()) ]
+        while queue :
+            yield queue[0]
+            expansion = [ queue[0].child(i) for i in range(0,queue[0].rowCount()) ]
+            if expansion is None:
+                del queue[0]
+            else:
+                queue = expansion  + queue[1:]            
+       
+    def searchHierarchy(self,valueList,role=None):
+        """
+          busco el elemento padre con toda la jerarquia de una tacada. No se con los grandes totales
+        """
+        if role is None:
+            prole = Qt.UserRole +1
+        else:
+            prole = role
+        elem = self.invisibleRootItem()
+        parent = self.invisibleRootItem()
+        for k,value in enumerate(valueList):
+            elem = searchStandardItem(parent,value,prole)
+            if not elem:
+                return None
+            parent = elem
+        return elem
 
+    def setStats(self,switch):
+        self.datos.stats = switch
+        if self.datos.stats:
+            for item in self.traverse():
+                item.setStatistics()
+        else:
+            return None
+    def data(self,index,role):
+        if not index.isValid():
+            return None
+        item = self.itemFromIndex(index)
+        if role == Qt.TextAlignmentRole:
+            if index.column() != 0:
+                return Qt.AlignRight| Qt.AlignVCenter
+            else:
+                return Qt.AlignLeft| Qt.AlignVCenter
+        elif role == Qt.BackgroundRole:
+            if item.data(Qt.DisplayRole) is None:
+                return item.data(role)
+            if index.column() != 0:
+                if self.datos.format['yellowoutliers'] and self.datos.stats:
+                    if isOutlier(item.data(Qt.DisplayRole),item.getStatistics()):
+                        return QColor(Qt.yellow)
+                if self.datos.format['rednegatives'] and item.data(Qt.DisplayRole) < 0 :
+                    return QColor(Qt.red)
+        elif role == Qt.DisplayRole:
+            datos = item.data(role)
+            if datos == None:
+                return None
+            if index.column() == 0:
+                return datos
+            else:
+                text, sign = fmtNumber(datos,self.datos.format)
+                return '{}{}'.format(sign if sign == '-' else '',text)               
+        else:
+            return item.data(role)
+
+class GuideItem(QStandardItem):
+    #
+    #  funciones reimplementadas
+    #
+    def __init__(self,*args):  #solo usamos valor (str o standarItem)
+        super(GuideItem, self).__init__(*args)
+        self.originalValue = self.data(Qt.UserRole +1)
+        if self.index().column() == 0:
+            self.stats = None
+
+    def setData(self,value,role):
+        super(GuideItem, self).setData(value,role)
+        if role is None or role == Qt.UserRole + 1:
+            if self.originalValue is None:
+                self.originalValue = value
+    
+    def data(self,role):
+        valor = super(GuideItem, self).data(role)
+        if role in (Qt.DisplayRole,Qt.UserRole +1) and valor is None:
+            valor = super(GuideItem,self).data(Qt.UserRole +1)
+        return valor
+    
+    def __str__(self):
+        return "<" + str(self.data(Qt.DisplayRole)) + ">"
+
+    def __repr__(self):
+        return "<" + self.data(Qt.UserRole +1) + ">"
+
+    #
+    # funciones de API user functions
+    #
+    def getPayload(self):
+        lista=[]
+        indice = self.index() #self.model().indexFromItem(field)
+        k = 1
+        colind = indice.sibling(indice.row(),k)
+        while colind.isValid():
+            lista.append(colind.data(Qt.UserRole +1)) #print(colind.data())
+            k +=1
+            colind = indice.sibling(indice.row(),k)
+        return lista
+    
+    def setPayload(self,lista):
+        indice = self.index() 
+        for k,valor in lista: 
+            col = k +1
+            colind = indice.sibling(indice.row(),col)
+            if colind.isValid():
+                item = self.model().itemFromIndex(colind)
+                item.setData(valor,Qt.UserRole +1)
+            else:
+                colroot = indice.sibling(indice.row(),0)
+                item = self.model().itemFromIndex(colroot)
+                item.setColumn(col,valor)
+
+    def lenPayload(self):
+        """
+        columnCount() no me funciona correctametne con los nodos hoja, asi que he tenido que 
+        escribir esta rutina
+        """
+        indice = self.index() #self.model().indexFromItem(field)
+        cont = 1
+        colind = indice.sibling(indice.row(),cont)
+        while colind.isValid():
+            cont +=1
+            colind = indice.sibling(indice.row(),cont)
+        return cont
+
+
+    
+    def getPayloadItem(self,idx):
+        indice = self.index() #self.model().indexFromItem(field
+        colind = indice.sibling(indice.row(),idx + 1)
+        if colind.isValid():
+            return self.model().itemFromIndex(colind)
+        else:
+            return None
+    
+    def __getHead(self):
+        if self.column() == 0:
+            return self
+        else:
+            indice = self.index() 
+            colind = indice.sibling(indice.row(),0)
+            return self.model().itemFromIndex(colind)
+
+    def getKey(self):
+        return __getHead().data(Qt.UserRole +1)
+    
+    def getLabel(self):
+        return __getHead().data(Qt.DisplayRole)
+
+
+    #
+    #  funciones de API general
+    #
+    def depth(self):
+        depth = 0
+        pai = self.parent()
+        while pai is not None and pai != self.model().invisibleRootItem():
+            pai = pai.parent()
+            depth += 1
+        return depth
+    
+    def getFullKey(self):
+        clave = self.data(Qt.UserRole +1)
+        pai = self.parent()
+        while pai is not None and pai != self.model().invisibleRootItem():
+            clave = pai.data(Qt.UserRole +1) + DELIMITER + clave
+        return clave
+        
+    def searchChildren(self,value,role=None):
+        if role is None:
+            prole = Qt.UserRole +1
+        else:
+            prole = role
+        return searchStandardItem(self,value,prole)
+
+    def setColumn(self,col,value):
+        row = self.index().row()
+        if self.parent() is None:
+            pai = self.model().invisibleRootItem()
+        else:
+            pai = self.parent()
+        colItem = GuideItem()
+        colItem.setData(value,Qt.UserRole +1)
+        #colItem.setData(value,Qt.DisplayRole)
+        pai.setChild(row,col,colItem)
+   
+    def getColumnData(self,idx,role=None):
+        indice = self.index() #self.model().indexFromItem(field
+        colind = indice.sibling(indice.row(),idx + 1)
+        if colind.isValid():
+            return self.model().itemFromIndex(colind).data(role if role is not None else Qt.UserRole +1)
+        else:
+            return None
+#
+    #  Compatibilidad TreeItem (no todas se incluyen)
+    #
+    def childCount(self):
+        return self.rowCount()
+    def getStatistics(self):
+        return self.__getHead().stats
+    def isTotal(self):
+        if self.column() != 0:
+            return False
+        if self.data(Qt.UserRole +1) == '//':
+            return True
+        else:
+            return False
+    def isBranch(self):
+        if self.column() != 0:
+            return False
+        if self.hasChildren():
+            return True
+        else:
+            return False
+    def isLeaf(self):
+        if self.column() != 0:
+            return True
+        if self.hasChildren():
+            return False
+        else:
+            return True
+
+    def restoreBackup(self):
+        if self.column() != 0:
+            self.setData(self.originalValue,Qt.UserRole +1)
+    def gpi(self,ind):
+        return self.getPayloadItem(ind)
+    def spi(self,ind,data):
+        return self.setPayloadItem(ind,data)
+    def setStatistics(self):
+        if self.column() == 0:
+            stat_dict = stats(self.getPayload())
+            self.stats=stat_dict
+    def getLevel(self):
+        return self.depth()
+    def getFullDesc(self):
+        valor = self.data(Qt.DisplayData)
+        pai = self.parent()
+        while pai is not None and pai != self.model().invisibleRootItem():
+            valor = pai.data(Qt.DisplayData) + DELIMITER + valor
+        return valor
+
+    #def getRoot(self):
+        #pass
+    def simplify(self):
+        npay = list()
+        ncab = list()
+        for k,value in enumerate(self.getPayload()):
+            if not value:
+                continue
+            npay.append(value)
+            ncab.append(k +1)
+        return npay,ncab
+
+    def __getitem__(self,campo):
+        if campo == 'key':
+            return self.data(Qt.UserRole +1)
+        elif campo == 'value':
+            return self.data(Qt.DisplayRole)
+        elif isinstance(campo,int):
+            return self.getColumnData(int)
+        else:
+            return None
+    
+    
 if __name__ == '__main__':
      item=TreeItem('alfa')
      #item.setLabel('omega')
