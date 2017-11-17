@@ -65,6 +65,7 @@ class GuideItemModel(QStandardItemModel):
     def __init__(self,parent=None):
         super(GuideItemModel, self).__init__(parent)
 
+                                   
     def traverse(self,base=None):
         if base is not None:
             yield base
@@ -84,9 +85,14 @@ class GuideItemModel(QStandardItemModel):
         """
           busco el elemento padre con toda la jerarquia de una tacada. No se con los grandes totales
         """
+        if role is None:
+            prole = Qt.UserRole +1
+        else:
+            prole = role
+        elem = self.invisibleRootItem()
         parent = self.invisibleRootItem()
         for k,value in enumerate(valueList):
-            elem = searchStandardItem(parent,value,role)
+            elem = searchStandardItem(parent,value,prole)
             if not elem:
                 return None
             parent = elem
@@ -95,7 +101,30 @@ class GuideItemModel(QStandardItemModel):
 class GuideItem(QStandardItem):
     def __init__(self,*args):  #solo usamos valor (str o standarItem)
         super(GuideItem, self).__init__(*args)
- 
+    
+    
+    def depth(self):
+        depth = 0
+        pai = self.parent()
+        while pai is not None and pai != self.model().invisibleRootItem():
+            pai = pai.parent()
+            depth += 1
+        return depth
+    
+    def getFullKey(self):
+        clave = self.data(Qt.UserRole +1)
+        pai = self.parent()
+        while pai is not None and pai != self.model().invisibleRootItem():
+            clave = pai.data(Qt.UserRole +1) + DELIMITER + clave
+        return clave
+        
+    def searchChildren(self,value,role=None):
+        if role is None:
+            prole = Qt.UserRole +1
+        else:
+            prole = role
+        return searchStandardItem(self,value,prole)
+
     def setColumn(self,col,value):
         row = self.index().row()
         if self.parent() is None:
@@ -106,9 +135,12 @@ class GuideItem(QStandardItem):
         colItem.setData(value,Qt.UserRole +1)
         colItem.setData(value,Qt.DisplayRole)
         pai.setChild(row,col,colItem)
-        
-    def searchChildren(self,value,role=None):
-        return searchStandardItem(self,value,role)
+
+    def __str__(self):
+        return "<" + self.text() + ">"
+
+    def __repr__(self):
+        return "<" + self.data(Qt.DisplayRole) + ">"
         
 def mergeString(string1,string2,connector):
     if not string1 :
