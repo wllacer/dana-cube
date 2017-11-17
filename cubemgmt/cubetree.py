@@ -257,7 +257,6 @@ class CubeItem(QStandardItem):
     def getChildByPos(self,pos):
         return self.child(pos)
                 
-
     def __repr__(self):
         return "<" + self.text() + ">"
     
