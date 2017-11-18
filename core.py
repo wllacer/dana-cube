@@ -714,7 +714,7 @@ class Vista:
         """
         if self.totalizado:
             contexto_row.insert(0,{'elems':["'//'",],'linkvia':[]})
-            contexto_col.insert(0,{'elems':["'//'",],'linkvia':[]})
+            #TOT-Y contexto_col.insert(0,{'elems':["'//'",],'linkvia':[]})
         maxRowElem = len(contexto_row[-1]['elems'])
         maxColElem = len(contexto_col[-1]['elems'])
         
@@ -728,12 +728,14 @@ class Vista:
                         del trow[pos]
                     except ValueError:
                         pass
-                if self.totalizado and y != 0:
-                    try:
-                        pos = tcol.index("'//'")
-                        del tcol[pos]
-                    except ValueError:
-                        pass
+                #TOT-Y START
+                #if self.totalizado and y != 0:
+                    #try:
+                        #pos = tcol.index("'//'")
+                        #del tcol[pos]
+                    #except ValueError:
+                        #pass
+                #TOT-Y end
                 sqlDef['group'] = trow + tcol
                 #numRowElems = len(row['elems'])
                 #numColElems = len(col['elems'])
@@ -744,10 +746,12 @@ class Vista:
                     else:
                         rowFields = trow
                     numRowElems = len(rowFields)
-                    if y > 0:
-                        colFields =["'//'",] + tcol 
-                    else:
-                        colFields = tcol
+                    #TOT-Y start
+                    #if y > 0:
+                        #colFields =["'//'",] + tcol 
+                    #else:
+                    #TOT-Y end
+                    colFields = tcol
                     numColElems = len(colFields)
                     sqlDef['fields'] = rowFields + colFields + [(self.campo,self.agregado)]
                 else:
@@ -788,11 +792,13 @@ class Vista:
         colindex = {}
         idx = 1
         for item in self.col_hdr_idx.traverse():
-            colindex[item.getFullKey()]=idx
+            colindex[item.getFullKey()]={'idx':idx,'objid':item,'leaf':item.isLeaf()}
             idx += 1
+        self.row_hdr_idx.colTreeIndex = colindex
+        
         raiz = self.row_hdr_idx.invisibleRootItem()            
         for record in self.array:
-            col = colindex[record[1].getFullKey()]
+            col = colindex[record[1].getFullKey()]['idx']
             row = record[0]
             row.setColumn(col,record[2])
             

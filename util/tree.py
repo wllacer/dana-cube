@@ -511,7 +511,8 @@ class GuideItemModel(QStandardItemModel):
         super(GuideItemModel, self).__init__(parent)
         self.name = None
         self.datos = TreeFormat()  #es por compatibilidad, son formatos
-                                   
+        self.colTreeIndex = None
+
     def traverse(self,base=None):
         if base is not None:
             yield base
