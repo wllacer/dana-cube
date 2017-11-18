@@ -83,7 +83,7 @@ def getOrderedText(desc,sparse=True,separator=None):
     
           
 class Cubo:
-    def __init__(self, definicion,nombre=None,dbConn=None,qtModel=None):
+    def __init__(self, definicion,nombre=None,dbConn=None):
         """
         Inicialización del cubo 
         Parametros
@@ -115,7 +115,7 @@ class Cubo:
         self.lista_campos = self.getFields()
         
         self.dbdriver = self.db.dialect.name #self.definition['connect']['driver']
-        self.newModel = qtModel
+        self.newModel = True
         
         
         
@@ -406,7 +406,6 @@ class Cubo:
             })
 
         '''
-        qtModel = self.newModel
         cubo = self.definition
         if isinstance(guidIdentifier,int):
             guidId = guidIdentifier
@@ -419,20 +418,16 @@ class Cubo:
         
         #arbol = QStandardItemModel()
         #raiz = arbol.invisibleRootItem()
-        if qtModel is None:
-            tree=TreeDict()
-            tree.name = guia['name']
+        arbol = GuideItemModel()
+        if total:  #el rebase no me ha traido mas que pesadillas
+            raiz = arbol.invisibleRootItem()
+            item = GuideItem()
+            item.setData('Grand Total',Qt.DisplayRole)
+            item.setData('//',Qt.UserRole +1)
+            raiz.insertRow(0,(item,))
+            tree = item
         else:
-            arbol = GuideItemModel()
-            if total:  #el rebase no me ha traido mas que pesadillas
-                raiz = arbol.invisibleRootItem()
-                item = GuideItem()
-                item.setData('Grand Total',Qt.DisplayRole)
-                item.setData('//',Qt.UserRole +1)
-                raiz.insertRow(0,(item,))
-                tree = item
-            else:
-                tree = arbol.invisibleRootItem()  #para que __createProdModel solo necesite invocarse una vez
+            tree = arbol.invisibleRootItem()  #para que __createProdModel solo necesite invocarse una vez
         
         # primero expandimos las entradas tipo fecha
         prodExpandida = self._expandDateProductions(guidId)
@@ -579,19 +574,11 @@ class Cubo:
  
             self._createProdModel(tree,cursor,contexto[-1],prodId,total)
 
-        if qtModel is None:
-            # es el unico modo que genere un ordinal unico 
-            k = 0
-            for item in tree.traverse(output=1): #por item
-                item.ord = k
-                k += 1
-            return tree,contexto
-        else:
             #for item in traverse(tree):
                 #print(item.parent().data(Qt.DisplayRole) if item.parent() is not None else '??',
                       #item.data(Qt.DisplayRole))          
                 
-            return arbol,contexto
+        return arbol,contexto
 
 class Vista:
     #TODO falta documentar
@@ -726,8 +713,6 @@ class Vista:
         Debería estudiarlo porque merece la pena
         """
         if self.totalizado:
-            if not self.cubo.newModel:
-                self.row_hdr_idx.rebaseTree()
             contexto_row.insert(0,{'elems':["'//'",],'linkvia':[]})
             contexto_col.insert(0,{'elems':["'//'",],'linkvia':[]})
         maxRowElem = len(contexto_row[-1]['elems'])
@@ -791,34 +776,14 @@ class Vista:
                                      'init':numRowElems,},
                               'cdir':self.col_hdr_idx
                               }
-                if self.cubo.newModel:
-                    cursor = getCursor(self.cubo.db,sqlstring,regTreeGuide,**lista_compra)
-                else:
-                    cursor = getCursor(self.cubo.db,sqlstring,regTree,**lista_compra)
+
+                cursor = getCursor(self.cubo.db,sqlstring,regTreeGuide,**lista_compra)
                 self.array +=cursor 
                 if DEBUG:
                     print(time.time(),'Datos ',queryFormat(sqlstring))
 
         #pprint(self.array)
         
-    def toTable(self):
-        """
-           convertir los datos en una tabla normal y corriente
-        """
-        table = [ [None for k in range(self.col_hdr_idx.len())] for j in range(self.row_hdr_idx.len())]
-        for record in self.array:
-            try:
-                ind_1 = record[0].ord
-                ind_2 = record[1].ord  
-                table[ind_1][ind_2]=record[-1]
-            except KeyError:
-                continue
-            except IndexError:
-                print('{} o {} fuera de rango'.format(ind_1,ind_2))
-        if DEBUG:
-            print(time.time(),'table ',len(table),self.row_hdr_idx.len(),len(table[0])) 
-        return table
-
     def toNewTree(self):
         colindex = {}
         idx = 1
@@ -831,40 +796,11 @@ class Vista:
             row = record[0]
             row.setColumn(col,record[2])
             
-    def toTree2D(self):
-        array = self.toTable()
-        k = 0
-        for key in self.row_hdr_idx.traverse(mode=1):
-            elem = self.row_hdr_idx[key]
-            datos = [ getOrderedText(elem.getFullDesc(),sparse=True,separator=''),] +\
-                    array[elem.ord][:]
-            elem.setData(datos)
-            if self.stats:
-                elem.setStatistics()
-            k += 1
-        k = 0
-        for key in self.col_hdr_idx.traverse(mode=1):
-            elem = self.col_hdr_idx[key]
-            datos = [ getOrderedText(elem.getFullDesc(),sparse=True,separator=''),] +\
-                    [ array[ind][elem.ord] for ind in range(self.row_hdr_idx.len()) ]
-            elem.setData(datos)
-            if self.stats:
-                elem.setStatistics()
-            k += 1
-        #if self.totalizado:
-            #self.row_hdr_idx.rebaseTree()
-            #tabla = self.__grandTotal()
-            #datos =['Gran Total',]+[elem[1] for elem in tabla]
-            #elem = self.row_hdr_idx['//']
-            #elem.setData(datos)
-            #if self.stats:
-                #elem.setStatistics()
-
-                    
-        if DEBUG:       
-            print(time.time(),'Tree ',len(array),self.row_hdr_idx.len())  
 
     def recalcGrandTotal(self):
+        """
+           TODO
+        """
         def cargaAcumuladores():
             if elem.isLeaf():
                 for k in range(len(acumuladores)):
@@ -917,6 +853,9 @@ class Vista:
                 del acumuladores[-1]
     
     def traspose(self):
+        """
+        TODO
+        """
         tmp_col = self.row_id
         tmp_row = self.col_id
         
@@ -1226,7 +1165,7 @@ def experimental():
         #if cuboId == 'default':
             #continue
         #print('\n----',cuboId,'----\n')
-        #cubo = Cubo(mis_cubos[cuboId],qtModel = True)
+        #cubo = Cubo(mis_cubos[cuboId])
         #cubo.nombre = cuboId
         #iters = len(cubo.lista_guias)
         #for i in range(iters):
@@ -1234,7 +1173,7 @@ def experimental():
                 #print(cuboId,'::',cubo.lista_guias[i]['name'],cubo.lista_guias[j]['name'])
                 #createVista(cubo,i,j)
     cuboId = micubo
-    cubo = Cubo(mis_cubos[cuboId],qtModel = True)
+    cubo = Cubo(mis_cubos[cuboId])
     cubo.nombre = cuboId
     iters = len(cubo.lista_guias)
     for i in range(iters):
