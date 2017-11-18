@@ -362,7 +362,7 @@ class Cubo:
                         papid = ["//",]+papid
                     parent = raiz.model().searchHierarchy(papid)
                     if not parent:
-                        print('Ilocalizable',papid)
+                        #print('Ilocalizable',papid)
                         continue
                     else:
                         item = GuideItem()
@@ -691,7 +691,7 @@ class Vista:
                     
             #for k,entrada in enumerate(self.lista_guias):
             for item in (row,col):
-                self.cubo.lista_guias[item]['dir_row'],self.cubo.lista_guias[item]['contexto']=self.cubo.fillGuia(item,total=self.totalizado if item == row else None)
+                self.cubo.lista_guias[item]['dir_row'],self.cubo.lista_guias[item]['contexto']=self.cubo.fillGuia(item,total=self.totalizado)
 
             self.dim_row = len(self.cubo.lista_guias[row]['contexto'])
             self.dim_col = len(self.cubo.lista_guias[col]['contexto'])
@@ -728,20 +728,43 @@ class Vista:
         if self.totalizado:
             if not self.cubo.newModel:
                 self.row_hdr_idx.rebaseTree()
-            #self.col_hdr_idx.rebaseTree()
             contexto_row.insert(0,{'elems':["'//'",],'linkvia':[]})
-            #contexto_col.insert(0,{'elems':["'//'",],'linkvia':[]})
+            contexto_col.insert(0,{'elems':["'//'",],'linkvia':[]})
         maxRowElem = len(contexto_row[-1]['elems'])
         maxColElem = len(contexto_col[-1]['elems'])
         
         for x,row in enumerate(contexto_row):
             for y,col in enumerate(contexto_col):
-                sqlDef['group'] = row['elems'] + col['elems']
-                numRowElems = len(row['elems'])
-                numColElems = len(col['elems'])
-                if self.totalizado and x > 0:
-                    sqlDef['fields'] =["'//'",] + sqlDef['group']  + [(self.campo,self.agregado)]
-                    numRowElems += 1
+                trow = row['elems'][:]
+                tcol = col['elems'][:]
+                if self.totalizado and x != 0:
+                    try:
+                        pos = trow.index("'//'")
+                        del trow[pos]
+                    except ValueError:
+                        pass
+                if self.totalizado and y != 0:
+                    try:
+                        pos = tcol.index("'//'")
+                        del tcol[pos]
+                    except ValueError:
+                        pass
+                sqlDef['group'] = trow + tcol
+                #numRowElems = len(row['elems'])
+                #numColElems = len(col['elems'])
+                #sqlDef['fields']=row['elems']+col['elems'] + [(self.campo,self.agregado)]
+                if self.totalizado:
+                    if x > 0:
+                        rowFields =["'//'",] + trow 
+                    else:
+                        rowFields = trow
+                    numRowElems = len(rowFields)
+                    if y > 0:
+                        colFields =["'//'",] + tcol 
+                    else:
+                        colFields = tcol
+                    numColElems = len(colFields)
+                    sqlDef['fields'] = rowFields + colFields + [(self.campo,self.agregado)]
                 else:
                     sqlDef['fields'] =sqlDef['group']  + [(self.campo,self.agregado)]
                 joins = row['linkvia'] + col['linkvia']
@@ -1177,6 +1200,12 @@ class Vista:
             workbook.close()
     #return lineas
 
+from util.decorators import stopwatch
+@stopwatch
+def createVista(cubo,x,y):
+    vista = Vista(cubo,x,y,'sum',cubo.lista_campos[0],totalizado=True)
+    vista.toNewTree()
+    print(vista.row_hdr_idx.numRecords(),'X',vista.col_hdr_idx.numRecords())
 def experimental():
     from cubemgmt.cubetree import recTreeLoader,dict2tree,navigateTree,CubeItem,traverseTree
     from util.jsonmgr import load_cubo
@@ -1189,13 +1218,33 @@ def experimental():
             ind += 1
     vista = None
     #micubo = 'rental'
-    #micubo = 'datos catalonia'
-    micubo = 'datos light'
-    guia = 'ideologia'
+    micubo = 'datos catalonia'
+    #micubo = 'datos light'
+    #guia = 'ideologia'
     mis_cubos = load_cubo()
-    cubo = Cubo(mis_cubos[micubo],qtModel=True)
-    cubo.nombre = micubo
-    guiax,dummy = cubo.fillGuia(5,total=True)
+    #for cuboId in mis_cubos:
+        #if cuboId == 'default':
+            #continue
+        #print('\n----',cuboId,'----\n')
+        #cubo = Cubo(mis_cubos[cuboId],qtModel = True)
+        #cubo.nombre = cuboId
+        #iters = len(cubo.lista_guias)
+        #for i in range(iters):
+            #for j in range(iters):
+                #print(cuboId,'::',cubo.lista_guias[i]['name'],cubo.lista_guias[j]['name'])
+                #createVista(cubo,i,j)
+    cuboId = micubo
+    cubo = Cubo(mis_cubos[cuboId],qtModel = True)
+    cubo.nombre = cuboId
+    iters = len(cubo.lista_guias)
+    for i in range(iters):
+        for j in range(iters):
+            print(cuboId,'::',cubo.lista_guias[i]['name'],cubo.lista_guias[j]['name'])
+            createVista(cubo,i,j)
+            
+    #cubo = Cubo(mis_cubos[micubo],qtModel=True)
+    #cubo.nombre = micubo
+    #guiax,dummy = cubo.fillGuia(1,total=True)
     #guiax.rebaseTree()
     #for item in guiax.traverse():
         #print('\t'*item.depth(),item.data(Qt.UserRole +1))
@@ -1203,12 +1252,12 @@ def experimental():
     #for item in guiax.traverse():
         #print('\t'*item.depth(),item.data(Qt.UserRole +1))
     
-    vista = Vista(cubo,5,1,'sum',cubo.lista_campos[0],totalizado=True)
+    vista = Vista(cubo,0,0,'sum',cubo.lista_campos[0],totalizado=True)
     vista.toNewTree()
-    for item in vista.row_hdr_idx.traverse():
-#        if item is not None:
-        print('\t'*item.depth(),item.data(Qt.UserRole +1),item.lenPayload(),item.getPayload())
-        print('\t'*item.depth(),item.data(Qt.UserRole +1),item.gpi(2))
+    #for item in vista.row_hdr_idx.traverse():
+##        if item is not None:
+        #print('\t'*item.depth(),item.data(Qt.UserRole +1),item.lenPayload(),item.getPayload())
+        #print('\t'*item.depth(),item.data(Qt.UserRole +1),item.gpi(2))
     #pprint(vista.row_hdr_idx.content)
     #print(vista.row_hdr_idx['CA08:16'])
     #vista.row_hdr_idx.setHeader()

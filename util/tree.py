@@ -527,6 +527,14 @@ class GuideItemModel(QStandardItemModel):
             else:
                 queue = expansion  + queue[1:]            
        
+    def numRecords(self):
+        """
+        El modelo estandard no da este valor con jerarquias
+        """
+        count = 0
+        for item in self.traverse():
+            count += 1
+        return count
     def searchHierarchy(self,valueList,role=None):
         """
           busco el elemento padre con toda la jerarquia de una tacada. No se con los grandes totales
@@ -690,6 +698,7 @@ class GuideItem(QStandardItem):
         pai = self.parent()
         while pai is not None and pai != self.model().invisibleRootItem():
             clave = pai.data(Qt.UserRole +1) + DELIMITER + clave
+            pai = pai.parent()
         return clave
         
     def searchChildren(self,value,role=None):
@@ -764,6 +773,7 @@ class GuideItem(QStandardItem):
         pai = self.parent()
         while pai is not None and pai != self.model().invisibleRootItem():
             valor = pai.data(Qt.DisplayData) + DELIMITER + valor
+            pai = pai.parent()
         return valor
 
     #def getRoot(self):
