@@ -459,6 +459,8 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtGui import QColor
 from util.numeros import isOutlier,fmtNumber
 
+LEAF,BRANCH,TOTAL = range(1000,1000+3)
+
 def searchStandardItem(item,value,role):
     """
        modelo general de funcion de busqueda binaria en hijos de un QStandardItem o derivados
@@ -536,6 +538,17 @@ class GuideItemModel(QStandardItemModel):
         for item in self.traverse():
             count += 1
         return count
+
+    def lenPayload(self,leafOnly=False):
+        """
+        columnCount() no me funciona correctametne con los nodos hoja, asi que he tenido que 
+        escribir esta rutina
+        """
+        if leafOnly:
+            return len(self.colTreeIndex['leaf']) 
+        else:
+            return len(self.colTreeIndex['idx'])
+
     def searchHierarchy(self,valueList,role=None):
         """
           busco el elemento padre con toda la jerarquia de una tacada. No se con los grandes totales
@@ -570,9 +583,21 @@ class GuideItemModel(QStandardItemModel):
             else:
                 return Qt.AlignLeft| Qt.AlignVCenter
         elif role == Qt.BackgroundRole:
+            #TODO TOTAL COLOR begin
+            #if item.type() == TOTAL:
+                #return QColor(Qt.cyan)
+            #if item.type() == BRANCH:
+                #return QColor(Qt.gray)
+            #TOTAL COLOR end
             if item.data(Qt.DisplayRole) is None:
                 return item.data(role)
             if index.column() != 0:
+                #TOTAL COLOR begin
+                #if item._getHead().type() == TOTAL:
+                    #return QColor(Qt.cyan)
+                #if item._getHead().type() == BRANCH:
+                    #return QColor(Qt.gray)
+                #TOTAL COLOR
                 if self.datos.format['yellowoutliers'] and self.datos.stats:
                     if isOutlier(item.data(Qt.DisplayRole),item.getStatistics()):
                         return QColor(Qt.yellow)
@@ -590,6 +615,25 @@ class GuideItemModel(QStandardItemModel):
         else:
             return item.data(role)
 
+    def filterCumHeader(self,total=True,branch=True,leaf=True,separador='\n',sparse=True):
+        lista = []
+        for item in self.traverse(output = _ITEM):
+            if total and item.isTotal():
+                pass
+            elif branch and item.isBranch():
+                pass
+            elif leaf and item.isLeaf():
+                pass
+            else:
+                continue
+            
+            clave = item.getFullDesc()
+            if sparse:
+                for k in range(len(clave) -1):
+                    clave[k]=''
+            lista.append((item,clave,))
+        return lista
+    
 class GuideItem(QStandardItem):
     #
     #  funciones reimplementadas
@@ -605,7 +649,15 @@ class GuideItem(QStandardItem):
         if role is None or role == Qt.UserRole + 1:
             if self.originalValue is None:
                 self.originalValue = value
-    
+
+    def type(self):
+        if self.data(Qt.UserRole +1) == '//':
+            return TOTAL
+        elif self.hasChildren():
+            return BRANCH
+        else:
+            return LEAF
+        
     def data(self,role):
         valor = super(GuideItem, self).data(role)
         if role in (Qt.DisplayRole,Qt.UserRole +1) and valor is None:
@@ -621,21 +673,30 @@ class GuideItem(QStandardItem):
     #
     # funciones de API user functions
     #
-    def getPayload(self):
+    def getPayload(self,leafOnly=False):
         lista=[]
         indice = self.index() #self.model().indexFromItem(field)
         k = 1
         colind = indice.sibling(indice.row(),k)
         while colind.isValid():
-            lista.append(colind.data(Qt.UserRole +1)) #print(colind.data())
+            if leafOnly:
+                if self.model().colTreeIndex['idx'][k]['objid'].type() == LEAF:
+                    lista.append(colind.data(Qt.UserRole +1)) #print(colind.data())
+            else:
+                lista.append(colind.data(Qt.UserRole +1)) #print(colind.data())
             k +=1
             colind = indice.sibling(indice.row(),k)
         return lista
     
-    def setPayload(self,lista):
+    def setPayload(self,lista,leafOnly=False):
         indice = self.index() 
+        lastLeaf = 0
         for k,valor in lista: 
-            col = k +1
+            if leafOnly:
+                col = self.model().colTreeIndex['leaf'][k] +1
+            else:
+                col = k +1
+                
             colind = indice.sibling(indice.row(),col)
             if colind.isValid():
                 item = self.model().itemFromIndex(colind)
@@ -645,18 +706,20 @@ class GuideItem(QStandardItem):
                 item = self.model().itemFromIndex(colroot)
                 item.setColumn(col,valor)
 
-    def lenPayload(self):
+    def lenPayload(self,leafOnly=False):
         """
         columnCount() no me funciona correctametne con los nodos hoja, asi que he tenido que 
         escribir esta rutina
         """
-        indice = self.index() #self.model().indexFromItem(field)
-        cont = 1
-        colind = indice.sibling(indice.row(),cont)
-        while colind.isValid():
-            cont +=1
-            colind = indice.sibling(indice.row(),cont)
-        return cont
+        return self.model().lenPayload(leafOnly)
+        #lo de abajo es como deberia ser, al tener colTreeIndex puedo escribir la version resumida de arriba
+        #indice = self.index() #self.model().indexFromItem(field)
+        #cont = 1
+        #colind = indice.sibling(indice.row(),cont)
+        #while colind.isValid():
+            #cont +=1
+            #colind = indice.sibling(indice.row(),cont)
+        #return cont
 
 
     
@@ -668,7 +731,7 @@ class GuideItem(QStandardItem):
         else:
             return None
     
-    def __getHead(self):
+    def _getHead(self):
         if self.column() == 0:
             return self
         else:
@@ -677,10 +740,10 @@ class GuideItem(QStandardItem):
             return self.model().itemFromIndex(colind)
 
     def getKey(self):
-        return __getHead().data(Qt.UserRole +1)
+        return self._getHead().data(Qt.UserRole +1)
     
     def getLabel(self):
-        return __getHead().data(Qt.DisplayRole)
+        return self._getHead().data(Qt.DisplayRole)
 
 
     #
@@ -733,28 +796,22 @@ class GuideItem(QStandardItem):
     def childCount(self):
         return self.rowCount()
     def getStatistics(self):
-        return self.__getHead().stats
+        return self._getHead().stats
     def isTotal(self):
-        if self.column() != 0:
-            return False
-        if self.data(Qt.UserRole +1) == '//':
+        if self.type() == TOTAL:
             return True
         else:
             return False
     def isBranch(self):
-        if self.column() != 0:
-            return False
-        if self.hasChildren():
+        if self.type() == BRANCH:
             return True
         else:
             return False
     def isLeaf(self):
-        if self.column() != 0:
+        if self.type() in (QStandardItem.UserType,'LEAF'):
             return True
-        if self.hasChildren():
-            return False
         else:
-            return True
+            return False
 
     def restoreBackup(self):
         if self.column() != 0:
@@ -770,10 +827,13 @@ class GuideItem(QStandardItem):
     def getLevel(self):
         return self.depth()
     def getFullDesc(self):
-        valor = self.data(Qt.DisplayData)
+        if self.column() != 0:
+            return None
+        valor = []
+        valor.insert(0,self.data(Qt.DisplayData))
         pai = self.parent()
         while pai is not None and pai != self.model().invisibleRootItem():
-            valor = pai.data(Qt.DisplayData) + DELIMITER + valor
+            valor.insert(0,pai.data(Qt.DisplayData))
             pai = pai.parent()
         return valor
 

@@ -678,7 +678,8 @@ class Vista:
                     
             #for k,entrada in enumerate(self.lista_guias):
             for item in (row,col):
-                self.cubo.lista_guias[item]['dir_row'],self.cubo.lista_guias[item]['contexto']=self.cubo.fillGuia(item,total=self.totalizado)
+                #TODO TOT-V
+                self.cubo.lista_guias[item]['dir_row'],self.cubo.lista_guias[item]['contexto']=self.cubo.fillGuia(item,total=self.totalizado if item == row else False)
 
             self.dim_row = len(self.cubo.lista_guias[row]['contexto'])
             self.dim_col = len(self.cubo.lista_guias[col]['contexto'])
@@ -750,7 +751,7 @@ class Vista:
                     #if y > 0:
                         #colFields =["'//'",] + tcol 
                     #else:
-                    #TOT-Y end
+                    #TOT-
                     colFields = tcol
                     numColElems = len(colFields)
                     sqlDef['fields'] = rowFields + colFields + [(self.campo,self.agregado)]
@@ -789,16 +790,19 @@ class Vista:
         #pprint(self.array)
         
     def toNewTree(self):
-        colindex = {}
+        coldict = {}
+        colindex = []
         idx = 1
         for item in self.col_hdr_idx.traverse():
-            colindex[item.getFullKey()]={'idx':idx,'objid':item,'leaf':item.isLeaf()}
+            coldict[item.getFullKey()]={'idx':idx,'objid':item}
+            colindex.append({'objid':item,'key':item.getFullKey()})
             idx += 1
-        self.row_hdr_idx.colTreeIndex = colindex
+        self.row_hdr_idx.colTreeIndex = {'dict':coldict,'idx':colindex}
+        self.row_hdr_idx.colTreeIndex['leaf'] = [ idx for idx,obj in enumerate(self.row_hdr_idx.colTreeIndex['idx']) if obj.type() == LEAF ]
         
         raiz = self.row_hdr_idx.invisibleRootItem()            
         for record in self.array:
-            col = colindex[record[1].getFullKey()]['idx']
+            col = coldict[record[1].getFullKey()]['idx']
             row = record[0]
             row.setColumn(col,record[2])
             
@@ -1181,11 +1185,11 @@ def experimental():
     cuboId = micubo
     cubo = Cubo(mis_cubos[cuboId])
     cubo.nombre = cuboId
-    iters = len(cubo.lista_guias)
-    for i in range(iters):
-        for j in range(iters):
-            print(cuboId,'::',cubo.lista_guias[i]['name'],cubo.lista_guias[j]['name'])
-            createVista(cubo,i,j)
+    #iters = len(cubo.lista_guias)
+    #for i in range(iters):
+        #for j in range(iters):
+            #print(cuboId,'::',cubo.lista_guias[i]['name'],cubo.lista_guias[j]['name'])
+            #createVista(cubo,i,j)
             
     #cubo = Cubo(mis_cubos[micubo],qtModel=True)
     #cubo.nombre = micubo
@@ -1199,10 +1203,10 @@ def experimental():
     
     vista = Vista(cubo,0,0,'sum',cubo.lista_campos[0],totalizado=True)
     vista.toNewTree()
-    #for item in vista.row_hdr_idx.traverse():
-##        if item is not None:
-        #print('\t'*item.depth(),item.data(Qt.UserRole +1),item.lenPayload(),item.getPayload())
-        #print('\t'*item.depth(),item.data(Qt.UserRole +1),item.gpi(2))
+    for item in vista.row_hdr_idx.traverse():
+#        if item is not None:
+        print('\t'*item.depth(),item.data(Qt.UserRole +1),item.lenPayload(),item.getPayload())
+        print('\t'*item.depth(),item.data(Qt.UserRole +1),item.gpi(2))
     #pprint(vista.row_hdr_idx.content)
     #print(vista.row_hdr_idx['CA08:16'])
     #vista.row_hdr_idx.setHeader()
