@@ -179,6 +179,7 @@ def regTree(record,**kwargs):
         for k in range(3):
           record[k]=triad[k]
     except KeyError:
+        #print('Egog',triad,record)
         del record[:]
 
 def regTree1D(record,**kwargs):

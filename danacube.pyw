@@ -638,6 +638,7 @@ class DanaCube(QTreeView):
             #self.cargaVista(row,col,agregado,campo,totalizado,stats)
 
     @waiting_effects
+    @stopwatch
     def cargaVista(self,row, col, agregado, campo, total=True, estad=True,force=False):
         if self.vista is None:
             self.vista = Vista(self.cubo, row, col, agregado, campo, totalizado=total, stats=estad,filtro=self.filtro)
@@ -649,6 +650,7 @@ class DanaCube(QTreeView):
         self.vista.format = self.format
      
     @waiting_effects
+    @stopwatch
     def changeView(self,row, col, agregado, campo, total=True, estad=True,force=False):
         self.vista.setNewView(row, col, agregado, campo, totalizado=total, stats=estad,filtro=self.filtro,force=force)
         self.vista.toTree2D()

@@ -818,10 +818,16 @@ class Vista:
         
         for x,row in enumerate(contexto_row):
             for y,col in enumerate(contexto_col):
-                sqlDef['group'] = row['elems'] + col['elems']
-                numRowElems = len(row['elems'])
-                numColElems = len(col['elems'])
-                sqlDef['fields'] = sqlDef['group']  + [(self.campo,self.agregado)]
+                if self.totalizado and x == 0:
+                    sqlDef['group'] = col['elems']
+                    numRowElems = len(row['elems'])
+                    numColElems = len(col['elems'])
+                    sqlDef['fields'] = row['elems'] + col['elems'] + [(self.campo,self.agregado)]
+                else:
+                    sqlDef['group'] = row['elems'] + col['elems']
+                    numRowElems = len(row['elems'])
+                    numColElems = len(col['elems'])
+                    sqlDef['fields'] = sqlDef['group']  + [(self.campo,self.agregado)]
                 joins = row['linkvia'] + col['linkvia']
                 sqlDef['join'] = []
                 for entrada in joins:
@@ -840,10 +846,9 @@ class Vista:
                 sqlDef['order'] = [ str(x + 1) for x in range(len(sqlDef['group']))]
                 sqlDef['driver'] = self.cubo.dbdriver
                 sqlstring=queryConstructor(**sqlDef)
-                lista_compra={'row':{'nkeys':len(row['elems']),},
+                lista_compra={'row':{'nkeys':numRowElems,},
                               'rdir':self.row_hdr_idx,
-                              'col':{'nkeys':len(col['elems']),
-                                     'init':len(row['elems']),},
+                              'col':{'nkeys':numColElems,'init':numRowElems,},
                               'cdir':self.col_hdr_idx
                               }
                 cursor = getCursor(self.cubo.db,sqlstring,regTree,**lista_compra)
