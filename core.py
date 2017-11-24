@@ -419,6 +419,7 @@ class Cubo:
         #arbol = QStandardItemModel()
         #raiz = arbol.invisibleRootItem()
         arbol = GuideItemModel()
+        arbol.name = self.lista_guias[guidId]['name']
         if total:  #el rebase no me ha traido mas que pesadillas
             raiz = arbol.invisibleRootItem()
             item = GuideItem()
@@ -605,8 +606,8 @@ class Vista:
         self.row_id = None   #son row y col. a asignar en setnewview
         self.col_id = None
 
-        self.row_hdr_idx = list()
-        self.col_hdr_idx = list()
+        self.row_hdr_idx = None
+        self.col_hdr_idx = None
         #self.row_hdr_txt = list()
         #self.col_hdr_txt = list()
 
@@ -798,7 +799,7 @@ class Vista:
             colindex.append({'objid':item,'key':item.getFullKey()})
             idx += 1
         self.row_hdr_idx.colTreeIndex = {'dict':coldict,'idx':colindex}
-        self.row_hdr_idx.colTreeIndex['leaf'] = [ idx for idx,obj in enumerate(self.row_hdr_idx.colTreeIndex['idx']) if obj.type() == LEAF ]
+        self.row_hdr_idx.colTreeIndex['leaf'] = [ idx for idx,obj in enumerate(self.row_hdr_idx.colTreeIndex['idx']) if obj['objid'].type() == LEAF ]
         
         raiz = self.row_hdr_idx.invisibleRootItem()            
         for record in self.array:

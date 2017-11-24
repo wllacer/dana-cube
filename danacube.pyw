@@ -10,7 +10,7 @@ from __future__ import unicode_literals
 from pprint import pprint
 import argparse
 
-from PyQt5.QtCore import Qt,QSortFilterProxyModel
+from PyQt5.QtCore import Qt #,QSortFilterProxyModel
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView , QTabWidget, QSplitter
 
@@ -579,29 +579,6 @@ class DanaCube(QTreeView):
 
         
     def initData(self,inicial=False,**viewData):
-        #FIXME casi funciona ... vuelve a leer el fichero cada vez. NO es especialmente malo
-        #my_cubos = load_cubo()
-        #viewData =dict()
-        #defaultViewData = None
-        #if 'default' in my_cubos and inicial:
-            #defaultViewData = my_cubos['default']
-            #self.cubo.nombre=defaultViewData['cubo']
-            #viewData['row'] = int(defaultViewData['vista']['row'])
-            #viewData['col'] = int(defaultViewData['vista']['col'])
-            #viewData['agregado'] = defaultViewData['vista']['agregado']
-            #viewData['campo'] = defaultViewData['vista']['elemento']
-            #viewData['totalizado'] = True
-            #viewData['stats'] = True
-            ##del my_cubos['default']
-        #else:
-            #dialog = CuboDlg(my_cubos, self)
-            #if dialog.exec_():
-                #self.cubo.nombre = str(dialog.cuboCB.currentText())
-            #elif inicial:
-                #exit()
-            #else:
-                #return
-        #self.setupFilters(my_cubos,self.cubo.nombre)
         if viewData:
             pass
         else:
@@ -615,8 +592,8 @@ class DanaCube(QTreeView):
 
     def getTitleText(self):
         return "{} X {} : {}({})".format(
-                    self.vista.row_hdr_idx.name.split('.')[-1],
-                    self.vista.col_hdr_idx.name.split('.')[-1],
+                    self.vista.row_hdr_idx.name,
+                    self.vista.col_hdr_idx.name,
                     self.vista.agregado,
                     self.vista.campo.split('.')[-1]
                     )
@@ -641,46 +618,32 @@ class DanaCube(QTreeView):
     def cargaVista(self,row, col, agregado, campo, total=True, estad=True,force=False):
         if self.vista is None:
             self.vista = Vista(self.cubo, row, col, agregado, campo, totalizado=total, stats=estad,filtro=self.filtro)
-            self.vista.toTree2D()
+            self.vista.toNewTree()
+            self.vista.row_hdr_idx.setHorizontalHeaderLabels(
+                [self.vista.row_hdr_idx.name,]+ 
+                [item.data(Qt.DisplayRole) for item in self.vista.col_hdr_idx.traverse()])
             self.expandToDepth(2)
         else:
             self.changeView(row, col, agregado, campo, total,estad,force)
             #self.refreshTable()
         self.vista.format = self.format
-     
+
     @waiting_effects
     def changeView(self,row, col, agregado, campo, total=True, estad=True,force=False):
         self.vista.setNewView(row, col, agregado, campo, totalizado=total, stats=estad,filtro=self.filtro,force=force)
-        self.vista.toTree2D()
+        self.vista.toNewTree()
         #
         self.setModel(self.defineModel())  #esto no deberia ser asi, sino dinámico, pero no lo he conseguido
+        self.vista.row_hdr_idx.setHorizontalHeaderLabels(
+            [self.vista.row_hdr_idx.name,]+ 
+            [item.data(Qt.DisplayRole) for item in self.vista.col_hdr_idx.traverse()])
+
         self.expandToDepth(2)
         
         self.setTitle()
         
     def defineModel(self):
-        """
-        definimos el modelo. Tengo que ejecutarlo cada vez que cambie la vista. TODO NO he conseguido hacerlo dinamicamente
-        """
-        newModel = TreeModel(self.vista, self)
-        newModel.hiddenRoot = self.vista.row_hdr_idx.rootItem
-        #newModel.setContext(format=self.format) #nueva version
-        #self.setModel(newModel)
-        #self.modelo=self.model
-        proxyModel = QSortFilterProxyModel()
-        proxyModel.setSourceModel(newModel)
-        proxyModel.setSortRole(33)
-        #self.setModel(proxyModel)
-        self.baseModel = newModel #proxyModel
-        #self.expandToDepth(2)
-        # estas vueltas para permitir ordenacion
-        # para que aparezcan colapsados los indices jerarquicos
-        self.max_row_level = self.vista.dim_row
-        self.max_col_level  = self.vista.dim_col
-        self.row_range = [0, self.vista.row_hdr_idx.len() -1]
-        self.col_range = [0, self.vista.col_hdr_idx.len() -1]
-        return proxyModel
-    
+        return self.vista.row_hdr_idx    
         
     def changeVista(self):
         viewData = self.requestVista()
