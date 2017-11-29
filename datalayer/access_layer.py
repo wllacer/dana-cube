@@ -236,6 +236,18 @@ def dbConnectQt(conDict):
         print('conexion a bd imposible')
         sys.exit(-1)
 
+def getCursorLim(db,sql_string,**kwargs):
+    if db is None:
+        return None
+    if sql_string is None or sql_string.strip() == '':
+        return None
+      
+    sqlString=text(sql_string + setLimitString(sql_string,db,**kwargs) )
+
+    cursor= []
+
+    return db.execute(sqlString)
+    
 def getCursorAlch(db, sql_string,funcion=None,**kwargs):
     if db is None:
         return None

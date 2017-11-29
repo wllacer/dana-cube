@@ -12,7 +12,7 @@ import os
 from PyQt5.QtCore import Qt,QSortFilterProxyModel, QCoreApplication, QSize
 from PyQt5.QtGui import QCursor, QStandardItemModel, QStandardItem, QIcon
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QSplitter, QAbstractItemView, QMenu,\
-          QDialog, QLineEdit,QLabel,QDialogButtonBox, QVBoxLayout, QHBoxLayout, QComboBox, QCheckBox,\
+          QDialog, QLineEdit,QLabel,QDialogButtonBox, QVBoxLayout, QHBoxLayout, QGridLayout, QComboBox, QCheckBox,\
           QPushButton, QMessageBox, \
           QTableView, QSpinBox
 
@@ -26,6 +26,111 @@ from widgets import WPropertySheet
 
 DEBUG = True
 
+class directConnectDlg(QDialog):
+    def __init__(self,configDict,parent=None):
+        super(directConnectDlg,self).__init__(parent)
+        if 'Conexiones' in configDict:
+            self.confData = ambito = configDict['Conexiones']
+        else:
+            exit()
+
+        self.listConnections = [ name for name in ambito]
+        self.conn = None
+        
+        self.etiqueta = QLabel("Eliga una conexion")
+        self.lista = QComboBox()
+        self.lista.addItems(['Eliga una conexión',] + self.listConnections)
+        
+        self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel,
+                                     Qt.Horizontal)       
+        context = (
+                ("Driver ",QComboBox,None,DRIVERS,),
+                ("DataBase Name",QLineEdit,None,None,),
+                ("Host",QLineEdit,None,None,),
+                ("User",QLineEdit,None,None,),
+                ("Password",QLineEdit,{'setEchoMode':QLineEdit.Password},None,),
+                ("Port",QLineEdit,None,None,),
+                ("Debug",QCheckBox,None,None,)
+                )
+        data =  [ None for k in range(len(context)) ]
+        
+        self.sheet=WPropertySheet(context,data)
+        self.msgLine = QLabel('')
+        self.msgLine.setWordWrap(True)
+
+
+        meatLayout = QGridLayout()
+        buttonLayout = QHBoxLayout()
+        buttonLayout.addWidget(self.buttonBox)
+        
+        meatLayout.addWidget(self.etiqueta,0,0)
+        meatLayout.addWidget(self.lista,0,1)
+        meatLayout.addWidget(self.sheet,1,0,6,2)
+        meatLayout.addWidget(self.msgLine,7,0)
+        meatLayout.addLayout(buttonLayout,8,0)
+        
+        self.setLayout(meatLayout)
+        self.setMinimumSize(QSize(382,382))
+        self.setWindowTitle("Seleccione la conexión a utilizar")
+        
+        self.sheet.hide()
+        self.buttonBox.hide()
+        
+        self.lista.currentIndexChanged[int].connect(self.selecConn)        
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+    
+    def selecConn(self,idx):
+        if idx < 1:
+            return
+        attr_list =  ('driver','dbname','dbhost','dbuser','dbpass','dbport','debug')
+        self.confName = self.lista.currentText()
+        datos = dict2row(self.confData[self.confName],attr_list)
+        datos[0]=DRIVERS.index(datos[0])
+        for i in range(len(datos)):
+            self.sheet.set(i,0,datos[i])
+        self.sheet.show()
+        self.buttonBox.show()
+
+    def validate(self):
+        datos = self.sheet.values()
+        if datos[1] == '':
+            self.sheet.cellWidget(1,0).setFocus()
+            self.msgLine.setText('Base de datos es Obligatorio')
+            return None
+        self.msgLine.clear()
+        return datos
+    
+    def accept(self):       
+        self.msgLine.clear()
+        attr_list =  ('driver','dbname','dbhost','dbuser','dbpass','dbport','debug')
+        datos = self.validate()
+        if datos is None:
+            return
+        if isinstance(datos[0],int):
+            datos[0]=DRIVERS[datos[0]]
+        conf = row2dict(datos,attr_list)
+        try:
+            if conf['driver'] == 'sqlite':
+                if not os.path.isfile(datos[1]):
+                    self.msgLine.setText('Fichero {} no existe'.format(datos[1]))
+                    return
+            conn = dbConnectAlch(conf)
+        except Exception  as e:
+            showConnectionError(datos[0],norm2String(e.orig.args))
+            self.msgLine.setText('Error en la conexión')
+            return
+    
+        self.conn = conn
+        self.confInfo = conf
+        
+        QDialog.accept(self)
+        
+    def reject(self):
+        if self.conn is not None:
+            self.conn.close()
+        QDialog.reject(self)
+        
 class SelectConnectionDlg(QDialog):
     def __init__(self,configDict,parent=None):
         super(SelectConnectionDlg,self).__init__(parent)
@@ -44,10 +149,12 @@ class SelectConnectionDlg(QDialog):
                                      Qt.Horizontal)       
         meatLayout = QVBoxLayout()
         buttonLayout = QHBoxLayout()
+        buttonLayout.addWidget(buttonBox)
+        
         meatLayout.addWidget(self.etiqueta)
         meatLayout.addWidget(self.lista)
-        buttonLayout.addWidget(buttonBox)
         meatLayout.addLayout(buttonLayout)
+
  
         self.setLayout(meatLayout)
         
