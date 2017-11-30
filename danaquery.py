@@ -18,19 +18,22 @@ from pprint import pprint
 import datetime
 import argparse
 
-from dictmgmt.datadict import *    
-#from PyQt5.QtGui import QGuiApplication
-from PyQt5.QtCore import  Qt,QModelIndex
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QColor
-from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QMenu, QComboBox, QLabel, QTableView, QDockWidget, QTextEdit, QListView, QTabWidget, QSplitter, QVBoxLayout
+#from dictmgmt.datadict import *    
 
-from datalayer.query_constructor import *
-from dictmgmt.tableInfo import *
+from PyQt5.QtCore import  Qt,QModelIndex
+from PyQt5.QtGui import QStandardItemModel, QStandardItem, QColor, QIcon
+from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QMenu, QComboBox, QLabel, QTableView, QDockWidget, QTextEdit, QListView, QTabWidget, QSplitter, QVBoxLayout, QWidget, QGridLayout
+
+from  sqlalchemy import create_engine,inspect,MetaData, types
+from  sqlalchemy.exc import CompileError, OperationalError, ProgrammingError, InterfaceError
+
 
 from util.numeros import fmtNumber               
-
+from util.jsonmgr import load_cubo,getConfigFileName
 from util.decorators import waiting_effects 
+from util.record_functions import norm2String
 
+from datalayer.access_layer import SYSTEM_SCHEMAS
 from datalayer.conn_dialogs import directConnectDlg
 
 DEBUG = True
@@ -103,10 +106,13 @@ def generaArgParser():
     return parser
 
 class dictBand(QWidget):
-    def __init__(self,conn,parent=None):
+    def __init__(self,conn,holder=None,exclude=True,parent=None):
         super(dictBand,self).__init__(parent)
         
         self.conn = conn
+        self.holder = holder
+        self.sysExcluded = exclude
+        
         self.schemaList = QComboBox()
         self.tableList = QListView()
         self.rowList = QTableView()
@@ -154,11 +160,11 @@ class dictBand(QWidget):
             schemata =[None,]
         else:
             #TODO esquemas excluidos
-            #driver = self.conn.dialect.name
-            #if self.sysExcluded and driver in SYSTEM_SCHEMAS:                    
-                #schemata = [schema for schema in inspector.get_schema_names() if schema not in SYSTEM_SCHEMAS[driver] ]
-            #else:
-            schemata=self.inspector.get_schema_names()  #behaviour with default
+            driver = self.conn.dialect.name
+            if self.sysExcluded and driver in SYSTEM_SCHEMAS:                    
+                schemata = [schema for schema in self.inspector.get_schema_names() if schema not in SYSTEM_SCHEMAS[driver] ]
+            else:
+                schemata=self.inspector.get_schema_names()  #behaviour with default
         return schemata
 
     def getTables(self):
@@ -274,16 +280,24 @@ class QueryTab(QWidget):
         super().close()
         
 class EditWindow(QMainWindow):
-    def __init__(self,conn,confName):
+    def __init__(self): #conn,confName):
         super(EditWindow,self).__init__()
+
+        parser = generaArgParser()
+        args = parser.parse_args()
+        #Leeo la configuracion
+        self.configFile = args.configFile
+        #self.secure = args.secure
+        #cubeFile = args.cubeFile
+        self.sysExclude = args.sysExclude
         
-        self.conn = conn
-        self.setWindowTitle("Consultas a la base de datos "+confName)
+        #self.conn = conn
+        self.setWindowTitle("Consultas a bases de datos" )
         #self.setupEditWindow()
         self.setupMultiEdit()
         
     def setupMultiEdit(self):
-        self.tabSesiones = QTabWidget()
+
         self.msgLine = QTextEdit()
         self.msgLine.setReadOnly(True)
         self.msgLine.setText("Bienvenido al query masta")
@@ -292,12 +306,17 @@ class EditWindow(QMainWindow):
         self.msgDock.setWidget(self.msgLine)
         self.msgDock.setAllowedAreas(Qt.BottomDockWidgetArea)
 
+        self.tabSesiones = QTabWidget()
+        self.addSesion()
+        firstconn = self.tabSesiones.currentWidget().conn
         self.setCentralWidget(self.tabSesiones)
+        
         self.tabSesiones.currentChanged[int].connect(self.sesionChanges)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.createDictionaryDocket(self.conn))
+        self.addDockWidget(Qt.RightDockWidgetArea, self.createDictionaryDocket(firstconn))
         self.addDockWidget(Qt.BottomDockWidgetArea, self.msgDock)
 
-        self.tabSesiones.addTab(SesionTab(conn,confName,holder=self),confName)
+
+
 
         self.sesionMenu = self.menuBar().addMenu("Sesiones")
         self.sesionMenu.addAction("&Nueva Sesion",self.addSesion,"Ctrl+N")
@@ -311,11 +330,12 @@ class EditWindow(QMainWindow):
         self.queryMenu.addAction("re&Format", self.queryReformat, "Alt+R")        
     
     def addSesion(self):
-        conn,confName,confInfo = selector()
+        conn,confName,confInfo = selector(self.configFile)
         if conn is None:
-            return
+            return None
         self.tabSesiones.addTab(SesionTab(conn,confName,holder=self),confName)
         self.tabSesiones.setCurrentIndex(self.tabSesiones.count() -1)
+    
     def closeSesion(self):
         tabId = self.tabSesiones.currentIndex()
         self.tabSesiones.currentWidget().conn.close()
@@ -340,17 +360,10 @@ class EditWindow(QMainWindow):
     def createDictionaryDocket(self,conn,area=Qt.RightDockWidgetArea):
         self.dictDock = QDockWidget()
         self.dictDock.setAllowedAreas(area)
-        self.dictDock.setWidget(dictBand(conn))
+        self.dictDock.setWidget(dictBand(conn,holder=self,exclude=self.sysExclude))
         return self.dictDock
             
-def selector():
-    parser = generaArgParser()
-    args = parser.parse_args()
-    #Leeo la configuracion
-    configFile = args.configFile
-    secure = args.secure
-    cubeFile = args.cubeFile
-    sysExclude = args.sysExclude
+def selector(configFile):
     configData = load_cubo(getConfigFileName(configFile))
     if configData is None or configData.get('Conexiones') is None:
         sys.exit()
@@ -370,10 +383,10 @@ if __name__ == '__main__':
         reload(sys)
         sys.setdefaultencoding('utf-8')
     app = QApplication(sys.argv)
-    conn,confName,confInfo = selector()
-    if conn is None:
-        sys.exit()
-    window = EditWindow(conn,confName)
+    #conn,confName,confInfo = selector()
+    #if conn is None:
+        #sys.exit()
+    window = EditWindow()#conn,confName)
     #window = multiEdit(conn,confName)
     window.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
     window.show()
