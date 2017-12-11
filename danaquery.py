@@ -33,7 +33,8 @@ from util.jsonmgr import load_cubo,getConfigFileName
 from util.decorators import waiting_effects 
 from util.record_functions import norm2String
 
-from datalayer.access_layer import SYSTEM_SCHEMAS
+from datalayer.access_layer import SYSTEM_SCHEMAS, getCursorLim
+from datalayer.query_constructor import queryFormat
 from datalayer.conn_dialogs import directConnectDlg
 
 DEBUG = True
@@ -201,6 +202,7 @@ class SesionTab(QWidget):
     def __init__(self,conn,confName,holder=None,parent=None):
         super(SesionTab,self).__init__(parent)
         self.conn = conn
+        self.confName = confName
         self.holder = holder
         self.tabQueries = QTabWidget()
         self.tabQueries.setTabShape(QTabWidget.Triangular)
@@ -208,10 +210,10 @@ class SesionTab(QWidget):
         meatLayout.addWidget(self.tabQueries)
         self.setLayout(meatLayout)
         
-        self.tabQueries.addTab(QueryTab(conn,confName,holder=self.holder),"{}:{}".format(confName, self.tabQueries.count() +1))
+        self.addQuery()
         
     def addQuery(self):
-        self.tabQueries.addTab(QueryTab(conn,confName,holder=self.holder),"{}:{}".format(confName, self.tabQueries.count() +1))
+        self.tabQueries.addTab(QueryTab(self.conn,self.confName,holder=self.holder),"{}:{}".format(self.confName, self.tabQueries.count() +1))
         self.tabQueries.setCurrentIndex(self.tabQueries.count() -1)
         
     def closeQuery(self):
@@ -233,11 +235,15 @@ class QueryTab(QWidget):
         self.browser.setAlternatingRowColors(True)
 
         self.sqlEdit = QTextEdit()
+        self.msgLine = QTextEdit()
+        self.msgLine.setReadOnly(True)
+        self.msgLine.setText("Bienvenido al query masta")
         
         split = QSplitter(Qt.Vertical)
         split.addWidget(self.sqlEdit)
         split.addWidget(self.browser)
-        split.setSizes([50,250])
+        split.addWidget(self.msgLine)
+        split.setSizes([50,250,25])
         #split.setRubberBand(1)
         
         meatLayout = QVBoxLayout()
@@ -251,16 +257,16 @@ class QueryTab(QWidget):
             return 
         cursor = None
 
-        self.holder.msgDock.hide()
-        self.holder.msgLine.setText('')
+        self.msgLine.hide()
+        self.msgLine.setText('')
         try:
             #TODO opcion para poner un limit
             cursor = getCursorLim(self.conn,sqlString,LIMIT=1000)
         except Exception as e:
             if cursor is not None:
                 cursor.close()
-            self.holder.msgDock.show()
-            self.holder.msgLine.setText(norm2String(e.orig.args))
+            self.msgLine.show()
+            self.msgLine.setText(norm2String(e.orig.args))
             return
             
         self.baseModel = CursorItemModel()
@@ -298,13 +304,6 @@ class EditWindow(QMainWindow):
         
     def setupMultiEdit(self):
 
-        self.msgLine = QTextEdit()
-        self.msgLine.setReadOnly(True)
-        self.msgLine.setText("Bienvenido al query masta")
-        
-        self.msgDock  = QDockWidget()
-        self.msgDock.setWidget(self.msgLine)
-        self.msgDock.setAllowedAreas(Qt.BottomDockWidgetArea)
 
         self.tabSesiones = QTabWidget()
         self.addSesion()
@@ -313,10 +312,6 @@ class EditWindow(QMainWindow):
         
         self.tabSesiones.currentChanged[int].connect(self.sesionChanges)
         self.addDockWidget(Qt.RightDockWidgetArea, self.createDictionaryDocket(firstconn))
-        self.addDockWidget(Qt.BottomDockWidgetArea, self.msgDock)
-
-
-
 
         self.sesionMenu = self.menuBar().addMenu("Sesiones")
         self.sesionMenu.addAction("&Nueva Sesion",self.addSesion,"Ctrl+N")
