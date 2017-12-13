@@ -104,7 +104,7 @@ class WzDestination(QWizardPage):
        self.selecciona()
        
     def selecciona(self):
-        
+    
         filename,filter = QFileDialog.getSaveFileName(self,
                                                   caption="Nombre del fichero",
                                                   directory="datos",

@@ -8,7 +8,21 @@ from __future__ import unicode_literals
 
 '''
 Documentation, License etc.
-
+TODO list:
+    Read/Write sql from file (WIP)
+    Edit Undo/Redo
+    Export results (CSV/Json)
+    Read view definitions
+    Generate code from definitions
+    Commits/Rollbacks
+    Limit UI
+    
+    Threads. Conexion a BD y cursor debe estar en un thread distinto (al menos sqlite). No es lo que yo tenia previsto.
+            Ademas al menos self.sqlEdit.document() y self.sqlEdit deben ejecutarse en el mismo thread (Qt)
+        
+    Icon "ribbon"
+    Data formating
+    
 @package estimaciones
 # 0.3
 '''
@@ -22,7 +36,7 @@ import argparse
 
 from PyQt5.QtCore import  Qt,QModelIndex
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QColor, QIcon
-from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QMenu, QComboBox, QLabel, QTableView, QDockWidget, QTextEdit, QListView, QTabWidget, QSplitter, QVBoxLayout, QWidget, QGridLayout
+from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QMenu, QComboBox, QLabel, QTableView, QDockWidget, QTextEdit, QListView, QTabWidget, QSplitter, QVBoxLayout, QWidget, QGridLayout, QFileDialog
 
 from  sqlalchemy import create_engine,inspect,MetaData, types
 from  sqlalchemy.exc import CompileError, OperationalError, ProgrammingError, InterfaceError
@@ -55,6 +69,9 @@ class CursorItem(QStandardItem):
         super(CursorItem, self).__init__(*args)
     
     def data(self,role=Qt.UserRole +1):
+        '''
+        FIXME realmente no se utiliza (recordStructure es nulo y probablemente tampoco role). Por otro lado el codigo no tiene mucho sentido en este caso (copiado de tablebrowse)
+        '''
         if self.model() and self.model().recordStructure and role in (Qt.DisplayRole, Qt.TextAlignmentRole):
             index = self.index()
             format = self.model().recordStructure[index.column()]['format']
@@ -215,6 +232,16 @@ class SesionTab(QWidget):
     def addQuery(self):
         self.tabQueries.addTab(QueryTab(self.conn,self.confName,holder=self.holder),"{}:{}".format(self.confName, self.tabQueries.count() +1))
         self.tabQueries.setCurrentIndex(self.tabQueries.count() -1)
+
+    def openQuery(self):
+        #self.tabQueries.addTab(QueryTab(self.conn,self.confName,holder=self.holder),"{}:{}".format(self.confName, #self.tabQueries.count() +1))
+        #self.tabQueries.setCurrentIndex(self.tabQueries.count() -1)
+        self.tabQueries.currentWidget().readQuery()
+        
+    def saveQuery(self):
+        self.tabQueries.currentWidget().writeQuery()
+    def saveAsQuery(self):
+        self.tabQueries.currentWidget().writeQuery(True)
         
     def closeQuery(self):
         tabId = self.tabQueries.currentIndex()
@@ -230,6 +257,7 @@ class QueryTab(QWidget):
         super(QueryTab,self).__init__(parent)
         self.conn = conn
         self.holder = holder
+        self.fileName = None
         self.browser = QTableView()
         self.browser.setSortingEnabled(True)  
         self.browser.setAlternatingRowColors(True)
@@ -277,11 +305,67 @@ class QueryTab(QWidget):
         self.browser.setModel(self.baseModel)
         cursor.close() #INNECESARIO pero recomendable
 
+    def readQuery(self):
+        #TODO y el contenido actual del script ?
+        if self.fileName is not None and self.sqlEdit.document().isModified():
+            #dialogo de confirmar el salvado de los datos
+             pass
+        filename,filter = QFileDialog.getOpenFileName(self,
+                                                  caption="Nombre del fichero de comandos a editar",
+                                                  directory="script",
+                                                  filter = "sql (*.sql);; All files (*)",
+                                                  initialFilter="sql (*.sql)",
+                                                  )
+        if filename:
+            with open(filename,"r") as file:
+                self.sqlEdit.document().setPlainText(file.read())
+                self.sqlEdit.document().setModified(False)
+            self.fileName = filename
+            #FIXME fugly
+            pos = self.holder.tabSesiones.currentWidget().tabQueries.currentIndex()
+            self.holder.tabSesiones.currentWidget().tabQueries.setTabText(pos,filename)
+            
+    def writeQuery(self,saveAs=False):
+        if not self.sqlEdit.document().isModified():
+            return
+        if self.fileName is None:
+            filename,filter = QFileDialog.getSaveFileName(self,
+                                                    caption="Salvar el script como',
+                                                    directory="script",
+                                                    filter = "sql (*.sql);; All files (*)",
+                                                    initialFilter="sql (*.sql)",
+                                                    )
+            if filename:
+                pass
+            else:
+                return
+
+        elif saveAs:
+            filename,filter = QFileDialog.getSaveFileName(self,"Save as",self.fileName)
+            if filename:
+                pass
+            else:
+                return
+        else:
+            filename = self.fileName
+        with open(self.fileName,"w") as file:
+            file.write(self.sqlEdit.document().toPlainText())
+            
+        if self.fileName is None or saveAs is True:
+            self.fileName = filename
+            #FIXME fugly
+            pos = self.holder.tabSesiones.currentWidget().tabQueries.currentIndex()
+            self.holder.tabSesiones.currentWidget().tabQueries.setTabText(pos,filename)
+    
+        self.sqlEdit.document().setModified(False)
     def reformat(self):
         sqlString = self.sqlEdit.document().toPlainText()
         self.sqlEdit.setText(queryFormat(sqlString))
   
     def close(self):
+        #TODO salvar si es fichero
+        if self.fileName is not None:
+            pass
         self.conn.close()
         super().close()
         
@@ -319,6 +403,9 @@ class EditWindow(QMainWindow):
 
         self.queryMenu = self.menuBar().addMenu("Queries")
         self.queryMenu.addAction("&Nueva consulta",self.addQuery,"Alt+N")
+        self.queryMenu.addAction("&Abrir query guardada",self.openQuery,"Alt+O")
+        self.queryMenu.addAction("Guardar query",self.saveQuery,"Alt+S")
+        self.queryMenu.addAction("Guardar query como",self.saveAsQuery,"Alt+S")
         self.queryMenu.addAction("&Cerrar consulta",self.closeQuery,"Alt+C")
         self.queryMenu.addSeparator()
         self.queryMenu.addAction("&Ejecutar", self.queryExecute, "Alt+X")
@@ -338,6 +425,13 @@ class EditWindow(QMainWindow):
 
     def addQuery(self):
         self.tabSesiones.currentWidget().addQuery()
+    def openQuery(self):
+        self.tabSesiones.currentWidget().openQuery()
+    def saveQuery(self):
+        self.tabSesiones.currentWidget().saveQuery()
+    def saveAsQuery(self):
+        self.tabSesiones.currentWidget().saveAsQuery()
+
     def closeQuery(self):
         self.tabSesiones.currentWidget().closeQuery()
     
