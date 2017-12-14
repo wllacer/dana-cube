@@ -14,14 +14,16 @@ TODO list:
     Export results (CSV/Json)
     Read view definitions
     Generate code from definitions
-    Commits/Rollbacks
+    Commits/Rollbacks 
+        DBAPI is in autocommit mode. Must explore sqlalchemy commit logic when autocommit is off. 
+        datalayer.query_constructor.queryTransStatus returns query potential transactional statu
     Limit UI
     
     Threads. Conexion a BD y cursor debe estar en un thread distinto (al menos sqlite). No es lo que yo tenia previsto.
             Ademas al menos self.sqlEdit.document() y self.sqlEdit deben ejecutarse en el mismo thread (Qt)
         
-    Icon "ribbon"
-    Data formating
+    Icon "ribbon". Ultima funcion a implementar
+    Data formating Extra points (May BE via sqlparse)
     
 @package estimaciones
 # 0.3
@@ -330,7 +332,7 @@ class QueryTab(QWidget):
             return
         if self.fileName is None:
             filename,filter = QFileDialog.getSaveFileName(self,
-                                                    caption="Salvar el script como',
+                                                    caption="Salvar el script como",
                                                     directory="script",
                                                     filter = "sql (*.sql);; All files (*)",
                                                     initialFilter="sql (*.sql)",

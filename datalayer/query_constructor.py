@@ -38,7 +38,33 @@ def queryFormat(sqlstring):
             cadena = cadena.replace(entry,salida)
         cadena = cadena.replace(',',',\n\t')
         return cadena
+
+
+def queryTransStatus(sqlString):
+    """
+    Determinar el estado transaccional tras ejecutar los comandos en sqlString.
+    Posibles salidas
+         None   -> El script no modifica el estado transaccional
+         Open   -> El script deja una transaccion abierta (pero puede haber ejectuado alguna intermedia
+         Closed -> El script cierra la transaccion al terminar de ejecutar
+    Funciona por el caracter secuencial de ejecucion de los comandos en el script
     
+    TODO Posible mejora  -> distinguir en estado open si el script cierra transacciones itermedias
+    """
+    import sqlparse
+    
+    DML = ('INSERT','UPDATE','DELETE')
+    DDL = ('CREATE','ALTER','DROP')
+    ACTIVE = DML + DDL
+    TC  = ('COMMIT','ROLLBACK')
+    status = None
+    for statement in sqlparse.parse(sqlString):
+        if statement.get_type() in ACTIVE:
+            status = 'Open'
+        elif statement.get_type() in TC:
+            status = 'Closed'
+    return status    
+
 def _sqlFmt(parametro,**kwargs):
     """Devuelve, de una entrada (parametro) la salida en un formato compatible con sqlClause
       acepta uno de la lista siguiente de parametros.
