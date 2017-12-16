@@ -1,6 +1,35 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+"""
+Nueva versiion. TodoList para volcar
+         TESTED Cubo
+            Abrir Cubo 
+            Convertir vista actual a defecto
+         TESTED Vista
+            Abrir Vista
+            Cambiar vista actual
+            Cerrar vista actual
+         TESTED Usar Filtros
+            Editar &Filtro
+            Borrar &Filtros
+            Guardar &Filtros permanentemente
+         Rangos de Fechas
+            Editar &Rango fechas
+            Borrar &Rango fechas
+            Salvar &Rango fechas
+         Opciones
+            Exportar datos
+            Trasponer datos
+            FAIL Presentacion ...
+         Graficos
+         WORK PRELIMINAR Funciones de usuario
+            FAIL funcion de merge
+         TESTED Restaurar valores originales   
+         
+         
+        revisar estadisticas
+        revisar restaurar valores originales cuando se crea entrada por ahí (en merge. probablemente no funciona correctamente. pero merge todavia no funciona
+"""
 
 from __future__ import division
 from __future__ import absolute_import
@@ -35,17 +64,7 @@ from util.uf_manager import *
 import exportWizard as eW
 
 from util.treestate import *
-#FIXED 1 zoom view breaks. Some variables weren't available
-#     FIXME zoom doesn't trigger any action with the new interface
-#FIXED 1 config view doesn't fire. Definition too early
-#     FIXED 2 there's no code to handle it now
-#          FIXED right justified
-#          FIXED refreshTable
-#
-#FIXED 1 cursor en trabajo app.setOverrideCursor
-#FIXED formateo de la tabla
-#FIXED 2 formateo de los elementos
-#FIXED implementar sort en modelo
+
 #TODO uso de formato numerico directamente en la view setNumberFormat
 #ALERT dopado para que vaya siempre a datos de prueba
 
@@ -270,29 +289,17 @@ class DanaCubeWindow(QMainWindow):
             self.editConnection(my_cubos[seleccion],seleccion)
         self.cubo = Cubo(my_cubos[seleccion])
         self.cubo.nombre = seleccion #FIXME es que no tengo sitio en Cubo para definirlo
-        self.cubo.recordStructure = self.summaryGuia()
+        self.cubo.recordStructure = self.getCubeRecordInfo()
         self.setWindowTitle(self.cubo.nombre)
 
         
     @waiting_effects
-    def summaryGuia(self):
+    def getCubeRecordInfo(self):
+        """
+           Determinamos con el la estructura del registro que el cubo analiza.
+           TODO Probablemente deberia estar mejor en Core
+        """
         result = []
-        """
-           este codigo parece no ser utilizado en el resto de danacube y es especialmente costoso.
-           A parte de incompatible con la nueva interfaz
-        """
-        #self.cubo.fillGuias()
-        #for k,guia in enumerate(self.cubo.lista_guias):
-            #arbolGuia,dummy = self.cubo.fillGuia(k)
-            #dataGuia = []
-            #for item in arbolGuia.traverse(mode=1,output=1):
-                #dataGuia.append((item.key,item.desc))
-            #result.append({'name':guia['name'],'format':guia.get('fmt','texto'),
-                                #'source':guia['elem'] if guia['class'] != 'c' else guia['name'] ,
-                                #'values':dataGuia,
-                                #'class':guia['class']}
-                                #)
-            
         confData = self.cubo.definition['connect']
         confName = '$$TEMP'
         (schema,table) = self.cubo.definition['table'].split('.')
@@ -554,7 +561,6 @@ class DanaCube(QTreeView):
                                     yellowoutliers=True)
 
         self.vista = None
-        self.baseModel = None
         self.parent= parent  #la aplicacion en la que esta. Lo necesito para los cambios de título
         self.cubo =  self.parent.cubo
         self.setupFilters()
@@ -610,7 +616,7 @@ class DanaCube(QTreeView):
         #self.vista = None
         self.filterValues = None
         self.isModified = False
-        #self.cubo.recordStructure = self.summaryGuia()
+        #self.cubo.recordStructure = self.getCubeRecordInfo()
 
             #self.cargaVista(row,col,agregado,campo,totalizado,stats)
 
@@ -656,11 +662,11 @@ class DanaCube(QTreeView):
     @waiting_effects
     @model_change_control()
     def traspose(self):
-        #self.baseModel.beginResetModel()
+        #self.model().beginResetModel()
         self.vista.traspose()
-        self.baseModel.getHeaders()
-        self.baseModel.rootItem = self.vista.row_hdr_idx.rootItem
-        #self.baseModel.endResetModel()
+        self.model().getHeaders()
+        self.model().rootItem = self.vista.row_hdr_idx.rootItem
+        #self.model().endResetModel()
         self.expandToDepth(2)
 
         self.setTitle()
@@ -670,8 +676,9 @@ class DanaCube(QTreeView):
             La eleccion de una u otra señal no es casualidad.
             Si utilizo layoutChanged el dialogo setNumberFormat cruje inmisericordemente al cerrar si no se le define el WA_DeleteOnClose !!!!???
         """
-        self.baseModel.emitModelReset()
-        #self.baseModel.layoutChanged.emit()
+        pass
+        #self.model().emitModelReset()
+        #self.model().layoutChanged.emit()
         
      
     def setNumberFormat(self):
@@ -681,7 +688,7 @@ class DanaCube(QTreeView):
         self.numberFormatDlg.show()
         self.numberFormatDlg.raise_()
         self.numberFormatDlg.activateWindow()
-        #self.refreshTable()  #creo que es innecesario
+        self.refreshTable()  #creo que es innecesario
     
     @keep_tree_layout()
     @waiting_effects
@@ -689,14 +696,14 @@ class DanaCube(QTreeView):
     def restoreData(self):
         #app.setOverrideCursor(QCursor(Qt.WaitCursor))
         #expList = saveExpandedState(self)
-        #self.baseModel.beginResetModel()
-        for item in self.baseModel.traverse(mode=1,output=1):
+        #self.model().beginResetModel()
+        for item in self.model().traverse():
             item.restoreBackup()
             if self.vista.stats :
                item.setStatistics()
 
-        #self.baseModel.rootItem = self.vista.row_hdr_idx.rootItem    
-        #self.baseModel.endResetModel()
+        #self.model().rootItem = self.vista.row_hdr_idx.rootItem    
+        #self.model().endResetModel()
         #restoreExpandedState(expList,self)
         #self.expandToDepth(2)
         #app.restoreOverrideCursor()
@@ -726,8 +733,9 @@ class DanaCube(QTreeView):
             funcioncilla para obtener las tablas para parmetrizar y presentar de las cabeceras de fila o columna
             """
             m_tabla = []
-            for key in guia.traverse(mode=1):
-                m_tabla.append((key.split(':')[-1],guia[key].desc))
+            for item in guia.traverse():
+                #m_tabla.append((key.split(':')[-1],guia[key].desc))
+                m_tabla.append((item.getKey(),item.getLabel()))
             return m_tabla
         
         def presenta(a_table,a_data = None):
@@ -741,17 +749,17 @@ class DanaCube(QTreeView):
             return a_data
 
         if 'colkey' in tipo_plugin:
-            lparm[1] = indice2tablas(self.baseModel.datos.col_hdr_idx)
+            lparm[1] = indice2tablas(self.vista.col_hdr_idx)
 
         if 'colparm' in tipo_plugin:
             if lparm[1]:
                 a_table = lparm[1]
             else:
-                a_table = indice2tablas(self.baseModel.datos.col_hdr_idx)
+                a_table = indice2tablas(self.vista.col_hdr_idx)
             lparm[3] = [(a_table[k][0],a_table[k][1],data) for k,data in enumerate(presenta(a_table))]
             
         if 'rowparm' in tipo_plugin:
-            a_table = indice2tablas(self.baseModel.datos.row_hdr_idx)
+            a_table = indice2tablas(self.vista.row_hdr_idx)
             lparm[2] = [(a_table[k][0],a_table[k][1],data) for k,data in enumerate(presenta(a_table))]
         
         if 'kwparm' in tipo_plugin:
@@ -768,7 +776,7 @@ class DanaCube(QTreeView):
         """
         separado para evitar efectos secundarios de model_change_control
         """
-        for item in self.baseModel.traverse(mode=1,output=1):
+        for item in self.model().traverse():
                 item.setBackup()
                 if 'leaf' in tipo_plugin and not item.isLeaf():
                     continue
@@ -782,21 +790,21 @@ class DanaCube(QTreeView):
     @waiting_effects    
     def dispatch(self,fcnName):
         #TODO reducir el numero de arrays temporales
-        #self.baseModel.beginResetModel()
+        #self.model().beginResetModel()
         for elem in self.parent.plugins[fcnName]['exec']:
             if elem[1] is None: #defino un defecto para esta aplicacion
                 elem[1] = 'item'
             self.funDispatch(elem)
             if 'leaf' in elem[1]:
                 self.vista.recalcGrandTotal()
-        #self.baseModel.endResetModel()
+        #self.model().endResetModel()
         self.isModified = True
         self.parent.restorator.setEnabled(True)
         #self.expandToDepth(2)
         
     def setFilter(self):
         #self.areFiltered = True
-        #self.cubo.recordStructure = self.summaryGuia()
+        #self.cubo.recordStructure = self.getCubeRecordInfo()
         
         filterDlg = filterDialog(self.cubo.recordStructure,self,driver=self.cubo.dbdriver)
         if self.filterValues :
@@ -974,16 +982,16 @@ class DanaCube(QTreeView):
         
     def drawGraph(self,source,id):
         if source == 'row':
-            item = self.baseModel.item(id)
+            item = self.model().item(id)
             titulo = item['key']
             datos = item.getPayload()
-            etiquetas = self.baseModel.colHdr[1:]
+            etiquetas = self.model().colHdr[1:]
         elif source == 'col':
-            titulo = self.baseModel.colHdr[id]
+            titulo = self.model().colHdr[id]
             datos = []
             for key in self.vista.row_hdr_idx.traverse(mode=1):
                 datos.append(self.vista.row_hdr_idx[key].gpi(id -1))
-            etiquetas = self.baseModel.rowHdr[1:]
+            etiquetas = self.model().rowHdr[1:]
         print(source,titulo,datos,etiquetas)
         
 if __name__ == '__main__':

@@ -643,13 +643,8 @@ class GuideItem(QStandardItem):
         self.originalValue = self.data(Qt.UserRole +1)
         if self.index().column() == 0:
             self.stats = None
-
     def setData(self,value,role):
         super(GuideItem, self).setData(value,role)
-        if role is None or role == Qt.UserRole + 1:
-            if self.originalValue is None:
-                self.originalValue = value
-
     def type(self):
         if self.data(Qt.UserRole +1) == '//':
             return TOTAL
@@ -691,7 +686,7 @@ class GuideItem(QStandardItem):
     def setPayload(self,lista,leafOnly=False):
         indice = self.index() 
         lastLeaf = 0
-        for k,valor in lista: 
+        for k,valor in enumerate(lista): 
             if leafOnly:
                 col = self.model().colTreeIndex['leaf'][k] +1
             else:
@@ -727,9 +722,20 @@ class GuideItem(QStandardItem):
         indice = self.index() #self.model().indexFromItem(field
         colind = indice.sibling(indice.row(),idx + 1)
         if colind.isValid():
-            return self.model().itemFromIndex(colind)
+            return self.model().itemFromIndex(colind).data(Qt.UserRole +1)
         else:
             return None
+
+    def setPayloadItem(self,idx,valor):
+        indice = self.index() #self.model().indexFromItem(field
+        colind = indice.sibling(indice.row(),idx + 1)
+        if colind.isValid():
+            item = self.model().itemFromIndex(colind)
+            item.setData(valor,Qt.UserRole +1)
+        else:
+            colroot = indice.sibling(indice.row(),0)
+            item = self.model().itemFromIndex(colroot)
+            item.setColumn(idx +1,valor)
     
     def _getHead(self):
         if self.column() == 0:
@@ -780,8 +786,8 @@ class GuideItem(QStandardItem):
             pai = self.parent()
         colItem = GuideItem()
         colItem.setData(value,Qt.UserRole +1)
-        #colItem.setData(value,Qt.DisplayRole)
         pai.setChild(row,col,colItem)
+        colItem.setBackup()
    
     def getColumnData(self,idx,role=None):
         indice = self.index() #self.model().indexFromItem(field
@@ -816,6 +822,25 @@ class GuideItem(QStandardItem):
     def restoreBackup(self):
         if self.column() != 0:
             self.setData(self.originalValue,Qt.UserRole +1)
+        else:
+            indice = self.index()
+            k = 1
+            colind = indice.sibling(indice.row(),k)
+            while colind.isValid():
+                item = self.model().itemFromIndex(colind)
+                try:
+                    item.setData(item.originalValue,Qt.UserRole +1)
+                except AttributeError:
+                    pass
+                k +=1
+                colind = indice.sibling(indice.row(),k)
+
+            
+    def setBackup(self):
+        if self.column() != 0:
+            if self.originalValue is None:
+                self.originalValue = self.data(Qt.UserRole +1)
+        
     def gpi(self,ind):
         return self.getPayloadItem(ind)
     def spi(self,ind,data):
