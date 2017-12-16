@@ -23,12 +23,13 @@ Nueva versiion. TodoList para volcar
             FAIL Presentacion ...
          Graficos
          WORK PRELIMINAR Funciones de usuario
-            FAIL funcion de merge
+            TESTED funcion de merge
+            WAIT   Simulaciones. recalcGrandTotal falla
          TESTED Restaurar valores originales   
          
          
         revisar estadisticas
-        revisar restaurar valores originales cuando se crea entrada por ahí (en merge. probablemente no funciona correctamente. pero merge todavia no funciona
+        OK revisar restaurar valores originales cuando se crea entrada en merge. Creemos que es correcto, pero merge no funciona
 """
 
 from __future__ import division

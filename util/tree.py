@@ -693,7 +693,12 @@ class GuideItem(QStandardItem):
             colind = indice.sibling(indice.row(),col)
             if colind.isValid():
                 item = self.model().itemFromIndex(colind)
-                item.setData(valor,Qt.UserRole +1)
+                if not isinstance(item,GuideItem):
+                    colroot = indice.sibling(indice.row(),0)
+                    ritem = self.model().itemFromIndex(colroot)
+                    ritem.setColumn(col,valor)
+                else:
+                    item.setData(valor,Qt.UserRole +1)
             else:
                 colroot = indice.sibling(indice.row(),0)
                 item = self.model().itemFromIndex(colroot)
@@ -729,7 +734,12 @@ class GuideItem(QStandardItem):
         colind = indice.sibling(indice.row(),idx + 1)
         if colind.isValid():
             item = self.model().itemFromIndex(colind)
-            item.setData(valor,Qt.UserRole +1)
+            if not isinstance(item,GuideItem):
+                colroot = indice.sibling(indice.row(),0)
+                ritem = self.model().itemFromIndex(colroot)
+                ritem.setColumn(idx +1,valor)
+            else:
+                item.setData(valor,Qt.UserRole +1)
         else:
             colroot = indice.sibling(indice.row(),0)
             item = self.model().itemFromIndex(colroot)
