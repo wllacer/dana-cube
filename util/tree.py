@@ -37,7 +37,6 @@ def traverse(tree, key=None, mode=1):
             #queue = queue[1:] + expansion  # width-first
 
 class TreeItem(object):
-    
     def __init__(self, key, ord=None, desc=None, data=None, parent=None):
         self.key= key
         if desc is None:
@@ -268,7 +267,6 @@ class TreeItem(object):
         return 'TreeItem({},{},{})'.format(self.key,self.ord,self.desc)
 
 class TreeDict(object):
-    
     def __init__(self):
         self.content={}
         self.rootItemKey="/"
@@ -787,9 +785,22 @@ class GuideItem(QStandardItem):
         colItem = GuideItem()
         colItem.setData(value,Qt.UserRole +1)
         pai.setChild(row,col,colItem)
-        colItem.setBackup()
+        #colItem.setBackup()
    
+    def getColumn(self,col):
+        if self.column() != 0:
+            return None
+        indice = self.index() 
+        colind = indice.sibling(indice.row(),col)
+        if colind.isValid():
+            return self.model().itemFromIndex(colind)
+        else:
+            return None
+        
     def getColumnData(self,idx,role=None):
+        """
+        VITAL ver que aqui idx no es la columna en el sentido de Qt sino de Payload, es decir desplazado por uno (la columna 0 es la "cabecera"
+        """
         indice = self.index() #self.model().indexFromItem(field
         colind = indice.sibling(indice.row(),idx + 1)
         if colind.isValid():

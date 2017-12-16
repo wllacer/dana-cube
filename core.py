@@ -806,6 +806,8 @@ class Vista:
             col = coldict[record[1].getFullKey()]['idx']
             row = record[0]
             row.setColumn(col,record[2])
+            colItem = row.getColumn(col)
+            colItem.setBackup()
             
 
     def recalcGrandTotal(self):
