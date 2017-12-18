@@ -24,12 +24,14 @@ Nueva versiion. TodoList para volcar
          Graficos
          WORK PRELIMINAR Funciones de usuario
             TESTED funcion de merge
-            WAIT   Simulaciones. recalcGrandTotal falla
+            TESTED Simulaciones
          TESTED Restaurar valores originales   
          
          
+        TESTED recalcGrandTotal
+        revisar recalcGrandTotal sin gran total
         revisar estadisticas
-        OK revisar restaurar valores originales cuando se crea entrada en merge. Creemos que es correcto, pero merge no funciona
+        TESTED revisar restaurar valores originales c
 """
 
 from __future__ import division

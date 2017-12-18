@@ -337,7 +337,7 @@ def register(contexto):
     
     ufm.registro_funcion(contexto,name='asigna',entry=asigna,type='item,leaf',seqnr=10,
                          text='Asignacion de escaños',
-                         db='datos locales')
+                         db='datos locales,datos light')
     ufm.registro_funcion(contexto,name='asignaCat',entry=asignaCat,type='item,leaf',seqnr=10,
                          text='Asignacion de escaños',
                          db='datos catalonia')

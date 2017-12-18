@@ -536,6 +536,9 @@ class GuideItemModel(QStandardItemModel):
         for item in self.traverse():
             count += 1
         return count
+    
+    def len(self):
+        return self.numRecords()
 
     def lenPayload(self,leafOnly=False):
         """

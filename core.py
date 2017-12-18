@@ -835,16 +835,16 @@ class Vista:
         
         arbol = self.row_hdr_idx
         numcol = self.col_hdr_idx.len()
-        padres = []
+        padres = []  
         acumuladores = []
-        for elem in arbol.traverse(mode=1,output=1):
+        for elem in arbol.traverse():
             prof = elem.depth()
             if len(padres) < prof:
-                padres.append(elem.parentItem)
+                padres.append(elem.parent())
                 acumuladores.append([ {'max':0,'min':0,'count':0,'sum':0} for k in range(numcol)])
                 cargaAcumuladores()
             elif len(padres) == prof:
-                if padres[-1] == elem.parentItem:
+                if padres and padres[-1] == elem.parent():
                     cargaAcumuladores()
                 else:
                     print('cambio de padre')
@@ -853,17 +853,19 @@ class Vista:
                 del padres[-1]
                 del acumuladores[-1]
                 cargaAcumuladores()
-                #if padres[-1] == elem.parentItem:
+                #if padres[-1] == elem.parent():
                     #print('no cambia nada')
                 #else:
                     #print('nuevo padre')
-                    #padres.append(elem.parentItem)
+                    #padres.append(elem.parent())
                 #print('para atras')
         else:
-            while padres[-1].parent() is not None:
+            while True: #padres[-1].parent() is not None:
                 procesa()
                 del padres[-1]
                 del acumuladores[-1]
+                if len(padres) == 0 or padres[-1] is None:
+                    break
     
     def traspose(self):
         """
