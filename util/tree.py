@@ -879,10 +879,10 @@ class GuideItem(QStandardItem):
         if self.column() != 0:
             return None
         valor = []
-        valor.insert(0,self.data(Qt.DisplayData))
+        valor.insert(0,self.data(Qt.DisplayRole))
         pai = self.parent()
         while pai is not None and pai != self.model().invisibleRootItem():
-            valor.insert(0,pai.data(Qt.DisplayData))
+            valor.insert(0,pai.data(Qt.DisplayRole))
             pai = pai.parent()
         return valor
 

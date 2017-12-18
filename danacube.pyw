@@ -13,16 +13,36 @@ Nueva versiion. TodoList para volcar
             Editar &Filtro
             Borrar &Filtros
             Guardar &Filtros permanentemente
-         Rangos de Fechas
+         FAIL Rangos de Fechas
+         
+         El error es previo; debia estar resuelto, se suponia
+         sqlalchemy.exc.ProgrammingError: (psycopg2.ProgrammingError) constante no entera en GROUP BY
+            LÍNEA 1: ...ntal.inventory_id)  FROM public.rental   GROUP BY '//', staf...
+                                                                            ^
+ [SQL: " SELECT  '//', staff_id, sum(public.rental.inventory_id)  FROM public.rental   GROUP BY '//', staff_id ORDER BY 1 , 2  "]
+
             Editar &Rango fechas
             Borrar &Rango fechas
             Salvar &Rango fechas
          Opciones
-            Exportar datos
-            Trasponer datos
+            FAIL Exportar datos
+             File "/home/werner/projects/dana-cube.git/util/tree.py", line 621, in filterCumHeader
+                    for item in self.traverse(output = _ITEM):
+                 TypeError: traverse() got an unexpected keyword argument 'output'
+                 
+            FAIL Trasponer datos
+              File "/home/werner/projects/dana-cube.git/core.py", line 880, in traspose
+                    self.dim_row = len(self.cubo.lista_guias[self.row_id]['rules'])
+                KeyError: 'rules'
+                
             FAIL Presentacion ...
-         Graficos
-         WORK PRELIMINAR Funciones de usuario
+            
+         PARTIAL Graficos
+            Falla multibar
+              File "danacube.pyw", line 565, in processChartItem
+                datos,kcabeceras = item.simplifyHierarchical() #msimplify(mdatos,self.textos_col)
+              AttributeError: 'GuideItem' object has no attribute 'simplifyHierarchical'
+         TESTED Funciones de usuario
             TESTED funcion de merge
             TESTED Simulaciones
          TESTED Restaurar valores originales   
@@ -524,28 +544,28 @@ class TabMgr(QWidget):
     def processChartItem(self,index=None,tipo='bar'):
         if index:
             if index.isValid():
-                item = self.tree.baseModel.item(index)
+                item = self.tree.model().itemFromIndex(index)
             else:
                 return
-        elif self.lastItemUsed:
+        elif self.lastItemUsed is not None:
             item = self.lastItemUsed
         else:
-            item = self.tree.baseModel.item('//')
+            item = self.tree.model().invisibleRootItem().child(0)
         self.lastItemUsed = item
         #textos_col = ytree.getHeader('col')
         #textos_row = xtree.getHeader('row')
         #line = 0
         #col  = 0
-        titulo = self.tree.baseModel.datos.row_hdr_idx.name+'> '+item.getFullDesc()[-1] +  '\n' + \
-            '{}({})'.format(self.tree.baseModel.datos.agregado,self.tree.baseModel.datos.campo) 
-        x_text = self.tree.baseModel.datos.col_hdr_idx.name
+        titulo = self.tree.vista.row_hdr_idx.name+'> '+item.getFullDesc()[-1] +  '\n' + \
+            '{}({})'.format(self.tree.vista.agregado,self.tree.vista.campo) 
+        x_text = self.tree.vista.col_hdr_idx.name
         y_text = ''
         
         if tipo == 'multibar': 
             datos,kcabeceras = item.simplifyHierarchical() #msimplify(mdatos,self.textos_col)
         else:
             datos,kcabeceras = item.simplify() #item.getPayload(),self.textos_col)
-        cabeceras = [ self.tree.baseModel.colHdr[k] for k in kcabeceras ]
+        cabeceras = [ self.tree.model().colTreeIndex['idx'][k -1]['objid'].data(Qt.DisplayRole) for k in kcabeceras ]
 
         if len(datos) == 0:
             self.chart.axes.cla()
