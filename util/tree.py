@@ -785,7 +785,6 @@ class GuideItem(QStandardItem):
     def getFullDesc(self):
         if item.column() != 0:
             fuente = self.index().sibling(self.index(),0)
-            print(self,self.parent(),fuente)
         else:
             fuente = self
         clave = fuente.data(Qt.DisplayRole)
@@ -793,6 +792,7 @@ class GuideItem(QStandardItem):
         while pai is not None and pai != fuente.model().invisibleRootItem():
             clave = pai.data(Qt.UserRole +1) + DELIMITER + clave
             pai = pai.parent()
+        print('get full desc',clave)
         return clave
         
     def searchChildren(self,value,role=None):
@@ -916,17 +916,18 @@ class GuideItem(QStandardItem):
         tmppay = list()
         ncab = list()
         kitem = self
-        while kitem.parent():
+        while kitem:
             tmppay.insert(0,kitem.getPayload())
             kitem = kitem.parent()
             
-        npay = [list() for k in range(profundidad) ]    
+        npay = [list() for k in range(profundidad +1) ]  
         for k,value in enumerate(self.getPayload()):
             if not value:
                 continue
-            for j in range(profundidad):
+            for j in range(profundidad +1):
                 npay[j].append(tmppay[j][k])
             ncab.append(k +1)
+
         return npay,ncab
     
     def __getitem__(self,campo):

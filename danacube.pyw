@@ -38,7 +38,7 @@ Nueva versiion. TodoList para volcar
             FAIL Presentacion ...
             
          PARTIAL Graficos
-            Falla multibar
+            SOLVED multibar
             SOLVED llamada inicial
             Falla
               File "/home/werner/projects/dana-cube.git/util/tree.py", line 614, in data
@@ -556,7 +556,6 @@ class TabMgr(QWidget):
                     rowid = self.tree.model().itemFromIndex(index.sibling(index.row(),0))
                 else:
                     rowid = item
-                print('Rpw id',rowid)
             else:
                 return
         elif len(self.tree.selectedIndexes()) > 0:
@@ -581,17 +580,16 @@ class TabMgr(QWidget):
             '{}({})'.format(self.tree.vista.agregado,self.tree.vista.campo) 
         x_text = self.tree.vista.col_hdr_idx.name
         y_text = ''
-        
         if tipo == 'multibar': 
-            datos,kcabeceras = item.simplifyHierarchical() #msimplify(mdatos,self.textos_col)
+            datos,kcabeceras = rowid.simplifyHierarchical() #msimplify(mdatos,self.textos_col)
         else:
-            datos,kcabeceras = item.simplify() #item.getPayload(),self.textos_col)
+            datos,kcabeceras = rowid.simplify() #item.getPayload(),self.textos_col)
         cabeceras = [ self.tree.model().colTreeIndex['idx'][k -1]['objid'].data(Qt.DisplayRole) for k in kcabeceras ]
 
         if len(datos) == 0:
             self.chart.axes.cla()
         else:
-            self.chart.loadData(tipo,cabeceras,datos,titulo,x_text,y_text,item.getFullDesc())  
+            self.chart.loadData(tipo,cabeceras,datos,titulo,x_text,y_text,rowid.getFullDesc())  
         self.chart.draw()
         self.chart.show()
         
