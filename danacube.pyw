@@ -39,9 +39,14 @@ Nueva versiion. TodoList para volcar
             
          PARTIAL Graficos
             Falla multibar
-              File "danacube.pyw", line 565, in processChartItem
-                datos,kcabeceras = item.simplifyHierarchical() #msimplify(mdatos,self.textos_col)
-              AttributeError: 'GuideItem' object has no attribute 'simplifyHierarchical'
+            SOLVED llamada inicial
+            Falla
+              File "/home/werner/projects/dana-cube.git/util/tree.py", line 614, in data
+                text, sign = fmtNumber(datos,self.datos.format)
+                File "/home/werner/projects/dana-cube.git/util/numeros.py", line 64, in fmtNumber
+                    cadena = formatter.format(number)
+                ValueError: Cannot specify ',' or '_' with 's'.
+
          TESTED Funciones de usuario
             TESTED funcion de merge
             TESTED Simulaciones
@@ -52,6 +57,7 @@ Nueva versiion. TodoList para volcar
         revisar recalcGrandTotal sin gran total
         revisar estadisticas
         TESTED revisar restaurar valores originales c
+        activar sort
 """
 
 from __future__ import division
@@ -545,18 +551,33 @@ class TabMgr(QWidget):
         if index:
             if index.isValid():
                 item = self.tree.model().itemFromIndex(index)
+                #esta vuelta es para localizar el nombre de la fila y evitar que los valores nulos, que son QStandardItem peten el proceso
+                if index.column() != 0:
+                    rowid = self.tree.model().itemFromIndex(index.sibling(index.row(),0))
+                else:
+                    rowid = item
+                print('Rpw id',rowid)
             else:
                 return
+        elif len(self.tree.selectedIndexes()) > 0:
+            indice = self.tree.selectedIndexes()[0]
+            item = self.tree.model().itemFromIndex(indice)
+            if item.column() != 0:
+                rowid = self.tree.model().itemFromIndex(indice.sibling(indice.row(),0))
+            else:
+                rowid = item
         elif self.lastItemUsed is not None:
             item = self.lastItemUsed
+            rowid = item
         else:
             item = self.tree.model().invisibleRootItem().child(0)
+            rowid = item
         self.lastItemUsed = item
         #textos_col = ytree.getHeader('col')
         #textos_row = xtree.getHeader('row')
         #line = 0
         #col  = 0
-        titulo = self.tree.vista.row_hdr_idx.name+'> '+item.getFullDesc()[-1] +  '\n' + \
+        titulo = self.tree.vista.row_hdr_idx.name+'> '+rowid.data(Qt.DisplayRole) +  '\n' + \
             '{}({})'.format(self.tree.vista.agregado,self.tree.vista.campo) 
         x_text = self.tree.vista.col_hdr_idx.name
         y_text = ''

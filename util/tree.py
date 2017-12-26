@@ -512,7 +512,7 @@ class GuideItemModel(QStandardItemModel):
         self.name = None
         self.datos = TreeFormat()  #es por compatibilidad, son formatos
         self.colTreeIndex = None
-
+        
     def traverse(self,base=None):
         if base is not None:
             yield base
@@ -664,7 +664,7 @@ class GuideItem(QStandardItem):
         return "<" + str(self.data(Qt.DisplayRole)) + ">"
 
     def __repr__(self):
-        return "<" + self.data(Qt.UserRole +1) + ">"
+        return "<" + str(self.data(Qt.UserRole +1)) + ">"
 
     #
     # funciones de API user functions
@@ -778,6 +778,19 @@ class GuideItem(QStandardItem):
         clave = self.data(Qt.UserRole +1)
         pai = self.parent()
         while pai is not None and pai != self.model().invisibleRootItem():
+            clave = pai.data(Qt.UserRole +1) + DELIMITER + clave
+            pai = pai.parent()
+        return clave
+
+    def getFullDesc(self):
+        if item.column() != 0:
+            fuente = self.index().sibling(self.index(),0)
+            print(self,self.parent(),fuente)
+        else:
+            fuente = self
+        clave = fuente.data(Qt.DisplayRole)
+        pai = fuente.parent()
+        while pai is not None and pai != fuente.model().invisibleRootItem():
             clave = pai.data(Qt.UserRole +1) + DELIMITER + clave
             pai = pai.parent()
         return clave
@@ -898,6 +911,24 @@ class GuideItem(QStandardItem):
             ncab.append(k +1)
         return npay,ncab
 
+    def simplifyHierarchical(self):
+        profundidad = self.depth()
+        tmppay = list()
+        ncab = list()
+        kitem = self
+        while kitem.parent():
+            tmppay.insert(0,kitem.getPayload())
+            kitem = kitem.parent()
+            
+        npay = [list() for k in range(profundidad) ]    
+        for k,value in enumerate(self.getPayload()):
+            if not value:
+                continue
+            for j in range(profundidad):
+                npay[j].append(tmppay[j][k])
+            ncab.append(k +1)
+        return npay,ncab
+    
     def __getitem__(self,campo):
         if campo == 'key':
             return self.data(Qt.UserRole +1)
