@@ -724,7 +724,7 @@ class Vista:
             for y,col in enumerate(contexto_col):
                 trow = row['elems'][:]
                 tcol = col['elems'][:]
-                if self.totalizado and x != 0:
+                if self.totalizado: #and x != 0:
                     try:
                         pos = trow.index("'//'")
                         del trow[pos]
@@ -743,10 +743,11 @@ class Vista:
                 #numColElems = len(col['elems'])
                 #sqlDef['fields']=row['elems']+col['elems'] + [(self.campo,self.agregado)]
                 if self.totalizado:
-                    if x > 0:
-                        rowFields =["'//'",] + trow 
-                    else:
-                        rowFields = trow
+                    rowFields =["'//'",] + trow 
+                    #if x > 0:
+                        #rowFields =["'//'",] + trow 
+                    #else:
+                        #rowFields = trow
                     numRowElems = len(rowFields)
                     #TOT-Y start
                     #if y > 0:
@@ -1183,7 +1184,7 @@ from util.decorators import stopwatch
 @stopwatch
 def createVista(cubo,x,y):
     vista = Vista(cubo,x,y,'sum',cubo.lista_campos[0],totalizado=True)
-    vista.toNewTree()
+    vista.toNewTree2D()
     print(vista.row_hdr_idx.numRecords(),'X',vista.col_hdr_idx.numRecords())
 def experimental():
     from cubemgmt.cubetree import recTreeLoader,dict2tree,navigateTree,CubeItem,traverseTree
@@ -1196,11 +1197,13 @@ def experimental():
             print (ind,key,elem.ord,elem.desc,elem.parentItem.key)
             ind += 1
     vista = None
-    #micubo = 'rental'
+    micubo = 'rental'
     #micubo = 'datos catalonia'
     micubo = 'datos light'
     #guia = 'ideologia'
+
     mis_cubos = load_cubo()
+    
     #for cuboId in mis_cubos:
         #if cuboId == 'default':
             #continue
@@ -1212,14 +1215,15 @@ def experimental():
             #for j in range(iters):
                 #print(cuboId,'::',cubo.lista_guias[i]['name'],cubo.lista_guias[j]['name'])
                 #createVista(cubo,i,j)
+
     cuboId = micubo
     cubo = Cubo(mis_cubos[cuboId])
     cubo.nombre = cuboId
-    #iters = len(cubo.lista_guias)
-    #for i in range(iters):
-        #for j in range(iters):
-            #print(cuboId,'::',cubo.lista_guias[i]['name'],cubo.lista_guias[j]['name'])
-            #createVista(cubo,i,j)
+    iters = len(cubo.lista_guias)
+    for i in range(iters):
+        for j in range(iters):
+            print(cuboId,'::',cubo.lista_guias[i]['name'],cubo.lista_guias[j]['name'])
+            createVista(cubo,i,j)
             
     #cubo = Cubo(mis_cubos[micubo],qtModel=True)
     #cubo.nombre = micubo
@@ -1231,12 +1235,12 @@ def experimental():
     #for item in guiax.traverse():
         #print('\t'*item.depth(),item.data(Qt.UserRole +1))
     
-    vista = Vista(cubo,5,1,'sum',cubo.lista_campos[0],totalizado=True)
-    vista.toNewTree2D()
-    for item in vista.row_hdr_idx.traverse():
-#        if item is not None:
-        print('\t'*item.depth(),item.data(Qt.UserRole +1),item.lenPayload(),item.getPayload())
-        print('\t'*item.depth(),item.data(Qt.UserRole +1),item.gpi(2))
+    #vista = Vista(cubo,5,1,'sum',cubo.lista_campos[0],totalizado=True)
+    #vista.toNewTree2D()
+    #for item in vista.row_hdr_idx.traverse():
+##        if item is not None:
+        #print('\t'*item.depth(),item.data(Qt.UserRole +1),item.lenPayload(),item.getPayload())
+        #print('\t'*item.depth(),item.data(Qt.UserRole +1),item.gpi(2))
     #pprint(vista.row_hdr_idx.content)
     #print(vista.row_hdr_idx['CA08:16'])
     #vista.row_hdr_idx.setHeader()

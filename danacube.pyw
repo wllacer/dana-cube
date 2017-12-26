@@ -14,13 +14,6 @@ Nueva versiion. TodoList para volcar
             Borrar &Filtros
             Guardar &Filtros permanentemente
          FAIL Rangos de Fechas
-         
-         El error es previo; debia estar resuelto, se suponia
-         sqlalchemy.exc.ProgrammingError: (psycopg2.ProgrammingError) constante no entera en GROUP BY
-            LÍNEA 1: ...ntal.inventory_id)  FROM public.rental   GROUP BY '//', staf...
-                                                                            ^
- [SQL: " SELECT  '//', staff_id, sum(public.rental.inventory_id)  FROM public.rental   GROUP BY '//', staff_id ORDER BY 1 , 2  "]
-
             Editar &Rango fechas
             Borrar &Rango fechas
             Salvar &Rango fechas
@@ -57,6 +50,12 @@ Nueva versiion. TodoList para volcar
             File "/home/werner/projects/dana-cube.git/util/numeros.py", line 64, in fmtNumber
                 cadena = formatter.format(number)
             ValueError: Cannot specify ',' or '_' with 's'.
+        Solved ¿?
+        El error es previo; debia estar resuelto, se suponia
+         sqlalchemy.exc.ProgrammingError: (psycopg2.ProgrammingError) constante no entera en GROUP BY
+            LÍNEA 1: ...ntal.inventory_id)  FROM public.rental   GROUP BY '//', staf...
+                                                                            ^
+ [SQL: " SELECT  '//', staff_id, sum(public.rental.inventory_id)  FROM public.rental   GROUP BY '//', staff_id ORDER BY 1 , 2  "]
 
 """
 
@@ -633,8 +632,6 @@ class DanaCube(QTreeView):
             viewData = self.parent.requestVista()
         #if not viewData:
         self.cargaVista(viewData['row'], viewData['col'], viewData['agregado'], viewData['campo'], total=viewData['totalizado'], estad=viewData['stats'])
-        
-        #self.setTitle() debe hacerse fuera para evitar colocarlo en el sitio equivocado
         
         self.defineModel()
 
