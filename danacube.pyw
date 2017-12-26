@@ -30,22 +30,13 @@ Nueva versiion. TodoList para volcar
                     for item in self.traverse(output = _ITEM):
                  TypeError: traverse() got an unexpected keyword argument 'output'
                  
-            FAIL Trasponer datos
-              File "/home/werner/projects/dana-cube.git/core.py", line 880, in traspose
-                    self.dim_row = len(self.cubo.lista_guias[self.row_id]['rules'])
-                KeyError: 'rules'
+            DONE Trasponer datos
                 
             FAIL Presentacion ...
             
-         PARTIAL Graficos
+         TESTED Graficos
             SOLVED multibar
             SOLVED llamada inicial
-            Falla
-              File "/home/werner/projects/dana-cube.git/util/tree.py", line 614, in data
-                text, sign = fmtNumber(datos,self.datos.format)
-                File "/home/werner/projects/dana-cube.git/util/numeros.py", line 64, in fmtNumber
-                    cadena = formatter.format(number)
-                ValueError: Cannot specify ',' or '_' with 's'.
 
          TESTED Funciones de usuario
             TESTED funcion de merge
@@ -58,6 +49,15 @@ Nueva versiion. TodoList para volcar
         revisar estadisticas
         TESTED revisar restaurar valores originales c
         activar sort
+        TODO .
+            En datos light la entrada con valor nulo España aparece en distintos lugares en el traverse. ¿?
+        NO reproduzco
+            File "/home/werner/projects/dana-cube.git/util/tree.py", line 614, in data
+            text, sign = fmtNumber(datos,self.datos.format)
+            File "/home/werner/projects/dana-cube.git/util/numeros.py", line 64, in fmtNumber
+                cadena = formatter.format(number)
+            ValueError: Cannot specify ',' or '_' with 's'.
+
 """
 
 from __future__ import division
@@ -636,7 +636,7 @@ class DanaCube(QTreeView):
         
         #self.setTitle() debe hacerse fuera para evitar colocarlo en el sitio equivocado
         
-        self.setModel(self.defineModel())
+        self.defineModel()
 
     def getTitleText(self):
         return "{} X {} : {}({})".format(
@@ -666,11 +666,8 @@ class DanaCube(QTreeView):
     def cargaVista(self,row, col, agregado, campo, total=True, estad=True,force=False):
         if self.vista is None:
             self.vista = Vista(self.cubo, row, col, agregado, campo, totalizado=total, stats=estad,filtro=self.filtro)
-            self.vista.toNewTree()
-            self.vista.row_hdr_idx.setHorizontalHeaderLabels(
-                [self.vista.row_hdr_idx.name,]+ 
-                [item.data(Qt.DisplayRole) for item in self.vista.col_hdr_idx.traverse()])
-            self.expandToDepth(2)
+            self.vista.toNewTree2D()
+            self.defineModel()
         else:
             self.changeView(row, col, agregado, campo, total,estad,force)
             #self.refreshTable()
@@ -679,19 +676,18 @@ class DanaCube(QTreeView):
     @waiting_effects
     def changeView(self,row, col, agregado, campo, total=True, estad=True,force=False):
         self.vista.setNewView(row, col, agregado, campo, totalizado=total, stats=estad,filtro=self.filtro,force=force)
-        self.vista.toNewTree()
+        self.vista.toNewTree2D()
         #
-        self.setModel(self.defineModel())  #esto no deberia ser asi, sino dinámico, pero no lo he conseguido
+        self.defineModel()
+        
+    def defineModel(self):
+        self.setModel(self.vista.row_hdr_idx)
         self.vista.row_hdr_idx.setHorizontalHeaderLabels(
             [self.vista.row_hdr_idx.name,]+ 
             [item.data(Qt.DisplayRole) for item in self.vista.col_hdr_idx.traverse()])
-
         self.expandToDepth(2)
-        
         self.setTitle()
-        
-    def defineModel(self):
-        return self.vista.row_hdr_idx    
+
         
     def changeVista(self):
         viewData = self.requestVista()
@@ -706,12 +702,10 @@ class DanaCube(QTreeView):
     def traspose(self):
         #self.model().beginResetModel()
         self.vista.traspose()
-        self.model().getHeaders()
-        self.model().rootItem = self.vista.row_hdr_idx.rootItem
+        #self.model().getHeaders()
+        #self.model().rootItem = self.vista.row_hdr_idx.rootItem
         #self.model().endResetModel()
-        self.expandToDepth(2)
-
-        self.setTitle()
+        self.defineModel()
 
     def refreshTable(self):
         """

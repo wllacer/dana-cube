@@ -809,6 +809,31 @@ class Vista:
             colItem = row.getColumn(col)
             colItem.setBackup()
             
+    def toNewTree2D(self):
+        def setContext(row,col):
+            coldict = {}
+            colindex = []
+            idx = 1
+            for item in col.traverse():
+                coldict[item.getFullKey()]={'idx':idx,'objid':item}
+                colindex.append({'objid':item,'key':item.getFullKey()})
+                idx += 1
+            row.colTreeIndex = {'dict':coldict,'idx':colindex}
+            row.colTreeIndex['leaf'] = [ idx for idx,obj in enumerate(row.colTreeIndex['idx']) if obj['objid'].type() == LEAF ]
+            return coldict
+        coldict=setContext(self.row_hdr_idx,self.col_hdr_idx)
+        rowdict=setContext(self.col_hdr_idx,self.row_hdr_idx)
+        #raizRow = self.row_hdr_idx.invisibleRootItem()  
+        #raizCol = self.col_hdr_idx.invisibleRootItem()
+        for record in self.array:
+            rowcol = coldict[record[1].getFullKey()]['idx']
+            colcol = rowdict[record[0].getFullKey()]['idx']
+            rowid = record[0]
+            rowid.setColumn(rowcol,record[2])
+            colid = record[1]
+            colid.setColumn(colcol,record[2])
+            #colItem = row.getColumn(col)
+            #colItem.setBackup()
 
     def recalcGrandTotal(self):
         """
@@ -877,8 +902,8 @@ class Vista:
         self.row_id = tmp_row
         self.col_id = tmp_col
         
-        self.dim_row = len(self.cubo.lista_guias[self.row_id]['rules'])
-        self.dim_col = len(self.cubo.lista_guias[self.col_id]['rules'])
+        self.dim_row = len(self.cubo.lista_guias[self.row_id]['contexto'])
+        self.dim_col = len(self.cubo.lista_guias[self.col_id]['contexto'])
 
         rtmp = self.row_hdr_idx
         ctmp = self.col_hdr_idx
@@ -1172,8 +1197,8 @@ def experimental():
             ind += 1
     vista = None
     #micubo = 'rental'
-    micubo = 'datos catalonia'
-    #micubo = 'datos light'
+    #micubo = 'datos catalonia'
+    micubo = 'datos light'
     #guia = 'ideologia'
     mis_cubos = load_cubo()
     #for cuboId in mis_cubos:
@@ -1206,8 +1231,8 @@ def experimental():
     #for item in guiax.traverse():
         #print('\t'*item.depth(),item.data(Qt.UserRole +1))
     
-    vista = Vista(cubo,0,0,'sum',cubo.lista_campos[0],totalizado=True)
-    vista.toNewTree()
+    vista = Vista(cubo,5,1,'sum',cubo.lista_campos[0],totalizado=True)
+    vista.toNewTree2D()
     for item in vista.row_hdr_idx.traverse():
 #        if item is not None:
         print('\t'*item.depth(),item.data(Qt.UserRole +1),item.lenPayload(),item.getPayload())
