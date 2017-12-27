@@ -18,12 +18,28 @@ We provide a database, OS agnostic environment for runing and managing those kin
 
 We have created an environment where you can run an -almost- arbitrary aggregate query and show it in tabular fashion.
 
-![Screenshot](docs/screenshot.png "Title")
+Each instance of the application runs against what we call a Cube. This is the view of a data table (or table-like DB object -a view, a select statement, ...) and the definition of the potential indexes over which to search. This indexes can be scalar fields or hierarchical structures. If the index is a date field; we automatically provide (for SQLITE, MySQL, PostGreSQL and Oracle, atm) for several subindexes (years, years-month, ...)
 
 This is __not designed as an end user tool__ , rather it is designed to be used for knowledgable users (DBAs, developers, data owners) or as a ready made __API__ cum sample tool to be integrated in other's people work (as it still is in heavy development, _Caveat emptor_ ).
 
+We provide a number of main programs:
+* __danacube.py__  Is our main tool where we execute our aggregate accesses to the database (to the cube), and provide means to show graphics or to export the results into several data formats
 
-Each instance of the application runs against what we call a Cube. This is the view of a data table (or table-like DB object -a view, a select statement, ...) and the definition of the potential indexes over which to search. This indexes can be scalar fields or hierarchical structures. If the index is a date field; we automatically provide (for SQLITE, MySQL, PostGreSQL and Oracle, atm) for several subindexes (years, years-month, ...) The definition of the Cube is a simple text (Json) file like this
+![Screenshot](docs/image/danacube_ss.png "Title")
+
+* __cubebrowse.py__ Is a tool designed to manipulate the cube definitions. They are a plain Json file (see below) and can be edited by hand if necessary
+
+![Screenshot](docs/image/cubebrowse_ss.png "Title")
+
+* __danabrowse.py__ We can browse the contents of the database servers in our environment, and if necessary, generate direct cube definitions from the catalog of the database 
+
+![Screenshot](docs/image/danabrowse_ss.png "Title")
+
+* __danaquery.py__ A very simple tool to execute arbitrary sql code against database servers in our environment
+
+![Screenshot](docs/image/danaquery_ss.png "Title")
+
+ The definition of the Cube is a simple text (Json) file like this
 
 ```
     "datos light": {
@@ -68,7 +84,7 @@ Why a text file for definition? To avoid a dependency to a concrete DB Manager o
 We provide a tool to manage these definitions, and another to generate directly from the database a basic outline
 (screenshots should follow)
 
-The tool is programmed in python3 + PyQt5, but we test it also under python2
+The tool is programmed in python3 + PyQt5 but it might be possible to be run under Python2 (we try to be as much compatible as possible, but haven't tested it in a while)
 
 ## Sample Data
 We will provide a test database (with results of the Spanish General Election in 2015) for several supported databases, with minimal changes between them.
@@ -84,7 +100,7 @@ Besides PyQt, we use:
 * [DateUtil](https://pypi.python.org/pypi/python-dateutil/2.6.0) for some date related functions
 * [SqlParse](https://pypi.python.org/pypi/sqlparse/0.2.2) ( _Optional_ ) for some trace outputs
 * [XlsxWriter](https://pypi.python.org/pypi/XlsxWriter) Guess it ...
-* [Matplotlib](http://matplotlib.org/)
+* [Matplotlib](http://matplotlib.org/) for all the graphic stuff
 
 ## License
 
@@ -107,83 +123,31 @@ Qt, PyQt -and the additional libraries-, licensing might impose other restrictio
 
 ## DANACUBE enters __ALPHA__
 
-__Update 2017/03/07__ Still no release this week, i'm afraid. There have been many small updates to the code, but the functionality i'm working is still not there (vacations, sick leave, getting a Windows test environment ... and a thougher nut to crack than I thought). So, it's not a bad idea to download _master_ if you find some hickups in the code
-__Update 2017/02/16__  No release this week. Lots of changes, though, but still not stable enough.
-__Update 2017/02/07__  New alpha release. With sample data. The __danacube.pyw__ (the basic tool) can be seen as pretty complete and (hope) stable
-__Update 2017/02/01__. New alpha release
+__Update 2017/12/27__  We have a new core based on qt standard models. It simplifies a lot programming and has solved a number of perfomance isses with long guides
 
-With today's release (version 0.10), we enter alpha. What does it means?
+What does it means?
 
 * We deem that we have achieved a functional 'completeness' of the cube tool (_danacube.pyw_) , so it should be useful for valiant user; but that it still lacks proper outside testing (so, for sure, many bugs ahead) and  documentation (hope to solve it soon)
 
 * What we know it's missing:
-    * Unknown bugs all around (i know i'm not perfect)
+    * Unknown bugs all around (i know i'm not perfect). And a few known ;-)
     * The user interface is implemented just for my needs and lacks internationalization (worse still, it's now a mix of english and spanish)
     * It's reasonably well tested with __Sqlite__, __MySQL__, __PostgreSQL__, and  __ORACLE__ ; but i haven't had the chance to adapt/test it against __DB2__ or __MSSQL Server__ ¿Any volunteer?
-    * As of today (2017/02/02) Oracle support is only at the level of the cube tool, not its administrative appendages.
+    * As of the last release Oracle support is still missing heavy testing..
     * Nor performance, neither security have been, till now, top priority goals. _You've been warned_
-    * The way User functions have been implemented is a 'hack'. Working on a better solution
-    * The administrative interface (_danabrowse.pyw_) and support, is still not 100% functional (but as the administrative files are pure JSON, this is not a showstopper)
-    
     * Legalese is missing in code (copyrights, licence specs, and so on)
 
-I've changed my code management policy. and plan to upstream the changes to _Github_ ASAP, but only _weekly updates to the release code_, so if something crashes, pls. look at the commits at __master__ still not in the released code.
+I've changed my code management policy. and plan to upstream the changes to _Github_ ASAP, but only _sparse updates to the release code_, so if something crashes, pls. look at the commits at __master__ still not in the released code.
 
 I've been able to install __Oracle__ in my computer, and it seems that some changes are needed (specially in the administrative tools). Expect soon working code.
 My computer is too weak to run MsSQL :-(
 
 
-## Actual Status
-
-_Update on the day of the Conversion of the Apostol Paul 2017_ As of today we enter __ALPHA__ status (see above for what it means)
-
-_Update XXIII ordinary sunday (vesper of S. Raphael Archangel 2016_ . For the first time, the code has all the main components in place. A release will be tagged during the day
-Of course there are still lots of bugs or areas with a minimal implementation, but the tool is usable on its full life cycle, so real debugging, -and fleshing- can start
-It only lacks -as a full subsystem- export capabilities. For end users they are critical, but as a subsystem fully isolated, they aren't as important from the application architecture POV
-
-_Update Feast of St. Francis of Borja 2016_ We have merged today the development tree at _Github_  The core code is more or less in an alfa release state, but the ancilliary tools aren't still there
-
-_Update Feast of St. Peter Canisius 2016_ I've integrated SqlAlchemy as (selectable but default) backend. Couple of reasons why:
-    * Better licensing terms 
-    * PyQt/QtSql as open product lacks some drivers i find useful
-    * Gets me more debugging info
-    
-_Update Feast of St. Cletus & Marcellin 2016_ I've changed a lot of internals in the move from lists to dictionaries (trees) for
-the guides. Performance is noticeable faster, and the code is better. Still haven't a release 
-
-_Update Feast of St. Georg 2016_ I used lists for guide definition and retrieval. I've discovered that using dictionaries
-enhances performance over 10000 % (read __100 TIMES__ ), but i have to rewrite almost everything again
-
-_Update Saturday of the BVM_: New GUI based on the Model View elements of Qt. Still some parts missing
-
-_Update Feria after Feast of St. Vincent Ferrer 2016_: __MASTER WORKS__. Only functionality missing is a statistical test (fivepoints) i've disabled pending
-further revisions. Outside of this, it's functionally identical to the '12 version
-
-_Update Feast of St. Vincent Ferrer 2016_: Work has progressed steadily. Upgrade to new versions seems to work, and i'm 
-in a process of heavy refactoring of the core functionality. Sadly that implies that _MASTER_ is broken, and might be for some time.
-I made a release from the old codebase which does work. Still have to master Github to know how to mantain them in parallel, so pls. be patient with bugs in there
-
-_Update Easter Monday 2016_: work has resumed. At first we'll center only in Python 3 -and Qt 5- compatibility). 
-
-I hope to make some inroads into new functionality.
 
 
-Active tasks can be read [here](../docs/todo.md)
+Active tasks can be read [here](../docs/todo.md) (Obsolete )
 
 
-## Historical info
-
-### History:
-As of June,12 2012 HEAD is loaded with functional code (it just lacks some UI functions we want in 0.1). The user interface is rather primitive and has been "lifted" from the "numbers" example of Mark Summerfield's book "Rapid GUI Programming with Python and Qt. Definitive Guide to PyQt?"
-
-### Current Plans (Just for historical value. Nothing came out of it)
-Updated at the Feast of St. Agnes, 2014 In case you haven't noticed it, development has stalled, but i'm still out there. I hope to resume work in the short term. Probably i'll drop QtSql? as DB backend ... 
-
-Updated at the Feast of the Sacred Hearth of Jesus, 2012. Due to some rather unexpected events -not all negative-, release schedule is in a bit of flux. But let's see how things develop Version 0.1 Due July, 1. Although HEAD should be usable by now. We plan to have all the core functionality implemented by then, with only minor functional aspects wanting. UI, error handling and doc will still be primitive we could introduce several intermediate releases and
-
-By September, 15 release Version 0.2 Our milestone for this version is to introduce an n-dimensional interface (several queries shown at once -or at least in tabs), and to close other known deficiences (and as much of the unknown posible ;-)
-
-We have still no plans to introduce an UI to generate the YAML (text) definition file at the core of the product. We try to be DB agnostic and the retrieval of the catalog is not an standard area, nor QtSQl abstract this. We are researching into this ...
 
 ## Help Needed
 

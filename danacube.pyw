@@ -43,7 +43,8 @@ Nueva versiion. TodoList para volcar
             investigar el uso de locales (Python o Qt) en lugar/ademas de numberFormat)
             sort por otros criterios o sin problemas con acentos
             En datos light la entrada con valor nulo España aparece en distintos lugares en el traverse. ¿?
-            mejorar los graficos de cabecera con criterios de seleccion
+            mejorar los graficos de cabecera de columna con criterios de seleccion
+            revisar estadisticas cuando hay muchos 1 (ver diputados por provincia)
         NO reproduzco
             File "/home/werner/projects/dana-cube.git/util/tree.py", line 614, in data
             text, sign = fmtNumber(datos,self.datos.format)
