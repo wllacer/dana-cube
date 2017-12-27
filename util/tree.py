@@ -87,7 +87,7 @@ class TreeFormat(object):
             self.format['rednegatives'] = True
             self.format['thousandsseparator'] = "."
             self.format['decimalmarker'] = ","
-            self.format['decimalplaces'] = 0
+            self.format['decimalplaces'] = 2
             
         
 class GuideItemModel(QStandardItemModel):
@@ -158,6 +158,7 @@ class GuideItemModel(QStandardItemModel):
                 item.setStatistics()
         else:
             return None
+        
     def data(self,index,role):
         if not index.isValid():
             return None
@@ -188,6 +189,7 @@ class GuideItemModel(QStandardItemModel):
                         return QColor(Qt.yellow)
                 if self.datos.format['rednegatives'] and item.data(Qt.DisplayRole) < 0 :
                     return QColor(Qt.red)
+                
         elif role == Qt.DisplayRole:
             datos = item.data(role)
             if datos == None:

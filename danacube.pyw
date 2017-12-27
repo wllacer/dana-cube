@@ -21,7 +21,7 @@ Nueva versiion. TodoList para volcar
             DONE (as tested) Exportar datos
             DONE Trasponer datos
                 
-            FAIL Presentacion ...
+            DONE Presentacion ...
             
          TESTED Graficos
             SOLVED multibar
@@ -38,6 +38,7 @@ Nueva versiion. TodoList para volcar
         revisar estadisticas
         TESTED revisar restaurar valores originales c
         activar sort
+        investigar el uso de locales (Python o Qt) en lugar/ademas de numberFormat)
         TODO .
             En datos light la entrada con valor nulo España aparece en distintos lugares en el traverse. ¿?
         NO reproduzco
@@ -591,11 +592,11 @@ class TabMgr(QWidget):
 class DanaCube(QTreeView):    
     def __init__(self,parent,**kwargs):
         super(DanaCube, self).__init__()        
-        self.format = dict(thousandsseparator=".",
-                                    decimalmarker=",",
-                                    decimalplaces=2,
-                                    rednegatives=False,
-                                    yellowoutliers=True)
+        #self.format = dict(thousandsseparator=".",
+                                    #decimalmarker=",",
+                                    #decimalplaces=2,
+                                    #rednegatives=False,
+                                    #yellowoutliers=True)
 
         self.vista = None
         self.parent= parent  #la aplicacion en la que esta. Lo necesito para los cambios de título
@@ -664,7 +665,7 @@ class DanaCube(QTreeView):
         else:
             self.changeView(row, col, agregado, campo, total,estad,force)
             #self.refreshTable()
-        self.vista.format = self.format
+        #self.vista.format = self.format
 
     @waiting_effects
     def changeView(self,row, col, agregado, campo, total=True, estad=True,force=False):
@@ -700,25 +701,31 @@ class DanaCube(QTreeView):
         #self.model().endResetModel()
         self.defineModel()
 
+    @keep_tree_layout
     def refreshTable(self):
         """
             La eleccion de una u otra señal no es casualidad.
             Si utilizo layoutChanged el dialogo setNumberFormat cruje inmisericordemente al cerrar si no se le define el WA_DeleteOnClose !!!!???
         """
-        pass
+        self.model().modelReset.emit()
         #self.model().emitModelReset()
         #self.model().layoutChanged.emit()
         
      
     def setNumberFormat(self):
         """ adapted from Rapid development with PyQT book (chapter 5) """
-        self.numberFormatDlg = NumberFormatDlg(self.format, self.refreshTable, self)
+        self.numberFormatDlg = NumberFormatDlg(self.model().datos.format, self.setTreeFormat, self)
         #self.numberFormatDlg.setAttribute(Qt.WA_DeleteOnClose) #si no cruje inmisericordemente ¿ o no?
         self.numberFormatDlg.show()
         self.numberFormatDlg.raise_()
         self.numberFormatDlg.activateWindow()
-        self.refreshTable()  #creo que es innecesario
+        #self.refreshTable()  #creo que es innecesario
     
+    def setTreeFormat(self):
+        #for entrada in self.format:
+            #self.model().datos.format[entrada] = self.format[entrada]
+        self.refreshTable()
+        
     @keep_tree_layout()
     @waiting_effects
     @model_change_control()

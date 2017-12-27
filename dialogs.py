@@ -385,7 +385,7 @@ class NumberFormatDlg(QDialog):
     def __init__(self, format, callback, parent=None):
         super(NumberFormatDlg, self).__init__(parent)
 
-        punctuationRe = QRegExp(r"[ ,;:.]")
+        punctuationRe = QRegExp(r"[ ,;:.']")
         
         self.context=[]
         """
@@ -455,6 +455,13 @@ class NumberFormatDlg(QDialog):
         #decimal = unicode(self.decimalMarkerEdit.text())
         thousands = self.sheet.get(0,0)
         decimal = self.sheet.get(1,0)
+        if thousands == '':
+            self.sheet.cellWidget(0,0).setFocus()
+            return
+        if decimal == '':
+            self.sheet.cellWidget(1,0).setFocus()
+            return
+
         if thousands == decimal:
             self.sheet.cellWidget(0,0).clear()
             self.sheet.cellWidget(0,0).setFocus()
