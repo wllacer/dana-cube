@@ -32,15 +32,18 @@ Nueva versiion. TodoList para volcar
             TESTED Simulaciones
          TESTED Restaurar valores originales   
          
+        TESTED menus de contexto de cabeceras
          
         TESTED recalcGrandTotal
         revisar recalcGrandTotal sin gran total
         revisar estadisticas
         TESTED revisar restaurar valores originales c
-        activar sort
-        investigar el uso de locales (Python o Qt) en lugar/ademas de numberFormat)
+        TESTED activar sort
         TODO .
+            investigar el uso de locales (Python o Qt) en lugar/ademas de numberFormat)
+            sort por otros criterios o sin problemas con acentos
             En datos light la entrada con valor nulo España aparece en distintos lugares en el traverse. ¿?
+            mejorar los graficos de cabecera con criterios de seleccion
         NO reproduzco
             File "/home/werner/projects/dana-cube.git/util/tree.py", line 614, in data
             text, sign = fmtNumber(datos,self.datos.format)
@@ -510,7 +513,6 @@ class TabMgr(QWidget):
         split = QSplitter(Qt.Vertical,self)
         lay = QGridLayout()
         self.setLayout(lay)
-        
         self.tree = DanaCube(parent,**kwargs)
         self.chart = SimpleChart()
         self.chartType = None #'barh'
@@ -619,7 +621,8 @@ class DanaCube(QTreeView):
         self.setAlternatingRowColors(True)
         self.sortByColumn(0, Qt.AscendingOrder)
 
-
+        self.header().setContextMenuPolicy(Qt.CustomContextMenu)
+        self.header().customContextMenuRequested.connect(self.openHeaderContextMenu)
 
         
     def initData(self,inicial=False,**viewData):
@@ -1021,15 +1024,31 @@ class DanaCube(QTreeView):
             item = self.model().item(id)
             titulo = item['key']
             datos = item.getPayload()
-            etiquetas = self.model().colHdr[1:]
+            etiquetas = [entrada['objid'].data(Qt.DIsplayRole) for entrada in self.model().colTreeIndex['idx']]
         elif source == 'col':
-            titulo = self.model().colHdr[id]
+            titulo= self.model().colTreeIndex['idx'][id -1]['objid'].data(Qt.DisplayRole) 
             datos = []
-            for key in self.vista.row_hdr_idx.traverse(mode=1):
-                datos.append(self.vista.row_hdr_idx[key].gpi(id -1))
-            etiquetas = self.model().rowHdr[1:]
+            etiquetas = []
+            for entrada in self.model().traverse():
+                if entrada.gpi(id -1) is None:
+                    continue
+                datos.append(entrada.gpi(id -1))
+                etiquetas.append(entrada.data(Qt.DisplayRole))
         print(source,titulo,datos,etiquetas)
-        
+        dialog = GraphDlg(self.parent.tabulatura.currentWidget().chartType, self)
+        if dialog.exec_():
+            if dialog.result:
+                chart = self.parent.tabulatura.currentWidget().chart
+                x_text = self.model().name
+                y_text = ''
+                if len(datos) == 0:
+                    chart.axes.cla()
+                else:
+                    chart.loadData(dialog.result,etiquetas,datos,titulo,x_text,y_text)  
+                chart.draw()
+                chart.show()
+            else:
+                chart.hide()
 if __name__ == '__main__':
     import sys
 
