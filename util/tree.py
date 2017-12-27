@@ -617,8 +617,17 @@ class GuideItemModel(QStandardItemModel):
             return item.data(role)
 
     def filterCumHeader(self,total=True,branch=True,leaf=True,separador='\n',sparse=True):
+        """
+        retorna una lista de elementos formados por
+                el elemento concreto
+                su clave
+                su posicion en el array virtual
+        """
         lista = []
-        for item in self.traverse(output = _ITEM):
+        idx = 0
+        for item in self.traverse():
+
+            idx +=1
             if total and item.isTotal():
                 pass
             elif branch and item.isBranch():
@@ -629,10 +638,11 @@ class GuideItemModel(QStandardItemModel):
                 continue
             
             clave = item.getFullDesc()
-            if sparse:
+            
+            if sparse and len(clave) > 1:
                 for k in range(len(clave) -1):
                     clave[k]=''
-            lista.append((item,clave,))
+            lista.append((item,clave,idx-1))
         return lista
     
 class GuideItem(QStandardItem):
@@ -646,6 +656,7 @@ class GuideItem(QStandardItem):
             self.stats = None
     def setData(self,value,role):
         super(GuideItem, self).setData(value,role)
+        
     def type(self):
         if self.data(Qt.UserRole +1) == '//':
             return TOTAL

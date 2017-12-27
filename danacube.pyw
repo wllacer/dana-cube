@@ -13,16 +13,12 @@ Nueva versiion. TodoList para volcar
             Editar &Filtro
             Borrar &Filtros
             Guardar &Filtros permanentemente
-         FAIL Rangos de Fechas
+         TESTED Rangos de Fechas
             Editar &Rango fechas
             Borrar &Rango fechas
             Salvar &Rango fechas
          Opciones
-            FAIL Exportar datos
-             File "/home/werner/projects/dana-cube.git/util/tree.py", line 621, in filterCumHeader
-                    for item in self.traverse(output = _ITEM):
-                 TypeError: traverse() got an unexpected keyword argument 'output'
-                 
+            DONE (as tested) Exportar datos
             DONE Trasponer datos
                 
             FAIL Presentacion ...

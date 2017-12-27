@@ -975,68 +975,7 @@ class Vista:
         return tabla 
     
 
-    def getExportDataArray(self,parms,selArea=None):
-        """
-            Parece obsoleta ... deberia adaptarse a lo de la de abajo (sin array)
-            
-            *parms['file']
-            *parms['type'] = ('csv','xls','json','html')
-            *parms['csvProp']['fldSep'] 
-            *parms['csvProp']['decChar']
-            *parms['csvProp']['txtSep'] 
-            *parms['NumFormat'] 
-            parms['filter']['scope'] = ('all','visible,'select') 
-            *parms['filter']['content'] = ('full','branch','leaf')
-            parms['filter']['totals'] 
-            *parms['filter']['horSparse'] 
-            *parms['filter']['verSparse']
 
-        """
-        contentFilter = parms['filter']['content']
-        row_sparse = parms['filter']['horSparse']
-        col_sparse = parms['filter']['verSparse']
-        translated = parms['NumFormat']
-        numFmt = parms['NumFormat']
-        decChar = parms['csvProp']['decChar']
-
-        
-        ind = 1
-                
-        dim_row = self.dim_row if not self.totalizado else self.dim_row + 1
-        dim_col = self.dim_col
-            
-        row_hdr = self.__exportHeaders('List',self.row_hdr_idx,dim_row,row_sparse,contentFilter)
-        col_hdr = self.__exportHeaders('List',self.col_hdr_idx,dim_col,col_sparse,contentFilter)
-        
-        num_rows = len(row_hdr)
-        num_cols = len(col_hdr)
-        
-        dim_row = len(row_hdr[0]) -2
-        dim_col = len(col_hdr[0]) -2
-        
-        ctable = [ ['' for k in range(num_cols + dim_row)] 
-                                for j in range(num_rows +dim_col) ]
-
-        for i in range(num_cols):
-            for j,colItem in enumerate(col_hdr[i]):
-                if j >= dim_col:
-                    break
-                ctable[j][i + dim_row]=colItem
-                
-        for i in range(num_rows):
-            for j,rowItem in enumerate(row_hdr[i]):
-                if j >= dim_row:
-                    break
-                ctable[i + dim_col][j]=rowItem
-                
-        table = self.toTable()
-        
-        for i in range(num_rows):
-            x = row_hdr[i][-1]
-            for j in range(num_cols):
-                y = col_hdr[j][-1]
-                ctable[i + dim_col][j + dim_row] = num2text(table[x][y]) if table[x][y] else ''  #TODO aqui es el sito de formatear numeros
-        return ctable,dim_row,dim_col
 
     
     def getExportData(self,parms,selArea=None):
@@ -1067,6 +1006,7 @@ class Vista:
  
         # filterCumHeader(self,total=True,branch=True,leaf=True,separador='\n',sparse=True):
         if contentFilterR == 'full':
+            totalR = True
             branchR = True
             leafR = True
         elif contentFilterR == 'branch' and self.dim_row > 1:
@@ -1077,6 +1017,7 @@ class Vista:
             leafR = True
 
         if contentFilterC == 'full':
+            totalC = True
             branchC = True
             leafC = True
         elif contentFilterC == 'branch' and self.dim_col > 1:
@@ -1085,7 +1026,7 @@ class Vista:
         else: #if contentFilter == 'leaf':
             branchC = False
             leafC = True
-            
+         
         rows=self.row_hdr_idx.filterCumHeader(sparse=row_sparse,branch=branchR,leaf=leafR,total=totalR)
         cols=self.col_hdr_idx.filterCumHeader(sparse=col_sparse,branch=branchC,leaf=leafC,total=totalC)
         
@@ -1098,23 +1039,17 @@ class Vista:
         ctable = [ ['' for k in range(num_cols + dim_row)] 
                                 for j in range(num_rows +dim_col) ]
 
-        columns = [item[0].ord for item in cols ]
-        #def extract(self,filter,crossFilter):
-            #result = []
-            #columns = [item[0].ord for item in crossFilter ]
-            #for item in filter:
-                #payload = item.getPayload()
-                #result.append([payload[k] for k in columns])
-            #return result
+        columnIDs = [item[2] for item in cols ]
         
         for ind in range(dim_col):
             ctable[ind][dim_row:]=[item[1][ind] if ind <len(item[1]) else '' for item in cols  ]
+        ctable[dim_col -1][dim_row -1] = self.row_hdr_idx.name
         ind = dim_col
         for entrada in rows:
             for k,valor in enumerate(entrada[1]): #cabeceras
                 ctable[ind][k]=valor
             payload = entrada[0].getPayload()
-            ctable[ind][dim_row:] = [  num2text(payload[k]) for k in columns]
+            ctable[ind][dim_row:] = [  num2text(payload[k]) for k in columnIDs if k < len(payload)]
                 
             ind +=1
         return ctable,dim_row,dim_col
@@ -1136,10 +1071,7 @@ class Vista:
             else:
                 return cadena
             
-        if parms.get('source') == 'array':
-            ctable,dim_row,dim_col = self.getExportDataArray(parms,selArea=None)
-        else:
-            ctable,dim_row,dim_col = self.getExportData(parms,selArea=None)
+        ctable,dim_row,dim_col = self.getExportData(parms,selArea=None)
             
         if type == 'csv':
             with open(parms['file'],'w') as f:
