@@ -337,7 +337,7 @@ def register(contexto):
     
     ufm.registro_funcion(contexto,name='asigna',entry=asigna,type='item,leaf',seqnr=10,
                          text='Asignacion de escaños',
-                         db='datos locales')
+                         db='datos locales,datos light')
     ufm.registro_funcion(contexto,name='asignaCat',entry=asignaCat,type='item,leaf',seqnr=10,
                          text='Asignacion de escaños',
                          db='datos catalonia')
@@ -347,15 +347,15 @@ def register(contexto):
     ufm.registro_funcion(contexto,name='borraIU',entry=consolida,
                          aux_parm={'desde':'4850','hacia':('5008','5041','5033','3736')},type='colkey',seqnr=20,
                          text='Integra UI en Podemos',
-                         db='datos locales')
+                         db='datos locales,datos light')
     ufm.registro_funcion(contexto,name='borraMes',entry=consolida,
                          aux_parm={'desde':'4976','hacia':('5008','5041','5033','3736')},type='colkey',seqnr=20,
                          text='Integra Mès en Podemos',
-                         db='datos locales')
+                         db='datos locales,datos light')
     ufm.registro_funcion(contexto,name='unPodemos',entry=consolida,
                          aux_parm={'desde':('5008','5041','5033'),'hacia':('3736',)},type='colkey',seqnr=20,
                          text='Agrupa en uno las candidaturas de Podemos',
-                         db='datos locales,datos catalonia')
+                         db='datos locales,datos catalonia,datos light')
     ufm.registro_secuencia(contexto,name='Podemos',list=('borraIU','borraMes','unPodemos'),seqnr=23,sep=True,
                            text='Todo lo anterior',
                            db='datos locales,datos light')

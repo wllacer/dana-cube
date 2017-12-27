@@ -616,10 +616,10 @@
     "default": {
         "cubo": "datos light",
         "vista": {
-            "agregado": "sum",
-            "col": "1",
             "elemento": "votes_presential",
-            "row": "3"
+            "agregado": "sum",
+            "row": 5,
+            "col": 1
         }
     },
     "experimento": {

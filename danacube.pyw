@@ -1,6 +1,63 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+Nueva versiion. TodoList para volcar
+         TESTED Cubo
+            Abrir Cubo 
+            Convertir vista actual a defecto
+         TESTED Vista
+            Abrir Vista
+            Cambiar vista actual
+            Cerrar vista actual
+         TESTED Usar Filtros
+            Editar &Filtro
+            Borrar &Filtros
+            Guardar &Filtros permanentemente
+         TESTED Rangos de Fechas
+            Editar &Rango fechas
+            Borrar &Rango fechas
+            Salvar &Rango fechas
+         Opciones
+            DONE (as tested) Exportar datos
+            DONE Trasponer datos
+                
+            DONE Presentacion ...
+            
+         TESTED Graficos
+            SOLVED multibar
+            SOLVED llamada inicial
 
+         TESTED Funciones de usuario
+            TESTED funcion de merge
+            TESTED Simulaciones
+         TESTED Restaurar valores originales   
+         
+        TESTED menus de contexto de cabeceras
+         
+        TESTED recalcGrandTotal
+        revisar recalcGrandTotal sin gran total
+        TESTED revisar estadisticas
+        TESTED revisar restaurar valores originales c
+        TESTED activar sort
+        TODO .
+            investigar el uso de locales (Python o Qt) en lugar/ademas de numberFormat)
+            sort por otros criterios o sin problemas con acentos
+            En datos light la entrada con valor nulo España aparece en distintos lugares en el traverse. ¿?
+            mejorar los graficos de cabecera con criterios de seleccion
+        NO reproduzco
+            File "/home/werner/projects/dana-cube.git/util/tree.py", line 614, in data
+            text, sign = fmtNumber(datos,self.datos.format)
+            File "/home/werner/projects/dana-cube.git/util/numeros.py", line 64, in fmtNumber
+                cadena = formatter.format(number)
+            ValueError: Cannot specify ',' or '_' with 's'.
+        Solved ¿?
+        El error es previo; debia estar resuelto, se suponia
+         sqlalchemy.exc.ProgrammingError: (psycopg2.ProgrammingError) constante no entera en GROUP BY
+            LÍNEA 1: ...ntal.inventory_id)  FROM public.rental   GROUP BY '//', staf...
+                                                                            ^
+ [SQL: " SELECT  '//', staff_id, sum(public.rental.inventory_id)  FROM public.rental   GROUP BY '//', staff_id ORDER BY 1 , 2  "]
+
+"""
 
 from __future__ import division
 from __future__ import absolute_import
@@ -10,7 +67,7 @@ from __future__ import unicode_literals
 from pprint import pprint
 import argparse
 
-from PyQt5.QtCore import Qt,QSortFilterProxyModel
+from PyQt5.QtCore import Qt #,QSortFilterProxyModel
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView , QTabWidget, QSplitter
 
@@ -35,17 +92,7 @@ from util.uf_manager import *
 import exportWizard as eW
 
 from util.treestate import *
-#FIXED 1 zoom view breaks. Some variables weren't available
-#     FIXME zoom doesn't trigger any action with the new interface
-#FIXED 1 config view doesn't fire. Definition too early
-#     FIXED 2 there's no code to handle it now
-#          FIXED right justified
-#          FIXED refreshTable
-#
-#FIXED 1 cursor en trabajo app.setOverrideCursor
-#FIXED formateo de la tabla
-#FIXED 2 formateo de los elementos
-#FIXED implementar sort en modelo
+
 #TODO uso de formato numerico directamente en la view setNumberFormat
 #ALERT dopado para que vaya siempre a datos de prueba
 
@@ -270,29 +317,17 @@ class DanaCubeWindow(QMainWindow):
             self.editConnection(my_cubos[seleccion],seleccion)
         self.cubo = Cubo(my_cubos[seleccion])
         self.cubo.nombre = seleccion #FIXME es que no tengo sitio en Cubo para definirlo
-        self.cubo.recordStructure = self.summaryGuia()
+        self.cubo.recordStructure = self.getCubeRecordInfo()
         self.setWindowTitle(self.cubo.nombre)
 
         
     @waiting_effects
-    def summaryGuia(self):
+    def getCubeRecordInfo(self):
+        """
+           Determinamos con el la estructura del registro que el cubo analiza.
+           TODO Probablemente deberia estar mejor en Core
+        """
         result = []
-        """
-           este codigo parece no ser utilizado en el resto de danacube y es especialmente costoso.
-           A parte de incompatible con la nueva interfaz
-        """
-        #self.cubo.fillGuias()
-        #for k,guia in enumerate(self.cubo.lista_guias):
-            #arbolGuia,dummy = self.cubo.fillGuia(k)
-            #dataGuia = []
-            #for item in arbolGuia.traverse(mode=1,output=1):
-                #dataGuia.append((item.key,item.desc))
-            #result.append({'name':guia['name'],'format':guia.get('fmt','texto'),
-                                #'source':guia['elem'] if guia['class'] != 'c' else guia['name'] ,
-                                #'values':dataGuia,
-                                #'class':guia['class']}
-                                #)
-            
         confData = self.cubo.definition['connect']
         confName = '$$TEMP'
         (schema,table) = self.cubo.definition['table'].split('.')
@@ -478,7 +513,6 @@ class TabMgr(QWidget):
         split = QSplitter(Qt.Vertical,self)
         lay = QGridLayout()
         self.setLayout(lay)
-        
         self.tree = DanaCube(parent,**kwargs)
         self.chart = SimpleChart()
         self.chartType = None #'barh'
@@ -514,47 +548,59 @@ class TabMgr(QWidget):
     def processChartItem(self,index=None,tipo='bar'):
         if index:
             if index.isValid():
-                item = self.tree.baseModel.item(index)
+                item = self.tree.model().itemFromIndex(index)
+                #esta vuelta es para localizar el nombre de la fila y evitar que los valores nulos, que son QStandardItem peten el proceso
+                if index.column() != 0:
+                    rowid = self.tree.model().itemFromIndex(index.sibling(index.row(),0))
+                else:
+                    rowid = item
             else:
                 return
-        elif self.lastItemUsed:
+        elif len(self.tree.selectedIndexes()) > 0:
+            indice = self.tree.selectedIndexes()[0]
+            item = self.tree.model().itemFromIndex(indice)
+            if item.column() != 0:
+                rowid = self.tree.model().itemFromIndex(indice.sibling(indice.row(),0))
+            else:
+                rowid = item
+        elif self.lastItemUsed is not None:
             item = self.lastItemUsed
+            rowid = item
         else:
-            item = self.tree.baseModel.item('//')
+            item = self.tree.model().invisibleRootItem().child(0)
+            rowid = item
         self.lastItemUsed = item
         #textos_col = ytree.getHeader('col')
         #textos_row = xtree.getHeader('row')
         #line = 0
         #col  = 0
-        titulo = self.tree.baseModel.datos.row_hdr_idx.name+'> '+item.getFullDesc()[-1] +  '\n' + \
-            '{}({})'.format(self.tree.baseModel.datos.agregado,self.tree.baseModel.datos.campo) 
-        x_text = self.tree.baseModel.datos.col_hdr_idx.name
+        titulo = self.tree.vista.row_hdr_idx.name+'> '+rowid.data(Qt.DisplayRole) +  '\n' + \
+            '{}({})'.format(self.tree.vista.agregado,self.tree.vista.campo) 
+        x_text = self.tree.vista.col_hdr_idx.name
         y_text = ''
-        
         if tipo == 'multibar': 
-            datos,kcabeceras = item.simplifyHierarchical() #msimplify(mdatos,self.textos_col)
+            datos,kcabeceras = rowid.simplifyHierarchical() #msimplify(mdatos,self.textos_col)
         else:
-            datos,kcabeceras = item.simplify() #item.getPayload(),self.textos_col)
-        cabeceras = [ self.tree.baseModel.colHdr[k] for k in kcabeceras ]
+            datos,kcabeceras = rowid.simplify() #item.getPayload(),self.textos_col)
+        cabeceras = [ self.tree.model().colTreeIndex['idx'][k -1]['objid'].data(Qt.DisplayRole) for k in kcabeceras ]
 
         if len(datos) == 0:
             self.chart.axes.cla()
         else:
-            self.chart.loadData(tipo,cabeceras,datos,titulo,x_text,y_text,item.getFullDesc())  
+            self.chart.loadData(tipo,cabeceras,datos,titulo,x_text,y_text,rowid.getFullDesc())  
         self.chart.draw()
         self.chart.show()
         
 class DanaCube(QTreeView):    
     def __init__(self,parent,**kwargs):
         super(DanaCube, self).__init__()        
-        self.format = dict(thousandsseparator=".",
-                                    decimalmarker=",",
-                                    decimalplaces=2,
-                                    rednegatives=False,
-                                    yellowoutliers=True)
+        #self.format = dict(thousandsseparator=".",
+                                    #decimalmarker=",",
+                                    #decimalplaces=2,
+                                    #rednegatives=False,
+                                    #yellowoutliers=True)
 
         self.vista = None
-        self.baseModel = None
         self.parent= parent  #la aplicacion en la que esta. Lo necesito para los cambios de título
         self.cubo =  self.parent.cubo
         self.setupFilters()
@@ -575,33 +621,11 @@ class DanaCube(QTreeView):
         self.setAlternatingRowColors(True)
         self.sortByColumn(0, Qt.AscendingOrder)
 
-
+        self.header().setContextMenuPolicy(Qt.CustomContextMenu)
+        self.header().customContextMenuRequested.connect(self.openHeaderContextMenu)
 
         
     def initData(self,inicial=False,**viewData):
-        #FIXME casi funciona ... vuelve a leer el fichero cada vez. NO es especialmente malo
-        #my_cubos = load_cubo()
-        #viewData =dict()
-        #defaultViewData = None
-        #if 'default' in my_cubos and inicial:
-            #defaultViewData = my_cubos['default']
-            #self.cubo.nombre=defaultViewData['cubo']
-            #viewData['row'] = int(defaultViewData['vista']['row'])
-            #viewData['col'] = int(defaultViewData['vista']['col'])
-            #viewData['agregado'] = defaultViewData['vista']['agregado']
-            #viewData['campo'] = defaultViewData['vista']['elemento']
-            #viewData['totalizado'] = True
-            #viewData['stats'] = True
-            ##del my_cubos['default']
-        #else:
-            #dialog = CuboDlg(my_cubos, self)
-            #if dialog.exec_():
-                #self.cubo.nombre = str(dialog.cuboCB.currentText())
-            #elif inicial:
-                #exit()
-            #else:
-                #return
-        #self.setupFilters(my_cubos,self.cubo.nombre)
         if viewData:
             pass
         else:
@@ -609,14 +633,12 @@ class DanaCube(QTreeView):
         #if not viewData:
         self.cargaVista(viewData['row'], viewData['col'], viewData['agregado'], viewData['campo'], total=viewData['totalizado'], estad=viewData['stats'])
         
-        #self.setTitle() debe hacerse fuera para evitar colocarlo en el sitio equivocado
-        
-        self.setModel(self.defineModel())
+        self.defineModel()
 
     def getTitleText(self):
         return "{} X {} : {}({})".format(
-                    self.vista.row_hdr_idx.name.split('.')[-1],
-                    self.vista.col_hdr_idx.name.split('.')[-1],
+                    self.vista.row_hdr_idx.name,
+                    self.vista.col_hdr_idx.name,
                     self.vista.agregado,
                     self.vista.campo.split('.')[-1]
                     )
@@ -633,7 +655,7 @@ class DanaCube(QTreeView):
         #self.vista = None
         self.filterValues = None
         self.isModified = False
-        #self.cubo.recordStructure = self.summaryGuia()
+        #self.cubo.recordStructure = self.getCubeRecordInfo()
 
             #self.cargaVista(row,col,agregado,campo,totalizado,stats)
 
@@ -642,47 +664,29 @@ class DanaCube(QTreeView):
     def cargaVista(self,row, col, agregado, campo, total=True, estad=True,force=False):
         if self.vista is None:
             self.vista = Vista(self.cubo, row, col, agregado, campo, totalizado=total, stats=estad,filtro=self.filtro)
-            self.vista.toTree2D()
-            self.expandToDepth(2)
+            self.vista.toNewTree2D()
+            self.defineModel()
         else:
             self.changeView(row, col, agregado, campo, total,estad,force)
             #self.refreshTable()
-        self.vista.format = self.format
-     
+        #self.vista.format = self.format
+
     @waiting_effects
     @stopwatch
     def changeView(self,row, col, agregado, campo, total=True, estad=True,force=False):
         self.vista.setNewView(row, col, agregado, campo, totalizado=total, stats=estad,filtro=self.filtro,force=force)
-        self.vista.toTree2D()
+        self.vista.toNewTree2D()
         #
-        self.setModel(self.defineModel())  #esto no deberia ser asi, sino dinámico, pero no lo he conseguido
-        self.expandToDepth(2)
-        
-        self.setTitle()
+        self.defineModel()
         
     def defineModel(self):
-        """
-        definimos el modelo. Tengo que ejecutarlo cada vez que cambie la vista. TODO NO he conseguido hacerlo dinamicamente
-        """
-        newModel = TreeModel(self.vista, self)
-        newModel.hiddenRoot = self.vista.row_hdr_idx.rootItem
-        #newModel.setContext(format=self.format) #nueva version
-        #self.setModel(newModel)
-        #self.modelo=self.model
-        proxyModel = QSortFilterProxyModel()
-        proxyModel.setSourceModel(newModel)
-        proxyModel.setSortRole(33)
-        #self.setModel(proxyModel)
-        self.baseModel = newModel #proxyModel
-        #self.expandToDepth(2)
-        # estas vueltas para permitir ordenacion
-        # para que aparezcan colapsados los indices jerarquicos
-        self.max_row_level = self.vista.dim_row
-        self.max_col_level  = self.vista.dim_col
-        self.row_range = [0, self.vista.row_hdr_idx.len() -1]
-        self.col_range = [0, self.vista.col_hdr_idx.len() -1]
-        return proxyModel
-    
+        self.setModel(self.vista.row_hdr_idx)
+        self.vista.row_hdr_idx.setHorizontalHeaderLabels(
+            [self.vista.row_hdr_idx.name,]+ 
+            [item.data(Qt.DisplayRole) for item in self.vista.col_hdr_idx.traverse()])
+        self.expandToDepth(2)
+        self.setTitle()
+
         
     def changeVista(self):
         viewData = self.requestVista()
@@ -695,47 +699,52 @@ class DanaCube(QTreeView):
     @waiting_effects
     @model_change_control()
     def traspose(self):
-        #self.baseModel.beginResetModel()
+        #self.model().beginResetModel()
         self.vista.traspose()
-        self.baseModel.getHeaders()
-        self.baseModel.rootItem = self.vista.row_hdr_idx.rootItem
-        #self.baseModel.endResetModel()
-        self.expandToDepth(2)
+        #self.model().getHeaders()
+        #self.model().rootItem = self.vista.row_hdr_idx.rootItem
+        #self.model().endResetModel()
+        self.defineModel()
 
-        self.setTitle()
-
+    @keep_tree_layout
     def refreshTable(self):
         """
             La eleccion de una u otra señal no es casualidad.
             Si utilizo layoutChanged el dialogo setNumberFormat cruje inmisericordemente al cerrar si no se le define el WA_DeleteOnClose !!!!???
         """
-        self.baseModel.emitModelReset()
-        #self.baseModel.layoutChanged.emit()
+        self.model().modelReset.emit()
+        #self.model().emitModelReset()
+        #self.model().layoutChanged.emit()
         
      
     def setNumberFormat(self):
         """ adapted from Rapid development with PyQT book (chapter 5) """
-        self.numberFormatDlg = NumberFormatDlg(self.format, self.refreshTable, self)
+        self.numberFormatDlg = NumberFormatDlg(self.model().datos.format, self.setTreeFormat, self)
         #self.numberFormatDlg.setAttribute(Qt.WA_DeleteOnClose) #si no cruje inmisericordemente ¿ o no?
         self.numberFormatDlg.show()
         self.numberFormatDlg.raise_()
         self.numberFormatDlg.activateWindow()
         #self.refreshTable()  #creo que es innecesario
     
+    def setTreeFormat(self):
+        #for entrada in self.format:
+            #self.model().datos.format[entrada] = self.format[entrada]
+        self.refreshTable()
+        
     @keep_tree_layout()
     @waiting_effects
     @model_change_control()
     def restoreData(self):
         #app.setOverrideCursor(QCursor(Qt.WaitCursor))
         #expList = saveExpandedState(self)
-        #self.baseModel.beginResetModel()
-        for item in self.baseModel.traverse(mode=1,output=1):
+        #self.model().beginResetModel()
+        for item in self.model().traverse():
             item.restoreBackup()
             if self.vista.stats :
                item.setStatistics()
 
-        #self.baseModel.rootItem = self.vista.row_hdr_idx.rootItem    
-        #self.baseModel.endResetModel()
+        #self.model().rootItem = self.vista.row_hdr_idx.rootItem    
+        #self.model().endResetModel()
         #restoreExpandedState(expList,self)
         #self.expandToDepth(2)
         #app.restoreOverrideCursor()
@@ -765,8 +774,9 @@ class DanaCube(QTreeView):
             funcioncilla para obtener las tablas para parmetrizar y presentar de las cabeceras de fila o columna
             """
             m_tabla = []
-            for key in guia.traverse(mode=1):
-                m_tabla.append((key.split(':')[-1],guia[key].desc))
+            for item in guia.traverse():
+                #m_tabla.append((key.split(':')[-1],guia[key].desc))
+                m_tabla.append((item.getKey(),item.getLabel()))
             return m_tabla
         
         def presenta(a_table,a_data = None):
@@ -780,17 +790,17 @@ class DanaCube(QTreeView):
             return a_data
 
         if 'colkey' in tipo_plugin:
-            lparm[1] = indice2tablas(self.baseModel.datos.col_hdr_idx)
+            lparm[1] = indice2tablas(self.vista.col_hdr_idx)
 
         if 'colparm' in tipo_plugin:
             if lparm[1]:
                 a_table = lparm[1]
             else:
-                a_table = indice2tablas(self.baseModel.datos.col_hdr_idx)
+                a_table = indice2tablas(self.vista.col_hdr_idx)
             lparm[3] = [(a_table[k][0],a_table[k][1],data) for k,data in enumerate(presenta(a_table))]
             
         if 'rowparm' in tipo_plugin:
-            a_table = indice2tablas(self.baseModel.datos.row_hdr_idx)
+            a_table = indice2tablas(self.vista.row_hdr_idx)
             lparm[2] = [(a_table[k][0],a_table[k][1],data) for k,data in enumerate(presenta(a_table))]
         
         if 'kwparm' in tipo_plugin:
@@ -807,7 +817,7 @@ class DanaCube(QTreeView):
         """
         separado para evitar efectos secundarios de model_change_control
         """
-        for item in self.baseModel.traverse(mode=1,output=1):
+        for item in self.model().traverse():
                 item.setBackup()
                 if 'leaf' in tipo_plugin and not item.isLeaf():
                     continue
@@ -821,21 +831,21 @@ class DanaCube(QTreeView):
     @waiting_effects    
     def dispatch(self,fcnName):
         #TODO reducir el numero de arrays temporales
-        #self.baseModel.beginResetModel()
+        #self.model().beginResetModel()
         for elem in self.parent.plugins[fcnName]['exec']:
             if elem[1] is None: #defino un defecto para esta aplicacion
                 elem[1] = 'item'
             self.funDispatch(elem)
             if 'leaf' in elem[1]:
                 self.vista.recalcGrandTotal()
-        #self.baseModel.endResetModel()
+        #self.model().endResetModel()
         self.isModified = True
         self.parent.restorator.setEnabled(True)
         #self.expandToDepth(2)
         
     def setFilter(self):
         #self.areFiltered = True
-        #self.cubo.recordStructure = self.summaryGuia()
+        #self.cubo.recordStructure = self.getCubeRecordInfo()
         
         filterDlg = filterDialog(self.cubo.recordStructure,self,driver=self.cubo.dbdriver)
         if self.filterValues :
@@ -1013,18 +1023,33 @@ class DanaCube(QTreeView):
         
     def drawGraph(self,source,id):
         if source == 'row':
-            item = self.baseModel.item(id)
+            item = self.model().item(id)
             titulo = item['key']
             datos = item.getPayload()
-            etiquetas = self.baseModel.colHdr[1:]
+            etiquetas = [entrada['objid'].data(Qt.DIsplayRole) for entrada in self.model().colTreeIndex['idx']]
         elif source == 'col':
-            titulo = self.baseModel.colHdr[id]
+            titulo= self.model().colTreeIndex['idx'][id -1]['objid'].data(Qt.DisplayRole) 
             datos = []
-            for key in self.vista.row_hdr_idx.traverse(mode=1):
-                datos.append(self.vista.row_hdr_idx[key].gpi(id -1))
-            etiquetas = self.baseModel.rowHdr[1:]
-        print(source,titulo,datos,etiquetas)
-        
+            etiquetas = []
+            for entrada in self.model().traverse():
+                if entrada.gpi(id -1) is None:
+                    continue
+                datos.append(entrada.gpi(id -1))
+                etiquetas.append(entrada.data(Qt.DisplayRole))
+        dialog = GraphDlg(self.parent.tabulatura.currentWidget().chartType, self)
+        if dialog.exec_():
+            if dialog.result:
+                chart = self.parent.tabulatura.currentWidget().chart
+                x_text = self.model().name
+                y_text = ''
+                if len(datos) == 0:
+                    chart.axes.cla()
+                else:
+                    chart.loadData(dialog.result,etiquetas,datos,titulo,x_text,y_text)  
+                chart.draw()
+                chart.show()
+            else:
+                chart.hide()
 if __name__ == '__main__':
     import sys
 

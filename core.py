@@ -36,112 +36,11 @@ try:
 except ImportError:
     XLSOUTPUT = False
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
+#from PyQt5.QtCore import Qt
+#from PyQt5.QtGui import QStandardItemModel, QStandardItem
 #from cubemgmt.cubetree import CubeItem,traverseTree
 
-def searchStandardItem(item,value,role):
-    """
-       modelo general de funcion de busqueda binaria en hijos de un QStandardItem o derivados
-       como funcion generica porque se repite en varias circunstancias
-       SOLO vale con children ordenados por el valor de busqueda (eso es muy importante)
-    """
-    lower = 0
-    upper = item.rowCount()
-    while lower < upper:   # use < instead of <=
-        x = lower + (upper - lower) // 2
-        val = item.child(x).data(role)
-        if value == val:
-            return item.child(x)
-        elif value > val:
-            if lower == x:   # this two are the actual lines
-                break        # you're looking for
-            lower = x
-        elif value < val:
-            upper = x
-    return None
 
-class GuideItemModel(QStandardItemModel):
-    def __init__(self,parent=None):
-        super(GuideItemModel, self).__init__(parent)
-
-                                   
-    def traverse(self,base=None):
-        if base is not None:
-            yield base
-            queue = [ base.child(i) for i in range(0,base.rowCount()) ]
-        else:
-            root = self.invisibleRootItem()
-            queue = [ root.child(i) for i in range(0,root.rowCount()) ]
-        while queue :
-            yield queue[0]
-            expansion = [ queue[0].child(i) for i in range(0,queue[0].rowCount()) ]
-            if expansion is None:
-                del queue[0]
-            else:
-                queue = expansion  + queue[1:]            
-       
-    def searchHierarchy(self,valueList,role=None):
-        """
-          busco el elemento padre con toda la jerarquia de una tacada. No se con los grandes totales
-        """
-        if role is None:
-            prole = Qt.UserRole +1
-        else:
-            prole = role
-        elem = self.invisibleRootItem()
-        parent = self.invisibleRootItem()
-        for k,value in enumerate(valueList):
-            elem = searchStandardItem(parent,value,prole)
-            if not elem:
-                return None
-            parent = elem
-        return elem
-    
-class GuideItem(QStandardItem):
-    def __init__(self,*args):  #solo usamos valor (str o standarItem)
-        super(GuideItem, self).__init__(*args)
-    
-    
-    def depth(self):
-        depth = 0
-        pai = self.parent()
-        while pai is not None and pai != self.model().invisibleRootItem():
-            pai = pai.parent()
-            depth += 1
-        return depth
-    
-    def getFullKey(self):
-        clave = self.data(Qt.UserRole +1)
-        pai = self.parent()
-        while pai is not None and pai != self.model().invisibleRootItem():
-            clave = pai.data(Qt.UserRole +1) + DELIMITER + clave
-        return clave
-        
-    def searchChildren(self,value,role=None):
-        if role is None:
-            prole = Qt.UserRole +1
-        else:
-            prole = role
-        return searchStandardItem(self,value,prole)
-
-    def setColumn(self,col,value):
-        row = self.index().row()
-        if self.parent() is None:
-            pai = self.model().invisibleRootItem()
-        else:
-            pai = self.parent()
-        colItem = GuideItem()
-        colItem.setData(value,Qt.UserRole +1)
-        colItem.setData(value,Qt.DisplayRole)
-        pai.setChild(row,col,colItem)
-
-    def __str__(self):
-        return "<" + self.text() + ">"
-
-    def __repr__(self):
-        return "<" + self.data(Qt.DisplayRole) + ">"
-        
 def mergeString(string1,string2,connector):
     if not string1 :
         merge = string2
@@ -216,7 +115,7 @@ class Cubo:
         self.lista_campos = self.getFields()
         
         self.dbdriver = self.db.dialect.name #self.definition['connect']['driver']
-        
+        self.newModel = True
         
         
         
@@ -408,7 +307,7 @@ class Cubo:
 
         return cursor
 
-    def _createProdModel(self,raiz,cursor,contexto,prodId):
+    def _createProdModel(self,raiz,cursor,contexto,prodId,total=None):
         """
         De cursor al modelo que utilizamos para definir la guia
         Input
@@ -416,7 +315,7 @@ class Cubo:
             cursor  el cursor a integrar en el modelo
             contexto contexto de la regla de produccion
             prodId identificación de la regla
-            
+            total (si la guia va a ser creada con totalizadores. En el caso de QStandardItemModel ha sido un fracaso de otra manera)
         Ahora mismo este codigo tiene el efecto secundario que en claves multicampo se crea implicitamente una jerarquia de valores
         TODO contemplar el caso contrario
         """
@@ -454,13 +353,32 @@ class Cubo:
                 del papid[-1]
                 #TODO cache sigue siendo necesario
                 if len(papid) == 0:
+<<<<<<< HEAD
                     parent = raiz
+=======
+                    item = GuideItem()
+                    item.setData(value,Qt.DisplayRole)
+                    item.setData(key,Qt.UserRole +1)
+                    raiz.appendRow((item,))                    
+>>>>>>> core2
                 else:
-                    parent = raiz.model().searchHierarchy(papid,Qt.DisplayRole)
+                    if total:  #no viene recogido previamente
+                        papid = ["//",]+papid
+                    parent = raiz.model().searchHierarchy(papid)
                     if not parent:
+<<<<<<< HEAD
                         print('Ilocalizable',papid)
                 parent.appendRow((GuideItem(key),GuideItem(value),))
                 
+=======
+                        #print('Ilocalizable',papid)
+                        continue
+                    else:
+                        item = GuideItem()
+                        item.setData(value,Qt.DisplayRole)
+                        item.setData(key,Qt.UserRole +1)
+                        parent.appendRow((item,))
+>>>>>>> core2
             elif isinstance(raiz,TreeDict):
                 # problemas inesperados con valores nulos
                 for k in range(len(row)):
@@ -477,12 +395,13 @@ class Cubo:
                 raiz.append(TreeItem(key,entryNum,value),parentId)
     
     
-    def fillGuia(self,guidIdentifier,qtModel = None):
+    def fillGuia(self,guidIdentifier,total=None):
         '''
         Es el metodo con el que creamos la guia; de paso generamos informacion complementaria, el contexto
         Como campo de entrada
         guidIdentifier  es la gua a procesar. sobrecargada como el número de la guia en la lista o el nombre
-        qtModel (Experimental) tipo de modelo que genera. Por defecto TreeDict que no es qt
+        total . Si debe crearse con totalizadores. En el caso de QStandardItemModel ha sido la unica manera de
+                hacerlo que no corrompiera el arbol
         El contexto que genera para cada produccion es
             {'table':table,   -> tabla del dominio de la guia
             'code':code,      -> lista de campos que contienen el code (valor interno) de la produccion
@@ -497,7 +416,6 @@ class Cubo:
             })
 
         '''
-        
         cubo = self.definition
         if isinstance(guidIdentifier,int):
             guidId = guidIdentifier
@@ -510,11 +428,16 @@ class Cubo:
         
         #arbol = QStandardItemModel()
         #raiz = arbol.invisibleRootItem()
-        if qtModel is None:
-            tree=TreeDict()
-            tree.name = guia['name']
+        arbol = GuideItemModel()
+        arbol.name = self.lista_guias[guidId]['name']
+        if total:  #el rebase no me ha traido mas que pesadillas
+            raiz = arbol.invisibleRootItem()
+            item = GuideItem()
+            item.setData('Grand Total',Qt.DisplayRole)
+            item.setData('//',Qt.UserRole +1)
+            raiz.insertRow(0,(item,))
+            tree = item
         else:
-            arbol = GuideItemModel()
             tree = arbol.invisibleRootItem()  #para que __createProdModel solo necesite invocarse una vez
         
         # primero expandimos las entradas tipo fecha
@@ -660,21 +583,13 @@ class Cubo:
                 cursor = self._getProdCursor(contexto[-1],basefilter,datefilter)
             
  
-            self._createProdModel(tree,cursor,contexto[-1],prodId)
+            self._createProdModel(tree,cursor,contexto[-1],prodId,total)
 
-        if qtModel is None:
-            # es el unico modo que genere un ordinal unico 
-            k = 0
-            for item in tree.traverse(output=1): #por item
-                item.ord = k
-                k += 1
-            return tree,contexto
-        else:
             #for item in traverse(tree):
                 #print(item.parent().data(Qt.DisplayRole) if item.parent() is not None else '??',
-                      #item.data(Qt.DisplayRole))
+                      #item.data(Qt.DisplayRole))          
                 
-            return arbol,contexto
+        return arbol,contexto
 
 class Vista:
     #TODO falta documentar
@@ -701,8 +616,8 @@ class Vista:
         self.row_id = None   #son row y col. a asignar en setnewview
         self.col_id = None
 
-        self.row_hdr_idx = list()
-        self.col_hdr_idx = list()
+        self.row_hdr_idx = None
+        self.col_hdr_idx = None
         #self.row_hdr_txt = list()
         #self.col_hdr_txt = list()
 
@@ -774,14 +689,15 @@ class Vista:
                     
             #for k,entrada in enumerate(self.lista_guias):
             for item in (row,col):
-                self.cubo.lista_guias[item]['dir_row'],self.cubo.lista_guias[item]['contexto']=self.cubo.fillGuia(item)
+                #TODO TOT-V
+                self.cubo.lista_guias[item]['dir_row'],self.cubo.lista_guias[item]['contexto']=self.cubo.fillGuia(item,total=self.totalizado if item == row else False)
 
             self.dim_row = len(self.cubo.lista_guias[row]['contexto'])
             self.dim_col = len(self.cubo.lista_guias[col]['contexto'])
                 
             self.row_hdr_idx = self.cubo.lista_guias[row]['dir_row']
             self.col_hdr_idx = self.cubo.lista_guias[col]['dir_row']
-        
+                        
             self.__setDataMatrix()
             
 
@@ -809,15 +725,14 @@ class Vista:
         Debería estudiarlo porque merece la pena
         """
         if self.totalizado:
-            self.row_hdr_idx.rebaseTree()
-            #self.col_hdr_idx.rebaseTree()
             contexto_row.insert(0,{'elems':["'//'",],'linkvia':[]})
-            #contexto_col.insert(0,{'elems':["'//'",],'linkvia':[]})
+            #TOT-Y contexto_col.insert(0,{'elems':["'//'",],'linkvia':[]})
         maxRowElem = len(contexto_row[-1]['elems'])
         maxColElem = len(contexto_col[-1]['elems'])
         
         for x,row in enumerate(contexto_row):
             for y,col in enumerate(contexto_col):
+<<<<<<< HEAD
                 if self.totalizado and x == 0:
                     sqlDef['group'] = col['elems']
                     numRowElems = len(row['elems'])
@@ -828,6 +743,45 @@ class Vista:
                     numRowElems = len(row['elems'])
                     numColElems = len(col['elems'])
                     sqlDef['fields'] = sqlDef['group']  + [(self.campo,self.agregado)]
+=======
+                trow = row['elems'][:]
+                tcol = col['elems'][:]
+                if self.totalizado: #and x != 0:
+                    try:
+                        pos = trow.index("'//'")
+                        del trow[pos]
+                    except ValueError:
+                        pass
+                #TOT-Y START
+                #if self.totalizado and y != 0:
+                    #try:
+                        #pos = tcol.index("'//'")
+                        #del tcol[pos]
+                    #except ValueError:
+                        #pass
+                #TOT-Y end
+                sqlDef['group'] = trow + tcol
+                #numRowElems = len(row['elems'])
+                #numColElems = len(col['elems'])
+                #sqlDef['fields']=row['elems']+col['elems'] + [(self.campo,self.agregado)]
+                if self.totalizado:
+                    rowFields =["'//'",] + trow 
+                    #if x > 0:
+                        #rowFields =["'//'",] + trow 
+                    #else:
+                        #rowFields = trow
+                    numRowElems = len(rowFields)
+                    #TOT-Y start
+                    #if y > 0:
+                        #colFields =["'//'",] + tcol 
+                    #else:
+                    #TOT-
+                    colFields = tcol
+                    numColElems = len(colFields)
+                    sqlDef['fields'] = rowFields + colFields + [(self.campo,self.agregado)]
+                else:
+                    sqlDef['fields'] =sqlDef['group']  + [(self.campo,self.agregado)]
+>>>>>>> core2
                 joins = row['linkvia'] + col['linkvia']
                 sqlDef['join'] = []
                 for entrada in joins:
@@ -848,172 +802,73 @@ class Vista:
                 sqlstring=queryConstructor(**sqlDef)
                 lista_compra={'row':{'nkeys':numRowElems,},
                               'rdir':self.row_hdr_idx,
+<<<<<<< HEAD
                               'col':{'nkeys':numColElems,'init':numRowElems,},
+=======
+                              'col':{'nkeys':numColElems,
+                                     'init':numRowElems,},
+>>>>>>> core2
                               'cdir':self.col_hdr_idx
                               }
-                cursor = getCursor(self.cubo.db,sqlstring,regTree,**lista_compra)
-                self.array +=cursor #getCursor(self.cubo.db,sqlstring,regTree,**lista_compra)
+
+                cursor = getCursor(self.cubo.db,sqlstring,regTreeGuide,**lista_compra)
+                self.array +=cursor 
                 if DEBUG:
                     print(time.time(),'Datos ',queryFormat(sqlstring))
 
         #pprint(self.array)
         
-    def toTable(self):
-        """
-           convertir los datos en una tabla normal y corriente
-        """
-        table = [ [None for k in range(self.col_hdr_idx.len())] for j in range(self.row_hdr_idx.len())]
+    def toNewTree(self):
+        coldict = {}
+        colindex = []
+        idx = 1
+        for item in self.col_hdr_idx.traverse():
+            coldict[item.getFullKey()]={'idx':idx,'objid':item}
+            colindex.append({'objid':item,'key':item.getFullKey()})
+            idx += 1
+        self.row_hdr_idx.colTreeIndex = {'dict':coldict,'idx':colindex}
+        self.row_hdr_idx.colTreeIndex['leaf'] = [ idx for idx,obj in enumerate(self.row_hdr_idx.colTreeIndex['idx']) if obj['objid'].type() == LEAF ]
+        
+        raiz = self.row_hdr_idx.invisibleRootItem()            
         for record in self.array:
-            try:
-                ind_1 = record[0].ord
-                ind_2 = record[1].ord  
-                table[ind_1][ind_2]=record[-1]
-            except KeyError:
-                continue
-            except IndexError:
-                print('{} o {} fuera de rango'.format(ind_1,ind_2))
-        if DEBUG:
-            print(time.time(),'table ',len(table),self.row_hdr_idx.len(),len(table[0])) 
-        return table
-
-    #def toKeyedTable(self):
-        #ktable = [ [None for k in range(self.col_hdr_idx.len()+1)] for j in range(self.row_hdr_idx.len()+1)]
-        #ktable[0][0] = None
-        #ind = 1
-        #for key in self.col_hdr_idx.traverse(mode=1):
-            #elem = self.col_hdr_idx[key]
-            #ktable[0][elem.ord +1] = key
-            #ind += 1
-        #ind = 1
-        #for key in self.row_hdr_idx.traverse(mode=1):
-            #elem = self.row_hdr_idx[key]
-            #ktable[elem.ord +1][0] = key
-            #ind += 1
-
-        #table = self.toTable()
-        #ind = 0
-        #for elem in ktable:
-           #if ind == 0:
-               #ind += 1
-               #continue
-
-           #elem[1:] = table[ind][:]
-        #return ktable
-    
-    #def toCsv(self,row_sparse=True,col_sparse=False,translated=True,separator=';',string_sep="'"):
-        #ctable = [ ['' for k in range(self.col_hdr_idx.len()+self.dim_row)] 
-                             #for j in range(self.row_hdr_idx.len()+self.dim_col) ]
-     
-        #ind = 1
-        #def csvFormatString(cadena):
-            #if separator in cadena:
-                #return string_sep + cadena + string_sep
-            #else:
-                #return cadena
-        #for key in self.col_hdr_idx.traverse(mode=1):
-            #elem = self.col_hdr_idx[key]
-            #desc = elem.getFullDesc()   
-            #if col_sparse:
-                #k = len(desc) -1
-                #ctable[k][elem.ord +self.dim_row] = csvFormatString(desc[k])
-            #else:
-                #for k in range(len(desc)):
-                    #ctable[k][elem.ord +self.dim_row] = csvFormatString(desc[k])
-
+            col = coldict[record[1].getFullKey()]['idx']
+            row = record[0]
+            row.setColumn(col,record[2])
+            colItem = row.getColumn(col)
+            colItem.setBackup()
             
-        #for key in self.row_hdr_idx.traverse(mode=1):
-            #elem = self.row_hdr_idx[key]
-            #desc = elem.getFullDesc()   
-            #if row_sparse:
-                #k = len(desc) -1
-                #ctable[elem.ord + self.dim_col][k]=csvFormatString(desc[k])
-            #else:
-                #for k in range(len(desc)):
-                    #ctable[elem.ord + self.dim_col][k]=csvFormatString(desc[k])
-        #table = self.toTable()
-        ## probablemente este paso intermedio es innecesario
-        #ind = 0
-        #for elem in ctable[self.dim_col : ]:
-           #elem[self.dim_row:] = [str(dato) if dato is not None else '' for dato in table[ind] ]
-           #ind += 1
-        #lineas=[]
-        #for row in ctable:
-            #lineas.append(separator.join(row))
-            
-        #return lineas
-    
-    #def toNamedTable(self):
-        #ntable = [ [ None for k in range(self.col_hdr_idx.len()+1)] for j in range(self.row_hdr_idx.len()+1)]
-        #ntable[0][0] = None
-        #ind = 1
-        #for key in self.col_hdr_idx.traverse(mode=1):
-            #elem = self.col_hdr_idx[key]
-            #ntable[0][elem.ord +1] = getOrderedText(elem.getFullDesc(),sparse=False,separator='\n')
-            #ind += 1
-        #ind = 1
-        #for key in self.row_hdr_idx.traverse(mode=1):
-            #elem = self.row_hdr_idx[key]
-            #ntable[elem.ord +1][0] = getOrderedText(elem.getFullDesc(),sparse=True,separator='\t')
-            #ind += 1
-
-        #table = self.toTable()
-        #ind = 0
-        #for elem in ntable:
-           #if ind == 0:
-               #ind += 1
-               #continue
-
-           #elem[1:] = table[ind][:]
-        #return ntable
-        ##for elem in ktable:
-            ##print(elem)
-            
-    #def toTree(self):
-        #array = self.toTable()
-        #for key in self.row_hdr_idx.traverse(mode=1):
-            #elem = self.row_hdr_idx[key]
-            #datos = [ getOrderedText(elem.getFullDesc(),sparse=True,separator=''),] +\
-                    #array[elem.ord][:]
-            #elem.setData(datos)
-            #if self.stats:
-                #elem.setStatistics()
-        #if DEBUG:
-            #print(time.time(),'Tree ',len(array),self.row_hdr_idx.len())  
-
-    def toTree2D(self):
-        array = self.toTable()
-        k = 0
-        for key in self.row_hdr_idx.traverse(mode=1):
-            elem = self.row_hdr_idx[key]
-            datos = [ getOrderedText(elem.getFullDesc(),sparse=True,separator=''),] +\
-                    array[elem.ord][:]
-            elem.setData(datos)
-            if self.stats:
-                elem.setStatistics()
-            k += 1
-        k = 0
-        for key in self.col_hdr_idx.traverse(mode=1):
-            elem = self.col_hdr_idx[key]
-            datos = [ getOrderedText(elem.getFullDesc(),sparse=True,separator=''),] +\
-                    [ array[ind][elem.ord] for ind in range(self.row_hdr_idx.len()) ]
-            elem.setData(datos)
-            if self.stats:
-                elem.setStatistics()
-            k += 1
-        #if self.totalizado:
-            #self.row_hdr_idx.rebaseTree()
-            #tabla = self.__grandTotal()
-            #datos =['Gran Total',]+[elem[1] for elem in tabla]
-            #elem = self.row_hdr_idx['//']
-            #elem.setData(datos)
-            #if self.stats:
-                #elem.setStatistics()
-
-                    
-        if DEBUG:       
-            print(time.time(),'Tree ',len(array),self.row_hdr_idx.len())  
-
+    def toNewTree2D(self):
+        def setContext(row,col):
+            coldict = {}
+            colindex = []
+            idx = 1
+            for item in col.traverse():
+                coldict[item.getFullKey()]={'idx':idx,'objid':item}
+                colindex.append({'objid':item,'key':item.getFullKey()})
+                idx += 1
+            row.colTreeIndex = {'dict':coldict,'idx':colindex}
+            row.colTreeIndex['leaf'] = [ idx for idx,obj in enumerate(row.colTreeIndex['idx']) if obj['objid'].type() == LEAF ]
+            return coldict
+        coldict=setContext(self.row_hdr_idx,self.col_hdr_idx)
+        rowdict=setContext(self.col_hdr_idx,self.row_hdr_idx)
+        #raizRow = self.row_hdr_idx.invisibleRootItem()  
+        #raizCol = self.col_hdr_idx.invisibleRootItem()
+        for record in self.array:
+            rowcol = coldict[record[1].getFullKey()]['idx']
+            colcol = rowdict[record[0].getFullKey()]['idx']
+            rowid = record[0]
+            rowid.setColumn(rowcol,record[2])
+            colid = record[1]
+            colid.setColumn(colcol,record[2])
+            #colItem = row.getColumn(col)
+            #colItem.setBackup()
+        if self.stats:
+            self.row_hdr_idx.setStats(True)
+            self.col_hdr_idx.setStats(True)
     def recalcGrandTotal(self):
+        """
+           TODO
+        """
         def cargaAcumuladores():
             if elem.isLeaf():
                 for k in range(len(acumuladores)):
@@ -1035,16 +890,16 @@ class Vista:
         
         arbol = self.row_hdr_idx
         numcol = self.col_hdr_idx.len()
-        padres = []
+        padres = []  
         acumuladores = []
-        for elem in arbol.traverse(mode=1,output=1):
+        for elem in arbol.traverse():
             prof = elem.depth()
             if len(padres) < prof:
-                padres.append(elem.parentItem)
+                padres.append(elem.parent())
                 acumuladores.append([ {'max':0,'min':0,'count':0,'sum':0} for k in range(numcol)])
                 cargaAcumuladores()
             elif len(padres) == prof:
-                if padres[-1] == elem.parentItem:
+                if padres and padres[-1] == elem.parent():
                     cargaAcumuladores()
                 else:
                     print('cambio de padre')
@@ -1053,27 +908,32 @@ class Vista:
                 del padres[-1]
                 del acumuladores[-1]
                 cargaAcumuladores()
-                #if padres[-1] == elem.parentItem:
+                #if padres[-1] == elem.parent():
                     #print('no cambia nada')
                 #else:
                     #print('nuevo padre')
-                    #padres.append(elem.parentItem)
+                    #padres.append(elem.parent())
                 #print('para atras')
         else:
-            while padres[-1].parent() is not None:
+            while True: #padres[-1].parent() is not None:
                 procesa()
                 del padres[-1]
                 del acumuladores[-1]
+                if len(padres) == 0 or padres[-1] is None:
+                    break
     
     def traspose(self):
+        """
+        TODO
+        """
         tmp_col = self.row_id
         tmp_row = self.col_id
         
         self.row_id = tmp_row
         self.col_id = tmp_col
         
-        self.dim_row = len(self.cubo.lista_guias[self.row_id]['rules'])
-        self.dim_col = len(self.cubo.lista_guias[self.col_id]['rules'])
+        self.dim_row = len(self.cubo.lista_guias[self.row_id]['contexto'])
+        self.dim_col = len(self.cubo.lista_guias[self.col_id]['contexto'])
 
         rtmp = self.row_hdr_idx
         ctmp = self.col_hdr_idx
@@ -1144,68 +1004,7 @@ class Vista:
         return tabla 
     
 
-    def getExportDataArray(self,parms,selArea=None):
-        """
-            Parece obsoleta ... deberia adaptarse a lo de la de abajo (sin array)
-            
-            *parms['file']
-            *parms['type'] = ('csv','xls','json','html')
-            *parms['csvProp']['fldSep'] 
-            *parms['csvProp']['decChar']
-            *parms['csvProp']['txtSep'] 
-            *parms['NumFormat'] 
-            parms['filter']['scope'] = ('all','visible,'select') 
-            *parms['filter']['content'] = ('full','branch','leaf')
-            parms['filter']['totals'] 
-            *parms['filter']['horSparse'] 
-            *parms['filter']['verSparse']
 
-        """
-        contentFilter = parms['filter']['content']
-        row_sparse = parms['filter']['horSparse']
-        col_sparse = parms['filter']['verSparse']
-        translated = parms['NumFormat']
-        numFmt = parms['NumFormat']
-        decChar = parms['csvProp']['decChar']
-
-        
-        ind = 1
-                
-        dim_row = self.dim_row if not self.totalizado else self.dim_row + 1
-        dim_col = self.dim_col
-            
-        row_hdr = self.__exportHeaders('List',self.row_hdr_idx,dim_row,row_sparse,contentFilter)
-        col_hdr = self.__exportHeaders('List',self.col_hdr_idx,dim_col,col_sparse,contentFilter)
-        
-        num_rows = len(row_hdr)
-        num_cols = len(col_hdr)
-        
-        dim_row = len(row_hdr[0]) -2
-        dim_col = len(col_hdr[0]) -2
-        
-        ctable = [ ['' for k in range(num_cols + dim_row)] 
-                                for j in range(num_rows +dim_col) ]
-
-        for i in range(num_cols):
-            for j,colItem in enumerate(col_hdr[i]):
-                if j >= dim_col:
-                    break
-                ctable[j][i + dim_row]=colItem
-                
-        for i in range(num_rows):
-            for j,rowItem in enumerate(row_hdr[i]):
-                if j >= dim_row:
-                    break
-                ctable[i + dim_col][j]=rowItem
-                
-        table = self.toTable()
-        
-        for i in range(num_rows):
-            x = row_hdr[i][-1]
-            for j in range(num_cols):
-                y = col_hdr[j][-1]
-                ctable[i + dim_col][j + dim_row] = num2text(table[x][y]) if table[x][y] else ''  #TODO aqui es el sito de formatear numeros
-        return ctable,dim_row,dim_col
 
     
     def getExportData(self,parms,selArea=None):
@@ -1236,6 +1035,7 @@ class Vista:
  
         # filterCumHeader(self,total=True,branch=True,leaf=True,separador='\n',sparse=True):
         if contentFilterR == 'full':
+            totalR = True
             branchR = True
             leafR = True
         elif contentFilterR == 'branch' and self.dim_row > 1:
@@ -1246,6 +1046,7 @@ class Vista:
             leafR = True
 
         if contentFilterC == 'full':
+            totalC = True
             branchC = True
             leafC = True
         elif contentFilterC == 'branch' and self.dim_col > 1:
@@ -1254,7 +1055,7 @@ class Vista:
         else: #if contentFilter == 'leaf':
             branchC = False
             leafC = True
-            
+         
         rows=self.row_hdr_idx.filterCumHeader(sparse=row_sparse,branch=branchR,leaf=leafR,total=totalR)
         cols=self.col_hdr_idx.filterCumHeader(sparse=col_sparse,branch=branchC,leaf=leafC,total=totalC)
         
@@ -1267,23 +1068,17 @@ class Vista:
         ctable = [ ['' for k in range(num_cols + dim_row)] 
                                 for j in range(num_rows +dim_col) ]
 
-        columns = [item[0].ord for item in cols ]
-        #def extract(self,filter,crossFilter):
-            #result = []
-            #columns = [item[0].ord for item in crossFilter ]
-            #for item in filter:
-                #payload = item.getPayload()
-                #result.append([payload[k] for k in columns])
-            #return result
+        columnIDs = [item[2] for item in cols ]
         
         for ind in range(dim_col):
             ctable[ind][dim_row:]=[item[1][ind] if ind <len(item[1]) else '' for item in cols  ]
+        ctable[dim_col -1][dim_row -1] = self.row_hdr_idx.name
         ind = dim_col
         for entrada in rows:
             for k,valor in enumerate(entrada[1]): #cabeceras
                 ctable[ind][k]=valor
             payload = entrada[0].getPayload()
-            ctable[ind][dim_row:] = [  num2text(payload[k]) for k in columns]
+            ctable[ind][dim_row:] = [  num2text(payload[k]) for k in columnIDs if k < len(payload)]
                 
             ind +=1
         return ctable,dim_row,dim_col
@@ -1305,10 +1100,7 @@ class Vista:
             else:
                 return cadena
             
-        if parms.get('source') == 'array':
-            ctable,dim_row,dim_col = self.getExportDataArray(parms,selArea=None)
-        else:
-            ctable,dim_row,dim_col = self.getExportData(parms,selArea=None)
+        ctable,dim_row,dim_col = self.getExportData(parms,selArea=None)
             
         if type == 'csv':
             with open(parms['file'],'w') as f:
@@ -1349,6 +1141,12 @@ class Vista:
             workbook.close()
     #return lineas
 
+from util.decorators import stopwatch
+@stopwatch
+def createVista(cubo,x,y):
+    vista = Vista(cubo,x,y,'sum',cubo.lista_campos[0],totalizado=True)
+    vista.toNewTree2D()
+    print(vista.row_hdr_idx.numRecords(),'X',vista.col_hdr_idx.numRecords())
 def experimental():
     from cubemgmt.cubetree import recTreeLoader,dict2tree,navigateTree,CubeItem,traverseTree
     from util.jsonmgr import load_cubo
@@ -1360,21 +1158,56 @@ def experimental():
             print (ind,key,elem.ord,elem.desc,elem.parentItem.key)
             ind += 1
     vista = None
-    #micubo = 'rental'
+    micubo = 'rental'
     #micubo = 'datos catalonia'
     micubo = 'datos light'
-    guia = 'ideologia'
+    #guia = 'ideologia'
+
     mis_cubos = load_cubo()
-    cubo = Cubo(mis_cubos[micubo])
-    cubo.nombre = micubo
-    vista = Vista(cubo,5,0,'sum',cubo.lista_campos[0],totalizado=True)
-    vista.toTree2D()
+    
+    #for cuboId in mis_cubos:
+        #if cuboId == 'default':
+            #continue
+        #print('\n----',cuboId,'----\n')
+        #cubo = Cubo(mis_cubos[cuboId])
+        #cubo.nombre = cuboId
+        #iters = len(cubo.lista_guias)
+        #for i in range(iters):
+            #for j in range(iters):
+                #print(cuboId,'::',cubo.lista_guias[i]['name'],cubo.lista_guias[j]['name'])
+                #createVista(cubo,i,j)
+
+    cuboId = micubo
+    cubo = Cubo(mis_cubos[cuboId])
+    cubo.nombre = cuboId
+    iters = len(cubo.lista_guias)
+    for i in range(iters):
+        for j in range(iters):
+            print(cuboId,'::',cubo.lista_guias[i]['name'],cubo.lista_guias[j]['name'])
+            createVista(cubo,i,j)
+            
+    #cubo = Cubo(mis_cubos[micubo],qtModel=True)
+    #cubo.nombre = micubo
+    #guiax,dummy = cubo.fillGuia(1,total=True)
+    #guiax.rebaseTree()
+    #for item in guiax.traverse():
+        #print('\t'*item.depth(),item.data(Qt.UserRole +1))
+    #guiax,dummy = cubo.fillGuia(0)
+    #for item in guiax.traverse():
+        #print('\t'*item.depth(),item.data(Qt.UserRole +1))
+    
+    #vista = Vista(cubo,5,1,'sum',cubo.lista_campos[0],totalizado=True)
+    #vista.toNewTree2D()
+    #for item in vista.row_hdr_idx.traverse():
+##        if item is not None:
+        #print('\t'*item.depth(),item.data(Qt.UserRole +1),item.lenPayload(),item.getPayload())
+        #print('\t'*item.depth(),item.data(Qt.UserRole +1),item.gpi(2))
     #pprint(vista.row_hdr_idx.content)
     #print(vista.row_hdr_idx['CA08:16'])
     #vista.row_hdr_idx.setHeader()
     #vista.row_hdr_idx.getHeader()
-    for item in vista.col_hdr_idx.traverse(output = 1):
-        print('\t'*item.depth(),item.getFullDesc(),item.ord)
+    #for item in vista.col_hdr_idx.traverse():
+        #print('\t'*item.depth(),item.data(Qt.DisplayRole))
 
     #print(vista.col_hdr_idx.getHeader())
     #for k,guia in enumerate(cubo.lista_guias):
@@ -1430,7 +1263,7 @@ def experimental():
     #pprint(vista.grandTotal())
     #tabla = vista.toKeyedTable()
     #vista.toTree2D()
-    vista.recalcGrandTotal()
+    #vista.recalcGrandTotal()
     #col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
     #print(col_hdr)
     #for key in vista.row_hdr_idx.content:

@@ -56,11 +56,14 @@ def fmtNumber(number, optDict=None):
     if fmtOpt['thousandsseparator'] and fmtOpt['decimalmarker'] == fmtOpt['thousandsseparator']:
         fmtOpt['thousandsseparator'] = '.' if fmtOpt['decimalmarker'] == ',' else ','
 
-    
-    formatter = '{{:{}{}{}{}}}'.format(',' if fmtOpt['thousandsseparator'] else '',
-                                     '.' if fmtOpt['decimalplaces'] else '',
-                                     fmtOpt['decimalplaces'] if fmtOpt['decimalplaces'] else '',
-                                     'f' if fmtOpt['decimalplaces'] else '',)
+    if isinstance(number,int):
+        formatter = '{{:{}{}}}'.format(',' if fmtOpt['thousandsseparator'] else '',
+                                        'd' if fmtOpt['decimalplaces'] else '',)
+    else:
+        formatter = '{{:{}{}{}{}}}'.format(',' if fmtOpt['thousandsseparator'] else '',
+                                        '.' if fmtOpt['decimalplaces'] else '',
+                                        fmtOpt['decimalplaces'] if fmtOpt['decimalplaces'] else '',
+                                        'f' if fmtOpt['decimalplaces'] else '',)
     cadena = formatter.format(number)
     if fmtOpt['thousandsseparator'] not in (',','.'):
         cadena = cadena.replace(',',fmtOpt['thousandsseparator'])
