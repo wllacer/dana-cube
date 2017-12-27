@@ -36,7 +36,7 @@ Nueva versiion. TodoList para volcar
          
         TESTED recalcGrandTotal
         revisar recalcGrandTotal sin gran total
-        revisar estadisticas
+        TESTED revisar estadisticas
         TESTED revisar restaurar valores originales c
         TESTED activar sort
         TODO .
@@ -1034,7 +1034,6 @@ class DanaCube(QTreeView):
                     continue
                 datos.append(entrada.gpi(id -1))
                 etiquetas.append(entrada.data(Qt.DisplayRole))
-        print(source,titulo,datos,etiquetas)
         dialog = GraphDlg(self.parent.tabulatura.currentWidget().chartType, self)
         if dialog.exec_():
             if dialog.result:

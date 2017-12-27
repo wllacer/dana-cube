@@ -835,7 +835,9 @@ class Vista:
             colid.setColumn(colcol,record[2])
             #colItem = row.getColumn(col)
             #colItem.setBackup()
-
+        if self.stats:
+            self.row_hdr_idx.setStats(True)
+            self.col_hdr_idx.setStats(True)
     def recalcGrandTotal(self):
         """
            TODO
