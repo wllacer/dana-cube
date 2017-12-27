@@ -353,24 +353,15 @@ class Cubo:
                 del papid[-1]
                 #TODO cache sigue siendo necesario
                 if len(papid) == 0:
-<<<<<<< HEAD
-                    parent = raiz
-=======
                     item = GuideItem()
                     item.setData(value,Qt.DisplayRole)
                     item.setData(key,Qt.UserRole +1)
                     raiz.appendRow((item,))                    
->>>>>>> core2
                 else:
                     if total:  #no viene recogido previamente
                         papid = ["//",]+papid
                     parent = raiz.model().searchHierarchy(papid)
                     if not parent:
-<<<<<<< HEAD
-                        print('Ilocalizable',papid)
-                parent.appendRow((GuideItem(key),GuideItem(value),))
-                
-=======
                         #print('Ilocalizable',papid)
                         continue
                     else:
@@ -378,7 +369,6 @@ class Cubo:
                         item.setData(value,Qt.DisplayRole)
                         item.setData(key,Qt.UserRole +1)
                         parent.appendRow((item,))
->>>>>>> core2
             elif isinstance(raiz,TreeDict):
                 # problemas inesperados con valores nulos
                 for k in range(len(row)):
@@ -732,18 +722,6 @@ class Vista:
         
         for x,row in enumerate(contexto_row):
             for y,col in enumerate(contexto_col):
-<<<<<<< HEAD
-                if self.totalizado and x == 0:
-                    sqlDef['group'] = col['elems']
-                    numRowElems = len(row['elems'])
-                    numColElems = len(col['elems'])
-                    sqlDef['fields'] = row['elems'] + col['elems'] + [(self.campo,self.agregado)]
-                else:
-                    sqlDef['group'] = row['elems'] + col['elems']
-                    numRowElems = len(row['elems'])
-                    numColElems = len(col['elems'])
-                    sqlDef['fields'] = sqlDef['group']  + [(self.campo,self.agregado)]
-=======
                 trow = row['elems'][:]
                 tcol = col['elems'][:]
                 if self.totalizado: #and x != 0:
@@ -781,7 +759,6 @@ class Vista:
                     sqlDef['fields'] = rowFields + colFields + [(self.campo,self.agregado)]
                 else:
                     sqlDef['fields'] =sqlDef['group']  + [(self.campo,self.agregado)]
->>>>>>> core2
                 joins = row['linkvia'] + col['linkvia']
                 sqlDef['join'] = []
                 for entrada in joins:
@@ -802,12 +779,8 @@ class Vista:
                 sqlstring=queryConstructor(**sqlDef)
                 lista_compra={'row':{'nkeys':numRowElems,},
                               'rdir':self.row_hdr_idx,
-<<<<<<< HEAD
-                              'col':{'nkeys':numColElems,'init':numRowElems,},
-=======
                               'col':{'nkeys':numColElems,
                                      'init':numRowElems,},
->>>>>>> core2
                               'cdir':self.col_hdr_idx
                               }
 
