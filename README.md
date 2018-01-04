@@ -138,7 +138,7 @@ The definition of the Cube is a simple text (Json) file like this
 
 Why a text file for definition? To avoid a dependency to a concrete DB Manager or of their DBA's . Second, text files are easier to distribute and for "emergency' changes. 
 
-You can find the documentation at (this place)[docs/tree_docs.md]
+You can find the documentation at [this place](docs/tree_docs.md)
 We provide, also, some administrative tools to work with the cube definitions:
 
 * __cubebrowse.py__ Is a tool designed to manipulate the cube definitions. They are a plain Json file (see below) and can be edited by hand if necessary
