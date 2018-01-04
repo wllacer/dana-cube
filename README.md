@@ -4,42 +4,99 @@ Dana-cube is a tool to automate the design, execution and visualization of __cro
 
 ## What's the problem:
 
-A common problem an SQL database users is to solve the need to resolve an aggregate (sum, aver,...) by two or more parameters, f.i. Give me the sum of sales per country and per line of product The, very simple, SQL query gives a tabular result (country,line,sum(sales)) but the normal way we want to is as a spreadsheet (countries as rows, lines as columns) but this is NOT usually available in most data query programs.
+I spent most of the last twenty years of my professional life mainly as a DBA and/or system manager  on "big databases" Now and then, i was sent as _"maiden for everything"_ to smaller customers and projects. And i ran also my private projects. Everywhere, be it great corporations or goverment offices, be it small shops or individual users with a database. there was the problem __how to extract information from the mass of data in a database beyond what's preprogrammed in the applications__.
 
-Some DB products (fi. Oracle and MSSQL) offer their own private means of generate such queries, but they're not always availabe in general query tools
+I've seen a lot of propossed solutions (be it named _User reporting tools_, _DataWarehouse_ or _Bussiness Inteligence_ ) but the fact is that, whatever the technology, they tend to end as overblown, complex, "professional support and security" needed tools, and as resource hungry, closed and  rigid as the applications it should complement. And let's not talk about the licence costs when not open source. There are, though, a number of other tools for _OLAP_ or _data minig_ less demanding, but usually there tend to be complex , giving innecesary pain to the most basic steps
 
-Resourceful users can use MS Access cross reference queries to get this or use Pivot Tables available in several spreadsheet programs, but the cost -and most ofter the unwieldness- of linking REAL databases to this products do not make them really sustainable options in the long run.
+In real life, and those not "lucky" enough to have access to such a tool, everyone has gone the _Access/Excel_ route. Either by periodically being downloaded data or direct ODBC linking into this tools, users develop the reporting/analisys tools they need. I've seen quite a few more than interesting. Stability,  maintainability, and the chance of distributing it, is another story. My own experience with ODBC linking performance is less than good. And as a former DBA, piggybacking an uncontrollable tool (as the ODBC interface is) on a corporate database is a security and performance nightmare
 
-At the other end of the spectrum, very expensive (in more senses than cost) OLAP products tend to serve the same end, but are usually an overkill; and for various reasons distribution in an organization is restricted, lowering its impact
+Try to find an alternative to Access as frontend to external databases, or enter Linux desktop ... You're left out in the cold. Very, very cold. Being honest, _OpenOffice_ and derivatives, have a huge "black hole" regarding database interaction. Neither its _Base_ component, nor its interface to outside databases are even minimally comparable to Microsoft's. [KDE's Kexi](http://www.kexi-project.org/) might have interesting features, but does not address Access' functionality as an interface to external databases ... and so on.
+
+I have no need either for a standalone database or a query tool. You'll find a lot of alternatives out there (even though we provide a very simple query tool as part of the package). But there is a tool __I do need__ 
+
+Probably the most common problem an SQL database users is to solve the need to __resolve an aggregate (sum, aver,...) by two or more parameters and show them in array (spreadsheet) form__.
+
+An example will explain it. Supose a database with electoral results, and what whe need is a query of the type  _Give me the sum of votes per party and and per electoral district_ .In  _SQL_ this is a very simple query, like
+
+```
+    select partido_id,provincia,sum(votes_presential)
+    from votos_locales
+    group by partido_id,provincia
+```
+and gives results in the form
+
+```
+"993"	"12"	"2134"
+"993"	"46"	"7101"
+"993"	"47"	"1570"
+"1033"	"23"	"1188"
+"1070"	"24"	"1027"
+"1079"	"01"	"10468"
+"1079"	"02"	"33676"
+"1079"	"03"	"154037"
+"1079"	"04"	"44320"
+"1079"	"05"	"15892"
+"1079"	"06"	"45252"
+"1079"	"07"	"71446"
+....
+```
+While all the info is there, it's clear that an analyst is better server if data could be shown in an array format (parties as rows, electoral districts as columns) and with some additional info, more or less like 
+
+```
+
+                               C's       EH Bildu        EAJ-PNV             PP           PSOE        PODEMOS           GBAI        CCa-PNC        IU-UPeC   ...
+Grand Total               3,500,541        218,467        301,585      7,215,752      5,530,779      3,182,082         30,554         81,750        923,133  
+Araba/Álava                  10,468         21,179         28,297         33,609         25,293         48,265                                        6,794                                                                                                         
+Albacete                     33,676                                       85,152         65,074         32,155                                        9,277                                                                                                         
+Alicante/Alacant            154,037                                      296,709        188,367                                                      33,293
+Almería                      44,320                                      117,407         89,022         39,482                                       10,776                                                                                                         
+Ávila                        15,892                                       46,963         20,129         11,863                                        3,878                                                                                                         
+Badajoz                      45,252                                      137,501        148,347         47,203                                       12,281                                                                                                         
+Balears, Illes               71,446                                      140,542         88,542        111,416                                       11,434
+Barcelona                   386,143                                      321,268        463,612                                                            
+Burgos                       33,373                                       81,780         44,488         36,612                                       10,099                                                                                                         
+Cáceres                      28,293                                       87,729         84,532         34,552                                        7,216                                                                                                         
+Cádiz                        94,707                                      179,054        180,667        130,215                                       38,798                                                                                                         
+Castellón/Castelló           48,220                                       98,341         66,450                                                       9,565
+...
+```
+Sadly, this is usually __NOT available in most data query programs__. Some DB products (fi. Oracle and MSSQL) offer their own private means of generate such queries, but they're not always available in general tools. MS Access _cross reference queries_ or _Pivot Tables_ available in several spreadsheet programs, DO offer this functionality, but the cost -and most ofter the unwieldness- of linking REAL databases to this products do not make them really sustainable options in the long run.
 
 ## What we provide
 
-We provide a database, OS agnostic environment for runing and managing those kind of queries and show them in tabular fashion.
+We provide a module (and its _API_) which aims to simplify the generation of such arrays /cross references, allowing to integrate it in any Python module. Thru such an interface the generation of the above sample could be reduced to the following Python core (with formatting extracted):
 
-We have created an environment where you can run an -almost- arbitrary aggregate query and show it in tabular fashion.
+```
+from dana-cube.util.jsonmgr import load_cubo
+from dana-cube.core import *
 
-Each instance of the application runs against what we call a Cube. This is the view of a data table (or table-like DB object -a view, a select statement, ...) and the definition of the potential indexes over which to search. This indexes can be scalar fields or hierarchical structures. If the index is a date field; we automatically provide (for SQLITE, MySQL, PostGreSQL and Oracle, atm) for several subindexes (years, years-month, ...)
+mis_cubos = load_cubo()
+cubo = Cubo(mis_cubos["datos light"])
+vista = Vista(cubo,'provincia','partidos importantes','sum','votes_presential',totalizado=True)
+resultado = vista.toArray(header=True,asList=True)
+for linea in resultado:
+    print(linea)
+```
+As you can see from the sample, we __do not refer directly to the underlying database, but to an abstraction__. Each instance runs against what we call a __Cube__. This is the view of a data table (or table-like DB object -a view, a select statement, ...) and the definition of the potential fields to query and the criteria over which to search. This criteria can be scalar fields or hierarchical structures. If the search item is a date field; we automatically provide (for SQLITE, MySQL, PostGreSQL and Oracle, atm) for several subindexes (years, years-month, ...). And every different aggregation is what we call a __Vista__. We provide this abstraction as an Json text file (_vide infra_)
 
-This is __not designed as an end user tool__ , rather it is designed to be used for knowledgable users (DBAs, developers, data owners) or as a ready made __API__ cum sample tool to be integrated in other's people work (as it still is in heavy development, _Caveat emptor_ ).
+As you will notice, this is _not designed as an end user tool_ , rather it is designed to be used for knowledgable users (DBAs, developers, data owners) or as a ready made __API__ cum sample tool to be integrated in other's people work (as it still is in heavy development, _Caveat emptor_ ).
 
-We provide a number of main programs:
-* __danacube.py__  Is our main tool where we execute our aggregate accesses to the database (to the cube), and provide means to show graphics or to export the results into several data formats
+But we do provide and __end user tool__, which can be used standalone: It is called  __danacube.py__  Is our main tool where we execute our aggregate accesses to the database (to the cube), and provide means to show graphics or to export the results into several data formats
 
 ![Screenshot](docs/image/danacube_ss.png "Title")
 
-* __cubebrowse.py__ Is a tool designed to manipulate the cube definitions. They are a plain Json file (see below) and can be edited by hand if necessary
+An end user can not define their own cubes, nor use search criteria outside what's defined in the configuration file. ¿Why? It's the way carefull DBAs can limit what is available for search in a production database, beyond the database own security.
 
-![Screenshot](docs/image/cubebrowse_ss.png "Title")
 
-* __danabrowse.py__ We can browse the contents of the database servers in our environment, and if necessary, generate direct cube definitions from the catalog of the database 
+## Where to run the tool
 
-![Screenshot](docs/image/danabrowse_ss.png "Title")
+The tool is programmed in _python3_ + _PyQt5_ but it might be possible to be run under _Python2_ (we try to be as much compatible as possible, but haven't tested it in a while). And we have made avaliable the core functionality _without_ the need of using Qt
 
-* __danaquery.py__ A very simple tool to execute arbitrary sql code against database servers in our environment
+The infrastructure is database agnostic. We use [SqlAlchemy](http://www.sqlalchemy.org/) as data backend, so in theory every database which can be accessed thru it should be available, although a few specific changes might be needed 
 
-![Screenshot](docs/image/danaquery_ss.png "Title")
+## The definitions file
 
- The definition of the Cube is a simple text (Json) file like this
+The definition of the Cube is a simple text (Json) file like this
 
 ```
     "datos light": {
@@ -81,16 +138,29 @@ We provide a number of main programs:
 
 Why a text file for definition? To avoid a dependency to a concrete DB Manager or of their DBA's . Second, text files are easier to distribute and for "emergency' changes. 
 
-We provide a tool to manage these definitions, and another to generate directly from the database a basic outline
-(screenshots should follow)
+You can find the documentation at (this place)[docs/tree_docs.md]
+We provide, also, some administrative tools to work with the cube definitions:
 
-The tool is programmed in python3 + PyQt5 but it might be possible to be run under Python2 (we try to be as much compatible as possible, but haven't tested it in a while)
+* __cubebrowse.py__ Is a tool designed to manipulate the cube definitions. They are a plain Json file (see below) and can be edited by hand if necessary
+
+![Screenshot](docs/image/cubebrowse_ss.png "Title")
+
+* __danabrowse.py__ We can browse the contents of the database servers in our environment, and if necessary, generate direct cube definitions from the catalog of the database 
+
+![Screenshot](docs/image/danabrowse_ss.png "Title")
+
+* __danaquery.py__ A very simple tool to execute arbitrary sql code against database servers in our environment
+
+![Screenshot](docs/image/danaquery_ss.png "Title")
+
 
 ## Sample Data
 We will provide a test database (with results of the Spanish General Election in 2015) for several supported databases, with minimal changes between them.
 You will find both a _sample_data.zip_ and a _sample_data.tar.gz_ file in the root directory of the project, there you'll find both a cube definition file and a DB dump for the samples
 
 As a matter of fact, the tool grew analizing those data
+
+
 
 ## Dependencies
 

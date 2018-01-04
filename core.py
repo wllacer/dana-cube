@@ -9,6 +9,8 @@ from __future__ import unicode_literals
 '''
 Documentation, License etc.
 
+TODO
+    to array y funciones para extraer las cabeceras
 '''
 
 DEBUG = True
@@ -809,7 +811,7 @@ class Vista:
             row.setColumn(col,record[2])
             colItem = row.getColumn(col)
             colItem.setBackup()
-            
+      
     def toNewTree2D(self):
         def setContext(row,col):
             coldict = {}
@@ -1120,6 +1122,8 @@ def createVista(cubo,x,y):
     vista = Vista(cubo,x,y,'sum',cubo.lista_campos[0],totalizado=True)
     vista.toNewTree2D()
     print(vista.row_hdr_idx.numRecords(),'X',vista.col_hdr_idx.numRecords())
+    
+    
 def experimental():
     from cubemgmt.cubetree import recTreeLoader,dict2tree,navigateTree,CubeItem,traverseTree
     from util.jsonmgr import load_cubo
@@ -1131,7 +1135,7 @@ def experimental():
             print (ind,key,elem.ord,elem.desc,elem.parentItem.key)
             ind += 1
     vista = None
-    micubo = 'rental'
+    #micubo = 'rental'
     #micubo = 'datos catalonia'
     micubo = 'datos light'
     #guia = 'ideologia'
@@ -1152,12 +1156,12 @@ def experimental():
 
     cuboId = micubo
     cubo = Cubo(mis_cubos[cuboId])
-    cubo.nombre = cuboId
-    iters = len(cubo.lista_guias)
-    for i in range(iters):
-        for j in range(iters):
-            print(cuboId,'::',cubo.lista_guias[i]['name'],cubo.lista_guias[j]['name'])
-            createVista(cubo,i,j)
+    #cubo.nombre = cuboId
+    #iters = len(cubo.lista_guias)
+    #for i in range(iters):
+        #for j in range(iters):
+            #print(cuboId,'::',cubo.lista_guias[i]['name'],cubo.lista_guias[j]['name'])
+            #createVista(cubo,i,j)
             
     #cubo = Cubo(mis_cubos[micubo],qtModel=True)
     #cubo.nombre = micubo
@@ -1169,12 +1173,28 @@ def experimental():
     #for item in guiax.traverse():
         #print('\t'*item.depth(),item.data(Qt.UserRole +1))
     
-    #vista = Vista(cubo,5,1,'sum',cubo.lista_campos[0],totalizado=True)
-    #vista.toNewTree2D()
+    vista = Vista(cubo,'provincia','partidos importantes','sum','votes_presential',totalizado=True)
+    vista.toNewTree2D()
+    hdr = ' '*20 
+    for item in vista.col_hdr_idx.traverse():
+        hdr += '{:>14s} '.format(item.data(Qt.DisplayRole))
+    print(hdr)
+    for item in vista.row_hdr_idx.traverse():
+#        if item is not None:
+        rsults = item.getPayload()
+        datos = ''
+        for dato in rsults:
+            if dato is not None:
+                datos += '      {:9,d}'.format(dato)
+            else:
+                datos +=' '*15
+        print('{:20s}{}'.format(item.data(Qt.DisplayRole),datos))
+        #print('\t'*item.depth(),item.data(Qt.UserRole +1),item.gpi(2))
+
     #for item in vista.row_hdr_idx.traverse():
 ##        if item is not None:
-        #print('\t'*item.depth(),item.data(Qt.UserRole +1),item.lenPayload(),item.getPayload())
-        #print('\t'*item.depth(),item.data(Qt.UserRole +1),item.gpi(2))
+        #print('\t'*item.depth(),item.data(Qt.DisplayRole),item.lenPayload(),item.getPayload())
+        ##print('\t'*item.depth(),item.data(Qt.UserRole +1),item.gpi(2))
     #pprint(vista.row_hdr_idx.content)
     #print(vista.row_hdr_idx['CA08:16'])
     #vista.row_hdr_idx.setHeader()
