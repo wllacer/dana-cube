@@ -77,7 +77,7 @@ resultado = vista.toArray(header=True,asList=True)
 for linea in resultado:
     print(linea)
 ```
-As you can see from the sample, we __do not refer directly to the underlying database, but to an abstraction__. Each instance runs against what we call a __Cube__. This is the view of a data table (or table-like DB object -a view, a select statement, ...) and the definition of the potential fields to query and the criteria over which to search. This criteria can be scalar fields or hierarchical structures. If the search item is a date field; we automatically provide (for SQLITE, MySQL, PostGreSQL and Oracle, atm) for several subindexes (years, years-month, ...). And every different aggregation is what we call a __Vista__. We provide this abstraction as an Json text file (_vide infra_)
+As you can see from the sample, we __do not refer directly to the underlying database, but to an abstraction__. Each instance runs against what we call a __Cube__. This is the view of a data table (or table-like DB object -a view, a select statement, ...) and the definition of the potential fields to query and the criteria over which to search (which we call __guides__ ). This criteria can be scalar fields or hierarchical structures. If the guide is a date field; we automatically provide (for SQLITE, MySQL, PostGreSQL and Oracle, atm) for several subindexes (years, years-month, ...). And every different aggregation is what we call a __Vista__. We provide this abstraction as an Json text file (_vide infra_)
 
 As you will notice, this is _not designed as an end user tool_ , rather it is designed to be used for knowledgable users (DBAs, developers, data owners) or as a ready made __API__ cum sample tool to be integrated in other's people work (as it still is in heavy development, _Caveat emptor_ ).
 
@@ -85,7 +85,9 @@ But we do provide and __end user tool__, which can be used standalone: It is cal
 
 ![Screenshot](docs/image/danacube_ss.png "Title")
 
-An end user can not define their own cubes, nor use search criteria outside what's defined in the configuration file. ¿Why? It's the way carefull DBAs can limit what is available for search in a production database, beyond the database own security.
+An end user can not define their own cubes, nor use guides outside what's defined in the configuration file. ¿Why? One reason is that it allows showing the end user an view to the data which doesn't need to ajust exactly to the internal database structure. On the other hadn, it's a way carefull DBAs can limit what is available for search in a production database, beyond the database own security.
+
+The tool is open to user extensions, so special test can be run over the data. See [docs here](docs/user_functions.md)-still only spanish- for the user functon module
 
 
 ## Where to run the tool
@@ -138,7 +140,7 @@ The definition of the Cube is a simple text (Json) file like this
 
 Why a text file for definition? To avoid a dependency to a concrete DB Manager or of their DBA's . Second, text files are easier to distribute and for "emergency' changes. 
 
-You can find the documentation at [this place](docs/tree_docs.md)
+You can find the documentation at [this place (spanish only)](docs/tree_docs.md)
 We provide, also, some administrative tools to work with the cube definitions:
 
 * __cubebrowse.py__ Is a tool designed to manipulate the cube definitions. They are a plain Json file (see below) and can be edited by hand if necessary
@@ -193,17 +195,16 @@ Qt, PyQt -and the additional libraries-, licensing might impose other restrictio
 
 ## DANACUBE enters __ALPHA__
 
-__Update 2017/12/27__  We have a new core based on qt standard models. It simplifies a lot programming and has solved a number of perfomance isses with long guides
-
 What does it means?
 
 * We deem that we have achieved a functional 'completeness' of the cube tool (_danacube.pyw_) , so it should be useful for valiant user; but that it still lacks proper outside testing (so, for sure, many bugs ahead) and  documentation (hope to solve it soon)
 
 * What we know it's missing:
     * Unknown bugs all around (i know i'm not perfect). And a few known ;-)
+    * Public API for the core functionality is still open (need input for use cases)
     * The user interface is implemented just for my needs and lacks internationalization (worse still, it's now a mix of english and spanish)
-    * It's reasonably well tested with __Sqlite__, __MySQL__, __PostgreSQL__, and  __ORACLE__ ; but i haven't had the chance to adapt/test it against __DB2__ or __MSSQL Server__ ¿Any volunteer?
-    * As of the last release Oracle support is still missing heavy testing..
+    * It's reasonably well tested with __Sqlite__, __MySQL__, __PostgreSQL__,; but i haven't had the chance to adapt/test it against __DB2__ or __MSSQL Server__ ¿Any volunteer?
+    * As of the last release __Oracle__ 's support, while it works, is still missing thorough testing..
     * Nor performance, neither security have been, till now, top priority goals. _You've been warned_
     * Legalese is missing in code (copyrights, licence specs, and so on)
 
@@ -212,6 +213,8 @@ I've changed my code management policy. and plan to upstream the changes to _Git
 I've been able to install __Oracle__ in my computer, and it seems that some changes are needed (specially in the administrative tools). Expect soon working code.
 My computer is too weak to run MsSQL :-(
 
+
+__Update 2017/12/27__  We have a new core based on qt standard models. It simplifies a lot programming and has solved a number of perfomance isses with long guides, BUT we keep a pure non-qt core subsystem for those interested
 
 
 
