@@ -835,8 +835,8 @@ class Vista:
             rowid.setColumn(rowcol,record[2])
             colid = record[1]
             colid.setColumn(colcol,record[2])
-            #colItem = row.getColumn(col)
-            #colItem.setBackup()
+            colitem = rowid.getColumn(rowcol)
+            colitem.setBackup()
         if self.stats:
             self.row_hdr_idx.setStats(True)
             self.col_hdr_idx.setStats(True)

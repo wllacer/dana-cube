@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 """
 Nueva versiion. TodoList para volcar
-         FIXME
-            restore valores originales DOES NO WORK
+         FIXED
+            restore valores originales 
          TESTED Cubo
             Abrir Cubo 
             Convertir vista actual a defecto

@@ -6,7 +6,7 @@ Dana-cube is a tool to automate the design, execution and visualization of __cro
 
 I spent most of the last twenty years of my professional life mainly as a DBA and/or system manager  on "big databases" Now and then, i was sent as _"maiden for everything"_ to smaller customers and projects. And i ran also my private projects. Everywhere, be it great corporations or goverment offices, be it small shops or individual users with a database. there was the problem __how to extract information from the mass of data in a database beyond what's preprogrammed in the applications__.
 
-I've seen a lot of propossed solutions (be it named _User reporting tools_, _DataWarehouse_ or _Bussiness Inteligence_ ) but the fact is that, whatever the technology, they tend to end as overblown, complex, "professional support and security" needed tools, and as resource hungry, closed and  rigid as the applications it should complement. And let's not talk about the licence costs when not open source. There are, though, a number of other tools for _OLAP_ or _data minig_ less demanding, but usually there tend to be complex , giving innecesary pain to the most basic steps
+I've seen a lot of propossed solutions (be it named _User reporting tools_, _DataWarehouse_ , _OLAP_ or _Bussiness Inteligence_ ) but the fact is that, whatever the technology, they tend to end as overblown, complex, "professional support and security" needed tools, and as resource hungry, closed and  rigid as the applications it should complement. And let's not talk about the licence costs when not open source. There are, though, a number of other tools for _OLAP_ or _data minig_ less demanding, but usually there tend to be complex , giving innecesary pain to the most basic steps
 
 In real life, and those not "lucky" enough to have access to such a tool, everyone has gone the _Access/Excel_ route. Either by periodically being downloaded data or direct ODBC linking into this tools, users develop the reporting/analisys tools they need. I've seen quite a few more than interesting. Stability,  maintainability, and the chance of distributing it, is another story. My own experience with ODBC linking performance is less than good. And as a former DBA, piggybacking an uncontrollable tool (as the ODBC interface is) on a corporate database is a security and performance nightmare
 
@@ -77,7 +77,7 @@ resultado = vista.toArray(header=True,asList=True)
 for linea in resultado:
     print(linea)
 ```
-As you can see from the sample, we __do not refer directly to the underlying database, but to an abstraction__. Each instance runs against what we call a __Cube__. This is the view of a data table (or table-like DB object -a view, a select statement, ...) and the definition of the potential fields to query and the criteria over which to search (which we call __guides__ ). This criteria can be scalar fields or hierarchical structures. If the guide is a date field; we automatically provide (for SQLITE, MySQL, PostGreSQL and Oracle, atm) for several subindexes (years, years-month, ...). And every different aggregation is what we call a __Vista__. We provide this abstraction as an Json text file (_vide infra_)
+As you can see from the sample, we __do not refer directly to the underlying database, but to an abstraction__. Each instance runs against what we call a __Cube__. This is the view of a data table (or table-like DB object -a view, a select statement, ...) and the definition of the potential fields to query and the criteria over which to search (which we call __guides__ ). This criteria can be scalar fields or hierarchical structures. If the guide is a date field; we automatically provide (for SQLITE, MySQL, PostGreSQL and Oracle, atm) for several subindexes (years, years-month, ...). And every different aggregation is what we call a __Vista__. We provide this abstraction as an Json text file ( _vide infra_ )
 
 As you will notice, this is _not designed as an end user tool_ , rather it is designed to be used for knowledgable users (DBAs, developers, data owners) or as a ready made __API__ cum sample tool to be integrated in other's people work (as it still is in heavy development, _Caveat emptor_ ).
 
@@ -203,15 +203,11 @@ What does it means?
     * Unknown bugs all around (i know i'm not perfect). And a few known ;-)
     * Public API for the core functionality is still open (need input for use cases)
     * The user interface is implemented just for my needs and lacks internationalization (worse still, it's now a mix of english and spanish)
-    * It's reasonably well tested with __Sqlite__, __MySQL__, __PostgreSQL__,; but i haven't had the chance to adapt/test it against __DB2__ or __MSSQL Server__ ¿Any volunteer?
+    * It's reasonably well tested with __Sqlite__, __MySQL__, __PostgreSQL__,; 
     * As of the last release __Oracle__ 's support, while it works, is still missing thorough testing..
+    * I haven't had the chance to adapt/test it against __DB2__ or __MSSQL Server__ ¿Any volunteer?
     * Nor performance, neither security have been, till now, top priority goals. _You've been warned_
     * Legalese is missing in code (copyrights, licence specs, and so on)
-
-I've changed my code management policy. and plan to upstream the changes to _Github_ ASAP, but only _sparse updates to the release code_, so if something crashes, pls. look at the commits at __master__ still not in the released code.
-
-I've been able to install __Oracle__ in my computer, and it seems that some changes are needed (specially in the administrative tools). Expect soon working code.
-My computer is too weak to run MsSQL :-(
 
 
 __Update 2017/12/27__  We have a new core based on qt standard models. It simplifies a lot programming and has solved a number of perfomance isses with long guides, BUT we keep a pure non-qt core subsystem for those interested
