@@ -20,4 +20,4 @@ Categoria:
         -> comparador
         -> lista valores
         -> resultado
-    Valor defecto
+    Valor defectojjj

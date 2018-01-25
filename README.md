@@ -156,6 +156,12 @@ We provide, also, some administrative tools to work with the cube definitions:
 ![Screenshot](docs/image/danaquery_ss.png "Title")
 
 
+## Documentation
+
+* The API for the core functionality us [here](docs/core_api.md)
+* The full definition specs can be found at [this place (spanish only)](docs/tree_docs.md)
+* The user functions specs can be found [this place (spanish only)](docs/user_functions.md)
+
 ## Sample Data
 We will provide a test database (with results of the Spanish General Election in 2015) for several supported databases, with minimal changes between them.
 You will find both a _sample_data.zip_ and a _sample_data.tar.gz_ file in the root directory of the project, there you'll find both a cube definition file and a DB dump for the samples
@@ -226,6 +232,9 @@ Testers are welcome.
 
 ## Out there ...
 
-If you feel my package isn't cooked enough for you (nor for me either :-( ) have a look at the [Cubes project](https://github.com/DataBrewery/cubes) It might be of interest for you
+If you feel my package isn't enough for you  have a look at the following projects of similar technology.They might be of interest for you
+
+* [Cubes project](https://github.com/DataBrewery/cubes)
+* [Pandas project](https://pandas.pydata.org/)
 
 A.M.D.G. & B.V.M.
