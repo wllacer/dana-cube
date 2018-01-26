@@ -154,7 +154,7 @@ class Cubo:
             lista_campos = self.lista_campos [ : ]
         return lista_campos
 
-    def setDateFilter(self):
+    def _setDateFilter(self):
         '''
         convierte la clausula date filter en codigo que puede utilizarse como una clausula where 
         Retorna una tupla de condiciones campo BETWEEN x e y, con un indicador de formato apropiado (fecha/fechahora(
@@ -233,7 +233,7 @@ class Cubo:
             if len(self.definition.get('base filter','')) > 0:
                 basefilter = self.definition['base filter']
             if 'date filter' in self.definition:
-                datefilter = self.setDateFilter()
+                datefilter = self._setDateFilter()
         return table_name,basefilter,datefilter
             
    
@@ -694,7 +694,7 @@ class Vista:
             
 
     def  __setDateFilter(self):
-        return self.cubo.setDateFilter()
+        return self.cubo._setDateFilter()
         
     def  __setDataMatrix(self):
          #TODO clarificar el codigo
@@ -982,7 +982,7 @@ class Vista:
 
 
     
-    def getExportData(self,parms,selArea=None):
+    def __getExportData(self,parms,selArea=None):
         """
             *parms['file']
             *parms['type'] = ('csv','xls','json','html')
@@ -997,16 +997,20 @@ class Vista:
             
 
         """
-        scope = parms['filter']['scope']
-        contentFilterR = parms['filter']['row']['content']
-        contentFilterC = parms['filter']['col']['content']
-        totalR = parms['filter']['row']['totals'] 
-        totalC = parms['filter']['col']['totals'] 
-        row_sparse = parms['filter']['row']['Sparse']
-        col_sparse = parms['filter']['col']['Sparse']
-        translated = parms['NumFormat']
-        numFmt = parms['NumFormat']
-        decChar = parms['csvProp']['decChar']
+        pfilter = parms.get('filter',{})
+        scope = pfilter.get('scope','all')
+        pfilterRow = pfilter.get('row',{})
+        pfilterCol = pfilter.get('col',{})
+        contentFilterR = pfilterRow.get('content','full')
+        contentFilterC = pfilterCol.get('content','full')
+        totalR = pfilterRow.get('totals',True) 
+        totalC = pfilterCol.get('totals',True) 
+        row_sparse = pfilterRow.get('Sparse',True)
+        col_sparse = pfilterCol.get('Sparse',True)
+        
+        #translated = parms.get('NumFormat',False)
+        numFmt = parms.get('NumFormat',False)
+        decChar = parms.get('csvProp',{}).get('decChar','.')
  
         # filterCumHeader(self,total=True,branch=True,leaf=True,separador='\n',sparse=True):
         if contentFilterR == 'full':
@@ -1053,19 +1057,23 @@ class Vista:
             for k,valor in enumerate(entrada[1]): #cabeceras
                 ctable[ind][k]=valor
             payload = entrada[0].getPayload()
-            ctable[ind][dim_row:] = [  num2text(payload[k]) for k in columnIDs if k < len(payload)]
+            ctable[ind][dim_row:] = [  num2text(payload[k],numFmt=numFmt,decChar=decChar) for k in columnIDs if k < len(payload)]
                 
             ind +=1
         return ctable,dim_row,dim_col
     
     def export(self,parms,selArea=None):
+        if 'file' not in parms:
+            print('Nombre de fichero no disponible')
+            return -1
         file = parms['file']
-        type = parms['type']
+        type = parms.get('type','csv')
         if type == 'xls' and not XLSOUTPUT:
             type = 'csv'
             print('Xls writer no disponible, pasamos a csv')
-        fldSep  = parms['csvProp']['fldSep']
-        txtSep = parms['csvProp']['txtSep'] 
+        csvProp = parms.get('csvProp',{})
+        fldSep  = csvProp.get('fldSep',',')
+        txtSep = csvProp.get('txtSep',"'") 
 
         def csvFormatString(cadena):
             if fldSep in cadena:
@@ -1075,7 +1083,7 @@ class Vista:
             else:
                 return cadena
             
-        ctable,dim_row,dim_col = self.getExportData(parms,selArea=None)
+        ctable,dim_row,dim_col = self.__getExportData(parms,selArea=None)
             
         if type == 'csv':
             with open(parms['file'],'w') as f:
@@ -1114,7 +1122,7 @@ class Vista:
                 for j,item in enumerate(entrada):
                     worksheet.write(i, j,item.strip())
             workbook.close()
-    #return lineas
+        return 0
 
 from util.decorators import stopwatch
 @stopwatch
@@ -1123,6 +1131,17 @@ def createVista(cubo,x,y):
     vista.toNewTree2D()
     print(vista.row_hdr_idx.numRecords(),'X',vista.col_hdr_idx.numRecords())
     
+
+def export():
+    from util.jsonmgr import load_cubo
+    mis_cubos = load_cubo()
+    cubo = Cubo(mis_cubos["datos light"])
+
+    vista = Vista(cubo,'provincia','partidos importantes','sum','votes_presential',totalizado=True)
+    vista.toNewTree()
+    export_parms = {}
+    export_parms['file'] = 'ejemplo.dat'
+    vista.export(export_parms)
     
 def experimental():
     from cubemgmt.cubetree import recTreeLoader,dict2tree,navigateTree,CubeItem,traverseTree
@@ -1317,5 +1336,5 @@ if __name__ == '__main__':
         reload(sys)
         sys.setdefaultencoding('utf-8')
 
-    experimental()
+    export()
         

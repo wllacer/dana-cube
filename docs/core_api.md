@@ -28,24 +28,49 @@ From an array of texts (_desc_) returns a string with each value delimited (_sep
 ## Attributes
 
 ### definition
+Holds the active definition dictionary
 
 ### nombre
+A name for the cube
 
-### db = dbConn
+### db
+
+Holds the sqlAlchemy.connection active for this cube
 
 ### lista_guias
+An array whith the current definition of the guides. Each element is a dictionary with
+
+*  __name__   name of the guide as it appears in the user interface
+*  __class__    '' normal or 'd' date (Ooptional)
+*  __contexto__ 
+    Information is internal and not expected to be queried by the user. The __context__ is a dictionary with following entries
+    
+    * 'table':table,   -> guide's domain table
+    * 'code':code,      -> tuple of fields which contain the related values in the cube's table, when the view is created
+    * 'desc':desc,      -> tuple of field at the domain's table whic contain the descriptive values. If empty code subtitutes for
+    * 'groupby':groupby,_> fields needed to link a hierarchy of guides, included in code
+    * 'columns':columns, _> full list of the fields needed on the select statement needed to create the guide
+    * 'elems':elems,    ->  list of field to be included in the __group by__ statemet when the view is created
+    * 'linkvia':linkvia   _> In case the guide is created via __join__ statements, the definition thereof
+* __dir_row__ the generated model tree (__GuideItemModel__)
+
+_contexto_ y _dir\_row_ are created only when __self.fillGuia__ is executed
+
 
 ### lista_funciones 
-
-### lista_funciones 
+An array with the available Sql functions for the current database manager
 
 ### lista_campos
-        
-### dbdriver = self.db.dialect.name
+the list of fields available for evaluation in this cube
+ 
+### dbdriver 
+The name of the current type of database manager (it holds self.db.dialect.name)
 
 ### newModel __UNUSED__
 
-### recordStructure  __DERIVED__
+### recordStructure  
+holds the sql structure (list of columns --their fully qualified name and their formats)  of the base table on which the cube is defined.
+For the time being is loaded thru __DanaCubeWindow.getCubeRecordInfo__
 
 ## Methods
 ###  \_\_init\_\_(self, definicion,nombre=None,dbConn=None):
@@ -75,12 +100,6 @@ Return the list of fields available for evaluation in this cube. First time invo
     * a tuple of strings
     
 
-###  setDateFilter(self):
-__INTERNAL__
-
-convierte la clausula date filter en codigo que puede utilizarse como una clausula where 
-Retorna una tupla de condiciones campo BETWEEN x e y, con un indicador de formato apropiado (fecha/fechahora(
-
 ###  fillGuias(self):
 __DEBUG ONLY__
 
@@ -102,14 +121,7 @@ Should be explictily called only for debugging purposes. Each subsequent executi
     * __contexto__ A dictionary with information needed n subsequent use of the guide
 
     
-    Information is internal and not expected to be queried by the user. The __context__ is a dictionary with following entries
-    * 'table':table,   -> guide's domain table
-    * 'code':code,      -> tuple of fields which contain the related values in the cube's table, when the view is created
-    * 'desc':desc,      -> tuple of field at the domain's table whic contain the descriptive values. If empty code subtitutes for
-    * 'groupby':groupby,_> fields needed to link a hierarchy of guides, included in code
-    * 'columns':columns, _> full list of the fields needed on the select statement needed to create the guide
-    * 'elems':elems,    ->  list of field to be included in the __group by__ statemet when the view is created
-    * 'linkvia':linkvia   _> In case the guide is created via __join__ statements, the definition thereof
+
 
 ## Programming notes
 
@@ -149,67 +161,210 @@ for item in guiax.traverse():
 ## Attributes
 
 ### cubo
+The reference to the __Cubo__ for which this view is definde
 
 ### agregado
+Name of the sql agregate function we are using in this view
 
 ### campo
+Name of the field which is aggregated in the view
 
 ### filtro
+An sql fragment compatible with a __select__ statement, used to filter the resulting data BEFORE aggregation
 
 ### totalizado
+Boolean. Determines if the view has a grand total row
 
 ### stats
+Boolean. Determines if we hold basic statistic data for each row. (see __GuideItemModel.setStats__ for details)
 
 ### row_id
+Integer. The index in self.cubo.lista_guias of the row guide
 
 ### col_id
+Integer. The index in self.cubo.lista_guias of the column guide
 
 ### row_hdr_idx
+GuideItemModel. the tree for the row guide
 
 ### col_hdr_idx
+GuideItemModel. the tree for the column guide
 
 ### dim_row
+Integer. Number of nested levels of aggregation for the row 
 
 ### dim_col
+Integer. Number of nested levels of aggregation for the column
 
 ### array
-
+Holds the raw results of the view. It is an array of tuples (rowItem. colItem, numeric value)
 
 ## Methods
 
-###  __init__(self, cubo,prow, pcol,  agregado, campo, filtro='',totalizado=True, stats=True):
+###  \_\_init\_\_(self, cubo,prow, pcol,  agregado, campo, filtro='',totalizado=True, stats=True):
+
+Instances the view. It implies access to the database and generation of the __self.array__
+
+* Input parameters
+    * __cubo__ Reference of the Cubo we'll be using
+    * __prow__ Name or Index of the guide will be used as row
+    * __pcol__ Name or Index of the guide will be used as column
+    * __agregado__ Name of the sql aggregate function to use
+    * __campo__ Name of the column which well be aggregated
+    * __filtro__ sql fragment to filter the query before aggregation
+    * __totalizado__ boolean. If a Grand Total row will be generated
+    * __stats__ boolean. Rows will have basic statistic
 
 ###  setNewView(self,prow, pcol, agregado=None, campo=None, filtro='',totalizado=True, stats=True, force=False):
 
-###   __setDateFilter(self):
+Allows to change any parameter of the current view and reevaluate it. Only the row and column are mandatory, parameters not included will use the value of the last run
 
-###   __setDataMatrix(self):
+* Input parameters
+    * __cubo__ Reference of the Cubo we'll be using
+    * __prow__ Name or Index of the guide will be used as row
+    * __pcol__ Name or Index of the guide will be used as column
+    * __agregado__ Name of the sql aggregate function to use
+    * __campo__ Name of the column which well be aggregated
+    * __filtro__ sql fragment to filter the query before aggregation
+    * __totalizado__ boolean. If a Grand Total row will be generated
+    * __stats__ boolean. Rows will have basic statistic
+    * __force__ boolean. If there is no change relative to the previous execution (or view instatiation) the view is not reevaluated, unless this parameter is set 
 
 ###  toNewTree(self):
 
+From the __self.array__ loads each element of the row model (self.row_hdr_idx) with a vector with the value for each element in the column model
+
 ###  toNewTree2D(self):
-    ###  setContext(row,col):
+
+From the __self.array__ 
+* loads each element of the row model (self.row_hdr_idx) with a vector with the value for each element in the column model.
+* loads each element of the column model (self.col_hdr_idx) with a vector with the value for each element in the row model.
 
 ###  recalcGrandTotal(self):
-    ###  cargaAcumuladores():
-    ###  procesa():
+
+If any manipulation has been made ONLY to the leaf elements of the row model, this method reconstruct the corresponding values to the branch and total elements
 
 ###  traspose(self):
 
+If the models are filled using the __toNewTree2D__ method, this method allows to traspose the view (change row for column)
+
 ###  fmtHeader(self,dimension, separador='\n', sparse=False): #, rango= None,  max_level=None)
+__DOES NOT WORK__
 
-###  __exportHeaders(self,tipo,header_tree,dim,sparse,content):
+__NOTE__ 
+used in models.TreeModel which in turn is used in dictMgmt.dictTree.
+Needs an undefined GuideItemTree.getHeader
 
-###  getExportData(self,parms,selArea=None):
+###  export(self,parms,selArea=None):
 
-###  export(self,parms,selArea=None):, s
-    ###  csvFormatString(cadena):
+This method allows for the export of the view data as files in several formats.
+Prior to the export __self.toNewTree__ or __self.toNewTree2D__ must have been called
+
+* Input Parameters
+    * __parms__ a dictionary with the ata needed to export the data. The parms allowed are:
+    
+        * __file__  (_mandatory_) name of the destination file
+        
+        * __type__  One of {'csv','xls','json','html'}. If _xls_ is not available, defaults to _csv_. _html_ generates ONLY  a table definition fragment, NOT a full html page. If not present defaults to _csv__
+        
+        * __csvProp__ A dictionary with specific parameters for csv conversion 
+        
+            * __fldSep__  Field separator char. Default ','
+            
+            * __decChar__ Default Decimal character. Default '.'
+            
+            * __txtSep__  Text separator char. Default "'"
+            
+        * __NumFormat__ Boolean. If numbers will be formatted with separators. Default=False
+        
+        * __filter__ A dictionary selecting What data are exported
+        
+            * __scope__ One of ('all')
+            
+            * __row__ or __col__ a dictionary with filter for rows/columns
+            
+                * __content__ =  One of ('full','branch','leaf'). _full_ is everything, _branch_ only branches of the model tree; _leaf_ only leaves of the model_tree. Default _full__
+                
+                * __totals__ Boolean. True if download includes grand total. Default True
+                
+                * __Sparse__ Boolean. True if header elements are only filled the first time they appear. Default True
+    
+    * __selArea__ An array limiting the output __UNUSED__ 
+    
+* Returns
+    Numeric 0 if correct, -1 if something went wrong
+
+
+
     
 ## Programming notes
-def createVista(cubo,x,y):
-def experimental():
-###  presenta(vista):
 
+
+We show a sample of how we coud get a view and show it in an array format with headers
+
+```
+from dana-cube.util.jsonmgr import load_cubo
+from dana-cube.core import *
+from PyQt5.QtCore import Qt
+
+mis_cubos = load_cubo()
+cubo = Cubo(mis_cubos["datos light"])
+
+vista = Vista(cubo,'provincia','partidos importantes','sum','votes_presential',totalizado=True)
+# the names of the guides ('provincia','partidos') might be sustituted for their indexes eg.
+# vista = Vista(cubo,3,1,'sum','votes_presential',totalizado=True)
+vista.toNewTree()
+
+#now we get the column headers
+hdr = ' '*20 
+for item in vista.col_hdr_idx.traverse():
+    hdr += '{:>14s} '.format(item.data(Qt.DisplayRole))
+print(hdr)
+
+#now we get the data for each row
+for item in vista.row_hdr_idx.traverse():
+    rsults = item.getPayload()
+    datos = ''
+    for dato in rsults:
+        if dato is not None:
+            datos += '      {:9,d}'.format(dato)
+        else:
+            datos +=' '*15
+    # and we print including the header for each row
+    print('{:20s}{}'.format(item.data(Qt.DisplayRole),datos))
+    
+```
+The easiest way to access the model data is via the statement
+```
+for item in vista.row_hdr_idx.traverse():
+```
+it returns the row in a hierarchy (if the guide is hierarchical) and in the default order of the generated _order by_ statement of the guide (the code values, not the description)
+
+For each row (item) there are three methods you have to check
+
+* __item.data(Qt.DisplayRole)__, which holds the description of the element
+
+* __item.data(Qt.UserRole + 1)__, which holds the internal value of the element
+
+* __item.getPayload()__, which is an array with the values por each column (None if not defined for this row, else a numeric value)
+
+And a second sample how to export to a csv file
+
+
+```
+from dana-cube.util.jsonmgr import load_cubo
+from dana-cube.core import *
+from PyQt5.QtCore import Qt
+
+mis_cubos = load_cubo()
+cubo = Cubo(mis_cubos["datos light"])
+
+vista = Vista(cubo,'provincia','partidos importantes','sum','votes_presential',totalizado=True)
+vista.toNewTree()
+export_parms = {'file':'datos.csv'}
+vista.export(export_parms)
+
+```
 # Auxiliary functions
 
 ## traverse(tree, key=None, mode=1):
