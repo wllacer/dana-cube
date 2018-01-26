@@ -840,6 +840,60 @@ class Vista:
         if self.stats:
             self.row_hdr_idx.setStats(True)
             self.col_hdr_idx.setStats(True)
+            
+    def toList(self,**parms):
+        """
+        Converts the view results in a list of texts
+        * Input parameters. All optional
+            * __colHdr__  boolean if a column header will be shown. default True
+            * __rowHdr__  boolean if a row header will be shown. default True
+            * __numFmt__ python format for the numeric values. Default = '      {:9,d}'
+            * __colFmt__    python format for the column headers. Default = ' {:>n.ns}', where n is the len of the numeric format minus 1
+            * __rowFmt__   python format for the row headers. Default = ' {:20.20s}', 
+            
+        Returns
+            a tuple of formatted lines
+        """
+        colHdr=parms.get('colHdr',True)
+        rowHdr=parms.get('rowHdr',True)
+        numFormat = parms.get('numFmt','      {:9,d}')
+        numLen = len(numFormat.format(0))
+        print(numFormat,'len is ',numLen)
+        #colFormat = '{:^'+'{}s'.format(len(numFormat.format(1000000)))+'}'
+        colFormat = parms.get('colFmt',' {{:>{0}.{0}s}}'.format(numLen -1))
+        rowFormat = parms.get('rowFmt','{:20.20s}')
+        rowLen = len(rowFormat.format(''))
+        
+        result = []
+        if self.row_hdr_idx.colTreeIndex is None:
+            self.toNewTree()    
+        #now we get the column headers
+        if colHdr:
+            if rowHdr:
+                hdr = ' '*rowLen
+            else:
+                hdr = ''
+            for item in self.col_hdr_idx.traverse():
+                hdr += colFormat.format(item.data(Qt.DisplayRole))
+            result.append(hdr)
+
+        #now we get the data for each row
+        for item in self.row_hdr_idx.traverse():
+            rsults = item.getPayload()
+            datos = ''
+            for dato in rsults:
+                if dato is not None:
+                    datos += numFormat.format(dato)
+                else:
+                    datos +=' '*numLen
+            # and we print including the header for each row
+            if rowHdr:
+                result.append(rowFormat.format(item.data(Qt.DisplayRole))+'{}'.format(datos))    
+            else:
+                result.append(datos)
+                
+        return result
+    
     def recalcGrandTotal(self):
         """
            TODO
@@ -1034,7 +1088,11 @@ class Vista:
         else: #if contentFilter == 'leaf':
             branchC = False
             leafC = True
-         
+        
+        if self.row_hdr_idx.colTreeIndex is None:
+            print('cargo el arbol ahora')
+            self.toNewTree()    
+
         rows=self.row_hdr_idx.filterCumHeader(sparse=row_sparse,branch=branchR,leaf=leafR,total=totalR)
         cols=self.col_hdr_idx.filterCumHeader(sparse=col_sparse,branch=branchC,leaf=leafC,total=totalC)
         
@@ -1132,13 +1190,25 @@ def createVista(cubo,x,y):
     print(vista.row_hdr_idx.numRecords(),'X',vista.col_hdr_idx.numRecords())
     
 
+def toArray():
+    from util.jsonmgr import load_cubo
+
+    mis_cubos = load_cubo()
+    cubo = Cubo(mis_cubos["datos light"])
+
+    vista = Vista(cubo,'provincia','partidos importantes','sum','votes_presential',totalizado=True)
+    for line in vista.toList():
+        print(line)
+    for line in vista.toList(numFmt=' {:14,.2F}'):
+        print(line)
+        
 def export():
     from util.jsonmgr import load_cubo
     mis_cubos = load_cubo()
     cubo = Cubo(mis_cubos["datos light"])
 
     vista = Vista(cubo,'provincia','partidos importantes','sum','votes_presential',totalizado=True)
-    vista.toNewTree()
+    #vista.toNewTree()
     export_parms = {}
     export_parms['file'] = 'ejemplo.dat'
     vista.export(export_parms)
@@ -1335,6 +1405,6 @@ if __name__ == '__main__':
     if sys.version_info[0] < 3:
         reload(sys)
         sys.setdefaultencoding('utf-8')
-
-    export()
+    #export()
+    toArray()
         

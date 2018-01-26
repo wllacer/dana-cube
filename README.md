@@ -73,7 +73,7 @@ from dana-cube.core import *
 mis_cubos = load_cubo()
 cubo = Cubo(mis_cubos["datos light"])
 vista = Vista(cubo,'provincia','partidos importantes','sum','votes_presential',totalizado=True)
-resultado = vista.toArray(header=True,asList=True)
+resultado = vista.toList()
 for linea in resultado:
     print(linea)
 ```

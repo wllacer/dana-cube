@@ -240,6 +240,20 @@ From the __self.array__
 * loads each element of the row model (self.row_hdr_idx) with a vector with the value for each element in the column model.
 * loads each element of the column model (self.col_hdr_idx) with a vector with the value for each element in the row model.
 
+### toList(self):
+Converts the view results in a list of texts
+
+* Input parameters. All optional
+    * __colHdr__  boolean if a column header will be shown. default True
+    * __rowHdr__  boolean if a row header will be shown. default True
+    * __numFmt__ python format for the numeric values. Default = _'      {:9,d}'_
+    * __colFmt__    python format for the column headers. Default = _' {:>n.ns}'_, where _n_ is the len of the numeric format minus 1
+    * __rowFmt__   python format for the row headers. Default = _' {:20.20s}'_, 
+    
+* Returns
+    a tuple of formatted lines
+
+
 ###  recalcGrandTotal(self):
 
 If any manipulation has been made ONLY to the leaf elements of the row model, this method reconstruct the corresponding values to the branch and total elements
@@ -300,7 +314,23 @@ Prior to the export __self.toNewTree__ or __self.toNewTree2D__ must have been ca
 ## Programming notes
 
 
-We show a sample of how we coud get a view and show it in an array format with headers
+We show a sample of how we coud get a view and show it in an array formatted with headers
+
+this particular case can be solved with the __toList__ method 
+
+```
+from dana-cube.util.jsonmgr import load_cubo
+from dana-cube.core import *
+from PyQt5.QtCore import Qt
+
+mis_cubos = load_cubo()
+cubo = Cubo(mis_cubos["datos light"])
+
+vista = Vista(cubo,'provincia','partidos importantes','sum','votes_presential',totalizado=True)
+for line in vista.toList(numFmt=' {:14,.2F}'):
+    print(line)
+```
+But if you prefer to code it in detail (with slightly different formatting)
 
 ```
 from dana-cube.util.jsonmgr import load_cubo
@@ -360,7 +390,7 @@ mis_cubos = load_cubo()
 cubo = Cubo(mis_cubos["datos light"])
 
 vista = Vista(cubo,'provincia','partidos importantes','sum','votes_presential',totalizado=True)
-vista.toNewTree()
+
 export_parms = {'file':'datos.csv'}
 vista.export(export_parms)
 
