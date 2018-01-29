@@ -313,73 +313,7 @@ class VistaDlg(propertySheetDlg):
         
         
         
-class ZoomDlg(QDialog):
-    def __init__(self, vista,  parent=None):
-        super(ZoomDlg, self).__init__(parent)
-        
-        self.vista = vista
 
-        cab_row = vista.fmtHeader('row', '\t',True) # max_col_level, row_range)
-        cab_col = vista.fmtHeader('col', '\t', True)  #max_row_level, col_range)
-        
-        InicioLabel = QLabel("Defina el rango de seleccion")
-        
-        rowFLbl = QLabel("&Row  from")
-        self.rowFCB = QComboBox()
-        self.rowFCB.addItems(cab_row)
-        rowFLbl.setBuddy(self.rowFCB)
- 
-        rowTLbl = QLabel("&Row  to")
-        self.rowTCB = QComboBox()
-        self.rowTCB.addItems(cab_row)
-        rowTLbl.setBuddy(self.rowTCB)
-
-        colFLbl = QLabel("&Col  from")
-        self.colFCB = QComboBox()
-        self.colFCB.addItems(cab_col)
-        colFLbl.setBuddy(self.colFCB)
- 
-        colTLbl = QLabel("&Col  to")
-        self.colTCB = QComboBox()
-        self.colTCB.addItems(cab_col)
-        colTLbl.setBuddy(self.colTCB)
-        
-        rowDimLbl= QLabel("Row &Dimensions")
-        self.rowDimSpinBox = QSpinBox()
-        rowDimLbl.setBuddy(self.rowDimSpinBox)
-        self.rowDimSpinBox.setRange(1, self.vista.dim_row)
-         
-        colDimLbl= QLabel("col &Dimensions")
-        self.colDimSpinBox = QSpinBox()
-        colDimLbl.setBuddy(self.colDimSpinBox)
-        self.colDimSpinBox.setRange(1, self.vista.dim_col)
-
-        
-        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel)
-
-        grid = QGridLayout()
-        grid.addWidget(InicioLabel, 0, 0)
-        grid.addWidget(rowFLbl, 1, 0)
-        grid.addWidget(self.rowFCB, 1, 1)
-        grid.addWidget(rowTLbl, 1, 2)
-        grid.addWidget(self.rowTCB, 1, 3)
-        grid.addWidget(colFLbl, 3, 0)
-        grid.addWidget(self.colFCB, 3, 1)
-        grid.addWidget(colTLbl, 3, 2)
-        grid.addWidget(self.colTCB, 3, 3)
-        
-        grid.addWidget(rowDimLbl, 5, 0)
-        grid.addWidget(self.rowDimSpinBox, 5, 1)
-        grid.addWidget(colDimLbl, 5, 2)
-        grid.addWidget(self.colDimSpinBox, 5, 3)
-
-        
-        
-        grid.addWidget(buttonBox, 7, 0, 1, 2)
-        self.setLayout(grid)
-  
-        buttonBox.accepted.connect(self.accept)
-        buttonBox.rejected.connect(self.reject)
 
 class NumberFormatDlg(QDialog):
     def __init__(self, format, callback, parent=None):

@@ -92,7 +92,7 @@ The tool is open to user extensions, so special test can be run over the data. S
 
 ## Where to run the tool
 
-The tool is programmed in _python3_ + _PyQt5_ but it might be possible to be run under _Python2_ (we try to be as much compatible as possible, but haven't tested it in a while). And we have made avaliable the core functionality _without_ the need of using Qt
+The tool is programmed in _python3_ + _PyQt5_ but it might be possible to be run under _Python2_ (we try to be as much compatible as possible, but haven't tested it in a while). And we have made avaliable the core functionality _without_ the need of using Qt. 
 
 The infrastructure is database agnostic. We use [SqlAlchemy](http://www.sqlalchemy.org/) as data backend, so in theory every database which can be accessed thru it should be available, although a few specific changes might be needed 
 
@@ -216,7 +216,7 @@ What does it means?
     * Legalese is missing in code (copyrights, licence specs, and so on)
 
 
-__Update 2017/12/27__  We have a new core based on qt standard models. It simplifies a lot programming and has solved a number of perfomance isses with long guides, BUT we keep a pure non-qt core subsystem for those interested
+__Update 2017/12/27__  We have a new core based on qt standard models. It simplifies a lot programming and has solved a number of perfomance isses with long guides, BUT we keep a pure non-qt core subsystem for those interested. This non-qt subsistem, sadly, is a WIP to assure code as much code compatibility as posible with the new core
 
 
 

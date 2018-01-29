@@ -488,8 +488,6 @@ vista.export(export_parms)
 
 ### data(self,index,role):
 
-### filterCumHeader(self,total=True,branch=True,leaf=True,separador='\n',sparse=True):
-
 ## Programming notes
 
 # class GuideItem(QStandardItem):

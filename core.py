@@ -1084,55 +1084,7 @@ class Vista:
             print('Piden formatear la cabecera >{}< no implementada'.format(dimension))
             return None
     
-    
-    def __exportHeaders(self,tipo,header_tree,dim,sparse,content):
-        if tipo.lower() == 'list':
-            tabla = list()
-        elif tipo.lower() == 'dict':
-            tabla = dict()
-        else:
-            return None
-        ind = 0
-        
-        for elem in header_tree.traverse(mode=1,output=1):
-            entrada = ['' for k in range(dim) ]
-            if content == 'branch' and elem.isLeaf() and dim > 1:
-                continue
-            if content == 'leaf' and not elem.isLeaf():
-                continue
-            
-            desc = elem.getFullDesc()
-            depth = elem.depth()
-            
-            if sparse:
-                #entrada[depth -1] = desc[-1].replace(':','-')
-                entrada[depth -1] = desc[-1].replace(':','-')
-            else:
-                for k in range(len(desc)):
-                    entrada[k] = desc[k].replace(':','-')
-            
-            #print(desc,depth,len(desc),entrada)
-            
-            if content == 'branch' and dim > 1:
-                del entrada[dim -1 ]
-            elif content == 'leaf' :
-                while len(entrada) > 1:
-                    del entrada[0]
-                    
-            entrada.append(elem)
-            
-            if tipo.lower() == 'list':
-                entrada.append(elem.ord)
-                tabla.append(entrada)
-            else:
-                entrada.append(ind)
-                tabla[elem.ord] = entrada
-            ind += 1
-            
 
-        return tabla 
-    
-    
     def __getExportData(self,parms):
         """
             *parms['file']
