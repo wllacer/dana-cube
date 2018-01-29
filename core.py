@@ -82,7 +82,58 @@ def getOrderedText(desc,sparse=True,separator=None):
     texto += desc[-1]
     return texto
         
+def exportFilter(item,dim,filter=None):
+    """
+    Auxiliary function.
+    Used as filter in export functions
     
+    * Input parameters
+        * __item__ a GuideItem. Element to be checked
+        * __dim__ a number, number of levels of the tree
+        * __filter__ a dictionary with the filter requeriments
+            * __content__ =  One of ('full','branch','leaf'). _full_ is everything, _branch_ only branches of the model tree; _leaf_ only leaves of the model_tree. Default _full__
+            * __totals__ Boolean. True if download includes grand total. Default True
+
+    * Returns
+        Boolean. True if accepted, False otherwise
+        
+    * Note:
+        The best way to call it is
+            ```
+            parms = { 'content':'full','totals':True}
+            rowHdr = vista.row_hdr_idx.asHdrFilter(lambda x,y=vista.dim_row,z=parms: exportFilter(x,y,z)))
+            ```
+    """
+    #scope = filter.get('scope','all') #no usado
+    if filter is None:
+        return True
+
+    contentFilter = filter.get('content','full')
+    total = filter.get('totals',True) 
+
+    
+    if contentFilter == 'full':
+        return True
+    
+    elif contentFilter == 'branch' and dim > 1:
+        branch = True
+        leaf = False
+    else: #if contentFilter == 'leaf':
+        branch = False
+        leaf = True
+
+    tipo = item.type()
+    
+    if tipo == TOTAL and total:
+        return True
+    elif tipo == BRANCH and branch:
+        return True
+    elif tipo == LEAF and leaf:
+        return True
+    else:
+        return False
+
+    return True
           
 class Cubo:
     def __init__(self, definicion,nombre=None,dbConn=None):
@@ -1081,11 +1132,8 @@ class Vista:
 
         return tabla 
     
-
-
-
     
-    def __getExportData(self,parms,selArea=None):
+    def __getExportData(self,parms):
         """
             *parms['file']
             *parms['type'] = ('csv','xls','json','html')
@@ -1094,20 +1142,15 @@ class Vista:
             *parms['csvProp']['txtSep'] 
             *parms['NumFormat'] 
             parms['filter']['scope'] = ('all') #,'visible,'select') 
-            *parms['filter']['row/col']['content'] = ('full','branch','leaf')
+            *parms['filter']['row/col']['content'] = ('full','total','branch','leaf')
             parms['filter']['row/col']['totals'] 
             *parms['filter']['row/col']['Sparse'] 
             
-
         """
         pfilter = parms.get('filter',{})
         scope = pfilter.get('scope','all')
         pfilterRow = pfilter.get('row',{})
         pfilterCol = pfilter.get('col',{})
-        contentFilterR = pfilterRow.get('content','full')
-        contentFilterC = pfilterCol.get('content','full')
-        totalR = pfilterRow.get('totals',True) 
-        totalC = pfilterCol.get('totals',True) 
         row_sparse = pfilterRow.get('Sparse',True)
         col_sparse = pfilterCol.get('Sparse',True)
         
@@ -1115,57 +1158,44 @@ class Vista:
         numFmt = parms.get('NumFormat',False)
         decChar = parms.get('csvProp',{}).get('decChar','.')
  
-        # filterCumHeader(self,total=True,branch=True,leaf=True,separador='\n',sparse=True):
-        if contentFilterR == 'full':
-            totalR = True
-            branchR = True
-            leafR = True
-        elif contentFilterR == 'branch' and self.dim_row > 1:
-            branchR = True
-            leafR = False
-        else: #if contentFilter == 'leaf':
-            branchR = False
-            leafR = True
-
-        if contentFilterC == 'full':
-            totalC = True
-            branchC = True
-            leafC = True
-        elif contentFilterC == 'branch' and self.dim_col > 1:
-            branchC = True
-            leafC = False
-        else: #if contentFilter == 'leaf':
-            branchC = False
-            leafC = True
+        tmpArray = self.toArrayFilter(lambda x,y=self.dim_row,z=pfilterRow: exportFilter(x,y,z),
+                                      lambda x,y=self.dim_col,z=pfilterCol: exportFilter(x,y,z))
         
-        if self.row_hdr_idx.colTreeIndex is None:
-            self.toNewTree()    
-
-        rows=self.row_hdr_idx.filterCumHeader(sparse=row_sparse,branch=branchR,leaf=leafR,total=totalR)
-        cols=self.col_hdr_idx.filterCumHeader(sparse=col_sparse,branch=branchC,leaf=leafC,total=totalC)
-        
-        dim_row = max([ len(item[1]) for item in rows])
-        dim_col = max([ len(item[1]) for item in cols])
+        rows = self.row_hdr_idx.asHdrFilter(lambda x,y=self.dim_row,z=pfilterRow: exportFilter(x,y,z),
+                                            sparse=row_sparse,format='array') #no puedo usar offset
+        cols = self.col_hdr_idx.asHdrFilter(lambda x,y=self.dim_col,z=pfilterCol: exportFilter(x,y,z),
+                                            sparse=col_sparse,format='array')
+        dim_row = max([ len(item) for item in rows])
+        dim_col = max([ len(item) for item in cols])
 
         num_rows = len(rows)
         num_cols = len(cols)
         
-        ctable = [ ['' for k in range(num_cols + dim_row)] 
-                                for j in range(num_rows +dim_col) ]
+        ctable = []
+        # relleno las lineas con las cabeceras de columnas
+        for j in range(dim_col):
+            vector = []
+            for k in range(dim_row):
+                vector.append('')
 
-        columnIDs = [item[2] for item in cols ]
-        
-        for ind in range(dim_col):
-            ctable[ind][dim_row:]=[item[1][ind] if ind <len(item[1]) else '' for item in cols  ]
+            vector[dim_row:] = [column[j] if j < len(column) else '' for column in cols ]
+            # insertar nombres especiales
+            ctable.append(vector)   
+            
+        # inclyo el nombre de la guia fila
         ctable[dim_col -1][dim_row -1] = self.row_hdr_idx.name
-        ind = dim_col
-        for entrada in rows:
-            for k,valor in enumerate(entrada[1]): #cabeceras
-                ctable[ind][k]=valor
-            payload = entrada[0].getPayload()
-            ctable[ind][dim_row:] = [  num2text(payload[k],numFmt=numFmt,decChar=decChar) for k in columnIDs if k < len(payload)]
-                
-            ind +=1
+        
+        # relleno las lineas de datos con cabeceras de filas
+        for i,linea in enumerate(tmpArray):
+            vector = []
+            for k in range(dim_row):
+                if k >= len(rows[i]):
+                    vector.append('')
+                else:
+                    vector.append(rows[i][k])
+            vector[dim_row : ] = [ num2text(valor,numFmt=numFmt,decChar=decChar) for valor in linea ]
+            ctable.append(vector)
+
         return ctable,dim_row,dim_col
     
     def export(self,parms,selArea=None):
@@ -1189,8 +1219,7 @@ class Vista:
             else:
                 return cadena
             
-        ctable,dim_row,dim_col = self.__getExportData(parms,selArea=None)
-            
+        ctable,dim_row,dim_col = self.__getExportData(parms)
         if type == 'csv':
             with open(parms['file'],'w') as f:
                 for row in ctable:
@@ -1251,6 +1280,19 @@ def toList():
     for line in vista.toList(rowHdrContent='key',rowFilter=lambda x:x.type() == TOTAL):
         print(line)
 
+def checkFilter():
+    from util.jsonmgr import load_cubo
+
+    mis_cubos = load_cubo()
+    cubo = Cubo(mis_cubos["datos light"])
+
+    vista = Vista(cubo,'geo','partidos importantes','sum','votes_presential',totalizado=True)
+    parms = { 'content':'full','totals':True}
+    #pprint(vista.row_hdr_idx.asHdrFilter(lambda x,y=vista.dim_row,z=parms: exportFilter(x,y,z)))
+    parms['content']='branch'
+    parms['totals']=False
+    pprint(vista.row_hdr_idx.asHdrFilter(lambda x,y=vista.dim_row,z=parms: exportFilter(x,y,z)))
+           
 def checkArrays():
     from util.jsonmgr import load_cubo
 
@@ -1350,7 +1392,7 @@ def export():
 
     vista = Vista(cubo,'provincia','partidos importantes','sum','votes_presential',totalizado=True)
     #vista.toNewTree()
-    export_parms = {}
+    export_parms = {'NumFormat':True,'csvProp':{'decChar':','}}
     export_parms['file'] = 'ejemplo.dat'
     vista.export(export_parms)
     
@@ -1546,7 +1588,7 @@ if __name__ == '__main__':
     if sys.version_info[0] < 3:
         reload(sys)
         sys.setdefaultencoding('utf-8')
-    #export()
+    export()
     #tabla = toArray()
     #for item in tabla:
         #print(len(item),item)
@@ -1554,4 +1596,4 @@ if __name__ == '__main__':
     #getHeadersFilter()
     fr = lambda x:x.type() == TOTAL
     fg = lambda x:True
-    toList()
+    #checkFilter()

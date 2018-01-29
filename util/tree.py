@@ -485,7 +485,7 @@ class GuideItem(QStandardItem):
             clave.append(item.data(rol))
             if sparse:
                 for k in range(item.depth()):
-                    clave.insert(0,None)
+                    clave.insert(0,'')
                 return clave
 
         pai = item.parent()

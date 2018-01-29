@@ -23,6 +23,27 @@ From an array of texts (_desc_) returns a string with each value delimited (_sep
 * returns
     * a string
 
+## exportFilter(item,dim,filter=None):
+
+Auxiliary function.
+Used as filter in export functions
+
+* Input parameters
+    * __item__ a GuideItem. Element to be checked
+    * __dim__ a number, number of levels of the tree
+    * __filter__ a dictionary with the filter requeriments
+        * __content__ =  One of ('full','branch','leaf'). _full_ is everything, _branch_ only branches of the model tree; _leaf_ only leaves of the model_tree. Default _full__
+        * __totals__ Boolean. True if download includes grand total. Default True
+* Returns
+    Boolean. True if accepted, False otherwise
+    
+* Note:
+    The best way to call it is
+        ```
+        parms = { 'content':'full','totals':True}
+        rowHdr = vista.row_hdr_idx.asHdrFilter(lambda x,y=vista.dim_row,z=parms: exportFilter(x,y,z)))
+        
+        ```
 # class Cubo:
 
 ## Attributes
