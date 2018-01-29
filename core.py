@@ -850,7 +850,7 @@ class Vista:
             * __numFmt__ python format for the numeric values. Default = '      {:9,d}'
             * __colFmt__    python format for the column headers. Default = ' {:>n.ns}', where n is the len of the numeric format minus 1
             * __rowFmt__   python format for the row headers. Default = ' {:20.20s}', 
-            
+            * __hMarker__  hierachical marker (for row header). Default _'  '_
         Returns
             a tuple of formatted lines
         """
@@ -858,11 +858,10 @@ class Vista:
         rowHdr=parms.get('rowHdr',True)
         numFormat = parms.get('numFmt','      {:9,d}')
         numLen = len(numFormat.format(0))
-        print(numFormat,'len is ',numLen)
-        #colFormat = '{:^'+'{}s'.format(len(numFormat.format(1000000)))+'}'
         colFormat = parms.get('colFmt',' {{:>{0}.{0}s}}'.format(numLen -1))
         rowFormat = parms.get('rowFmt','{:20.20s}')
         rowLen = len(rowFormat.format(''))
+        hMarker = parms.get('hMarker','  ')
         
         result = []
         if self.row_hdr_idx.colTreeIndex is None:
@@ -888,7 +887,7 @@ class Vista:
                     datos +=' '*numLen
             # and we print including the header for each row
             if rowHdr:
-                result.append(rowFormat.format(item.data(Qt.DisplayRole))+'{}'.format(datos))    
+                result.append(rowFormat.format(hMarker*item.depth()+item.data(Qt.DisplayRole))+'{}'.format(datos))    
             else:
                 result.append(datos)
                 
@@ -1090,7 +1089,6 @@ class Vista:
             leafC = True
         
         if self.row_hdr_idx.colTreeIndex is None:
-            print('cargo el arbol ahora')
             self.toNewTree()    
 
         rows=self.row_hdr_idx.filterCumHeader(sparse=row_sparse,branch=branchR,leaf=leafR,total=totalR)
@@ -1190,18 +1188,101 @@ def createVista(cubo,x,y):
     print(vista.row_hdr_idx.numRecords(),'X',vista.col_hdr_idx.numRecords())
     
 
+def toList():
+    from util.jsonmgr import load_cubo
+
+    mis_cubos = load_cubo()
+    cubo = Cubo(mis_cubos["datos light"])
+
+    vista = Vista(cubo,'geo','partidos importantes','sum','votes_presential',totalizado=True)
+    for line in vista.toList():
+        print(line)
+
+def toArrayQD():
+    """
+    to array quick and dirty
+    """
+    from util.jsonmgr import load_cubo
+
+    mis_cubos = load_cubo()
+    cubo = Cubo(mis_cubos["datos light"])
+
+    vista = Vista(cubo,'geo','partidos importantes','sum','votes_presential',totalizado=True)
+    
+    result = []
+
+    if vista.row_hdr_idx.colTreeIndex is None:
+        vista.toNewTree()   
+        
+    numCols = vista.col_hdr_idx.numRecords()
+    #now we get the data for each row
+    for item in vista.row_hdr_idx.traverse():
+        datos = item.getPayload()
+        # relleno para tener valores en todas las columnas
+        contenido = len(datos)
+        if numCols - contenido > 0:
+            datos.extend( [ None for k in range(numCols - contenido)])
+        result.append(datos)
+
+    return result
+
 def toArray():
     from util.jsonmgr import load_cubo
 
     mis_cubos = load_cubo()
     cubo = Cubo(mis_cubos["datos light"])
 
-    vista = Vista(cubo,'provincia','partidos importantes','sum','votes_presential',totalizado=True)
-    for line in vista.toList():
-        print(line)
-    for line in vista.toList(numFmt=' {:14,.2F}'):
-        print(line)
-        
+    vista = Vista(cubo,'geo','partidos importantes','sum','votes_presential',totalizado=True)
+    
+    result = [ [ None for j in range(vista.col_hdr_idx.numRecords()) ] for i in range(vista.row_hdr_idx.numRecords()) ]
+
+
+    coldict=vista.col_hdr_idx.asDict()
+    rowdict=vista.row_hdr_idx.asDict()
+    
+    for record in vista.array:
+        col = coldict[record[1].getFullKey()]['idx']
+        row = rowdict[record[0].getFullKey()]['idx']
+        result[row][col] = record[2]
+
+    return result
+
+def getHeaders(**parms):
+    from util.jsonmgr import load_cubo
+
+    mis_cubos = load_cubo()
+    cubo = Cubo(mis_cubos["datos light"])
+
+    vista = Vista(cubo,'geo','partidos importantes','sum','votes_presential',totalizado=True)
+    #pprint(vista.row_hdr_idx.asHdr())
+    #pprint(vista.row_hdr_idx.asHdr(content='key'))
+    #pprint(vista.row_hdr_idx.asHdr(content='value'))
+    #pprint(vista.row_hdr_idx.asHdr(offset=vista.dim_col))
+    #pprint(vista.row_hdr_idx.asHdr(format='array',offset=vista.dim_col))
+    print(vista.dim_row)
+    pprint(vista.row_hdr_idx.asHdr(format='array',normArray=vista.dim_row +1))
+ 
+def getBaseHeaders(**parms):
+    from util.jsonmgr import load_cubo
+
+    mis_cubos = load_cubo()
+    cubo = Cubo(mis_cubos["datos light"])
+
+    vista = Vista(cubo,'geo','partidos importantes','sum','votes_presential',totalizado=True)
+    for item in vista.row_hdr_idx.traverse():
+        print(item.data(Qt.DisplayRole))
+        print(item.getFullHeadInfo())
+        print(item.getFullHeadInfo(content='value'))
+        print(item.getFullDesc())
+        print(item.getFullHeadInfo(content='value',format='array'))
+        print(item.getFullHeadInfo(content='value',format='array',sparse=True))
+        print(item.getFullHeadInfo(content='value',format='string'))
+        print(item.getFullHeadInfo(content='value',format='string',sparse=True))
+        print(item.data(Qt.UserRole +1))
+        print(item.getFullHeadInfo(content='key'))
+        print(item.getFullKey())
+        print(item.getFullHeadInfo(content='key',format='string'))
+ 
 def export():
     from util.jsonmgr import load_cubo
     mis_cubos = load_cubo()
@@ -1406,5 +1487,7 @@ if __name__ == '__main__':
         reload(sys)
         sys.setdefaultencoding('utf-8')
     #export()
-    toArray()
-        
+    #tabla = toArray()
+    #for item in tabla:
+        #print(len(item),item)
+    getHeaders()

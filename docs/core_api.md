@@ -249,7 +249,8 @@ Converts the view results in a list of texts
     * __numFmt__ python format for the numeric values. Default = _'      {:9,d}'_
     * __colFmt__    python format for the column headers. Default = _' {:>n.ns}'_, where _n_ is the len of the numeric format minus 1
     * __rowFmt__   python format for the row headers. Default = _' {:20.20s}'_, 
-    
+    * __hMarker__  hierachical marker (for row header). Default _'  '_    
+
 * Returns
     a tuple of formatted lines
 

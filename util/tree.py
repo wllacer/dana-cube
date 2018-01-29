@@ -124,6 +124,43 @@ class GuideItemModel(QStandardItemModel):
     def len(self):
         return self.numRecords()
 
+    def asDict(self):
+        diccionario = {}
+        idx = 0
+        for item in self.traverse():
+            diccionario[item.getFullKey()]={'idx':idx,'objid':item}
+            idx += 1
+        return diccionario
+    
+    def asHdr(self,**parms):
+        """
+        * parms for getFullHeadInfo
+            * content = ('key','value')
+            * format  = ('simple','string','array')
+            * delimiter  (only if format == string)
+            * sparse = boolean. Default False
+        * specific parms
+            * offset. a number
+            * normArray. a number only if format = array
+        """
+        cabecera = []
+        for item in self.traverse():
+            cabecera.append(item.getFullHeadInfo(**parms))
+        
+        # para incluir elementos de offset por otras cabeceras
+        if 'offset' in parms and parms['offset'] > 0:
+            for k in range(parms['offset']):
+                cabecera.insert(0,[''] if parms.get('format','simple') == 'array' else '')
+        # para que los arrays vuelvan ya con una longitud minima unificada -por definicion dim_x +1 lo malo es que no puedo recuperarlo por defecto
+        if parms.get('format','simple') == 'array' and parms.get('normArray',1) > 1:
+            for elem in cabecera:
+                diff = parms.get('normArray',1) - len(elem)
+                if diff > 0:
+                    for k in range(diff):
+                        elem.append('')
+        return cabecera
+        
+    
     def lenPayload(self,leafOnly=False):
         """
         columnCount() no me funciona correctametne con los nodos hoja, asi que he tenido que 
@@ -371,26 +408,80 @@ class GuideItem(QStandardItem):
             depth += 1
         return depth
     
-    def getFullKey(self):
-        clave = self.data(Qt.UserRole +1)
-        pai = self.parent()
-        while pai is not None and pai != self.model().invisibleRootItem():
-            clave = pai.data(Qt.UserRole +1) + DELIMITER + clave
+    def getFullHeadInfo(self,**parms):
+        """
+        * parms
+            * content = ('key','value')
+            * format  = ('simple','string','array')
+            * delimiter  (only if format == string)
+            * sparse = boolean. Default False
+        """
+        rol = Qt.DisplayRole
+        if 'content' in parms and parms['content'] == 'key':
+                rol = Qt.UserRole +1
+        format = 'single'
+        delim = DELIMITER
+        if 'format' in parms:
+            sparse = parms.get('sparse',False)
+            if parms['format'] == 'string':
+                format = 'string'
+                delim = parms.get('delimiter',delim)
+            elif parms['format'] == 'array':
+                format = 'array'
+            else:
+                pass   # revert to single if not specified
+            
+        # por si no se pide en la columna 0
+        item = self._getHead()
+        # ahora obtengo los valores cuando no tengo que iterar por la jerarquia
+        clave = None
+        if format == 'single':
+            return item.data(rol)
+        elif format == 'string':
+            clave = item.data(rol)
+            if sparse:
+                for k in range(item.depth()):
+                    clave = delim + clave
+                return clave
+        elif format == 'array':
+            clave = []
+            clave.append(item.data(rol))
+            if sparse:
+                for k in range(item.depth()):
+                    clave.insert(0,None)
+                return clave
+
+        pai = item.parent()
+        while pai is not None and pai != item.model().invisibleRootItem():
+            if format == 'string':
+                clave = pai.data(rol) + delim + clave
+            elif format == 'array':
+                clave.insert(0,pai.data(rol))
             pai = pai.parent()
         return clave
+        
+    def getFullKey(self):
+        return self.getFullHeadInfo(content='key',format='string')
+        #clave = self.data(Qt.UserRole +1)
+        #pai = self.parent()
+        #while pai is not None and pai != self.model().invisibleRootItem():
+            #clave = pai.data(Qt.UserRole +1) + DELIMITER + clave
+            #pai = pai.parent()
+        #return clave
 
     def getFullDesc(self):
-        if item.column() != 0:
-            fuente = self.index().sibling(self.index(),0)
-        else:
-            fuente = self
-        clave = fuente.data(Qt.DisplayRole)
-        pai = fuente.parent()
-        while pai is not None and pai != fuente.model().invisibleRootItem():
-            clave = pai.data(Qt.UserRole +1) + DELIMITER + clave
-            pai = pai.parent()
-        print('get full desc',clave)
-        return clave
+        return self.getFullHeadInfo(content='value',format='array')
+        #if item.column() != 0:
+            #fuente = self.index().sibling(self.index(),0)
+        #else:
+            #fuente = self
+        #clave = fuente.data(Qt.DisplayRole)
+        #pai = fuente.parent()
+        #while pai is not None and pai != fuente.model().invisibleRootItem():
+            #clave = pai.data(Qt.UserRole +1) + DELIMITER + clave
+            #pai = pai.parent()
+        #print('get full desc',clave)
+        #return clave
         
     def searchChildren(self,value,role=None):
         if role is None:
