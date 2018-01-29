@@ -1069,21 +1069,6 @@ class Vista:
         self.row_hdr_idx = ctmp  #self.cubo.lista_guias[self.row_id]['dir_row']
         self.col_hdr_idx = rtmp  #self.cubo.lista_guias[self.col_id]['dir_row']
 
-        
-    def fmtHeader(self,dimension, separador='\n', sparse=False): #, rango= None,  max_level=None):
-        """
-           begin new code
-           (funcionalidad abreviada)
-           Probablemente obsoleto
-        """
-        if dimension == 'row':
-            return self.row_hdr_idx.getHeader('row',separador,sparse)
-        elif dimension == 'col':
-            return self.col_hdr_idx.getHeader('col',separador,sparse)
-        else:
-            print('Piden formatear la cabecera >{}< no implementada'.format(dimension))
-            return None
-    
 
     def __getExportData(self,parms):
         """
@@ -1460,76 +1445,6 @@ def experimental():
     #pprint(sorted(cubo.lista_guias[1]['dir_row'])) esto devuelve una lista con las claves
     #pprint(cubo.lista_guias)
 
-    #cubo.fillGuia(1)
-    ##pprint(cubo.lista_guias[5])   
-    #guia=cubo.lista_guias[5]['dir_row']
-    #ind = 0
-    #for key in guia.traverse(mode=1):
-        #elem = guia[key]
-        #print (ind,key,elem.ord,elem.desc)
-        #ind += 1
-    #vista=Vista(cubo,'fecha','partidos importantes','sum','votes_presential')
-    ##vista=Vista(cubo,6,0,'sum','votes_presential')
-    #arbol = vista.row_hdr_idx
-    ##raiz = arbol.rootItem
-    #for item in arbol.traverse(output=1):
-        #print(item.key,item)
-        ##print(item,item.getRoot(),item.model())
-    #print(arbol.count())
-    #print(arbol.len())
-    #pprint(vista.grandTotal())
-    #tabla = vista.toKeyedTable()
-    #vista.toTree2D()
-    #vista.recalcGrandTotal()
-    #col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
-    #print(col_hdr)
-    #for key in vista.row_hdr_idx.content:
-        #elem = vista.row_hdr_idx[key]
-        #print(elem,elem.itemData,elem.depth())
-    #vista.traspose()
-    #row_hdr = vista.fmtHeader('row',separador='\n',sparse='True')
-    #print(col_hdr)
-    #for key in vista.row_hdr_idx.content:
-        #elem = vista.row_hdr_idx[key]
-        #pprint(elem)
-    #print(vista.row_hdr_idx.len())
-    #presenta(vista)
-    #print(vista.dim_row)
-    #vista.row_hdr_idx.rebaseTree()
-    #pprint(vista.row_hdr_idx.content)
-    #print(vista.row_hdr_idx['//'].key)
-    #for key in vista.row_hdr_idx.traverse(None,1):
-        ##print(key,vista.row_hdr_idx[key].desc,vista.row_hdr_idx[key].getFullDesc(),getOrderedText(vista.row_hdr_idx[key].getFullDesc(),sparse=False,separator=':'))
-        #print(key,vista.row_hdr_idx[key].desc,vista.row_hdr_idx[key].depth())
-    #for elem in vista.array:
-        #print(elem[0].desc,elem[1].desc,elem[2])
-    
-    #tabla = vista.toTable()    
-    #row_hdr = vista.fmtHeader('row',sparse=True)
-    ####pprint(row_hdr)
-    #col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
-    #pprint(col_hdr)
-    #idx = 0
-    #print('',col_hdr)
-    #for ind,record in enumerate(tabla):
-
-        #stat_data=stats(record)
-        #for idx,item in enumerate(record):
-            #if item is None:
-                #continue
-            #if item <= stat_data['out_low'] or item >= stat_data['out_hig']:
-                #print('{} en {}:  {} es un outlier'.format(row_hdr[ind +1],col_hdr[idx+1],item))
-        
-
-        
-    #tabla = vista.toIndexedTable()    
-    #row_hdr = vista.fmtHeader('row',sparse=True)
-    #col_hdr = vista.fmtHeader('col',separador='\n',sparse='True')
-    #idx = 0
-    #print('',col_hdr)
-    #for record in  tabla:
-        #print(row_hdr[record[0]['idx']],record[1:])
-        #idx += 1
 
 
 

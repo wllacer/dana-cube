@@ -17,7 +17,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView , QTabWidget, Q
 from noqt.core import Cubo,Vista, mergeString
 from dialogs import *
 from util.jsonmgr import *
-from models import *
+from noqt.models import *
 
 import user as uf
 

@@ -20,8 +20,6 @@ from PyQt5.QtWidgets import QMessageBox
           #QPushButton, QMessageBox, \
           #QTableView
 
-from models import TreeModel
-
 from datalayer.access_layer import *
 from datalayer.query_constructor import queryFormat
 #from cubebrowse import *
@@ -219,7 +217,7 @@ class BaseTreeItem(QStandardItem):
         probablemente innecesario
         """
         item = self
-        while item is not None and not isinstance(item,TreeModel):
+        while item is not None: 
             item = item.parent()
         return item
 
