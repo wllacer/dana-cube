@@ -240,6 +240,26 @@ From the __self.array__
 * loads each element of the row model (self.row_hdr_idx) with a vector with the value for each element in the column model.
 * loads each element of the column model (self.col_hdr_idx) with a vector with the value for each element in the row model.
 
+### toArray(self)
+
+Convert the raw data of the view in a two dimensional array, for further processing. Non existing values are returned as None
+
+* Returns
+   a two dimensional array with the values
+
+### toArrayFilter(self,filterrow,filtercol)
+
+Convert the raw data of the view in a two dimensional array, for further processing. Non existing values are returned as None.
+
+Aditionally two filter functions are specified as parameters, one for rows, the other for columns. Each function accepts an item tree  as parameter (GuideItem) and returns a boolean value: True if it will be processed, False otherwise
+
+* Input parameters
+    * __filterrow__ filter function for rows.
+    * __filtercol__ filter function for columns
+
+* Returns
+   a two dimensional array with the values. Only acceptable rows/columns are included in the array
+
 ### toList(self):
 Converts the view results in a list of texts
 
@@ -250,6 +270,10 @@ Converts the view results in a list of texts
     * __colFmt__    python format for the column headers. Default = _' {:>n.ns}'_, where _n_ is the len of the numeric format minus 1
     * __rowFmt__   python format for the row headers. Default = _' {:20.20s}'_, 
     * __hMarker__  hierachical marker (for row header). Default _'  '_    
+    * __rowHdrContent__ one of ('key','value'). Default 'value'
+    * __colHdrContent__ one of ('key','value'). Default 'value'
+    * __rowFilter__ a filtering function
+    * __colFilter__ a filtering function
 
 * Returns
     a tuple of formatted lines

@@ -840,8 +840,50 @@ class Vista:
         if self.stats:
             self.row_hdr_idx.setStats(True)
             self.col_hdr_idx.setStats(True)
+    
+    def toArray(self):
+        coldict=self.col_hdr_idx.asDict()
+        rowdict=self.row_hdr_idx.asDict()
+
+        result = [ [ None for j in range(len(coldict)) ] for i in range(len(rowdict)) ]
+        
+        for record in self.array:
+            col = coldict[record[1].getFullKey()]['idx']
+            row = rowdict[record[0].getFullKey()]['idx']
+            result[row][col] = record[2]
+
+        return result
+
+    def toArrayFilter(self,filterrow=lambda x:True,filtercol=lambda x:True):
+        """        
+        Convert the raw data of the view in a two dimensional array, for further processing. Non existing values are returned as None.
+
+        Aditionally two filter functions are specified as parameters, one for rows, the other for columns. Each function accepts an item tree  as parameter (GuideItem) and returns a boolean value: True if it will be processed, False otherwise
+
+        * Input parameters
+            * __filterrow__ filter function for rows.
+            * __filtercol__ filter function for columns
+
+        * Returns
+        a two dimensional array with the values. Only acceptable rows/columns are included in the array
+
+        """
+        coldict=self.col_hdr_idx.asDictFilter(filtercol)
+        rowdict=self.row_hdr_idx.asDictFilter(filterrow)
+
+        result = [ [ None for j in range(len(coldict)) ] for i in range(len(rowdict)) ]
+        
+        for record in self.array:
+            try:
+                col = coldict[record[1].getFullKey()]['idx']
+                row = rowdict[record[0].getFullKey()]['idx']
+            except KeyError:
+                continue
+            result[row][col] = record[2]
+
+        return result
             
-    def toList(self,**parms):
+    def toList(self,*parms,**kwparms):
         """
         Converts the view results in a list of texts
         * Input parameters. All optional
@@ -851,47 +893,55 @@ class Vista:
             * __colFmt__    python format for the column headers. Default = ' {:>n.ns}', where n is the len of the numeric format minus 1
             * __rowFmt__   python format for the row headers. Default = ' {:20.20s}', 
             * __hMarker__  hierachical marker (for row header). Default _'  '_
+            * __rowHdrContent__ one of ('key','value'). Default 'value'
+            * __colHdrContent__ one of ('key','value'). Default 'value'
+            * __rowFilter__ a filtering function
+            * __colFilter__ a filtering function
         Returns
             a tuple of formatted lines
         """
-        colHdr=parms.get('colHdr',True)
-        rowHdr=parms.get('rowHdr',True)
-        numFormat = parms.get('numFmt','      {:9,d}')
+        colHdr=kwparms.get('colHdr',True)
+        rowHdr=kwparms.get('rowHdr',True)
+        numFormat = kwparms.get('numFmt','      {:9,d}')
         numLen = len(numFormat.format(0))
-        colFormat = parms.get('colFmt',' {{:>{0}.{0}s}}'.format(numLen -1))
-        rowFormat = parms.get('rowFmt','{:20.20s}')
+        colFormat = kwparms.get('colFmt',' {{:>{0}.{0}s}}'.format(numLen -1))
+        rowFormat = kwparms.get('rowFmt','{:20.20s}')
         rowLen = len(rowFormat.format(''))
-        hMarker = parms.get('hMarker','  ')
+        hMarker = kwparms.get('hMarker','  ')
+        rowContent = kwparms.get('rowHdrContent','value')
+        colContent = kwparms.get('colHdrContent','value')
+        rowFilter = kwparms.get('rowFilter',lambda x:True)
+        colFilter = kwparms.get('colFilter',lambda x:True)
         
         result = []
-        if self.row_hdr_idx.colTreeIndex is None:
-            self.toNewTree()    
-        #now we get the column headers
+        tmpArray = self.toArrayFilter(rowFilter,colFilter)
+        
         if colHdr:
+            colHeaders = self.col_hdr_idx.asHdrFilter(colFilter,content=colContent,format='string',sparse=True)
             if rowHdr:
                 hdr = ' '*rowLen
             else:
                 hdr = ''
-            for item in self.col_hdr_idx.traverse():
-                hdr += colFormat.format(item.data(Qt.DisplayRole))
-            result.append(hdr)
-
-        #now we get the data for each row
-        for item in self.row_hdr_idx.traverse():
-            rsults = item.getPayload()
-            datos = ''
-            for dato in rsults:
+            for item in colHeaders:
+                hdr += colFormat.format(item)
+        result.append(hdr)
+        
+        if rowHdr:
+            rowHeaders = self.row_hdr_idx.asHdrFilter(rowFilter,content=rowContent,format='string',delimiter=hMarker,sparse=True)
+            
+        for k,line in enumerate(tmpArray):
+            dataLine = ''
+            for dato in line:
                 if dato is not None:
-                    datos += numFormat.format(dato)
+                    dataLine += numFormat.format(dato)
                 else:
-                    datos +=' '*numLen
-            # and we print including the header for each row
+                    dataLine +=' '*numLen
             if rowHdr:
-                result.append(rowFormat.format(hMarker*item.depth()+item.data(Qt.DisplayRole))+'{}'.format(datos))    
-            else:
-                result.append(datos)
-                
+                dataLine = rowFormat.format(rowHeaders[k]) + dataLine
+            result.append(dataLine)
+            
         return result
+                
     
     def recalcGrandTotal(self):
         """
@@ -1197,18 +1247,31 @@ def toList():
     vista = Vista(cubo,'geo','partidos importantes','sum','votes_presential',totalizado=True)
     for line in vista.toList():
         print(line)
+    print()
+    for line in vista.toList(rowHdrContent='key',rowFilter=lambda x:x.type() == TOTAL):
+        print(line)
 
-def toArrayQD():
-    """
-    to array quick and dirty
-    """
+def checkArrays():
     from util.jsonmgr import load_cubo
 
     mis_cubos = load_cubo()
     cubo = Cubo(mis_cubos["datos light"])
 
-    vista = Vista(cubo,'geo','partidos importantes','sum','votes_presential',totalizado=True)
+    vista = Vista(cubo,'municipio','partidos importantes','sum','votes_presential',totalizado=True)
     
+    result = []
+
+    if vista.row_hdr_idx.colTreeIndex is None:
+        vista.toNewTree()   
+    toArrayQD(vista)
+    toArray(vista)
+    toArrayFilter(vista,lambda x:True,lambda x:True)
+ 
+@stopwatch
+def toArrayQD(vista):
+    """
+    to array quick and dirty
+    """
     result = []
 
     if vista.row_hdr_idx.colTreeIndex is None:
@@ -1226,27 +1289,24 @@ def toArrayQD():
 
     return result
 
-def toArray():
+@stopwatch
+def toArray(vista):    
+    return vista.toArray()
+
+@stopwatch
+def toArrayFilter(vista,filterrow,filtercol):
+    
+    return vista.toArrayFilter(filterrow,filtercol)
+
+def getHeadersFilter():
     from util.jsonmgr import load_cubo
 
     mis_cubos = load_cubo()
     cubo = Cubo(mis_cubos["datos light"])
 
     vista = Vista(cubo,'geo','partidos importantes','sum','votes_presential',totalizado=True)
+    pprint(vista.row_hdr_idx.asHdrFilter(lambda x:x.type() in (BRANCH, LEAF) ))
     
-    result = [ [ None for j in range(vista.col_hdr_idx.numRecords()) ] for i in range(vista.row_hdr_idx.numRecords()) ]
-
-
-    coldict=vista.col_hdr_idx.asDict()
-    rowdict=vista.row_hdr_idx.asDict()
-    
-    for record in vista.array:
-        col = coldict[record[1].getFullKey()]['idx']
-        row = rowdict[record[0].getFullKey()]['idx']
-        result[row][col] = record[2]
-
-    return result
-
 def getHeaders(**parms):
     from util.jsonmgr import load_cubo
 
@@ -1343,7 +1403,7 @@ def experimental():
     #for item in guiax.traverse():
         #print('\t'*item.depth(),item.data(Qt.UserRole +1))
     
-    vista = Vista(cubo,'provincia','partidos importantes','sum','votes_presential',totalizado=True)
+    vista = Vista(cubo,'municipio','partidos importantes','sum','votes_presential',totalizado=True)
     vista.toNewTree2D()
     hdr = ' '*20 
     for item in vista.col_hdr_idx.traverse():
@@ -1490,4 +1550,8 @@ if __name__ == '__main__':
     #tabla = toArray()
     #for item in tabla:
         #print(len(item),item)
-    getHeaders()
+    #getHeaders()
+    #getHeadersFilter()
+    fr = lambda x:x.type() == TOTAL
+    fg = lambda x:True
+    toList()

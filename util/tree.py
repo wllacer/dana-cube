@@ -160,6 +160,43 @@ class GuideItemModel(QStandardItemModel):
                         elem.append('')
         return cabecera
         
+    def asDictFilter(self,filter):
+        diccionario = {}
+        idx = 0
+        for item in self.traverse():
+            if filter(item):
+                diccionario[item.getFullKey()]={'idx':idx,'objid':item}
+                idx += 1
+        return diccionario
+    
+    def asHdrFilter(self,filter,**parms):
+        """
+        * parms for getFullHeadInfo
+            * content = ('key','value')
+            * format  = ('simple','string','array')
+            * delimiter  (only if format == string)
+            * sparse = boolean. Default False
+        * specific parms
+            * offset. a number
+            * normArray. a number only if format = array
+        """
+        cabecera = []
+        for item in self.traverse():
+            if filter(item):
+                cabecera.append(item.getFullHeadInfo(**parms))
+        
+        # para incluir elementos de offset por otras cabeceras
+        if 'offset' in parms and parms['offset'] > 0:
+            for k in range(parms['offset']):
+                cabecera.insert(0,[''] if parms.get('format','simple') == 'array' else '')
+        # para que los arrays vuelvan ya con una longitud minima unificada -por definicion dim_x +1 lo malo es que no puedo recuperarlo por defecto
+        if parms.get('format','simple') == 'array' and parms.get('normArray',1) > 1:
+            for elem in cabecera:
+                diff = parms.get('normArray',1) - len(elem)
+                if diff > 0:
+                    for k in range(diff):
+                        elem.append('')
+        return cabecera
     
     def lenPayload(self,leafOnly=False):
         """
