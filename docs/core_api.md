@@ -44,6 +44,7 @@ Used as filter in export functions
         rowHdr = vista.row_hdr_idx.asHdrFilter(lambda x,y=vista.dim_row,z=parms: exportFilter(x,y,z)))
         
         ```
+
 # class Cubo:
 
 ## Attributes

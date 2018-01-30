@@ -14,27 +14,29 @@ from util.numeros import stats
 DELIMITER=':'
 
 def traverse(tree, key=None, mode=1):
-    return tree.traverse(key,mode,output = _ITEM)
     """
-        variante de TreeDict.traverse().
-        En lugar de las claves devuelve el item
-        TODO deberia normalizar todos los traverses
+    __DOES NOT WORK NOW__
+    
+    Auxiliary function.
+    Generator to navigate a tree, but as external function See base at util.treebasic.TreeModel
+
+    * Input parameter
+        * __tree__ the tree to be navigated
+        * __key__  the key of the element to start reading
+        * __mode__ type of navigation. One of (_ROOT, _DEPTH, _BREADTH) =range(3). _DEPTH navigates hierarchicaly, .BREADTH per level. Default _DEPTH
+
+    * returns
+        * next item in sequence
         
-    #"""
-    #if key is not None:
-        #yield tree.content[key]
-        #queue = tree.content[key].childItems
-    #else:
-        #queue = tree.rootItem.childItems
-        ##print(queue)
-        ##print('')
-    #while queue:
-        #yield queue[0] 
-        #expansion = queue[0].childItems
-        #if mode == _DEPTH:
-            #queue = expansion + queue[1:]  # depth-first
-        #elif mode == _BREADTH:
-            #queue = queue[1:] + expansion  # width-first
+    __NOTES__
+    
+    More complex interface to current traverse at GuideItemModel. Should be upgraded to this specs.
+    See base at util.treebasic.TreeModel
+
+    """
+
+    return tree.traverse(key,mode,output = _ITEM)
+
 
 from PyQt5.QtCore import Qt 
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
@@ -45,9 +47,26 @@ LEAF,BRANCH,TOTAL = range(1000,1000+3)
 
 def searchStandardItem(item,value,role):
     """
-       modelo general de funcion de busqueda binaria en hijos de un QStandardItem o derivados
-       como funcion generica porque se repite en varias circunstancias
-       SOLO vale con children ordenados por el valor de busqueda (eso es muy importante)
+    Auxiliary function.
+    Implement a binary search inside a QStandardItemModel.
+    Extremely faster than the .find method.
+    Only perform the search in one hierarchical level
+    currently REQUIRES that the children be ordered by default. As is the case in _danacube_
+    Actual binary search code was retrieved from StackOverflow. Sadly i lost the reference
+    
+    * Input Parameters
+        * __item__ (QStandardItem) parent of the level we are searching for
+        * __value__ value we are searching for
+        * __role__  the __Qt Role__ for the value. (An item can contain different data associated to different roles)
+    
+    * Returns
+        the item which has that _value_ or _None_
+     
+    * Programming notes.
+        Look for GuideModel.searchHierarchy for usage
+        
+    __TODO__
+    Make a variant which do not requires previous order
     """
     lower = 0
     upper = item.rowCount()
@@ -71,10 +90,37 @@ def searchStandardItem(item,value,role):
 
 class TreeFormat(object):
     """
-    Esta clase solo tiene propiedades de formateo del modelo (unado se usa en uan view)
-    La forma actual es por compatibilidad con implementaciones anteriores
+    This class mantains the format definition (for a display or background roles) for the value contents of an item in GuideItemModel (see the .data method)
+    
+    __NOTES__
+    The current implementation is pretty lame, and compatibility forced from previous code, and the parameters needed by __util.numeros.fmtNumber__
+    
+    ## Properties
+    ### __stats__ 
+    Boolean. IF the tree will keep statistics for each row
+    ### __format __
+    A dictionary containing following entries
+    * __yellowoutliers__  Boolean. If statistic ooutliers in a row will be backgrounded in yellow. Default True
+    * __rednegatives__    Boolean. If negative values will be backgrounded in red- Default True
+    * __thousandseparator__ a Char. character for thousands separation. Default "." (spanish style)
+    * __decimalmarker__  a Char. decimal character. Default "," (spanish style)
+    * __decimalplaces__  number of default decimal places for floating point values. Default 2
+    
+    ## Methods
     """
     def __init__(self,**opciones):
+        """
+        * Input parameters.
+          A kwparms dict of
+            * __stats__  Boolean. IF the tree will keep statistics for each row
+            * __format __ A dictionary containing following entries                
+                * __yellowoutliers__  Boolean. If statistic outliers in a row will be backgrounded in yellow. Default True
+                * __rednegatives__    Boolean. If negative values will be backgrounded in red- Default True
+                * __thousandseparator__ a Char. character for thousands separation. Default "." (spanish style)
+                * __decimalmarker__  a Char. decimal character. Default "," (spanish style)
+                * __decimalplaces__  number of default decimal places for floating point values. Default 2
+
+        """
         self.format = {}
         if 'stats' in opciones:
             self.stats = opciones['stats']
@@ -91,6 +137,65 @@ class TreeFormat(object):
             
         
 class GuideItemModel(QStandardItemModel):
+    """
+    __GuideItemModel__ is an extension of Qt's [QStandardItemModel](https://doc.qt.io/qt-5/qstandarditemmodel.html), specially crafted for holding trees with vector like items (defined as GuideItem, see below).
+    They also have some attributes and methods specific for the handling of danacube
+    
+    In danacube the guides of a view (row_hdr_idx, col_hdr_idx) are implemented with this class
+    
+    ## Implementation details
+    
+    Of the methods, following are reimplemetation of base methods, and are task tailored
+        * __\_\_init\_\___
+        * __data__
+        
+    Those are provided as extensions to the general model I miss
+        * __traverse__
+        * __numRecords__
+        * __lenPayload__
+        * __searchHierarchy
+        
+    The rest is task tailored for danacube, but the __as*__ methods can be used as a frame for less specific work
+    
+    ## Attributes
+    
+    ### colTreeIndex
+    
+    A complex structure (dict) designed to hold support information refering to the oposing guide in a view (if we are in the row guide refers to the col guide). Main objective was to to reduce navigations at the trees. Is created at core.vista.toNewTree*
+    
+    Currently it holds
+    *   __dict__ .
+        A dictionary of fullkeys of the items (delimiter separated string) -QStandardItems can not be hashed- and for each entry a dictionary of
+        * __idx__   ordinal in the traverse of the tree
+        * __objid__ reference to the base item
+    *   __idx__ Refering to the oposing guide in a view.
+        A list of dictionaries, each referencing an entry in the tree with 
+        * __objid__ reference to the base item
+        * __key__   item's full key
+    *   __leaf__ list of  ordinal of leaf elements in the tree
+    
+    
+    __DEPRECATION WARNING__
+    
+    Was designed to reduce accesses, but seems to have been overengineering, with no notable performance gain. and will be probably scrapped
+    
+    __USAGE__
+    
+    Current uses are
+    * dict is not used ¿?
+    * leaf in (len|set)Payload
+    * idx  in
+        * (len|get)Payload
+        * danacube.processChartItem cabeceras
+        * danacube.drawGraph etiquetas ,titulo
+        
+    ### datos
+    A TreeFormat object. Holds the formating info for the tree. THe name is merely historical
+    
+    ### name
+    Holds the name of the guide on which the tree is based. Is not mandatory
+    
+    """
     def __init__(self,parent=None):
         super(GuideItemModel, self).__init__(parent)
         self.name = None
@@ -98,6 +203,18 @@ class GuideItemModel(QStandardItemModel):
         self.colTreeIndex = None
         
     def traverse(self,base=None):
+        """
+        Generator to navigate the tree  
+
+        * Input parameter
+            * __base__ initial item to process. default is .invisibleRootItem, but this element is not yielded
+        * returns
+            * next item in sequence
+        
+        __TODO__
+        
+        It would be nice to put it functionally on par to util.treebasic.TreeModel
+        """
         if base is not None:
             yield base
             queue = [ base.child(i) for i in range(0,base.rowCount()) ]
@@ -114,17 +231,32 @@ class GuideItemModel(QStandardItemModel):
        
     def numRecords(self):
         """
-        El modelo estandard no da este valor con jerarquias
+        Returns the number of items in the tree.
+        The standard model _rowCount_ method only gives the number of direct children of the first level
+        
+        * returns
+        The number of items in the tree
         """
         count = 0
         for item in self.traverse():
             count += 1
         return count
-    
-    def len(self):
-        return self.numRecords()
 
     def asDict(self):
+        """
+        returns a dictionary view of the tree. The purpose is to allow a quasi direct access to the item based on the key values
+        
+        *Returns
+        
+        A dictionary whose keys are the fullkeys of the items. The fullkey is a string which concatenates the keys of the tree hierarchy of the item. To each item is attached, as value a dict with following entries
+        * __idx__ the ordinal of the item in the tree traversal
+        * __objid__ a reference to the item itself
+        *
+        
+        * Implementation notes
+        Trees are meant to be navigated via traversal, but are complex to use as direct access (via the key). This function generates a dictionary which can be accessed directly via the key.
+        Python didn't allowed a QStandardItem as a dict key, so we had to use the key as index. It is the full hierachical key to ensure unicity
+        """
         diccionario = {}
         idx = 0
         for item in self.traverse():
@@ -134,14 +266,32 @@ class GuideItemModel(QStandardItemModel):
     
     def asHdr(self,**parms):
         """
-        * parms for getFullHeadInfo
-            * content = ('key','value')
-            * format  = ('simple','string','array')
-            * delimiter  (only if format == string)
+        Returns a list with an element for every item in the tree. Each element contains data which can be used as headers
+        
+        * Input parms.
+        
+        A kwparm whith can contain any of the following entries
+        * parms used by GuideItem.getFullHeadInfo
+            * content = ('key','value'). Default 'value'
+            * format  = ('simple','string','array'). Default 'simple'
+            * delimiter  (only if format == string). Concatenation delimiter
             * sparse = boolean. Default False
         * specific parms
-            * offset. a number
-            * normArray. a number only if format = array
+            * offset. a number of blank elements to precede the list
+            * normArray. a number only if format = array, all elements will have at least this length (num of entries)
+            
+        * returns
+        A list with one element for each item in the tree. What is offered in each element varies according to the input parameters:
+            * Content
+                * if 'key' we return the internal key of the item (the domain's _code_ of the guide).
+                * if 'value' its display text (the domain's _desc_ of the guide
+            * format  
+                * if 'simple' just the value for this entry (production rule in guide)
+                * if 'string' the hierarchy of keys concatenated in one string
+                * if 'array'  an array with the hierarchy of keys
+                
+        * Implementation notes
+        In danacbue the need for header structures related to the guides has been an usual task. This function is a generic one to generate such headers
         """
         cabecera = []
         for item in self.traverse():
@@ -161,6 +311,23 @@ class GuideItemModel(QStandardItemModel):
         return cabecera
         
     def asDictFilter(self,filter):
+        """
+        returns a dictionary view of the tree, but only those items for which the filter applies.
+        
+        * Input parameter
+            * __filter__ a function which returns a boolean and accept a QStandardItem as parameter
+
+        *Returns
+        
+        A dictionary whose keys are the fullkeys of the items. The fullkey is a string which concatenates the keys of the tree hierarchy of the item. To each item is attached, as value a dict with following entries
+        * __idx__ the ordinal of the item in the filtered tree traversal 
+        * __objid__ a reference to the item itself
+        *
+        
+        * Implementation notes
+        Enhanced version of the _asDict_ method. Allows any filtering 
+        """
+
         diccionario = {}
         idx = 0
         for item in self.traverse():
@@ -171,14 +338,32 @@ class GuideItemModel(QStandardItemModel):
     
     def asHdrFilter(self,filter,**parms):
         """
-        * parms for getFullHeadInfo
-            * content = ('key','value')
-            * format  = ('simple','string','array')
-            * delimiter  (only if format == string)
-            * sparse = boolean. Default False
-        * specific parms
-            * offset. a number
-            * normArray. a number only if format = array
+        Returns a list with an element for every item in the tree for which the filter is True. Each element contains data which can be used as headers
+        
+        * Input parms.
+        * __filter__ a function which returns a boolean and accept a QStandardItem as parameter
+        * A kwparm whith can contain any of the following entries
+            * parms for getFullHeadInfo
+                * content = ('key','value')
+                * format  = ('simple','string','array')
+                * delimiter  (only if format == string)
+                * sparse = boolean. Default False
+            * specific parms
+                * offset. a number
+                * normArray. a number only if format = array
+        
+        * returns
+        A list with one element for each item in the filtered tree. What is offered in each element varies according to the input parameters:
+            * Content
+                * if 'key' we return the internal key of the item (the domain's _code_ of the guide).
+                * if 'value' its display text (the domain's _desc_ of the guide
+            * format  
+                * if 'simple' just the value for this entry (production rule in guide)
+                * if 'string' the hierarchy of keys concatenated in one string
+                * if 'array'  an array with the hierarchy of keys
+
+        * Implementation notes
+        Enhanced version of the _asDict_ method. Allows any filtering 
         """
         cabecera = []
         for item in self.traverse():
@@ -278,6 +463,14 @@ class GuideItemModel(QStandardItemModel):
 
     
 class GuideItem(QStandardItem):
+    """
+    ## Attributes
+
+    ### originalValue
+
+    ### stats
+
+    """
     #
     #  funciones reimplementadas
     #
@@ -636,11 +829,11 @@ class GuideItem(QStandardItem):
             return self.getColumnData(int)
         else:
             return None
-    
-    
+#
+#  MonkeyPatch section
+#  Definition of synonims of methods of the previous classes, used either for simplicity or compatibility
+#
+GuideItemModel.len = GuideItemModel.numRecords
+GuideItem.aleluya = GuideItem.data
 if __name__ == '__main__':
-     item=TreeItem('alfa')
-     #item.setLabel('omega')
-     datos = [1,2,3,4,5]
-     item.setPayload(datos)
-     print(item,item.itemData)
+    pass

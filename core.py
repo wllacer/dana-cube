@@ -1332,7 +1332,16 @@ def export():
     export_parms = {'NumFormat':True,'csvProp':{'decChar':','}}
     export_parms['file'] = 'ejemplo.dat'
     vista.export(export_parms)
-    
+
+def testTree():
+    from util.jsonmgr import load_cubo
+    mis_cubos = load_cubo()
+    cubo = Cubo(mis_cubos["datos light"])
+
+    vista = Vista(cubo,'provincia','partidos importantes','sum','votes_presential',totalizado=True)
+    for item in vista.row_hdr_idx.traverse():
+        print(item.data(Qt.DisplayRole),item.aleluya(Qt.UserRole +1))
+              
 def experimental():
     from cubemgmt.cubetree import recTreeLoader,dict2tree,navigateTree,CubeItem,traverseTree
     from util.jsonmgr import load_cubo
@@ -1463,4 +1472,4 @@ if __name__ == '__main__':
     #getHeadersFilter()
     fr = lambda x:x.type() == TOTAL
     fg = lambda x:True
-    #checkFilter()
+    testTree()
