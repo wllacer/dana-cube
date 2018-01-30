@@ -385,8 +385,17 @@ class GuideItemModel(QStandardItemModel):
     
     def lenPayload(self,leafOnly=False):
         """
-        columnCount() no me funciona correctametne con los nodos hoja, asi que he tenido que 
-        escribir esta rutina
+        Returns the lenght of the payload for each item.
+        QStandardItem.columnCount() give some incorrect results
+        
+        * Input parameters
+            * leafOnly. Boolean. counting is done only for leaf elements
+        
+        * returns 
+            * the number of columns expected
+            
+        * Programming notes
+            Implementation will vary, most probably
         """
         if leafOnly:
             return len(self.colTreeIndex['leaf']) 
@@ -395,7 +404,17 @@ class GuideItemModel(QStandardItemModel):
 
     def searchHierarchy(self,valueList,role=None):
         """
-          busco el elemento padre con toda la jerarquia de una tacada. No se con los grandes totales
+          Does a search thru all the hierarchy given the key/value data
+        
+        * Input parameters
+            * __valueList__ an array with the hierachy data to be searched
+            * __role__ the Qt.Role the data is associated with
+            
+        * Returns
+            An Item of the tree which mastches the valueList
+            
+        * Programming notes
+            Which data is searched depends on the role. Qt.UserRole +1 searches for internal keys; Qt.DisplayRole for description 
         """
         if role is None:
             prole = Qt.UserRole +1
@@ -411,6 +430,16 @@ class GuideItemModel(QStandardItemModel):
         return elem
 
     def setStats(self,switch):
+        """
+        Sets (and evaluate) the per row statistics. While they are per row(item) are calculated once per tree
+        
+        * Input parameters:
+            * __switch__ a Boolean, activates or deactivates the statistics
+        
+        * returns
+            none. If activated loads the items with the corresponding statistics
+        """
+        
         self.datos.stats = switch
         if self.datos.stats:
             for item in self.traverse():
@@ -419,6 +448,19 @@ class GuideItemModel(QStandardItemModel):
             return None
         
     def data(self,index,role):
+        """
+        Reimplementation of QStandardItemModel.data for the needs of danacube. It will be invoked when a view associated with the model is redrawn
+        
+        * Input parameters
+            * __index__ a QIndexModel which identifies the item
+            * __role__ which Qt.Role are we handling
+            
+        * Programming notes
+        We define special actions for following cases
+            * Qt.TextAlignmentRole. For column 0 -the value- left aligned, else -the vector- right aligned (they are numbers)
+            * Qt.BackgroundRole. Color if the conditions in TreeFormat are met 
+            * Qt.DisplayRole. Formats the numeric vector
+        """
         if not index.isValid():
             return None
         item = self.itemFromIndex(index)
