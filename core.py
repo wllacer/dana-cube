@@ -843,55 +843,53 @@ class Vista:
                     print(time.time(),'Datos ',queryFormat(sqlstring))
 
         #pprint(self.array)
+     
+    
+    def __setAndBackup(self,item,idx,data):
+        """
+        Internal function. In fact should be decoupled from the instance
+        Sets the column _idx_ of the _item_ with _data_, and performs an initial backup
+        """
+        item.setColumn(idx,data)
+        cell = item.getColumn(idx)
+        cell.setBackup()
         
-    def toNewTree(self):
-        coldict = {}
+    def __setTreeContext(self,rowTree,colTree):
+        """
+        Internal function. In fact should be decoupled from the instance
+        Sets tree.colTreeIndex
+        """
         colindex = []
         idx = 1
-        for item in self.col_hdr_idx.traverse():
-            coldict[item.getFullKey()]={'idx':idx,'objid':item}
+        for item in colTree.traverse():
             colindex.append({'objid':item,'key':item.getFullKey()})
             idx += 1
-        self.row_hdr_idx.colTreeIndex = {'dict':coldict,'idx':colindex}
-        self.row_hdr_idx.colTreeIndex['leaf'] = [ idx for idx,obj in enumerate(self.row_hdr_idx.colTreeIndex['idx']) if obj['objid'].type() == LEAF ]
+        rowTree.colTreeIndex = {'idx':colindex} #{'dict':coldict,'idx':colindex}
+        rowTree.colTreeIndex['leaf'] = [ idx for idx,obj in enumerate(rowTree.colTreeIndex['idx']) if obj['objid'].type() == LEAF ]
+        return None
         
-        raiz = self.row_hdr_idx.invisibleRootItem()            
+    def toNewTree(self):
+        coldict = self.col_hdr_idx.asDict()
         for record in self.array:
-            col = coldict[record[1].getFullKey()]['idx']
             row = record[0]
-            row.setColumn(col,record[2])
-            colItem = row.getColumn(col)
-            colItem.setBackup()
-      
+            colnr = coldict[record[1].getFullKey()]['idx'] + 1
+            self.__setAndBackup(row,colnr,record[2])
+        self.__setTreeContext(self.row_hdr_idx,self.col_hdr_idx)
+        
     def toNewTree2D(self):
-        def setContext(row,col):
-            coldict = {}
-            colindex = []
-            idx = 1
-            for item in col.traverse():
-                coldict[item.getFullKey()]={'idx':idx,'objid':item}
-                colindex.append({'objid':item,'key':item.getFullKey()})
-                idx += 1
-            row.colTreeIndex = {'dict':coldict,'idx':colindex}
-            row.colTreeIndex['leaf'] = [ idx for idx,obj in enumerate(row.colTreeIndex['idx']) if obj['objid'].type() == LEAF ]
-            return coldict
-        coldict=setContext(self.row_hdr_idx,self.col_hdr_idx)
-        rowdict=setContext(self.col_hdr_idx,self.row_hdr_idx)
-        #raizRow = self.row_hdr_idx.invisibleRootItem()  
-        #raizCol = self.col_hdr_idx.invisibleRootItem()
+        rowdict = self.row_hdr_idx.asDict()
+        coldict = self.col_hdr_idx.asDict()
         for record in self.array:
-            rowcol = coldict[record[1].getFullKey()]['idx']
-            colcol = rowdict[record[0].getFullKey()]['idx']
-            rowid = record[0]
-            rowid.setColumn(rowcol,record[2])
-            colid = record[1]
-            colid.setColumn(colcol,record[2])
-            colitem = rowid.getColumn(rowcol)
-            colitem.setBackup()
-        if self.stats:
-            self.row_hdr_idx.setStats(True)
-            self.col_hdr_idx.setStats(True)
-    
+            row = record[0]
+            col = record[1]
+            rownr = rowdict[row.getFullKey()]['idx'] + 1
+            colnr = coldict[col.getFullKey()]['idx'] + 1
+            
+            self.__setAndBackup(row,colnr,record[2])
+            self.__setAndBackup(col,rownr,record[2])
+        self.__setTreeContext(self.row_hdr_idx,self.col_hdr_idx)
+        self.__setTreeContext(self.col_hdr_idx,self.row_hdr_idx)
+            
     def toArray(self):
         coldict=self.col_hdr_idx.asDict()
         rowdict=self.row_hdr_idx.asDict()
@@ -1195,6 +1193,9 @@ class Vista:
                     worksheet.write(i, j,item.strip())
             workbook.close()
         return 0
+# monkeypatch
+Vista.toTree = Vista.toNewTree
+Vista.toTree2D = Vista.toNewTree2D
 
 from util.decorators import stopwatch
 @stopwatch
@@ -1339,8 +1340,9 @@ def testTree():
     cubo = Cubo(mis_cubos["datos light"])
 
     vista = Vista(cubo,'provincia','partidos importantes','sum','votes_presential',totalizado=True)
-    for item in vista.row_hdr_idx.traverse():
-        print(item.data(Qt.DisplayRole),item.aleluya(Qt.UserRole +1))
+    vista.toTree2D()
+    #for item in vista.row_hdr_idx.traverse():
+        #print(item.data(Qt.DisplayRole),item.aleluya(Qt.UserRole +1))
               
 def experimental():
     from cubemgmt.cubetree import recTreeLoader,dict2tree,navigateTree,CubeItem,traverseTree

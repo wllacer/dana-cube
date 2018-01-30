@@ -182,7 +182,7 @@ class GuideItemModel(QStandardItemModel):
     __USAGE__
     
     Current uses are
-    * dict is not used ¿?
+    * dict is not used. Is already done with. eliminated
     * leaf in (len|set)Payload
     * idx  in
         * (len|get)Payload
@@ -383,24 +383,24 @@ class GuideItemModel(QStandardItemModel):
                         elem.append('')
         return cabecera
     
-    def lenPayload(self,leafOnly=False):
-        """
-        Returns the lenght of the payload for each item.
-        QStandardItem.columnCount() give some incorrect results
+    #def lenPayload(self,leafOnly=False):
+        #"""
+        #Returns the lenght of the payload for each item.
+        #QStandardItem.columnCount() give some incorrect results
         
-        * Input parameters
-            * leafOnly. Boolean. counting is done only for leaf elements
+        #* Input parameters
+            #* leafOnly. Boolean. counting is done only for leaf elements
         
-        * returns 
-            * the number of columns expected
+        #* returns 
+            #* the number of columns expected
             
-        * Programming notes
-            Implementation will vary, most probably
-        """
-        if leafOnly:
-            return len(self.colTreeIndex['leaf']) 
-        else:
-            return len(self.colTreeIndex['idx'])
+        #* Programming notes
+            #Implementation will vary, most probably
+        #"""
+        #if leafOnly:
+            #return len(self.colTreeIndex['leaf']) 
+        #else:
+            #return len(self.colTreeIndex['idx'])
 
     def searchHierarchy(self,valueList,role=None):
         """
@@ -590,15 +590,17 @@ class GuideItem(QStandardItem):
         columnCount() no me funciona correctametne con los nodos hoja, asi que he tenido que 
         escribir esta rutina
         """
-        return self.model().lenPayload(leafOnly)
-        #lo de abajo es como deberia ser, al tener colTreeIndex puedo escribir la version resumida de arriba
-        #indice = self.index() #self.model().indexFromItem(field)
-        #cont = 1
-        #colind = indice.sibling(indice.row(),cont)
-        #while colind.isValid():
-            #cont +=1
-            #colind = indice.sibling(indice.row(),cont)
-        #return cont
+        #return self.model().lenPayload(leafOnly)
+        ##lo de abajo es como deberia ser, al tener colTreeIndex puedo escribir la version resumida de arriba
+        if self.hasChildren() and leafOnly:
+            return None
+        indice = self.index() #self.model().indexFromItem(field)
+        cont = 1
+        colind = indice.sibling(indice.row(),cont)
+        while colind.isValid():
+            cont +=1
+            colind = indice.sibling(indice.row(),cont)
+        return cont
 
 
     
@@ -735,6 +737,9 @@ class GuideItem(QStandardItem):
         return searchStandardItem(self,value,prole)
 
     def setColumn(self,col,value):
+        #colItem = GuideItem()
+        #colItem.setData(value,Qt.UserRole +1)
+        #self.insertColumn(col,[colItem,])
         row = self.index().row()
         if self.parent() is None:
             pai = self.model().invisibleRootItem()
@@ -743,6 +748,7 @@ class GuideItem(QStandardItem):
         colItem = GuideItem()
         colItem.setData(value,Qt.UserRole +1)
         pai.setChild(row,col,colItem)
+        return self
         #colItem.setBackup()
    
     def getColumn(self,col):

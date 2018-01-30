@@ -97,7 +97,6 @@ Of the methods, following are reimplemetation of base methods, and are task tail
 Those are provided as extensions to the general model I miss
     * __traverse__
     * __numRecords__
-    * __lenPayload__
     * __searchHierarchy
     
 The rest is task tailored for danacube, but the __as*__ methods can be used as a frame for less specific work
@@ -262,19 +261,6 @@ A list with one element for each item in the filtered tree. What is offered in e
 Enhanced version of the _asDict_ method. Allows any filtering 
  
 
-### lenPayload(self,leafOnly=False):
- 
-Returns the lenght of the payload for each item.
-QStandardItem.columnCount() give some incorrect results
-
-* Input parameters
-    * leafOnly. Boolean. counting is done only for leaf elements
-
-* returns 
-    * the number of columns expected
-    
-* Programming notes
-    Implementation will vary, most probably
 
 ### searchHierarchy(self,valueList,role=None):
  
