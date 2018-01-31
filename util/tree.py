@@ -159,48 +159,55 @@ class GuideItemModel(QStandardItemModel):
     
     ## Attributes
     
-    ### colTreeIndex
+    #### colTreeIndex
     
-    A complex structure (dict) designed to hold support information refering to the oposing guide in a view (if we are in the row guide refers to the col guide). Main objective was to to reduce navigations at the trees. Is created at core.vista.toNewTree*
+    #A complex structure (dict) designed to hold support information refering to the oposing guide in a view (if we are in the row guide refers to the col guide). Main objective was to to reduce navigations at the trees. Is created at core.vista.toNewTree*
     
-    Currently it holds
-    *   __dict__ .
-        A dictionary of fullkeys of the items (delimiter separated string) -QStandardItems can not be hashed- and for each entry a dictionary of
-        * __idx__   ordinal in the traverse of the tree
-        * __objid__ reference to the base item
-    *   __idx__ Refering to the oposing guide in a view.
-        A list of dictionaries, each referencing an entry in the tree with 
-        * __objid__ reference to the base item
-        * __key__   item's full key
-    *   __leaf__ list of  ordinal of leaf elements in the tree
+    #Currently it holds
+    #*   __dict__ .
+        #A dictionary of fullkeys of the items (delimiter separated string) -QStandardItems can not be hashed- and for each entry a dictionary of
+        #* __idx__   ordinal in the traverse of the tree
+        #* __objid__ reference to the base item
+    #*   __idx__ Refering to the oposing guide in a view.
+        #A list of dictionaries, each referencing an entry in the tree with 
+        #* __objid__ reference to the base item
+        #* __key__   item's full key
+    #*   __leaf__ list of  ordinal of leaf elements in the tree
     
     
-    __DEPRECATION WARNING__
+    #__DEPRECATION WARNING__
     
-    Was designed to reduce accesses, but seems to have been overengineering, with no notable performance gain. and will be probably scrapped
+    #Was designed to reduce accesses, but seems to have been overengineering, with no notable performance gain. and will be probably scrapped
     
-    __USAGE__
+    #__USAGE__
     
-    Current uses are
-    * dict is not used. Is already done with. eliminated
-    * leaf in (len|set)Payload
-    * idx  in
-        * (len|get)Payload
-        * danacube.processChartItem cabeceras
-        * danacube.drawGraph etiquetas ,titulo
+    #Current uses are
+    #* dict is not used. Is already done with. eliminated
+    #* leaf in (len|set)Payload
+    #* idx  in
+        #* (len|get)Payload
+        #* danacube.processChartItem cabeceras
+        #* danacube.drawGraph etiquetas ,titulo
         
     ### datos
     A TreeFormat object. Holds the formating info for the tree. THe name is merely historical
     
     ### name
     Holds the name of the guide on which the tree is based. Is not mandatory
+
+    ### vista
+    En que vista se utiliza (activado en core.vista.toNewArray*
     
+    ### orthogonal
+    Cual es el otro modelo que complementa la vista (activado en core.vista.toNewArray*)
     """
     def __init__(self,parent=None):
         super(GuideItemModel, self).__init__(parent)
         self.name = None
         self.datos = TreeFormat()  #es por compatibilidad, son formatos
-        self.colTreeIndex = None
+        #self.colTreeIndex = None
+        self.vista = None
+        self.orthogonal = None
         
     def traverse(self,base=None):
         """
@@ -383,24 +390,22 @@ class GuideItemModel(QStandardItemModel):
                         elem.append('')
         return cabecera
     
-    #def lenPayload(self,leafOnly=False):
-        #"""
-        #Returns the lenght of the payload for each item.
-        #QStandardItem.columnCount() give some incorrect results
+    def lenPayload(self,leafOnly=False):
+        """
+        TODO
+        Returns the lenght of the payload for each item.
+        QStandardItem.columnCount() give some incorrect results
         
-        #* Input parameters
-            #* leafOnly. Boolean. counting is done only for leaf elements
+        * Input parameters
+            * leafOnly. Boolean. counting is done only for leaf elements
         
-        #* returns 
-            #* the number of columns expected
+        * returns 
+            * the number of columns expected
             
-        #* Programming notes
-            #Implementation will vary, most probably
-        #"""
-        #if leafOnly:
-            #return len(self.colTreeIndex['leaf']) 
-        #else:
-            #return len(self.colTreeIndex['idx'])
+        * Programming notes
+            Implementation will vary, most probably
+        """
+        return None
 
     def searchHierarchy(self,valueList,role=None):
         """
@@ -547,30 +552,22 @@ class GuideItem(QStandardItem):
     #
     # funciones de API user functions
     #
-    def getPayload(self,leafOnly=False):
+    def getPayload(self):
         lista=[]
         indice = self.index() #self.model().indexFromItem(field)
         k = 1
         colind = indice.sibling(indice.row(),k)
         while colind.isValid():
-            if leafOnly:
-                if self.model().colTreeIndex['idx'][k]['objid'].type() == LEAF:
-                    lista.append(colind.data(Qt.UserRole +1)) #print(colind.data())
-            else:
-                lista.append(colind.data(Qt.UserRole +1)) #print(colind.data())
+            lista.append(colind.data(Qt.UserRole +1)) #print(colind.data())
             k +=1
             colind = indice.sibling(indice.row(),k)
         return lista
     
-    def setPayload(self,lista,leafOnly=False):
+    def setPayload(self,lista): 
         indice = self.index() 
         lastLeaf = 0
         for k,valor in enumerate(lista): 
-            if leafOnly:
-                col = self.model().colTreeIndex['leaf'][k] +1
-            else:
-                col = k +1
-                
+            col = k + 1                
             colind = indice.sibling(indice.row(),col)
             if colind.isValid():
                 item = self.model().itemFromIndex(colind)
@@ -590,8 +587,6 @@ class GuideItem(QStandardItem):
         columnCount() no me funciona correctametne con los nodos hoja, asi que he tenido que 
         escribir esta rutina
         """
-        #return self.model().lenPayload(leafOnly)
-        ##lo de abajo es como deberia ser, al tener colTreeIndex puedo escribir la version resumida de arriba
         if self.hasChildren() and leafOnly:
             return None
         indice = self.index() #self.model().indexFromItem(field)
@@ -846,7 +841,7 @@ class GuideItem(QStandardItem):
             if not value:
                 continue
             npay.append(value)
-            ncab.append(k +1)
+            ncab.append(k)
         return npay,ncab
 
     def simplifyHierarchical(self):
@@ -864,7 +859,7 @@ class GuideItem(QStandardItem):
                 continue
             for j in range(profundidad +1):
                 npay[j].append(tmppay[j][k])
-            ncab.append(k +1)
+            ncab.append(k)
 
         return npay,ncab
     

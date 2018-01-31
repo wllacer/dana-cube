@@ -102,36 +102,6 @@ Those are provided as extensions to the general model I miss
 The rest is task tailored for danacube, but the __as*__ methods can be used as a frame for less specific work
 
 ## Attributes
-
-### colTreeIndex
-
-A complex structure (dict) designed to hold support information refering to the oposing guide in a view (if we are in the row guide refers to the col guide). Main objective was to to reduce navigations at the trees. Is created at core.vista.toNewTree*
-
-Currently it holds
-*   __dict__ .
-    A dictionary of fullkeys of the items (delimiter separated string) -QStandardItems can not be hashed- and for each entry a dictionary of
-    * __idx__   ordinal in the traverse of the tree
-    * __objid__ reference to the base item
-*   __idx__ Refering to the oposing guide in a view.
-    A list of dictionaries, each referencing an entry in the tree with 
-    * __objid__ reference to the base item
-    * __key__   item's full key
-*   __leaf__ list of  ordinal of leaf elements in the tree
-
-
-__DEPRECATION WARNING__
-
-Was designed to reduce accesses, but seems to have been overengineering, with no notable performance gain. and will be probably scrapped
-
-__USAGE__
-
-Current uses are
-* dict is not used ¿?
-* leaf in (len|set)Payload
-* idx  in
-    * (len|get)Payload
-    * danacube.processChartItem cabeceras
-    * danacube.drawGraph etiquetas ,titulo
     
 ### datos
 A TreeFormat object. Holds the formating info for the tree. THe name is merely historical
@@ -139,7 +109,12 @@ A TreeFormat object. Holds the formating info for the tree. THe name is merely h
 ### name
 Holds the name of the guide on which the tree is based. Is not mandatory
 
- 
+### vista
+En que vista se utiliza (activado en core.vista.toNewArray*
+
+### orthogonal
+Cual es el otro modelo que complementa la vista (activado en core.vista.toNewArray*)
+
 ### __init__(self,parent=None):
  
  

@@ -21,7 +21,8 @@ Nueva versiion. TodoList para volcar
             Salvar &Rango fechas
          Opciones
             DONE (as tested) Exportar datos
-            DONE Trasponer datos
+            FAIL Trasponer datos
+                FIXME off by one
                 
             DONE Presentacion ...
             
@@ -38,7 +39,8 @@ Nueva versiion. TodoList para volcar
          
         TESTED recalcGrandTotal
         revisar recalcGrandTotal sin gran total
-        TESTED revisar estadisticas
+        DONE revisar estadisticas
+            look as if they have disappeared
         TESTED revisar restaurar valores originales c
         TESTED activar sort
         TODO .
@@ -576,15 +578,20 @@ class TabMgr(QWidget):
         #textos_row = xtree.getHeader('row')
         #line = 0
         #col  = 0
-        titulo = self.tree.vista.row_hdr_idx.name+'> '+rowid.data(Qt.DisplayRole) +  '\n' + \
-            '{}({})'.format(self.tree.vista.agregado,self.tree.vista.campo) 
         x_text = self.tree.vista.col_hdr_idx.name
         y_text = ''
+        titleParms = {}
         if tipo == 'multibar': 
             datos,kcabeceras = rowid.simplifyHierarchical() #msimplify(mdatos,self.textos_col)
+            titleParms = {'format':'string', 'delimiter':' > '}
         else:
             datos,kcabeceras = rowid.simplify() #item.getPayload(),self.textos_col)
-        cabeceras = [ self.tree.model().colTreeIndex['idx'][k -1]['objid'].data(Qt.DisplayRole) for k in kcabeceras ]
+
+            
+        titulo = self.tree.vista.row_hdr_idx.name+'> '+rowid.getFullHeadInfo(**titleParms) +  '\n' + \
+                '{}({})'.format(self.tree.vista.agregado,self.tree.vista.campo) 
+            
+        cabeceras = [ self.tree.colHdr[k] for k in kcabeceras ] 
 
         if len(datos) == 0:
             self.chart.axes.cla()
@@ -605,6 +612,7 @@ class DanaCube(QTreeView):
         self.vista = None
         self.parent= parent  #la aplicacion en la que esta. Lo necesito para los cambios de título
         self.cubo =  self.parent.cubo
+        self.colHdr = None
         self.setupFilters()
         #self.filtro = ''
         #self.filtroCampos = ''
@@ -683,9 +691,11 @@ class DanaCube(QTreeView):
         
     def defineModel(self):
         self.setModel(self.vista.row_hdr_idx)
+        self.colHdr = self.vista.col_hdr_idx.asHdr()
         self.vista.row_hdr_idx.setHorizontalHeaderLabels(
             [self.vista.row_hdr_idx.name,]+ 
-            [item.data(Qt.DisplayRole) for item in self.vista.col_hdr_idx.traverse()])
+            self.colHdr )
+            #[item.data(Qt.DisplayRole) for item in self.vista.col_hdr_idx.traverse()])
         self.expandToDepth(2)
         self.setTitle()
 
@@ -1028,16 +1038,16 @@ class DanaCube(QTreeView):
             item = self.model().item(id)
             titulo = item['key']
             datos = item.getPayload()
-            etiquetas = [entrada['objid'].data(Qt.DIsplayRole) for entrada in self.model().colTreeIndex['idx']]
+            etiquetas = self.colHdr()
         elif source == 'col':
-            titulo= self.model().colTreeIndex['idx'][id -1]['objid'].data(Qt.DisplayRole) 
+            titulo = self.colHdr[id]
             datos = []
             etiquetas = []
             for entrada in self.model().traverse():
                 if entrada.gpi(id -1) is None:
                     continue
                 datos.append(entrada.gpi(id -1))
-                etiquetas.append(entrada.data(Qt.DisplayRole))
+                etiquetas.append(entrada.getFullHeadInfo())
         dialog = GraphDlg(self.parent.tabulatura.currentWidget().chartType, self)
         if dialog.exec_():
             if dialog.result:

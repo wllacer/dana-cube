@@ -859,13 +859,17 @@ class Vista:
         Internal function. In fact should be decoupled from the instance
         Sets tree.colTreeIndex
         """
-        colindex = []
-        idx = 1
-        for item in colTree.traverse():
-            colindex.append({'objid':item,'key':item.getFullKey()})
-            idx += 1
-        rowTree.colTreeIndex = {'idx':colindex} #{'dict':coldict,'idx':colindex}
-        rowTree.colTreeIndex['leaf'] = [ idx for idx,obj in enumerate(rowTree.colTreeIndex['idx']) if obj['objid'].type() == LEAF ]
+        rowTree.vista = self
+        colTree.vista = self
+        rowTree.orthogonal = colTree
+        colTree.orthogonal = rowTree
+        #colindex = []
+        #idx = 1
+        #for item in colTree.traverse():
+            #colindex.append({'objid':item,'key':item.getFullKey()})
+            #idx += 1
+        #rowTree.colTreeIndex = {'idx':colindex} #{'dict':coldict,'idx':colindex}
+        # rowTree.colTreeIndex['leaf'] = [ idx for idx,obj in enumerate(rowTree.colTreeIndex['idx']) if obj['objid'].type() == LEAF ]
         return None
         
     def toNewTree(self):
@@ -874,6 +878,9 @@ class Vista:
             row = record[0]
             colnr = coldict[record[1].getFullKey()]['idx'] + 1
             self.__setAndBackup(row,colnr,record[2])
+        if self.stats:
+            self.row_hdr_idx.setStats(True)
+
         self.__setTreeContext(self.row_hdr_idx,self.col_hdr_idx)
         
     def toNewTree2D(self):
@@ -887,8 +894,12 @@ class Vista:
             
             self.__setAndBackup(row,colnr,record[2])
             self.__setAndBackup(col,rownr,record[2])
+        if self.stats:
+            self.row_hdr_idx.setStats(True)
+            self.col_hdr_idx.setStats(True)
+        
         self.__setTreeContext(self.row_hdr_idx,self.col_hdr_idx)
-        self.__setTreeContext(self.col_hdr_idx,self.row_hdr_idx)
+
             
     def toArray(self):
         coldict=self.col_hdr_idx.asDict()
@@ -1341,8 +1352,8 @@ def testTree():
 
     vista = Vista(cubo,'provincia','partidos importantes','sum','votes_presential',totalizado=True)
     vista.toTree2D()
-    #for item in vista.row_hdr_idx.traverse():
-        #print(item.data(Qt.DisplayRole),item.aleluya(Qt.UserRole +1))
+    for item in vista.row_hdr_idx.traverse():
+        print(item.simplifyHierarchical())
               
 def experimental():
     from cubemgmt.cubetree import recTreeLoader,dict2tree,navigateTree,CubeItem,traverseTree
