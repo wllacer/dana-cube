@@ -159,35 +159,7 @@ class GuideItemModel(QStandardItemModel):
     
     ## Attributes
     
-    #### colTreeIndex
     
-    #A complex structure (dict) designed to hold support information refering to the oposing guide in a view (if we are in the row guide refers to the col guide). Main objective was to to reduce navigations at the trees. Is created at core.vista.toNewTree*
-    
-    #Currently it holds
-    #*   __dict__ .
-        #A dictionary of fullkeys of the items (delimiter separated string) -QStandardItems can not be hashed- and for each entry a dictionary of
-        #* __idx__   ordinal in the traverse of the tree
-        #* __objid__ reference to the base item
-    #*   __idx__ Refering to the oposing guide in a view.
-        #A list of dictionaries, each referencing an entry in the tree with 
-        #* __objid__ reference to the base item
-        #* __key__   item's full key
-    #*   __leaf__ list of  ordinal of leaf elements in the tree
-    
-    
-    #__DEPRECATION WARNING__
-    
-    #Was designed to reduce accesses, but seems to have been overengineering, with no notable performance gain. and will be probably scrapped
-    
-    #__USAGE__
-    
-    #Current uses are
-    #* dict is not used. Is already done with. eliminated
-    #* leaf in (len|set)Payload
-    #* idx  in
-        #* (len|get)Payload
-        #* danacube.processChartItem cabeceras
-        #* danacube.drawGraph etiquetas ,titulo
         
     ### datos
     A TreeFormat object. Holds the formating info for the tree. THe name is merely historical
@@ -236,17 +208,23 @@ class GuideItemModel(QStandardItemModel):
             else:
                 queue = expansion  + queue[1:]            
        
-    def numRecords(self):
+    def numRecords(self,type=None):
         """
         Returns the number of items in the tree.
         The standard model _rowCount_ method only gives the number of direct children of the first level
         
+        * Input Parameters
+            * __type__ integer the type to be searched for (an integer above 1000. See Qt.StandardItem.type())
+            
         * returns
         The number of items in the tree
         """
         count = 0
         for item in self.traverse():
-            count += 1
+            if type is None or type < QStandardItem.UserType:
+                count += 1
+            elif item.type() == type :
+                    count +=1
         return count
 
     def asDict(self):
@@ -392,8 +370,7 @@ class GuideItemModel(QStandardItemModel):
     
     def lenPayload(self,leafOnly=False):
         """
-        TODO
-        Returns the lenght of the payload for each item.
+        Returns the maximum lenght of the payload for each item. (in fact the length of the orthogonal model)
         QStandardItem.columnCount() give some incorrect results
         
         * Input parameters
@@ -405,7 +382,12 @@ class GuideItemModel(QStandardItemModel):
         * Programming notes
             Implementation will vary, most probably
         """
-        return None
+        if self.orthogonal is None:
+            return 0
+        elif not leafOnly:
+            return self.orthogonal.numRecords()
+        else:
+            return self.orthogonal.numRecords(type=LEAF)
 
     def searchHierarchy(self,valueList,role=None):
         """
@@ -498,10 +480,10 @@ class GuideItemModel(QStandardItemModel):
                 
         elif role == Qt.DisplayRole:
             datos = item.data(role)
-            if datos == None:
-                return None
             if index.column() == 0:
                 return datos
+            if datos == None:
+                return None
             else:
                 text, sign = fmtNumber(datos,self.datos.format)
                 return '{}{}'.format(sign if sign == '-' else '',text)               

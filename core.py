@@ -405,14 +405,16 @@ class Cubo:
                 key = papid[-1]
                 del papid[-1]
                 #TODO cache sigue siendo necesario
+                if total:  #no viene recogido previamente
+                    papid = ["//",]+papid
                 if len(papid) == 0:
                     item = GuideItem()
                     item.setData(value,Qt.DisplayRole)
                     item.setData(key,Qt.UserRole +1)
                     raiz.appendRow((item,))                    
                 else:
-                    if total:  #no viene recogido previamente
-                        papid = ["//",]+papid
+                    #if total:  #no viene recogido previamente
+                        #papid = ["//",]+papid
                     parent = raiz.model().searchHierarchy(papid)
                     if not parent:
                         #print('Ilocalizable',papid)
@@ -422,20 +424,21 @@ class Cubo:
                         item.setData(value,Qt.DisplayRole)
                         item.setData(key,Qt.UserRole +1)
                         parent.appendRow((item,))
-            elif isinstance(raiz,TreeDict):
-                # problemas inesperados con valores nulos
-                for k in range(len(row)):
-                    if row[k] is None:
-                        row[k] = 'NULL'
-                #descripcion
-                if ndesc == 0:
-                    value=', '.join(row)  
-                else:
-                    value=', '.join(row[-ndesc:])
-                #clave separada jeraruqicamnet por DELIMITER
-                key=DELIMITER.join(row[0:len(code)])   #asi creo una jerarquia automatica en claves multiples
-                parentId = getParentKey(key)
-                raiz.append(TreeItem(key,entryNum,value),parentId)
+            # No aplica ya. Mantenido por si fuera necesario volver
+            #elif isinstance(raiz,TreeDict):
+                ## problemas inesperados con valores nulos
+                #for k in range(len(row)):
+                    #if row[k] is None:
+                        #row[k] = 'NULL'
+                ##descripcion
+                #if ndesc == 0:
+                    #value=', '.join(row)  
+                #else:
+                    #value=', '.join(row[-ndesc:])
+                ##clave separada jeraruqicamnet por DELIMITER
+                #key=DELIMITER.join(row[0:len(code)])   #asi creo una jerarquia automatica en claves multiples
+                #parentId = getParentKey(key)
+                #raiz.append(TreeItem(key,entryNum,value),parentId)
     
     
     def fillGuia(self,guidIdentifier,total=None):
@@ -1354,7 +1357,19 @@ def testTree():
     vista.toTree2D()
     for item in vista.row_hdr_idx.traverse():
         print(item.simplifyHierarchical())
-              
+        
+def testTraspose():
+    from util.jsonmgr import load_cubo
+    mis_cubos = load_cubo()
+    cubo = Cubo(mis_cubos["datos light"])
+
+    vista = Vista(cubo,'geo','partidos importantes','sum','votes_presential',totalizado=True)
+    vista.toTree2D()
+    vista.traspose()
+    print(vista.col_hdr_idx.asHdr())
+    for item in vista.row_hdr_idx.traverse():
+        print(item.getPayload())
+
 def experimental():
     from cubemgmt.cubetree import recTreeLoader,dict2tree,navigateTree,CubeItem,traverseTree
     from util.jsonmgr import load_cubo
@@ -1485,4 +1500,4 @@ if __name__ == '__main__':
     #getHeadersFilter()
     fr = lambda x:x.type() == TOTAL
     fg = lambda x:True
-    testTree()
+    testTraspose()

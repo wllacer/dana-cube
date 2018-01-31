@@ -21,9 +21,7 @@ Nueva versiion. TodoList para volcar
             Salvar &Rango fechas
          Opciones
             DONE (as tested) Exportar datos
-            FAIL Trasponer datos
-                FIXME off by one
-                
+            DONE Trasponer datos
             DONE Presentacion ...
             
          TESTED Graficos
@@ -43,10 +41,12 @@ Nueva versiion. TodoList para volcar
             look as if they have disappeared
         TESTED revisar restaurar valores originales c
         TESTED activar sort
-        TODO .
+        BUG .
+            Un problema con valores '' en la clave, pero no en el valor. No aparecen en el mismo lugar y "joden" el traspose.  
+            En datos light la entrada de C.A. con valor '' España aparece en distintos lugares en el traverse. 
+        TODO
             investigar el uso de locales (Python o Qt) en lugar/ademas de numberFormat)
             sort por otros criterios o sin problemas con acentos
-            En datos light la entrada con valor nulo España aparece en distintos lugares en el traverse. ¿?
             mejorar los graficos de cabecera de columna con criterios de seleccion
             revisar estadisticas cuando hay muchos 1 (ver diputados por provincia)
         NO reproduzco
@@ -55,12 +55,12 @@ Nueva versiion. TodoList para volcar
             File "/home/werner/projects/dana-cube.git/util/numeros.py", line 64, in fmtNumber
                 cadena = formatter.format(number)
             ValueError: Cannot specify ',' or '_' with 's'.
-        Solved ¿?
-        El error es previo; debia estar resuelto, se suponia
-         sqlalchemy.exc.ProgrammingError: (psycopg2.ProgrammingError) constante no entera en GROUP BY
-            LÍNEA 1: ...ntal.inventory_id)  FROM public.rental   GROUP BY '//', staf...
-                                                                            ^
- [SQL: " SELECT  '//', staff_id, sum(public.rental.inventory_id)  FROM public.rental   GROUP BY '//', staff_id ORDER BY 1 , 2  "]
+        NO reproduzco
+            El error es previo; debia estar resuelto, se suponia
+            sqlalchemy.exc.ProgrammingError: (psycopg2.ProgrammingError) constante no entera en GROUP BY
+                LÍNEA 1: ...ntal.inventory_id)  FROM public.rental   GROUP BY '//', staf...
+                                                                                ^
+    [SQL: " SELECT  '//', staff_id, sum(public.rental.inventory_id)  FROM public.rental   GROUP BY '//', staff_id ORDER BY 1 , 2  "]
 
 """
 

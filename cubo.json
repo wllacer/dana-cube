@@ -245,7 +245,7 @@
                         "domain": {
                             "code": "region",
                             "desc": "nombre",
-                            "filter": "provincia = ''",
+                            "filter": "provincia = '' and region <> '' ",
                             "table": "main.localidades"
                         },
                         "elem": "region",
@@ -293,7 +293,7 @@
                         "domain": {
                             "code": "region",
                             "desc": "nombre",
-                            "filter": "provincia = ''",
+                            "filter": "provincia = '' ",
                             "table": "main.localidades"
                         },
                         "elem": "region",

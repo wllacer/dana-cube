@@ -97,7 +97,7 @@ Of the methods, following are reimplemetation of base methods, and are task tail
 Those are provided as extensions to the general model I miss
     * __traverse__
     * __numRecords__
-    * __searchHierarchy
+    * __searchHierarchy__
     
 The rest is task tailored for danacube, but the __as*__ methods can be used as a frame for less specific work
 
@@ -132,31 +132,35 @@ __TODO__
 
 It would be nice to put it functionally on par to util.treebasic.TreeModel
  
-### numRecords(self):
- 
+### numRecords(self,type=None):
 
-Returns the number of items in the tree.
-The standard model _rowCount_ method only gives the number of direct children of the first level
+Returns the number of items in the tree. The type parameter allows filtering of an item subtype
+The standard model _rowCount_ method only gives the number of direct children of the first level. 
 
+* Input Parameters
+    * __type__ integer. the type of the item to be searched for (an integer above 1000. See Qt.StandardItem.UserType
+    
 * returns
 The number of items in the tree
  
+
 ### asDict(self):
  
 
 returns a dictionary view of the tree. The purpose is to allow a quasi direct access to the item based on the key values
 
-*Returns
-
+* Returns
 A dictionary whose keys are the fullkeys of the items. The fullkey is a string which concatenates the keys of the tree hierarchy of the item. To each item is attached, as value a dict with following entries
-* __idx__ the ordinal of the item in the tree traversal
-* __objid__ a reference to the item itself
-*
+
+    * __idx__ the ordinal of the item in the tree traversal
+    * __objid__ a reference to the item itself
+    *
 
 * Implementation notes
 Trees are meant to be navigated via traversal, but are complex to use as direct access (via the key). This function generates a dictionary which can be accessed directly via the key.
 Python didn't allowed a QStandardItem as a dict key, so we had to use the key as index. It is the full hierachical key to ensure unicity
  
+
 ### asHdr(self,**parms):
  
 
@@ -187,6 +191,7 @@ A list with one element for each item in the tree. What is offered in each eleme
 * Implementation notes
 In danacbue the need for header structures related to the guides has been an usual task. This function is a generic one to generate such headers
  
+
 ### asDictFilter(self,filter):
  
 
@@ -205,6 +210,7 @@ A dictionary whose keys are the fullkeys of the items. The fullkey is a string w
 * Implementation notes
 Enhanced version of the _asDict_ method. Allows any filtering 
  
+
 ### asHdrFilter(self,filter,**parms):
  
 
@@ -236,6 +242,19 @@ A list with one element for each item in the filtered tree. What is offered in e
 Enhanced version of the _asDict_ method. Allows any filtering 
  
 
+### def lenPayload(self,leafOnly=False):
+
+Returns the maximum lenght of the payload for each item. (in fact the length of the orthogonal model)
+QStandardItem.columnCount() give some incorrect results
+
+* Input parameters
+    * leafOnly. Boolean. counting is done only for leaf elements
+
+* returns 
+    * the number of columns expected
+    
+* Programming notes
+    Implementation will vary, most probably
 
 ### searchHierarchy(self,valueList,role=None):
  
@@ -262,7 +281,7 @@ Sets (and evaluate) the per row statistics. While they are per row(item) are cal
 * returns
     none. If activated loads the items with the corresponding statistics
  
- 
+
 ### data(self,index,role):
 
 Reimplementation of QStandardItemModel.data for the needs of danacube. It will be invoked when a view associated with the model is redrawn
@@ -277,6 +296,7 @@ We define special actions for following cases
     * Qt.BackgroundRole. Color if the conditions in TreeFormat are met 
     * Qt.DisplayRole. Formats the numeric vector 
  
+
 # class GuideItem(QStandardItem):
  
 
