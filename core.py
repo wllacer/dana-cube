@@ -657,8 +657,8 @@ class Vista:
         self.agregado=agregado
         self.campo = campo
         self.filtro = filtro
-        self.totalizado = True
-        self.stats = True
+        self.totalizado = totalizado
+        self.stats = stats
         self.row_id = None   #son row y col. a asignar en setnewview
         self.col_id = None
 
@@ -672,7 +672,7 @@ class Vista:
         #self.hierarchy= False
         self.array = []
         
-        self.setNewView(row, col)
+        self.setNewView(row, col,agregado, campo, filtro,totalizado, stats)
 
     def setNewView(self,prow, pcol, agregado=None, campo=None, filtro='',totalizado=True, stats=True, force=False):
         # acepto tanto nombre como nuero de columna y fila.
@@ -815,6 +815,10 @@ class Vista:
                     sqlDef['fields'] = rowFields + colFields + [(self.campo,self.agregado)]
                 else:
                     sqlDef['fields'] =sqlDef['group']  + [(self.campo,self.agregado)]
+                    rowFields = trow
+                    numRowElems = len(rowFields)
+                    colFields = tcol
+                    numColElems = len(colFields)
                 joins = row['linkvia'] + col['linkvia']
                 sqlDef['join'] = []
                 for entrada in joins:
