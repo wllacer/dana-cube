@@ -188,95 +188,20 @@ class GuideItem(QStandardItem):
         else:
             return None
 
-    """
-    
-    ## General methods which conform the API for __user functions__
-    
-    """
-    def getPayload(self):
-        lista=[]
-        indice = self.index() #self.model().indexFromItem(field)
-        k = 1
-        colind = indice.sibling(indice.row(),k)
-        while colind.isValid():
-            lista.append(colind.data(Qt.UserRole +1)) #print(colind.data())
-            k +=1
-            colind = indice.sibling(indice.row(),k)
-        return lista
-    
-    def setPayload(self,lista): 
-        indice = self.index() 
-        lastLeaf = 0
-        for k,valor in enumerate(lista): 
-            col = k + 1                
-            colind = indice.sibling(indice.row(),col)
-            if colind.isValid():
-                item = self.model().itemFromIndex(colind)
-                if not isinstance(item,GuideItem):
-                    colroot = indice.sibling(indice.row(),0)
-                    ritem = self.model().itemFromIndex(colroot)
-                    ritem.setColumn(col,valor)
-                else:
-                    item.setData(valor,Qt.UserRole +1)
-            else:
-                colroot = indice.sibling(indice.row(),0)
-                item = self.model().itemFromIndex(colroot)
-                item.setColumn(col,valor)
-
-    def lenPayload(self,leafOnly=False):
-        """
-        columnCount() no me funciona correctametne con los nodos hoja, asi que he tenido que 
-        escribir esta rutina
-        """
-        if self.hasChildren() and leafOnly:
-            return None
-        indice = self.index() #self.model().indexFromItem(field)
-        cont = 1
-        colind = indice.sibling(indice.row(),cont)
-        while colind.isValid():
-            cont +=1
-            colind = indice.sibling(indice.row(),cont)
-        return cont
-
-
-    
-    def getPayloadItem(self,idx):
-        indice = self.index() #self.model().indexFromItem(field
-        colind = indice.sibling(indice.row(),idx + 1)
-        if colind.isValid():
-            return self.model().itemFromIndex(colind).data(Qt.UserRole +1)
-        else:
-            return None
-
-    def setPayloadItem(self,idx,valor):
-        indice = self.index() #self.model().indexFromItem(field
-        colind = indice.sibling(indice.row(),idx + 1)
-        if colind.isValid():
-            item = self.model().itemFromIndex(colind)
-            if not isinstance(item,GuideItem):
-                colroot = indice.sibling(indice.row(),0)
-                ritem = self.model().itemFromIndex(colroot)
-                ritem.setColumn(idx +1,valor)
-            else:
-                item.setData(valor,Qt.UserRole +1)
-        else:
-            colroot = indice.sibling(indice.row(),0)
-            item = self.model().itemFromIndex(colroot)
-            item.setColumn(idx +1,valor)
-    
-    def getKey(self):
-        return self._getHead().data(Qt.UserRole +1)
-    
-    def getLabel(self):
-        return self._getHead().data(Qt.DisplayRole)
-
 
     """
     
-    ##  General methods
+    ##  General methods QStandardItem should have
     
     """
     def depth(self):
+        """
+        hierachical level of the row
+        
+        * returns
+        An integer with the current level, starting from 0
+        """
+        # depth is evaluated backwards, from the actual item up to the root item
         depth = 0
         pai = self.parent()
         while pai is not None and pai != self.model().invisibleRootItem():
@@ -285,12 +210,268 @@ class GuideItem(QStandardItem):
         return depth
     
     def _getHead(self):
+        """
+        for a given row, returns the current row header (i.e. the sibling which has column 0)
+        
+        * returns
+        the item with column 0 from the current row
+        """
         if self.column() == 0:
             return self
         else:
             indice = self.index() 
             colind = indice.sibling(indice.row(),0)
             return self.model().itemFromIndex(colind)
+
+        
+        
+    def searchChildren(self,value,role=None):
+        """
+        We seach for a specific value inside the children of the current row
+        
+        * Input parameters
+            * __value__ the value to be searched for. Type be QStandardItem.setData compatible
+            * __role__ Qt.Role, if not specified Qt.UserRole +1
+        * Returns
+        An item which contains this value or None
+        
+        * Implementation notes
+        Wide faster and hierachical level specific than model().find
+        Currently the values of the rows have to be sorted in advance
+        """
+        if role is None:
+            prole = Qt.UserRole +1
+        else:
+            prole = role
+        return searchStandardItem(self,value,prole)
+
+   
+    def getColumn(self,col):
+        """
+        Returns the item at column _col_ for the current row_hdr_idx
+        
+        * Input parameters
+            * __col__ the index of the column requested. 0 is not allowed
+        
+        * Returns
+        The item at that column or None if it doesn't exist
+        
+        * Implementation notes
+        Surprisingly such a method does not exist at QStandardItem
+        """
+        if self.column() != 0:
+            return None
+        indice = self.index() 
+        colind = indice.sibling(indice.row(),col)
+        if colind.isValid():
+            return self.model().itemFromIndex(colind)
+        else:
+            return None
+
+    def setColumn(self,col,value,role=None):
+        """
+        Method to set , for the current row, a data column at position _col_ with value _value_ .
+        It's a destructive function: if the column already exist is replaced with the new version
+        Can only be executed on GuideItems with column 0 (the head of the row)
+        
+        * Input parameters
+            * __col__ the index of the column to be set. 0 is not allowed
+            * __value__ the value to be inserted. Type be QStandardItem.setData compatible
+            * __role__ Qt.Role, if not specified Qt.UserRole +1
+            
+        * returns
+            a reference to the new column item or None (if 0 happens to be specified at _col_)
+            
+        * Implementation notes.
+            QtStandardItem.insertColumn and QStandardItem.insertColumns are most probably faulty, and the need to create a list of QStandardItem (or derived) before using QStandardItem.insertColumns is unconfortable to program. 
+            Column 0 is not allowed because (as it is the head of the row,i.e. _self_) it would destroy _self_
+        """
+        if col == 0:
+            return None
+        elif self.column() != 0:
+            return None
+        # with insertColumns, which does not work again
+        #colItem = GuideItem()
+        #self.insertColumns(col,1,(colItem,))
+        #return colItem
+        #
+        # this is the code needed if insertColumns should behave badly
+        row = self.index().row()
+        if self.parent() is None:
+            pai = self.model().invisibleRootItem()
+        else:
+            pai = self.parent()
+        colItem = GuideItem()
+        if role is None:
+            colItem.setData(value,Qt.UserRole +1)
+        else:
+            colItem.setData(value,role)
+        pai.setChild(row,col,colItem)
+        return colItem
+        
+    def setUpdateColumn(self,col,value,role=None):
+        """
+        Method to set , for the current row, a data column at position _col_ with value _value_ .
+        If the item already exist it is updated, else is created
+        Can only be executed on GuideItems with column 0 (the head of the row)
+        
+        * Input parameters
+            * __col__ the index of the column to be set. 0 is not allowed
+            * __value__ the value to be inserted. Type be QStandardItem.setData compatible
+            * __role__ Qt.Role, if not specified Qt.UserRole +1
+            
+        * returns
+            a reference to the new column item or None (if 0 happens to be specified at _col_)
+            
+        """
+        if col == 0:
+            return None
+        elif self.column() != 0:
+            return None
+        
+        columna = self.getColumn(col)
+        if columna is None:
+            columna = self.setColumn(col,value)
+        else:
+            if role is None:
+                columna.setData(value,Qt.UserRole +1)
+            else:
+                columna.setData(value,role)
+     
+        return columna   
+     
+    def rowTraverse(self):
+        """
+        __EXPERIMENTAL__
+        generator navigate the vector elements inside a row after the current one
+        
+        """
+        indice = self.index() 
+        k = indice.column() + 1
+        colind = indice.sibling(indice.row(),k)
+        while colind.isValid():
+            yield self.model().itemFromIndex(colind)
+            k +=1
+            colind = indice.sibling(indice.row(),k)
+
+    """
+    
+    ## General methods which make up the API for __user functions__
+    
+    """
+    def getPayload(self):
+        """
+        Returns a list with the values of the data vector (columns 1 .. of the current row
+        """
+        return [ item.data(Qt.UserRole +1) for item in self.rowTraverse() ]
+    
+    def setPayload(self,lista): 
+        """
+        Updates in one step all the values of the data vector.
+        If len(lista) < len(vector) only those values get updated; otherwise the vector will be expanded as apropiate
+        
+        * Input parameters
+             __lista__ a list with the new values for the vector 
+        """
+        indice = self.index() 
+        lastLeaf = 0
+        for idx,valor in enumerate(lista): 
+            col = idx + 1                
+            self.setUpdateColumn(col,valor)
+
+    def lenPayload(self):
+        """
+        Length of the data vector for this __numRecords__
+        
+        * Returns
+        Length of the data vector
+        
+        * implementation notes
+        QStandardItem.columnCount() does not seem to work, it should be lenPayload = columnCount -1.
+        In this case the use of the generator seems not that performant
+        """
+        if self.hasChildren():
+            return 0
+        indice = self.index() #self.model().indexFromItem(field)
+        idx = 0
+        colind = indice.sibling(indice.row(),idx +1)
+        while colind.isValid():
+            idx +=1
+            colind = indice.sibling(indice.row(),idx +1)
+        return idx
+
+
+    
+    def getPayloadItem(self,idx):
+        """
+        Returns the data at data vector position _idx_ for the current row
+        It corresponds to column idx + 1
+        
+        * Input parameters
+            * __idx__ the index inside the data vector.
+        
+        * Returns
+        The item at that column or None if it doesn't exist
+        
+        
+        """
+        return self.getColumn(idx +1)
+    
+    def setPayloadItem(self,idx,valor):
+        """
+         Method to set , for the current row, a data vector column at index _idx_ with value _value_ .
+        If the item already exist it is updated, else is created
+        It will correspond to column = idx +1
+        
+        * Input parameters
+            * __idx__ the index of the data vector to be set. 
+            * __value__ the value to be inserted. 
+            
+        * returns
+            a reference to the new column item or None 
+       """
+        return self.setUpdateColumn(self,idx +1,valor)
+    
+    def getKey(self):
+        """
+        
+        returns the internal key of the current row 
+        
+        """
+        return self._getHead().data(Qt.UserRole +1)
+    
+    def getLabel(self):
+        """
+        
+        returns the display value for the current row 
+        
+        """
+
+        return self._getHead().data(Qt.DisplayRole)
+
+        
+    """
+    
+    ##  Application specific methods
+    
+    """
+
+    def getColumnData(self,idx,role=None):
+        """
+        Returns data from an specified index and role inside the data vector.
+        
+        * Input parameter
+            * __idx__ the index in the data vector 
+            * __role__ data associated to that role. Default is Qt.UserRole +1
+            
+        * Implementation notes
+            For compatibility with other tree implementations
+        """
+        item = self.getColumn(idx +1)
+        if item is not None:
+            return item.data(role if role is not None else Qt.UserRole +1)
+        else:
+            return None
 
     def getFullHeadInfo(self,**parms):
         """
@@ -343,63 +524,13 @@ class GuideItem(QStandardItem):
                 clave.insert(0,pai.data(rol))
             pai = pai.parent()
         return clave
-        
+
     def getFullKey(self):
         return self.getFullHeadInfo(content='key',format='string')
 
     def getFullDesc(self):
         return self.getFullHeadInfo(content='value',format='array')
-        
-    def searchChildren(self,value,role=None):
-        if role is None:
-            prole = Qt.UserRole +1
-        else:
-            prole = role
-        return searchStandardItem(self,value,prole)
 
-    def setColumn(self,col,value):
-        #colItem = GuideItem()
-        #colItem.setData(value,Qt.UserRole +1)
-        #self.insertColumn(col,[colItem,])
-        row = self.index().row()
-        if self.parent() is None:
-            pai = self.model().invisibleRootItem()
-        else:
-            pai = self.parent()
-        colItem = GuideItem()
-        colItem.setData(value,Qt.UserRole +1)
-        pai.setChild(row,col,colItem)
-        return self
-        #colItem.setBackup()
-   
-    def getColumn(self,col):
-        if self.column() != 0:
-            return None
-        indice = self.index() 
-        colind = indice.sibling(indice.row(),col)
-        if colind.isValid():
-            return self.model().itemFromIndex(colind)
-        else:
-            return None
-        
-    def getColumnData(self,idx,role=None):
-        """
-        VITAL ver que aqui idx no es la columna en el sentido de Qt sino de Payload, es decir desplazado por uno (la columna 0 es la "cabecera"
-        """
-        indice = self.index() #self.model().indexFromItem(field
-        colind = indice.sibling(indice.row(),idx + 1)
-        if colind.isValid():
-            return self.model().itemFromIndex(colind).data(role if role is not None else Qt.UserRole +1)
-        else:
-            return None
-#
-    """
-    
-    ##  Application specific methods
-    
-    """
-    #def childCount(self):
-        #return self.rowCount()
     def getStatistics(self):
         return self._getHead().stats
     def isTotal(self):
@@ -522,7 +653,7 @@ class GuideItemModel(QStandardItemModel):
         
     def traverse(self,base=None):
         """
-        Generator to navigate the tree  
+        Generator to navigate the tree. It only reads the head items of each rows
 
         * Input parameter
             * __base__ initial item to process. default is .invisibleRootItem, but this element is not yielded
