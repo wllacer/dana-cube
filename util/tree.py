@@ -135,6 +135,345 @@ class TreeFormat(object):
             self.format['decimalmarker'] = ","
             self.format['decimalplaces'] = 2
             
+class GuideItem(QStandardItem):
+    """
+    ## Attributes
+
+    ### originalValue
+
+    ### stats
+
+    """
+    """
+    
+    ## Methods reimplemented from QStandardItem
+    
+    """
+    def __init__(self,*args):  #solo usamos valor (str o standarItem)
+        super(GuideItem, self).__init__(*args)
+        self.originalValue = self.data(Qt.UserRole +1)
+        if self.index().column() == 0:
+            self.stats = None
+            
+    #def setData(self,value,role):
+        #super(GuideItem, self).setData(value,role)
+        
+    def type(self):
+        if self.data(Qt.UserRole +1) == '//':
+            return TOTAL
+        elif self.hasChildren():
+            return BRANCH
+        else:
+            return LEAF
+        
+    def data(self,role):
+        valor = super(GuideItem, self).data(role)
+        if role in (Qt.DisplayRole,Qt.UserRole +1) and valor is None:
+            valor = super(GuideItem,self).data(Qt.UserRole +1)
+        return valor
+    
+    def __str__(self):
+        return "<" + str(self.data(Qt.DisplayRole)) + ">"
+
+    def __repr__(self):
+        return "<" + str(self.data(Qt.UserRole +1)) + ">"
+
+    def __getitem__(self,campo):
+        if campo == 'key':
+            return self.data(Qt.UserRole +1)
+        elif campo == 'value':
+            return self.data(Qt.DisplayRole)
+        elif isinstance(campo,int):
+            return self.getColumnData(int)
+        else:
+            return None
+
+    """
+    
+    ## General methods which conform the API for __user functions__
+    
+    """
+    def getPayload(self):
+        lista=[]
+        indice = self.index() #self.model().indexFromItem(field)
+        k = 1
+        colind = indice.sibling(indice.row(),k)
+        while colind.isValid():
+            lista.append(colind.data(Qt.UserRole +1)) #print(colind.data())
+            k +=1
+            colind = indice.sibling(indice.row(),k)
+        return lista
+    
+    def setPayload(self,lista): 
+        indice = self.index() 
+        lastLeaf = 0
+        for k,valor in enumerate(lista): 
+            col = k + 1                
+            colind = indice.sibling(indice.row(),col)
+            if colind.isValid():
+                item = self.model().itemFromIndex(colind)
+                if not isinstance(item,GuideItem):
+                    colroot = indice.sibling(indice.row(),0)
+                    ritem = self.model().itemFromIndex(colroot)
+                    ritem.setColumn(col,valor)
+                else:
+                    item.setData(valor,Qt.UserRole +1)
+            else:
+                colroot = indice.sibling(indice.row(),0)
+                item = self.model().itemFromIndex(colroot)
+                item.setColumn(col,valor)
+
+    def lenPayload(self,leafOnly=False):
+        """
+        columnCount() no me funciona correctametne con los nodos hoja, asi que he tenido que 
+        escribir esta rutina
+        """
+        if self.hasChildren() and leafOnly:
+            return None
+        indice = self.index() #self.model().indexFromItem(field)
+        cont = 1
+        colind = indice.sibling(indice.row(),cont)
+        while colind.isValid():
+            cont +=1
+            colind = indice.sibling(indice.row(),cont)
+        return cont
+
+
+    
+    def getPayloadItem(self,idx):
+        indice = self.index() #self.model().indexFromItem(field
+        colind = indice.sibling(indice.row(),idx + 1)
+        if colind.isValid():
+            return self.model().itemFromIndex(colind).data(Qt.UserRole +1)
+        else:
+            return None
+
+    def setPayloadItem(self,idx,valor):
+        indice = self.index() #self.model().indexFromItem(field
+        colind = indice.sibling(indice.row(),idx + 1)
+        if colind.isValid():
+            item = self.model().itemFromIndex(colind)
+            if not isinstance(item,GuideItem):
+                colroot = indice.sibling(indice.row(),0)
+                ritem = self.model().itemFromIndex(colroot)
+                ritem.setColumn(idx +1,valor)
+            else:
+                item.setData(valor,Qt.UserRole +1)
+        else:
+            colroot = indice.sibling(indice.row(),0)
+            item = self.model().itemFromIndex(colroot)
+            item.setColumn(idx +1,valor)
+    
+    def getKey(self):
+        return self._getHead().data(Qt.UserRole +1)
+    
+    def getLabel(self):
+        return self._getHead().data(Qt.DisplayRole)
+
+
+    """
+    
+    ##  General methods
+    
+    """
+    def depth(self):
+        depth = 0
+        pai = self.parent()
+        while pai is not None and pai != self.model().invisibleRootItem():
+            pai = pai.parent()
+            depth += 1
+        return depth
+    
+    def _getHead(self):
+        if self.column() == 0:
+            return self
+        else:
+            indice = self.index() 
+            colind = indice.sibling(indice.row(),0)
+            return self.model().itemFromIndex(colind)
+
+    def getFullHeadInfo(self,**parms):
+        """
+        * parms
+            * content = ('key','value')
+            * format  = ('simple','string','array')
+            * delimiter  (only if format == string)
+            * sparse = boolean. Default False
+        """
+        rol = Qt.DisplayRole
+        if 'content' in parms and parms['content'] == 'key':
+                rol = Qt.UserRole +1
+        format = 'single'
+        delim = DELIMITER
+        if 'format' in parms:
+            sparse = parms.get('sparse',False)
+            if parms['format'] == 'string':
+                format = 'string'
+                delim = parms.get('delimiter',delim)
+            elif parms['format'] == 'array':
+                format = 'array'
+            else:
+                pass   # revert to single if not specified
+            
+        # por si no se pide en la columna 0
+        item = self._getHead()
+        # ahora obtengo los valores cuando no tengo que iterar por la jerarquia
+        clave = None
+        if format == 'single':
+            return item.data(rol)
+        elif format == 'string':
+            clave = item.data(rol)
+            if sparse:
+                for k in range(item.depth()):
+                    clave = delim + clave
+                return clave
+        elif format == 'array':
+            clave = []
+            clave.append(item.data(rol))
+            if sparse:
+                for k in range(item.depth()):
+                    clave.insert(0,'')
+                return clave
+
+        pai = item.parent()
+        while pai is not None and pai != item.model().invisibleRootItem():
+            if format == 'string':
+                clave = pai.data(rol) + delim + clave
+            elif format == 'array':
+                clave.insert(0,pai.data(rol))
+            pai = pai.parent()
+        return clave
+        
+    def getFullKey(self):
+        return self.getFullHeadInfo(content='key',format='string')
+
+    def getFullDesc(self):
+        return self.getFullHeadInfo(content='value',format='array')
+        
+    def searchChildren(self,value,role=None):
+        if role is None:
+            prole = Qt.UserRole +1
+        else:
+            prole = role
+        return searchStandardItem(self,value,prole)
+
+    def setColumn(self,col,value):
+        #colItem = GuideItem()
+        #colItem.setData(value,Qt.UserRole +1)
+        #self.insertColumn(col,[colItem,])
+        row = self.index().row()
+        if self.parent() is None:
+            pai = self.model().invisibleRootItem()
+        else:
+            pai = self.parent()
+        colItem = GuideItem()
+        colItem.setData(value,Qt.UserRole +1)
+        pai.setChild(row,col,colItem)
+        return self
+        #colItem.setBackup()
+   
+    def getColumn(self,col):
+        if self.column() != 0:
+            return None
+        indice = self.index() 
+        colind = indice.sibling(indice.row(),col)
+        if colind.isValid():
+            return self.model().itemFromIndex(colind)
+        else:
+            return None
+        
+    def getColumnData(self,idx,role=None):
+        """
+        VITAL ver que aqui idx no es la columna en el sentido de Qt sino de Payload, es decir desplazado por uno (la columna 0 es la "cabecera"
+        """
+        indice = self.index() #self.model().indexFromItem(field
+        colind = indice.sibling(indice.row(),idx + 1)
+        if colind.isValid():
+            return self.model().itemFromIndex(colind).data(role if role is not None else Qt.UserRole +1)
+        else:
+            return None
+#
+    """
+    
+    ##  Application specific methods
+    
+    """
+    #def childCount(self):
+        #return self.rowCount()
+    def getStatistics(self):
+        return self._getHead().stats
+    def isTotal(self):
+        if self.type() == TOTAL:
+            return True
+        else:
+            return False
+    def isBranch(self):
+        if self.type() == BRANCH:
+            return True
+        else:
+            return False
+    def isLeaf(self):
+        if self.type() in (QStandardItem.UserType,'LEAF'):
+            return True
+        else:
+            return False
+
+    def restoreBackup(self):
+        if self.column() != 0:
+            self.setData(self.originalValue,Qt.UserRole +1)
+        else:
+            indice = self.index()
+            k = 1
+            colind = indice.sibling(indice.row(),k)
+            while colind.isValid():
+                item = self.model().itemFromIndex(colind)
+                try:
+                    item.setData(item.originalValue,Qt.UserRole +1)
+                except AttributeError:
+                    pass
+                k +=1
+                colind = indice.sibling(indice.row(),k)
+
+            
+    def setBackup(self):
+        if self.column() != 0:
+            if self.originalValue is None:
+                self.originalValue = self.data(Qt.UserRole +1)
+        
+    def setStatistics(self):
+        if self.column() == 0:
+            stat_dict = stats(self.getPayload())
+            self.stats=stat_dict
+
+    def simplify(self):
+        npay = list()
+        ncab = list()
+        for k,value in enumerate(self.getPayload()):
+            if not value:
+                continue
+            npay.append(value)
+            ncab.append(k)
+        return npay,ncab
+
+    def simplifyHierarchical(self):
+        profundidad = self.depth()
+        tmppay = list()
+        ncab = list()
+        kitem = self
+        while kitem:
+            tmppay.insert(0,kitem.getPayload())
+            kitem = kitem.parent()
+            
+        npay = [list() for k in range(profundidad +1) ]  
+        for k,value in enumerate(self.getPayload()):
+            if not value:
+                continue
+            for j in range(profundidad +1):
+                npay[j].append(tmppay[j][k])
+            ncab.append(k)
+
+        return npay,ncab
+    
         
 class GuideItemModel(QStandardItemModel):
     """
@@ -491,374 +830,25 @@ class GuideItemModel(QStandardItemModel):
             return item.data(role)
 
     
-class GuideItem(QStandardItem):
-    """
-    ## Attributes
-
-    ### originalValue
-
-    ### stats
-
-    """
-    #
-    #  funciones reimplementadas
-    #
-    def __init__(self,*args):  #solo usamos valor (str o standarItem)
-        super(GuideItem, self).__init__(*args)
-        self.originalValue = self.data(Qt.UserRole +1)
-        if self.index().column() == 0:
-            self.stats = None
-    def setData(self,value,role):
-        super(GuideItem, self).setData(value,role)
-        
-    def type(self):
-        if self.data(Qt.UserRole +1) == '//':
-            return TOTAL
-        elif self.hasChildren():
-            return BRANCH
-        else:
-            return LEAF
-        
-    def data(self,role):
-        valor = super(GuideItem, self).data(role)
-        if role in (Qt.DisplayRole,Qt.UserRole +1) and valor is None:
-            valor = super(GuideItem,self).data(Qt.UserRole +1)
-        return valor
-    
-    def __str__(self):
-        return "<" + str(self.data(Qt.DisplayRole)) + ">"
-
-    def __repr__(self):
-        return "<" + str(self.data(Qt.UserRole +1)) + ">"
-
-    #
-    # funciones de API user functions
-    #
-    def getPayload(self):
-        lista=[]
-        indice = self.index() #self.model().indexFromItem(field)
-        k = 1
-        colind = indice.sibling(indice.row(),k)
-        while colind.isValid():
-            lista.append(colind.data(Qt.UserRole +1)) #print(colind.data())
-            k +=1
-            colind = indice.sibling(indice.row(),k)
-        return lista
-    
-    def setPayload(self,lista): 
-        indice = self.index() 
-        lastLeaf = 0
-        for k,valor in enumerate(lista): 
-            col = k + 1                
-            colind = indice.sibling(indice.row(),col)
-            if colind.isValid():
-                item = self.model().itemFromIndex(colind)
-                if not isinstance(item,GuideItem):
-                    colroot = indice.sibling(indice.row(),0)
-                    ritem = self.model().itemFromIndex(colroot)
-                    ritem.setColumn(col,valor)
-                else:
-                    item.setData(valor,Qt.UserRole +1)
-            else:
-                colroot = indice.sibling(indice.row(),0)
-                item = self.model().itemFromIndex(colroot)
-                item.setColumn(col,valor)
-
-    def lenPayload(self,leafOnly=False):
-        """
-        columnCount() no me funciona correctametne con los nodos hoja, asi que he tenido que 
-        escribir esta rutina
-        """
-        if self.hasChildren() and leafOnly:
-            return None
-        indice = self.index() #self.model().indexFromItem(field)
-        cont = 1
-        colind = indice.sibling(indice.row(),cont)
-        while colind.isValid():
-            cont +=1
-            colind = indice.sibling(indice.row(),cont)
-        return cont
-
-
-    
-    def getPayloadItem(self,idx):
-        indice = self.index() #self.model().indexFromItem(field
-        colind = indice.sibling(indice.row(),idx + 1)
-        if colind.isValid():
-            return self.model().itemFromIndex(colind).data(Qt.UserRole +1)
-        else:
-            return None
-
-    def setPayloadItem(self,idx,valor):
-        indice = self.index() #self.model().indexFromItem(field
-        colind = indice.sibling(indice.row(),idx + 1)
-        if colind.isValid():
-            item = self.model().itemFromIndex(colind)
-            if not isinstance(item,GuideItem):
-                colroot = indice.sibling(indice.row(),0)
-                ritem = self.model().itemFromIndex(colroot)
-                ritem.setColumn(idx +1,valor)
-            else:
-                item.setData(valor,Qt.UserRole +1)
-        else:
-            colroot = indice.sibling(indice.row(),0)
-            item = self.model().itemFromIndex(colroot)
-            item.setColumn(idx +1,valor)
-    
-    def _getHead(self):
-        if self.column() == 0:
-            return self
-        else:
-            indice = self.index() 
-            colind = indice.sibling(indice.row(),0)
-            return self.model().itemFromIndex(colind)
-
-    def getKey(self):
-        return self._getHead().data(Qt.UserRole +1)
-    
-    def getLabel(self):
-        return self._getHead().data(Qt.DisplayRole)
-
-
-    #
-    #  funciones de API general
-    #
-    def depth(self):
-        depth = 0
-        pai = self.parent()
-        while pai is not None and pai != self.model().invisibleRootItem():
-            pai = pai.parent()
-            depth += 1
-        return depth
-    
-    def getFullHeadInfo(self,**parms):
-        """
-        * parms
-            * content = ('key','value')
-            * format  = ('simple','string','array')
-            * delimiter  (only if format == string)
-            * sparse = boolean. Default False
-        """
-        rol = Qt.DisplayRole
-        if 'content' in parms and parms['content'] == 'key':
-                rol = Qt.UserRole +1
-        format = 'single'
-        delim = DELIMITER
-        if 'format' in parms:
-            sparse = parms.get('sparse',False)
-            if parms['format'] == 'string':
-                format = 'string'
-                delim = parms.get('delimiter',delim)
-            elif parms['format'] == 'array':
-                format = 'array'
-            else:
-                pass   # revert to single if not specified
-            
-        # por si no se pide en la columna 0
-        item = self._getHead()
-        # ahora obtengo los valores cuando no tengo que iterar por la jerarquia
-        clave = None
-        if format == 'single':
-            return item.data(rol)
-        elif format == 'string':
-            clave = item.data(rol)
-            if sparse:
-                for k in range(item.depth()):
-                    clave = delim + clave
-                return clave
-        elif format == 'array':
-            clave = []
-            clave.append(item.data(rol))
-            if sparse:
-                for k in range(item.depth()):
-                    clave.insert(0,'')
-                return clave
-
-        pai = item.parent()
-        while pai is not None and pai != item.model().invisibleRootItem():
-            if format == 'string':
-                clave = pai.data(rol) + delim + clave
-            elif format == 'array':
-                clave.insert(0,pai.data(rol))
-            pai = pai.parent()
-        return clave
-        
-    def getFullKey(self):
-        return self.getFullHeadInfo(content='key',format='string')
-        #clave = self.data(Qt.UserRole +1)
-        #pai = self.parent()
-        #while pai is not None and pai != self.model().invisibleRootItem():
-            #clave = pai.data(Qt.UserRole +1) + DELIMITER + clave
-            #pai = pai.parent()
-        #return clave
-
-    def getFullDesc(self):
-        return self.getFullHeadInfo(content='value',format='array')
-        #if item.column() != 0:
-            #fuente = self.index().sibling(self.index(),0)
-        #else:
-            #fuente = self
-        #clave = fuente.data(Qt.DisplayRole)
-        #pai = fuente.parent()
-        #while pai is not None and pai != fuente.model().invisibleRootItem():
-            #clave = pai.data(Qt.UserRole +1) + DELIMITER + clave
-            #pai = pai.parent()
-        #print('get full desc',clave)
-        #return clave
-        
-    def searchChildren(self,value,role=None):
-        if role is None:
-            prole = Qt.UserRole +1
-        else:
-            prole = role
-        return searchStandardItem(self,value,prole)
-
-    def setColumn(self,col,value):
-        #colItem = GuideItem()
-        #colItem.setData(value,Qt.UserRole +1)
-        #self.insertColumn(col,[colItem,])
-        row = self.index().row()
-        if self.parent() is None:
-            pai = self.model().invisibleRootItem()
-        else:
-            pai = self.parent()
-        colItem = GuideItem()
-        colItem.setData(value,Qt.UserRole +1)
-        pai.setChild(row,col,colItem)
-        return self
-        #colItem.setBackup()
-   
-    def getColumn(self,col):
-        if self.column() != 0:
-            return None
-        indice = self.index() 
-        colind = indice.sibling(indice.row(),col)
-        if colind.isValid():
-            return self.model().itemFromIndex(colind)
-        else:
-            return None
-        
-    def getColumnData(self,idx,role=None):
-        """
-        VITAL ver que aqui idx no es la columna en el sentido de Qt sino de Payload, es decir desplazado por uno (la columna 0 es la "cabecera"
-        """
-        indice = self.index() #self.model().indexFromItem(field
-        colind = indice.sibling(indice.row(),idx + 1)
-        if colind.isValid():
-            return self.model().itemFromIndex(colind).data(role if role is not None else Qt.UserRole +1)
-        else:
-            return None
-#
-    #  Compatibilidad TreeItem (no todas se incluyen)
-    #
-    def childCount(self):
-        return self.rowCount()
-    def getStatistics(self):
-        return self._getHead().stats
-    def isTotal(self):
-        if self.type() == TOTAL:
-            return True
-        else:
-            return False
-    def isBranch(self):
-        if self.type() == BRANCH:
-            return True
-        else:
-            return False
-    def isLeaf(self):
-        if self.type() in (QStandardItem.UserType,'LEAF'):
-            return True
-        else:
-            return False
-
-    def restoreBackup(self):
-        if self.column() != 0:
-            self.setData(self.originalValue,Qt.UserRole +1)
-        else:
-            indice = self.index()
-            k = 1
-            colind = indice.sibling(indice.row(),k)
-            while colind.isValid():
-                item = self.model().itemFromIndex(colind)
-                try:
-                    item.setData(item.originalValue,Qt.UserRole +1)
-                except AttributeError:
-                    pass
-                k +=1
-                colind = indice.sibling(indice.row(),k)
-
-            
-    def setBackup(self):
-        if self.column() != 0:
-            if self.originalValue is None:
-                self.originalValue = self.data(Qt.UserRole +1)
-        
-    def gpi(self,ind):
-        return self.getPayloadItem(ind)
-    def spi(self,ind,data):
-        return self.setPayloadItem(ind,data)
-    def setStatistics(self):
-        if self.column() == 0:
-            stat_dict = stats(self.getPayload())
-            self.stats=stat_dict
-    def getLevel(self):
-        return self.depth()
-    def getFullDesc(self):
-        if self.column() != 0:
-            return None
-        valor = []
-        valor.insert(0,self.data(Qt.DisplayRole))
-        pai = self.parent()
-        while pai is not None and pai != self.model().invisibleRootItem():
-            valor.insert(0,pai.data(Qt.DisplayRole))
-            pai = pai.parent()
-        return valor
-
-    #def getRoot(self):
-        #pass
-    def simplify(self):
-        npay = list()
-        ncab = list()
-        for k,value in enumerate(self.getPayload()):
-            if not value:
-                continue
-            npay.append(value)
-            ncab.append(k)
-        return npay,ncab
-
-    def simplifyHierarchical(self):
-        profundidad = self.depth()
-        tmppay = list()
-        ncab = list()
-        kitem = self
-        while kitem:
-            tmppay.insert(0,kitem.getPayload())
-            kitem = kitem.parent()
-            
-        npay = [list() for k in range(profundidad +1) ]  
-        for k,value in enumerate(self.getPayload()):
-            if not value:
-                continue
-            for j in range(profundidad +1):
-                npay[j].append(tmppay[j][k])
-            ncab.append(k)
-
-        return npay,ncab
-    
-    def __getitem__(self,campo):
-        if campo == 'key':
-            return self.data(Qt.UserRole +1)
-        elif campo == 'value':
-            return self.data(Qt.DisplayRole)
-        elif isinstance(campo,int):
-            return self.getColumnData(int)
-        else:
-            return None
-#
+"""
 #  MonkeyPatch section
-#  Definition of synonims of methods of the previous classes, used either for simplicity or compatibility
-#
+   Definition of synonims of methods of the previous classes, used either for simplicity or compatibility
+
+* GuideItemModel.len = GuideItemModel.numRecords
+
+* GuideItem.childCount = GuideItem.rowCount
+* GuideItem.gpi = GuideItem.getPayloadItem
+* GuideItem.spi = GuideItem.setPayloadItem
+* GuideItem.getLevel = GuideItem.depth
+* GuideItem.getHeader = GuideItem.getFullHeadInfo
+
+"""
 GuideItemModel.len = GuideItemModel.numRecords
-GuideItem.aleluya = GuideItem.data
+GuideItem.childCount = GuideItem.rowCount
+GuideItem.gpi = GuideItem.getPayloadItem
+GuideItem.spi = GuideItem.setPayloadItem
+GuideItem.getLevel = GuideItem.depth
+GuideItem.getHeader = GuideItem.getFullHeadInfo
+
 if __name__ == '__main__':
     pass
