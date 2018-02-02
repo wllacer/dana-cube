@@ -393,3 +393,6 @@ def empalmador(left,right,clause):
         return right
     else:
         return ''
+
+if __name__ == '__main__':
+    #prueba de funciones

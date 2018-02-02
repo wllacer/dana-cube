@@ -137,19 +137,54 @@ class TreeFormat(object):
             
 class GuideItem(QStandardItem):
     """
+    
+    This class is an specialization of [QStandardItem](http://doc.qt.io/qt-5/qstandarditem.html) for use with __GuideItemModel__ 
+    
+    We have developed it to be the model for [QTableViews](http://doc.qt.io/qt-5/qtableview.html), when we want to manipulate two-dimensional arrays, and the rows are suposed to be linked in a hierarchical tree, thus
+
+    o ------> row 
+          |-> row 
+               |
+               |--> row 
+               |--> row 
+    
+    row is  
+        row head + payload  (the equivalent of ) row head + data col1 + data col2 + .... ) 
+        
+    In our current implementation _GuideItem_ instantiates every element of the row.
+    
+    Column 0 of each row is the row header and has two data inside it:
+        * the internal __key__ accessed via the Qt.Role (Qt.QUserRole +1) and
+        * an human readable _value_. Accessd via the Qt.Role Qt.QDisplayRole
+        
+    When we navigate the tree we access for each row the row header.
+    
+    The other columns of the row is what we call _payload_, and can be accessed thru the header individually or as a block
+    
+    
     ## Attributes
 
+    both are given value during the application workflow
+    
     ### originalValue
-
+        A value for the item which to return 
     ### stats
+        a dict with following entries (excluidn null values)
+            * __avg__  average
+            * __std__  standard deviation
+            * __max__  max value
+            * __median__ median value
+            * __min__  minimum value
+            * __out_low__  upper threshold for low outliers
+            * __out_hig__  lower threshold for upper outliers
 
     """
     """
     
-    ## Methods reimplemented from QStandardItem
+    ## Methods reimplemented from [QStandardItem](http://doc.qt.io/qt-5/qstandarditem.html). See documentation there
     
     """
-    def __init__(self,*args):  #solo usamos valor (str o standarItem)
+    def __init__(self,*args):  #
         super(GuideItem, self).__init__(*args)
         self.originalValue = self.data(Qt.UserRole +1)
         if self.index().column() == 0:
@@ -159,6 +194,13 @@ class GuideItem(QStandardItem):
         #super(GuideItem, self).setData(value,role)
         
     def type(self):
+        """ 
+            We define three different types of items (really of the rows)
+            TOTAL which correspond to the grand total
+            BRANCH rows which have children 
+            LEAF   rows without children
+
+        """
         if self.data(Qt.UserRole +1) == '//':
             return TOTAL
         elif self.hasChildren():
@@ -167,8 +209,12 @@ class GuideItem(QStandardItem):
             return LEAF
         
     def data(self,role):
+        """
+        We make Qt.UserRole +1 as default role if Qt.DisplayRole returns None
+        
+        """
         valor = super(GuideItem, self).data(role)
-        if role in (Qt.DisplayRole,Qt.UserRole +1) and valor is None:
+        if role in (Qt.DisplayRole) and valor is None:
             valor = super(GuideItem,self).data(Qt.UserRole +1)
         return valor
     
@@ -179,12 +225,20 @@ class GuideItem(QStandardItem):
         return "<" + str(self.data(Qt.UserRole +1)) + ">"
 
     def __getitem__(self,campo):
+        """
+        
+        We define three types of fields
+        * __'key'__  the UsdrRole content
+        * __'value'__ the DisplaRole content
+        * a number: the playload column
+        
+        """
         if campo == 'key':
             return self.data(Qt.UserRole +1)
         elif campo == 'value':
             return self.data(Qt.DisplayRole)
         elif isinstance(campo,int):
-            return self.getColumnData(int)
+            return self.getColumnData(int +1)
         else:
             return None
 
@@ -270,7 +324,7 @@ class GuideItem(QStandardItem):
 
     def setColumn(self,col,value,role=None):
         """
-        Method to set , for the current row, a data column at position _col_ with value _value_ .
+        Method to set , for the current row, a payload entry at position _col_ with value _value_ .
         It's a destructive function: if the column already exist is replaced with the new version
         Can only be executed on GuideItems with column 0 (the head of the row)
         
@@ -311,7 +365,7 @@ class GuideItem(QStandardItem):
         
     def setUpdateColumn(self,col,value,role=None):
         """
-        Method to set , for the current row, a data column at position _col_ with value _value_ .
+        Method to set , for the current row, a payload entry at position _col_ with value _value_ .
         If the item already exist it is updated, else is created
         Can only be executed on GuideItems with column 0 (the head of the row)
         
@@ -343,8 +397,18 @@ class GuideItem(QStandardItem):
     def rowTraverse(self):
         """
         __EXPERIMENTAL__
-        generator navigate the vector elements inside a row after the current one
+        generator navigate the payload elements inside a row after the current one
         
+        Implementation note:
+            If the corresponding column is still not defined it returns a QStandardItem, not a real column
+        If we use expanded functionality of the class we must code like
+        ```
+            for item in self.rowTraverse():
+                if type(item) == QStandardItem:
+                    pass
+                else:
+                    ...
+        ```
         """
         indice = self.index() 
         k = indice.column() + 1
@@ -361,13 +425,13 @@ class GuideItem(QStandardItem):
     """
     def getPayload(self):
         """
-        Returns a list with the values of the data vector (columns 1 .. of the current row
+        Returns a list with the values of the payload (columns 1 .. of the current row
         """
         return [ item.data(Qt.UserRole +1) for item in self.rowTraverse() ]
     
     def setPayload(self,lista): 
         """
-        Updates in one step all the values of the data vector.
+        Updates in one step all the values of the payload.
         If len(lista) < len(vector) only those values get updated; otherwise the vector will be expanded as apropiate
         
         * Input parameters
@@ -381,10 +445,10 @@ class GuideItem(QStandardItem):
 
     def lenPayload(self):
         """
-        Length of the data vector for this __numRecords__
+        Length of the payload for this __numRecords__
         
         * Returns
-        Length of the data vector
+        Length of the payload
         
         * implementation notes
         QStandardItem.columnCount() does not seem to work, it should be lenPayload = columnCount -1.
@@ -404,11 +468,11 @@ class GuideItem(QStandardItem):
     
     def getPayloadItem(self,idx):
         """
-        Returns the data at data vector position _idx_ for the current row
+        Returns the data at payload position _idx_ for the current row
         It corresponds to column idx + 1
         
         * Input parameters
-            * __idx__ the index inside the data vector.
+            * __idx__ the index inside the payload.
         
         * Returns
         The item at that column or None if it doesn't exist
@@ -419,12 +483,12 @@ class GuideItem(QStandardItem):
     
     def setPayloadItem(self,idx,valor):
         """
-         Method to set , for the current row, a data vector column at index _idx_ with value _value_ .
+         Method to set , for the current row, a payload column at index _idx_ with value _value_ .
         If the item already exist it is updated, else is created
         It will correspond to column = idx +1
         
         * Input parameters
-            * __idx__ the index of the data vector to be set. 
+            * __idx__ the index of the payload to be set. 
             * __value__ the value to be inserted. 
             
         * returns
@@ -458,10 +522,10 @@ class GuideItem(QStandardItem):
 
     def getColumnData(self,idx,role=None):
         """
-        Returns data from an specified index and role inside the data vector.
+        Returns data from an specified index and role inside the payload.
         
         * Input parameter
-            * __idx__ the index in the data vector 
+            * __idx__ the index in the payload 
             * __role__ data associated to that role. Default is Qt.UserRole +1
             
         * Implementation notes
@@ -526,57 +590,131 @@ class GuideItem(QStandardItem):
         return clave
 
     def getFullKey(self):
+        """
+
+        obtains the key of the row in string format (i.e each hierachical step separated by DELIMITER ).
+        Key is the DB internal key and Qt.UserRole + 1 data
+        
+        """
         return self.getFullHeadInfo(content='key',format='string')
 
     def getFullDesc(self):
+        """
+
+        obtains the description of the row in array format (i.e each hierachical step in an occurrence of a list ).
+        Description is the presentation values of the keys and Qt.DisplayRole data
+        
+        """
         return self.getFullHeadInfo(content='value',format='array')
 
     def getStatistics(self):
+        """
+        
+        returns the statistics gathered for this row 
+        
+        """
         return self._getHead().stats
+    
     def isTotal(self):
+        """
+        
+        Boolean to check if the row is a totalizer row
+        
+        """
         if self.type() == TOTAL:
             return True
         else:
             return False
+        
     def isBranch(self):
+        """
+        
+        Boolean to check if the row is a branch row (has children of its own)
+        
+        """
         if self.type() == BRANCH:
             return True
         else:
             return False
     def isLeaf(self):
+        """
+        
+        Boolean to check if the row is a leaf row (has no children of its own)
+        
+        """
         if self.type() in (QStandardItem.UserType,'LEAF'):
             return True
         else:
             return False
 
     def restoreBackup(self):
+        """
+        
+        Returns the payload item to the original value
+        If executed at the header restores the full row
+        
+        """
         if self.column() != 0:
             self.setData(self.originalValue,Qt.UserRole +1)
         else:
-            indice = self.index()
-            k = 1
-            colind = indice.sibling(indice.row(),k)
-            while colind.isValid():
-                item = self.model().itemFromIndex(colind)
-                try:
-                    item.setData(item.originalValue,Qt.UserRole +1)
-                except AttributeError:
+            for item in self.rowTraverse():
+                if type(item) == QStandardItem:
                     pass
-                k +=1
-                colind = indice.sibling(indice.row(),k)
-
+                else:
+                    item.setData(item.originalValue,Qt.UserRole +1)
             
     def setBackup(self):
+        """
+        
+        Sets the current value as  backup value (self.originalValue) for a payload column
+        If executed at the header restores the full row
+        
+        For orthogonality sake we allow to process the full row if executed at the header
+        
+        """
         if self.column() != 0:
             if self.originalValue is None:
                 self.originalValue = self.data(Qt.UserRole +1)
+        else:
+            for item in self.rowTraverse():
+                if type(item) == QStandardItem:
+                    pass
+                else:
+                    if self.originalValue is None:
+                        self.originalValue = self.data(Qt.UserRole +1)
         
     def setStatistics(self):
+        """
+        
+        Executes the statistic gathering routine at the row 
+        Only executable at the row header
+        
+        The statistics routine is util.numeros.stats and creates a dict with following entries (excluidn null values)
+            * __avg__  average
+            * __std__  standard deviation
+            * __max__  max value
+            * __median__ median value
+            * __min__  minimum value
+            * __out_low__  upper threshold for low outliers
+            * __out_hig__  lower threshold for upper outliers
+            
+
+        """
         if self.column() == 0:
             stat_dict = stats(self.getPayload())
             self.stats=stat_dict
 
     def simplify(self):
+        """
+        We get the value of the elements in the payload which are not Null (None)
+        Only to be executed at the head
+        * return
+            * A list with the values of the non null payload
+            * A list with the indexes of those elements
+        
+        """
+        if self.column() != 0:
+            return None,None
         npay = list()
         ncab = list()
         for k,value in enumerate(self.getPayload()):
@@ -587,21 +725,30 @@ class GuideItem(QStandardItem):
         return npay,ncab
 
     def simplifyHierarchical(self):
+        """
+        We get the value of the elements in the payload at this level and its parents. Only return those which are not Null at this level
+        Only to be executed at the head
+        
+        * return
+            * A list for each hiearchical level of lists of values of the non null payload
+            * A list with the indexes of those elements
+        
+        """
+        if self.column() != 0:
+            return None,None
+
         profundidad = self.depth()
         tmppay = list()
         ncab = list()
-        kitem = self
+        npay = list()
+        
+        tmppay,ncab = self.simplify()
+        npay.append(tmppay[:])
+        kitem = self.parent()
         while kitem:
-            tmppay.insert(0,kitem.getPayload())
+            tmppay = kitem.getPayload()
+            npay.insert(0,[ tmppay[i] for i in ncab ])
             kitem = kitem.parent()
-            
-        npay = [list() for k in range(profundidad +1) ]  
-        for k,value in enumerate(self.getPayload()):
-            if not value:
-                continue
-            for j in range(profundidad +1):
-                npay[j].append(tmppay[j][k])
-            ncab.append(k)
 
         return npay,ncab
     
