@@ -158,8 +158,10 @@ We provide, also, some administrative tools to work with the cube definitions:
 
 ## Documentation
 
+It's a work in progress
+
 * The API for the core functionality us [here](docs/core_api.md)
-* The API for the Guide model trees is [here](docs/tree_api.md) (_still a WIP_)
+* The API for the Guide model trees is [here](docs/tree_api.md)
 * The full definition specs can be found at [this place (spanish only)](docs/tree_docs.md)
 * The user functions specs can be found [this place (spanish only)](docs/user_functions.md)
 

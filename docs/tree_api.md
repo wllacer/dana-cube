@@ -1,34 +1,50 @@
- 
-### traverse(tree, key=None, mode=1):
- 
+# General preview
 
-__DOES NOT WORK NOW__
+We have developed the classes here to be models for the [Qt Model-View Programming](http://doc.qt.io/qt-5/model-view-programming.html).
 
-Auxiliary function.
-Generator to navigate a tree, but as external function See base at util.treebasic.TreeModel
+They are tailored for the case we have to deal with two dimensional data, and one of the dimensions can be also viewed as a tree
 
-* Input parameter
-    * __tree__ the tree to be navigated
-    * __key__  the key of the element to start reading
-    * __mode__ type of navigation. One of (_ROOT, _DEPTH, _BREADTH) =range(3). _DEPTH navigates hierarchicaly, .BREADTH per level. Default _DEPTH
+```
+o ------> row 
+      |-> row 
+           |
+           |--> row 
+           |--> row 
+```
 
-* returns
-    * next item in sequence
+Each row is  
+
+```
+    row head + data col1 + data col2 + ....  
+``` 
+To represent the tree we have developed the __GuideItemModel__ (from [QStandardItemModel](http://doc.qt.io/qt-5/qstandarditemmodel.html))
+
+And to handle each item individually we created the __GuideItem__ (from [QStandardItem](http://doc.qt.io/qt-5/qstandarditem.html)
+
+
+Column 0 of each row is the row header and has two data inside it:
+
+* the internal __key__ accessed via the Qt.Role (Qt.QUserRole +1) and
+* an human readable _value_. Accessd via the Qt.Role Qt.QDisplayRole
     
-__NOTES__
 
-More complex interface to current traverse at GuideItemModel. Should be upgraded to this specs.
-See base at util.treebasic.TreeModel
+When we navigate the tree we access for each row the row header.
 
+The other columns of the row is what we call _payload_, and can be accessed thru the header individually or as a block
+
+
+# General Auxiliary functions 
  
-### searchStandardItem(item,value,role):
+## searchStandardItem(item,value,role):
  
-
-Auxiliary function.
 Implement a binary search inside a QStandardItemModel.
+
 Extremely faster than the .find method.
+
 Only perform the search in one hierarchical level
+
 currently REQUIRES that the children be ordered by default. As is the case in _danacube_
+
 Actual binary search code was retrieved from StackOverflow. Sadly i lost the reference
 
 * Input Parameters
@@ -37,14 +53,17 @@ Actual binary search code was retrieved from StackOverflow. Sadly i lost the ref
     * __role__  the __Qt Role__ for the value. (An item can contain different data associated to different roles)
 
 * Returns
+
     the item which has that _value_ or _None_
  
 * Programming notes.
+
     Look for GuideModel.searchHierarchy for usage
     
 __TODO__
 Make a variant which do not requires previous order
  
+
 # class TreeFormat(object):
  
 
@@ -54,10 +73,15 @@ __NOTES__
 The current implementation is pretty lame, and compatibility forced from previous code, and the parameters needed by __util.numeros.fmtNumber__
 
 ## Properties
+
 ### __stats__ 
+
 Boolean. IF the tree will keep statistics for each row
+
 ### __format __
+
 A dictionary containing following entries
+
 * __yellowoutliers__  Boolean. If statistic ooutliers in a row will be backgrounded in yellow. Default True
 * __rednegatives__    Boolean. If negative values will be backgrounded in red- Default True
 * __thousandseparator__ a Char. character for thousands separation. Default "." (spanish style)
@@ -67,7 +91,6 @@ A dictionary containing following entries
 ## Methods
  
 ### __init__(self,**opciones):
- 
 
 * Input parameters.
   A kwparms dict of
@@ -86,26 +109,22 @@ A dictionary containing following entries
 
 This class is an specialization of [QStandardItem](http://doc.qt.io/qt-5/qstandarditem.html) for use with __GuideItemModel__ 
 
-We have developed it to be the model for [QTableViews](http://doc.qt.io/qt-5/qtableview.html), when we want to manipulate two-dimensional arrays, and the rows are suposed to be linked in a hierarchical tree, thus
-
-o ------> row 
-      |-> row 
-           |
-           |--> row 
-           |--> row 
-
-row is  
-    row head + payload  (the equivalent of ) row head + data col1 + data col2 + .... ) 
-    
 In our current implementation _GuideItem_ instantiates every element of the row.
+We view a row as containing:
+
+```
+    row head + payload  (the equivalent of row head + data col1 + data col2 + ....  
+```
 
 Column 0 of each row is the row header and has two data inside it:
-    * the internal __key__ accessed via the Qt.Role (Qt.QUserRole +1) and
-    * an human readable _value_. Accessd via the Qt.Role Qt.QDisplayRole
-    
-When we navigate the tree we access for each row the row header.
 
-The other columns of the row is what we call _payload_, and can be accessed thru the header individually or as a block
+* the internal __key__ accessed via the _Qt.Role_ (_Qt.QUserRole_ +1) and
+* an human readable __value__. Accessed via the _Qt.Role_ _Qt.QDisplayRole_
+    
+
+When we navigate the tree we get the row header. for each row
+
+The other columns of the row is what we call __payload__, and can be accessed thru the header individually or as a block
 
 
 ## Attributes
@@ -113,38 +132,44 @@ The other columns of the row is what we call _payload_, and can be accessed thru
 both are given value during the application workflow
 
 ### originalValue
-    A value for the item which to return 
+
+A value for the item which to return 
+
 ### stats
-    a dict with following entries (excluidn null values)
-        * __avg__  average
-        * __std__  standard deviation
-        * __max__  max value
-        * __median__ median value
-        * __min__  minimum value
-        * __out_low__  upper threshold for low outliers
-        * __out_hig__  lower threshold for upper outliers
+
+a dict with following entries (excluding null values during computation)
+
+* __avg__  average
+* __std__  standard deviation
+* __max__  max value
+* __median__ median value
+* __min__  minimum value
+* __out_low__  upper threshold for low outliers
+* __out_hig__  lower threshold for upper outliers
 
 
 
-## Methods reimplemented from [QStandardItem](http://doc.qt.io/qt-5/qstandarditem.html). See documentation there
+## Methods reimplemented from [QStandardItem](http://doc.qt.io/qt-5/qstandarditem.html). 
+See documentation there
 
  
-### __init__(self,*args):  #
+### __init__(self,*args):  
  
  
 ### type(self):
  
 
-    We define three different types of items (really of the rows)
-    TOTAL which correspond to the grand total
-    BRANCH rows which have children 
-    LEAF   rows without children
+We define three different types of items (really of the _rows_)
+
+* __TOTAL__ which correspond to the grand total
+* __BRANCH__ rows which have children 
+* __LEAF__   rows without children
 
  
 ### data(self,role):
  
 
-We make Qt.UserRole +1 as default role if Qt.DisplayRole returns None
+We make _Qt.UserRole +1_ as default role if _Qt.DisplayRole_ returns None
 
  
 ### __str__(self):
@@ -156,9 +181,9 @@ We make Qt.UserRole +1 as default role if Qt.DisplayRole returns None
 ### __getitem__(self,campo):
  
 
-
 We define three types of fields
-* __'key'__  the UsdrRole content
+
+* __'key'__  the UserRole content
 * __'value'__ the DisplaRole content
 * a number: the playload column
 
@@ -173,62 +198,69 @@ We define three types of fields
 hierachical level of the row
 
 * returns
-An integer with the current level, starting from 0
+    * an integer with the current level, starting from 0
  
+
 ### _getHead(self):
  
 
-for a given row, returns the current row header (i.e. the sibling which has column 0)
+for a given row, returns the current _row header_ (i.e. the sibling which has column 0)
 
 * returns
-the item with column 0 from the current row
+    * the item with column 0 from the current row
  
+
 ### searchChildren(self,value,role=None):
  
 
 We seach for a specific value inside the children of the current row
 
 * Input parameters
-    * __value__ the value to be searched for. Type be QStandardItem.setData compatible
-    * __role__ Qt.Role, if not specified Qt.UserRole +1
+    * __value__ the value to be searched for. Type has to be _QStandardItem.setData_ compatible
+    * __role__ _Qt.Role_, if not specified _Qt.UserRole +1_
+    
 * Returns
-An item which contains this value or None
+    * An item which contains this value or None
 
 * Implementation notes
-Wide faster and hierachical level specific than model().find
-Currently the values of the rows have to be sorted in advance
+
+    Wide faster and hierachical level specific than _model().find_
+    Currently the values of the rows have to be sorted in advance
  
 ### getColumn(self,col):
  
 
-Returns the item at column _col_ for the current row_hdr_idx
+Returns the item at column _col_ for the current row  
 
 * Input parameters
     * __col__ the index of the column requested. 0 is not allowed
 
 * Returns
-The item at that column or None if it doesn't exist
+    * The item at that column or None if it doesn't exist
 
 * Implementation notes
-Surprisingly such a method does not exist at QStandardItem
+
+    Surprisingly such a method does not exist at QStandardItem
  
+
 ### setColumn(self,col,value,role=None):
  
 
-Method to set , for the current row, a payload entry at position _col_ with value _value_ .
+Method to set , for the current row, a _payload entry_ at position _col_ with value _value_ .
 It's a destructive function: if the column already exist is replaced with the new version
 Can only be executed on GuideItems with column 0 (the head of the row)
 
 * Input parameters
     * __col__ the index of the column to be set. 0 is not allowed
-    * __value__ the value to be inserted. Type be QStandardItem.setData compatible
-    * __role__ Qt.Role, if not specified Qt.UserRole +1
+    * __value__ the value to be inserted. Type be _QStandardItem.setData_ compatible
+    * __role__ _Qt.Role_, if not specified _Qt.UserRole +1_
     
 * returns
-    a reference to the new column item or None (if 0 happens to be specified at _col_)
+    * a reference to the new column item or None (if 0 happens to be specified at _col_)
     
 * Implementation notes.
-    QtStandardItem.insertColumn and QStandardItem.insertColumns are most probably faulty, and the need to create a list of QStandardItem (or derived) before using QStandardItem.insertColumns is unconfortable to program. 
+
+    _QtStandardItem.insertColumn_ and _QStandardItem.insertColumns_ are most probably faulty, and, even if worked, the need to create a list of QStandardItem (or derived) before using QStandardItem.insertColumns is unconfortable to program. 
     Column 0 is not allowed because (as it is the head of the row,i.e. _self_) it would destroy _self_
  
 ### setUpdateColumn(self,col,value,role=None):
@@ -244,17 +276,20 @@ Can only be executed on GuideItems with column 0 (the head of the row)
     * __role__ Qt.Role, if not specified Qt.UserRole +1
     
 * returns
-    a reference to the new column item or None (if 0 happens to be specified at _col_)
+    * a reference to the new column item or None (if 0 happens to be specified at _col_)
     
- 
+
 ### rowTraverse(self):
  
-
 __EXPERIMENTAL__
-generator navigate the payload elements inside a row after the current one
 
-Implementation note:
+generator to navigate the payload elements inside a row 
+
+* Implementation note:
+
+    If executed over an arbitrary item it starts on the following column
     If the corresponding column is still not defined it returns a QStandardItem, not a real column
+
 If we use expanded functionality of the class we must code like
 ```
     for item in self.rowTraverse():
@@ -271,29 +306,33 @@ If we use expanded functionality of the class we must code like
 ### getPayload(self):
  
 
-Returns a list with the values of the payload (columns 1 .. of the current row
+Returns a list with the values of the _payload_ (columns 1 .. of the current row
  
 ### setPayload(self,lista): 
  
 
-Updates in one step all the values of the payload.
+Updates in one step all the values of the _payload_
+
 If len(lista) < len(vector) only those values get updated; otherwise the vector will be expanded as apropiate
 
 * Input parameters
-     __lista__ a list with the new values for the vector 
+     * __lista__ a list with the new values for the vector 
  
+
 ### lenPayload(self):
  
 
-Length of the payload for this __numRecords__
+Length of the _payload_ for this row
 
 * Returns
-Length of the payload
+    * Length of the payload
 
 * implementation notes
-QStandardItem.columnCount() does not seem to work, it should be lenPayload = columnCount -1.
-In this case the use of the generator seems not that performant
+
+_QStandardItem.columnCount()_ does not seem to work, it should be lenPayload = columnCount -1.
+In this case the use of the generator seems not to be that performant
  
+
 ### getPayloadItem(self,idx):
  
 
@@ -304,7 +343,7 @@ It corresponds to column idx + 1
     * __idx__ the index inside the payload.
 
 * Returns
-The item at that column or None if it doesn't exist
+    * The item at that column or None if it doesn't exist
 
 
  
@@ -320,22 +359,16 @@ It will correspond to column = idx +1
     * __value__ the value to be inserted. 
     
 * returns
-    a reference to the new column item or None 
+    * a reference to the new column item or None 
  
+
 ### getKey(self):
  
-
-
 returns the internal key of the current row 
 
- 
 ### getLabel(self):
- 
-
 
 returns the display value for the current row 
-
-
 
 ##  Application specific methods
 
@@ -352,6 +385,7 @@ Returns data from an specified index and role inside the payload.
 * Implementation notes
     For compatibility with other tree implementations
  
+
 ### getFullHeadInfo(self,**parms):
  
 
@@ -361,100 +395,81 @@ Returns data from an specified index and role inside the payload.
     * delimiter  (only if format == string)
     * sparse = boolean. Default False
  
+
 ### getFullKey(self):
  
+obtains the key of the row in string format (i.e each hierachical step separated by _DELIMITER_ ).
 
-
-obtains the key of the row in string format (i.e each hierachical step separated by DELIMITER ).
 Key is the DB internal key and Qt.UserRole + 1 data
 
  
 ### getFullDesc(self):
  
-
-
 obtains the description of the row in array format (i.e each hierachical step in an occurrence of a list ).
-Description is the presentation values of the keys and Qt.DisplayRole data
 
+Description is the presentation values of the keys and Qt.DisplayRole data
  
 ### getStatistics(self):
  
-
-
 returns the statistics gathered for this row 
 
- 
 ### isTotal(self):
  
-
-
 Boolean to check if the row is a totalizer row
 
- 
 ### isBranch(self):
- 
-
 
 Boolean to check if the row is a branch row (has children of its own)
-
  
 ### isLeaf(self):
  
-
-
 Boolean to check if the row is a leaf row (has no children of its own)
 
- 
 ### restoreBackup(self):
  
-
-
 Returns the payload item to the original value
-If executed at the header restores the full row
 
+If executed at the header restores the full row
  
 ### setBackup(self):
  
-
-
-Sets the current value as  backup value (self.originalValue) for a payload column
+Sets the current value as  backup value (_self.originalValue_) for a _payload_ column
 If executed at the header restores the full row
 
-For orthogonality sake we allow to process the full row if executed at the header
+For orthogonality sake, we allow to process the full row if executed at the _header_
 
  
 ### setStatistics(self):
  
-
-
 Executes the statistic gathering routine at the row 
+
 Only executable at the row header
 
 The statistics routine is util.numeros.stats and creates a dict with following entries (excluidn null values)
-    * __avg__  average
-    * __std__  standard deviation
-    * __max__  max value
-    * __median__ median value
-    * __min__  minimum value
-    * __out_low__  upper threshold for low outliers
-    * __out_hig__  lower threshold for upper outliers
-    
 
+* __avg__  average
+* __std__  standard deviation
+* __max__  max value
+* __median__ median value
+* __min__  minimum value
+* __out_low__  upper threshold for low outliers
+* __out_hig__  lower threshold for upper outliers
+    
  
 ### simplify(self):
  
-
 We get the value of the elements in the payload which are not Null (None)
+
 Only to be executed at the head
+
 * return
     * A list with the values of the non null payload
     * A list with the indexes of those elements
 
- 
 ### simplifyHierarchical(self):
  
-
 We get the value of the elements in the payload at this level and its parents. Only return those which are not Null at this level
+
 Only to be executed at the head
 
 * return
@@ -680,10 +695,10 @@ We define special actions for following cases
     * Qt.DisplayRole. Formats the numeric vector
 
 #  MonkeyPatch section
-   Definition of synonims of methods of the previous classes, used either for simplicity or compatibility
+
+   Definition of synonyms of methods of the previous classes, used either for simplicity or compatibility
 
 * GuideItemModel.len = GuideItemModel.numRecords
-
 * GuideItem.childCount = GuideItem.rowCount
 * GuideItem.gpi = GuideItem.getPayloadItem
 * GuideItem.spi = GuideItem.setPayloadItem
