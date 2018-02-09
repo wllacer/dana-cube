@@ -21,7 +21,7 @@ def load_cubo(fichero="cubo.json"):
         with open(fichero) as infile:
             my_dict = json.load(infile)
     except IOError:
-        print('Error de E/S en fichero %s'%fichero)
+        print('Error de E/S en fichero. Probablemente fichero no exista %s'%fichero)
         my_dict= None
     return my_dict
 
@@ -56,6 +56,8 @@ def dump_structure(new_data, fichero="cubo.json",**flags):
         # proceso datos de seguridad (los dejo como estaban. asi puedo usarlo con y sin)
         for entry in k_new_data:
             if not isinstance(k_new_data[entry],dict):
+                continue
+            if not baseCubo:
                 continue
             if k_new_data[entry].get('connect'):
                 k_new_data[entry]['connect'] = baseCubo[entry]['connect']
@@ -93,17 +95,20 @@ def dump_config(new_data, fichero=".danabrowse.json",**flags):
     if secure:
         # proceso datos de seguridad (los dejo como estaban. asi puedo usarlo con y sin)
         for entry in k_new_data['Conexiones']:
+            if not baseCubo:
+                break
             if not isinstance(k_new_data['Conexiones'][entry],dict):
                 continue
             if k_new_data['Conexiones'][entry].get('dbpass'):
-                k_new_data['Conexiones'][entry]['dbpass'] = baseCubo['Conexiones'][entry]['dbpass']
+                k_new_data['Conexiones'][entry]['dbpass'] = baseCubo.get('Conexiones',{}).get(entry,{}).get('dbpass','')
             if k_new_data['Conexiones'][entry].get('dbuser'):
-                k_new_data['Conexiones'][entry]['dbuser'] = baseCubo['Conexiones'][entry]['dbuser']
+                k_new_data['Conexiones'][entry]['dbuser'] = baseCubo.get('Conexiones',{}).get(entry,{}).get('dbuser','')
 
     if baseCubo == k_new_data:
         return
     #no grabo si no hay cambios
-    dump_json(baseCubo,'{}.{}'.format(fichero,datetime.datetime.now().strftime("%Y%m%d-%H%M%S")))
+    if baseCubo:
+        dump_json(baseCubo,'{}.{}'.format(fichero,datetime.datetime.now().strftime("%Y%m%d-%H%M%S")))
     dump_json(k_new_data,fichero)
     
 def getConfigFileName(pName=None):

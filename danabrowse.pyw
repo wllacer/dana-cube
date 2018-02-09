@@ -123,7 +123,7 @@ class DanaBrowseWindow(QMainWindow):
         self.conn = self.dictionary.conn
         if self.dictionary.isEmpty:
             self.newConfigData()
-            self.dictionary._cargaModelo(self.dictionary.baseModel)
+            #self.dictionary._cargaModelo(self.dictionary.baseModel)
         self.setupView()
         self.cubeMgr = None # necesito mas adelante que este definida
         if DEBUG:
@@ -201,7 +201,8 @@ class DanaBrowseWindow(QMainWindow):
         self.editConnection(None)
         if self.configData['Conexiones']:
             self.saveConfigFile()
-            self.dictionary._cargaModelo(self.dictionary.baseModel)
+            print(self.configData)
+            self.dictionary._cargaModelo(confData=self.configData['Conexiones']) #self.dictionary.baseModel)
         else:
             QMessageBox.critical(self,
                                 "Error Fatal",

@@ -396,3 +396,4 @@ def empalmador(left,right,clause):
 
 if __name__ == '__main__':
     #prueba de funciones
+    pass

@@ -77,9 +77,9 @@ resultado = vista.toList()
 for linea in resultado:
     print(linea)
 ```
-As you can see from the sample, we __do not refer directly to the underlying database, but to an abstraction__. Each instance runs against what we call a __Cube__. This is the view of a data table (or table-like DB object -a view, a select statement, ...) and the definition of the potential fields to query and the criteria over which to search (which we call __guides__ ). This criteria can be scalar fields or hierarchical structures. If the guide is a date field; we automatically provide (for SQLITE, MySQL, PostGreSQL and Oracle, atm) for several subindexes (years, years-month, ...). And every different aggregation is what we call a __Vista__. We provide this abstraction as an Json text file ( _vide infra_ )
+As you can see from the sample, we __do not refer directly to the underlying database, but to an abstraction__. Each instance runs against what we call a __Cube__. This is the view of a data table (or table-like DB object -a view, a select statement, ...) and the definition of the potential __fields__ (other tools call it _measures_ ) to query and the criteria over which to search, which we call __guides__ ( other tools call _dimensions_ or _hierarchies_ ). This criteria can be scalar fields or hierarchical structures. If the guide is a date field; we automatically provide (for SQLITE, MySQL, PostGreSQL and Oracle, atm) for several subindexes (years, years-month, ...). And every different _cross aggregation_ is what we call a __Vista__. We provide this abstraction as an Json text file ( _vide infra_ )
 
-As you will notice, this is _not designed as an end user tool_ , rather it is designed to be used for knowledgable users (DBAs, developers, data owners) or as a ready made __API__ cum sample tool to be integrated in other's people work (as it still is in heavy development, _Caveat emptor_ ).
+As you will notice, this is, in this way is _not designed as an end user tool_ , rather it is designed to be used for knowledgable users (DBAs, developers, data owners) or as a ready made __API__ cum sample tool to be integrated in other's people work (as it still is in heavy development, _Caveat emptor_ ).
 
 But we do provide and __end user tool__, which can be used standalone: It is called  __danacube.py__  Is our main tool where we execute our aggregate accesses to the database (to the cube), and provide means to show graphics or to export the results into several data formats
 
@@ -235,9 +235,10 @@ Testers are welcome.
 
 ## Out there ...
 
-If you feel my package isn't enough for you  have a look at the following projects of similar technology.They might be of interest for you
+If you feel my package isn't enough for you  have a look at the following projects of similar scope and technology. They might be of interest for you
 
 * [Cubes project](https://github.com/DataBrewery/cubes)
 * [Pandas project](https://pandas.pydata.org/)
+* [Orange3 project](https://github.com/biolab/orange3)
 
 A.M.D.G. & B.V.M.

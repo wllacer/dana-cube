@@ -172,13 +172,13 @@ We define three different types of items (really of the _rows_)
 We make _Qt.UserRole +1_ as default role if _Qt.DisplayRole_ returns None
 
  
-### __str__(self):
+### \_\_str\_\_(self):
  
  
-### __repr__(self):
+### \_\_repr\_\_(self):
  
  
-### __getitem__(self,campo):
+### \_\_getitem\_\_(self,campo):
  
 
 We define three types of fields
@@ -199,15 +199,6 @@ hierachical level of the row
 
 * returns
     * an integer with the current level, starting from 0
- 
-
-### _getHead(self):
- 
-
-for a given row, returns the current _row header_ (i.e. the sibling which has column 0)
-
-* returns
-    * the item with column 0 from the current row
  
 
 ### searchChildren(self,value,role=None):
@@ -287,8 +278,9 @@ generator to navigate the payload elements inside a row
 
 * Implementation note:
 
-    If executed over an arbitrary item it starts on the following column
-    If the corresponding column is still not defined it returns a QStandardItem, not a real column
+If executed over an arbitrary item it starts on the following column
+
+If the corresponding column is still not defined it returns a QStandardItem, not a real column
 
 If we use expanded functionality of the class we must code like
 ```

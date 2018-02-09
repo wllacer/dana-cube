@@ -119,11 +119,15 @@ class DataDict():
         if 'conn' in kwargs:
             self.appendConnection(kwargs.get('conName','$$TEMP'),**kwargs)
             return
-        if 'confData' not in kwargs:
-            definition = self.configData.get('Conexiones')
         if 'conName' in kwargs:
             self.appendConnection(kwargs.get('conName'),**kwargs)
             return
+        
+        if 'confData' not in kwargs:
+            definition = self.configData.get('Conexiones')
+        else:
+            definition = kwargs['confData']
+
         for confName in sorted(definition):
             self.appendConnection(confName,**kwargs)  # aqui no tiene sentido filtrar
 
@@ -131,7 +135,7 @@ class DataDict():
 
         padre = self.hiddenRoot
         if 'confData' in kwargs:
-            conf = kwargs['confData']
+            conf = kwargs['confData'][confName]   
             # asi tengo acceso a esos datos aunque sea dinamica
             if not self.configData:
                 self.configData = {'Conexiones':{confName:conf}}
@@ -152,7 +156,7 @@ class DataDict():
             pos = padre.rowCount()
         else:
             pos = kwargs.get('pos')
-            
+
         try:
             if 'conn' in kwargs:
                 self.conn[confName] = kwargs['conn']
@@ -171,7 +175,7 @@ class DataDict():
         except Exception as e:
             self.conn[confName] = None
             informacion = [ str(item) for item in e.orig.args ]
-            print(informacion)
+            print(type(e),informacion)
             showConnectionError(confName,norm2String(informacion))             
             padre.insertRow(pos,(ConnectionTreeItem(confName,None),QStandardItem('Disconnected')))
             curConnection = padre.child(pos)
@@ -207,12 +211,14 @@ class DataDict():
     @model_change_control()
     def updateModel(self,confName=None):
         """
+        __BUG__
+        la invocacion a _cargaModelo no puedo garantizar que sea  correcta. No he encontrado un path de uso 
         """
         #self.baseModel.beginResetModel()       
         if confName is None:
             self.baseModel.clear()
             self.hiddenRoot = self.baseModel.invisibleRootItem()
-            self._cargaModelo(self.baseModel,sysExclude=self.sysExclude)
+            self._cargaModelo() #self.baseModel,sysExclude=self.sysExclude)   
         else:
             conexion = self.conn.get(confName)
             if conexion is not None:  #conexion nueva
