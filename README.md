@@ -4,18 +4,19 @@ Dana-cube is a tool to automate the design, execution and visualization of __cro
 
 __Table of Contents__
 
-. [dana-cube]()
-   1. [What's the problem:]()
-   1. [What we provide]()
-   1. [Where to run the tool]()
-   1. [The definitions file]()
-   1. [Documentation]()
-   1. [Sample Data]()
-   1. [Dependencies]()
-   1. [License]()
-   1. [DANACUBE enters __ALPHA__]()
-   1. [Help Needed]()
-   1. [Out there ...]()
+* [What's the problem:](#whats-the-problem)
+* [What we provide](#what-we-provide)
+* [Where to run the tool](#where-to-run-the-tool)
+* [The definitions file](#the-definitions-file)
+* [Documentation](#documentation)
+* [Sample Data](#sample-data)
+* [Dependencies](#dependencies)
+* [License](#license)
+* [DANACUBE enters <strong>ALPHA</strong>](#danacube-enters-alpha)
+* [Help Needed](#help-needed)
+* [Out there ...](#out-there-)
+
+
    
 ## What's the problem:
 

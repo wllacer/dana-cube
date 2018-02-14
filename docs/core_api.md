@@ -1,56 +1,56 @@
 __Table of Contents__
 
-1. [Auxiliary Functions][]
-   1. [mergeString(string1,string2,connector)][]
-   1. [getParentKey(clave,debug=False):][]
-   1. [getOrderedText(desc,sparse=True,separator=None):][]
-   1. [exportFilter(item,dim,filter=None):][]
-1. [class Cubo:][]
-   1. [Attributes][]
-      1. [definition][]
-      1. [nombre][]
-      1. [db][]
-      1. [lista_guias][]
-      1. [lista_funciones ][]
-      1. [lista_campos][]
-      1. [dbdriver ][]
-      1. [newModel __UNUSED__][]
-      1. [recordStructure  ][]
-   1. [Methods][]
-      1. [ \_\_init\_\_(self, definicion,nombre=None,dbConn=None):][]
-      1. [ getGuideNames(self):][]
-      1. [ getFunctions(self):][]
-      1. [ getFields(self):][]
-      1. [ fillGuias(self):][]
-      1. [ fillGuia(self,guidIdentifier,total=None):][]
-   1. [Programming notes][]
-1. [class Vista:][]
-   1. [Attributes][]
-      1. [cubo][]
-      1. [agregado][]
-      1. [campo][]
-      1. [filtro][]
-      1. [totalizado][]
-      1. [stats][]
-      1. [row_id][]
-      1. [col_id][]
-      1. [row_hdr_idx][]
-      1. [col_hdr_idx][]
-      1. [dim_row][]
-      1. [dim_col][]
-      1. [array][]
-   1. [Methods][]
-      1. [ \_\_init\_\_(self, cubo,prow, pcol,  agregado, campo, filtro='',totalizado=True, stats=True):][]
-      1. [ setNewView(self,prow, pcol, agregado=None, campo=None, filtro='',totalizado=True, stats=True, force=False):][]
-      1. [ toNewTree(self):][]
-      1. [ toNewTree2D(self):][]
-      1. [toArray(self)][]
-      1. [toArrayFilter(self,filterrow,filtercol)][]
-      1. [toList(self):][]
-      1. [ recalcGrandTotal(self):][]
-      1. [ traspose(self):][]
-      1. [ export(self,parms,selArea=None):][]
-   1. [Programming notes][]
+* [Auxiliary Functions](#auxiliary-functions)
+* [mergeString(string1,string2,connector)](#mergestringstring1string2connector)
+* [getParentKey(clave,debug=False):](#getparentkeyclavedebugfalse)
+* [getOrderedText(desc,sparse=True,separator=None):](#getorderedtextdescsparsetrueseparatornone)
+* [exportFilter(item,dim,filter=None):](#exportfilteritemdimfilternone)
+* [class Cubo:](#class-cubo)
+* [Attributes](#attributes)
+    * [definition](#definition)
+    * [nombre](#nombre)
+    * [db](#db)
+    * [lista_guias](#lista_guias)
+    * [lista_funciones](#lista_funciones)
+    * [lista_campos](#lista_campos)
+    * [dbdriver](#dbdriver)
+    * [newModel <strong>UNUSED</strong>](#newmodel-unused)
+    * [recordStructure](#recordstructure)
+* [Methods](#methods)
+    * [__init__(self, definicion,nombre=None,dbConn=None):](#__init__self-definicionnombrenonedbconnnone)
+    * [getGuideNames(self):](#getguidenamesself)
+    * [getFunctions(self):](#getfunctionsself)
+    * [getFields(self):](#getfieldsself)
+    * [fillGuias(self):](#fillguiasself)
+    * [fillGuia(self,guidIdentifier,total=None):](#fillguiaselfguididentifiertotalnone)
+* [Programming notes](#programming-notes)
+* [class Vista:](#class-vista)
+* [Attributes](#attributes-1)
+    * [cubo](#cubo)
+    * [agregado](#agregado)
+    * [campo](#campo)
+    * [filtro](#filtro)
+    * [totalizado](#totalizado)
+    * [stats](#stats)
+    * [row_id](#row_id)
+    * [col_id](#col_id)
+    * [row_hdr_idx](#row_hdr_idx)
+    * [col_hdr_idx](#col_hdr_idx)
+    * [dim_row](#dim_row)
+    * [dim_col](#dim_col)
+    * [array](#array)
+* [Methods](#methods-1)
+    * [__init__(self, cubo,prow, pcol,  agregado, campo, filtro='',totalizado=True, stats=True):](#__init__self-cuboprow-pcol--agregado-campo-filtrototalizadotrue-statstrue)
+    * [setNewView(self,prow, pcol, agregado=None, campo=None, filtro='',totalizado=True, stats=True, force=False):](#setnewviewselfprow-pcol-agregadonone-camponone-filtrototalizadotrue-statstrue-forcefalse)
+    * [toNewTree(self):](#tonewtreeself)
+    * [toNewTree2D(self):](#tonewtree2dself)
+    * [toArray(self)](#toarrayself)
+    * [toArrayFilter(self,filterrow,filtercol)](#toarrayfilterselffilterrowfiltercol)
+    * [toList(self):](#tolistself)
+    * [recalcGrandTotal(self):](#recalcgrandtotalself)
+    * [traspose(self):](#trasposeself)
+    * [export(self,parms,selArea=None):](#exportselfparmsselareanone)
+* [Programming notes](#programming-notes-1)
 
 # Auxiliary Functions
 ## mergeString(string1,string2,connector)

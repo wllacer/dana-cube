@@ -1,11 +1,12 @@
 __Table of Contents__
 
-1. [Funciones de usuario (plugins)][]
-   1. [Los modulos de usuario. Requerimientos][]
-   1. [Tipos de función y parametros que reciben][]
-   1. [parametros de registro][]
-   1. [Metodos que pueden ser utilizadas para acceder a los datos del modelo (de TreeItem)][]
-   1. [Un registro anotado.][]
+* [Funciones de usuario (plugins)](#funciones-de-usuario-plugins)
+    * [Los modulos de usuario. Requerimientos](#los-modulos-de-usuario-requerimientos)
+    * [Tipos de función y parametros que reciben](#tipos-de-función-y-parametros-que-reciben)
+    * [parametros de registro](#parametros-de-registro)
+    * [Metodos que pueden ser utilizadas para acceder a los datos del modelo (de TreeItem)](#metodos-que-pueden-ser-utilizadas-para-acceder-a-los-datos-del-modelo-de-treeitem)
+    * [Un registro anotado.](#un-registro-anotado)
+
 
 # Funciones de usuario (plugins)
 Son funciones que el usuario puede añadir para ejecutar procesos especiales sobre el cubo (En la versión actual *por cada fila individual*). Estos aparecen en un menú separado

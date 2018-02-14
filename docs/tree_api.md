@@ -1,73 +1,74 @@
 __Table of Contents__
 
-1. [General preview][]
-1. [General Auxiliary functions ][]
-   1. [searchStandardItem(item,value,role):][]
-1. [class TreeFormat(object):][]
-   1. [Properties][]
-      1. [__stats__ ][]
-      1. [__format __][]
-   1. [Methods][]
-      1. [__init__(self,**opciones):][]
-1. [class GuideItem(QStandardItem):][]
-   1. [Attributes][]
-      1. [originalValue][]
-      1. [stats][]
-   1. [Methods reimplemented from [QStandardItem](http://doc.qt.io/qt-5/qstandarditem.html). ][]
-      1. [__init__(self,*args):  ][]
-      1. [type(self):][]
-      1. [data(self,role):][]
-      1. [\_\_str\_\_(self):][]
-      1. [\_\_repr\_\_(self):][]
-      1. [\_\_getitem\_\_(self,campo):][]
-   1. [ General methods QStandardItem should have][]
-      1. [depth(self):][]
-      1. [searchChildren(self,value,role=None):][]
-      1. [getColumn(self,col):][]
-      1. [setColumn(self,col,value,role=None):][]
-      1. [setUpdateColumn(self,col,value,role=None):][]
-      1. [rowTraverse(self):][]
-   1. [General methods which make up the API for __user functions__][]
-      1. [getPayload(self):][]
-      1. [setPayload(self,lista): ][]
-      1. [lenPayload(self):][]
-      1. [getPayloadItem(self,idx):][]
-      1. [setPayloadItem(self,idx,valor):][]
-      1. [getKey(self):][]
-      1. [getLabel(self):][]
-   1. [ Application specific methods][]
-      1. [getColumnData(self,idx,role=None):][]
-      1. [getFullHeadInfo(self,**parms):][]
-      1. [getFullKey(self):][]
-      1. [getFullDesc(self):][]
-      1. [getStatistics(self):][]
-      1. [isTotal(self):][]
-      1. [isBranch(self):][]
-      1. [isLeaf(self):][]
-      1. [restoreBackup(self):][]
-      1. [setBackup(self):][]
-      1. [setStatistics(self):][]
-      1. [simplify(self):][]
-      1. [simplifyHierarchical(self):][]
-1. [class GuideItemModel(QStandardItemModel):][]
-   1. [Implementation details][]
-   1. [Attributes][]
-      1. [datos][]
-      1. [name][]
-      1. [vista][]
-      1. [orthogonal][]
-      1. [__init__(self,parent=None):][]
-      1. [traverse(self,base=None):][]
-      1. [numRecords(self,type=None):][]
-      1. [asDict(self):][]
-      1. [asHdr(self,**parms):][]
-      1. [asDictFilter(self,filter):][]
-      1. [asHdrFilter(self,filter,**parms):][]
-      1. [lenPayload(self,leafOnly=False):][]
-      1. [searchHierarchy(self,valueList,role=None):][]
-      1. [setStats(self,switch):][]
-      1. [data(self,index,role):][]
-1. [ MonkeyPatch section][]
+* [General preview](#general-preview)
+* [General Auxiliary functions](#general-auxiliary-functions)
+    * [searchStandardItem(item,value,role):](#searchstandarditemitemvaluerole)
+* [class TreeFormat(object):](#class-treeformatobject)
+    * [Properties](#properties)
+        * [<strong>stats</strong>](#stats)
+        * [__format __](#__format-__)
+    * [Methods](#methods)
+        * [<strong>init</strong>(self,**opciones):](#initselfopciones)
+* [class GuideItem(QStandardItem):](#class-guideitemqstandarditem)
+    * [Attributes](#attributes)
+        * [originalValue](#originalvalue)
+        * [stats](#stats-1)
+    * [Methods reimplemented from <a href="http://doc.qt.io/qt-5/qstandarditem.html" rel="nofollow">QStandardItem</a>.](#methods-reimplemented-from-qstandarditem)
+        * [<strong>init</strong>(self,*args):](#initselfargs)
+        * [type(self):](#typeself)
+        * [data(self,role):](#dataselfrole)
+        * [__str__(self):](#__str__self)
+        * [__repr__(self):](#__repr__self)
+        * [__getitem__(self,campo):](#__getitem__selfcampo)
+    * [General methods QStandardItem should have](#general-methods-qstandarditem-should-have)
+        * [depth(self):](#depthself)
+        * [searchChildren(self,value,role=None):](#searchchildrenselfvaluerolenone)
+        * [getColumn(self,col):](#getcolumnselfcol)
+        * [setColumn(self,col,value,role=None):](#setcolumnselfcolvaluerolenone)
+        * [setUpdateColumn(self,col,value,role=None):](#setupdatecolumnselfcolvaluerolenone)
+        * [rowTraverse(self):](#rowtraverseself)
+    * [General methods which make up the API for <strong>user functions</strong>](#general-methods-which-make-up-the-api-for-user-functions)
+        * [getPayload(self):](#getpayloadself)
+        * [setPayload(self,lista):](#setpayloadselflista)
+        * [lenPayload(self):](#lenpayloadself)
+        * [getPayloadItem(self,idx):](#getpayloaditemselfidx)
+        * [setPayloadItem(self,idx,valor):](#setpayloaditemselfidxvalor)
+        * [getKey(self):](#getkeyself)
+        * [getLabel(self):](#getlabelself)
+    * [Application specific methods](#application-specific-methods)
+        * [getColumnData(self,idx,role=None):](#getcolumndataselfidxrolenone)
+        * [getFullHeadInfo(self,**parms):](#getfullheadinfoselfparms)
+        * [getFullKey(self):](#getfullkeyself)
+        * [getFullDesc(self):](#getfulldescself)
+        * [getStatistics(self):](#getstatisticsself)
+        * [isTotal(self):](#istotalself)
+        * [isBranch(self):](#isbranchself)
+        * [isLeaf(self):](#isleafself)
+        * [restoreBackup(self):](#restorebackupself)
+        * [setBackup(self):](#setbackupself)
+        * [setStatistics(self):](#setstatisticsself)
+        * [simplify(self):](#simplifyself)
+        * [simplifyHierarchical(self):](#simplifyhierarchicalself)
+* [class GuideItemModel(QStandardItemModel):](#class-guideitemmodelqstandarditemmodel)
+    * [Implementation details](#implementation-details)
+    * [Attributes](#attributes-1)
+        * [datos](#datos)
+        * [name](#name)
+        * [vista](#vista)
+        * [orthogonal](#orthogonal)
+        * [<strong>init</strong>(self,parent=None):](#initselfparentnone)
+        * [traverse(self,base=None):](#traverseselfbasenone)
+        * [numRecords(self,type=None):](#numrecordsselftypenone)
+        * [asDict(self):](#asdictself)
+        * [asHdr(self,**parms):](#ashdrselfparms)
+        * [asDictFilter(self,filter):](#asdictfilterselffilter)
+        * [asHdrFilter(self,filter,**parms):](#ashdrfilterselffilterparms)
+        * [lenPayload(self,leafOnly=False):](#lenpayloadselfleafonlyfalse)
+        * [searchHierarchy(self,valueList,role=None):](#searchhierarchyselfvaluelistrolenone)
+        * [setStats(self,switch):](#setstatsselfswitch)
+        * [data(self,index,role):](#dataselfindexrole)
+* [MonkeyPatch section](#monkeypatch-section)
+
 
 # General preview
 

@@ -1,12 +1,12 @@
 __Table of Contents__
 
-1. [reglas de produccion del fichero cubo][]
-   1. [definicion de cubos individuales][]
-      1. [conexiones][]
-      1. [Campos][]
-      1. [guias][]
-   1. [La entrada de defecto][]
-   1. [relacion completa de las reglas BNF][]
+* [reglas de produccion del fichero cubo](#reglas-de-produccion-del-fichero-cubo)
+    * [definicion de cubos individuales](#definicion-de-cubos-individuales)
+        * [conexiones](#conexiones)
+        * [Campos](#campos)
+        * [guias](#guias)
+    * [La entrada de defecto](#la-entrada-de-defecto)
+    * [relacion completa de las reglas BNF](#relacion-completa-de-las-reglas-bnf)
 
 # reglas de produccion del fichero cubo
 
