@@ -214,7 +214,7 @@ class GuideItem(QStandardItem):
         
         """
         valor = super(GuideItem, self).data(role)
-        if role in (Qt.DisplayRole) and valor is None:
+        if role in (Qt.DisplayRole, ) and valor is None:
             valor = super(GuideItem,self).data(Qt.UserRole +1)
         return valor
     
