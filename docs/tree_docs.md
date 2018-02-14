@@ -1,3 +1,13 @@
+__Table of Contents__
+
+1. [reglas de produccion del fichero cubo][]
+   1. [definicion de cubos individuales][]
+      1. [conexiones][]
+      1. [Campos][]
+      1. [guias][]
+   1. [La entrada de defecto][]
+   1. [relacion completa de las reglas BNF][]
+
 # reglas de produccion del fichero cubo
 
 *   \<cube_file\> ::= \<cube_defs\>+ [ \<default\> ]

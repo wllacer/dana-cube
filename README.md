@@ -2,6 +2,21 @@
 
 Dana-cube is a tool to automate the design, execution and visualization of __cross reference queries__, aka __pivot tables__ aka __multidimensional aggregate queries__.
 
+__Table of Contents__
+
+. [dana-cube][]
+   1. [What's the problem:][]
+   1. [What we provide][]
+   1. [Where to run the tool][]
+   1. [The definitions file][]
+   1. [Documentation][]
+   1. [Sample Data][]
+   1. [Dependencies][]
+   1. [License][]
+   1. [DANACUBE enters __ALPHA__][]
+   1. [Help Needed][]
+   1. [Out there ...][]
+   
 ## What's the problem:
 
 I spent most of the last twenty years of my professional life mainly as a DBA and/or system manager  on "big databases" Now and then, i was sent as _"maiden for everything"_ to smaller customers and projects. And i ran also my private projects. Everywhere, be it great corporations or goverment offices, be it small shops or individual users with a database. there was the problem __how to extract information from the mass of data in a database beyond what's preprogrammed in the applications__.

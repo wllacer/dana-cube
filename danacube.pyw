@@ -59,8 +59,11 @@ Nueva versiion. TodoList para volcar
             El error es previo; debia estar resuelto, se suponia
             sqlalchemy.exc.ProgrammingError: (psycopg2.ProgrammingError) constante no entera en GROUP BY
                 LÍNEA 1: ...ntal.inventory_id)  FROM public.rental   GROUP BY '//', staf...
-                                                                                ^
+        
     [SQL: " SELECT  '//', staff_id, sum(public.rental.inventory_id)  FROM public.rental   GROUP BY '//', staff_id ORDER BY 1 , 2  "]
+    
+        TODO
+            fechas no acaban de salir bien (ver datos light)
 
 """
 
