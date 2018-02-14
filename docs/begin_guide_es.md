@@ -27,6 +27,34 @@ Si lo que se desea es meramente evaluar las capacidades del producto, recomendam
 
 # Trabajar con un cubo
 
+## Estructura de menus
+
+* Cubo
+    * Abrir cubo
+    * Convertir vista actual a defecto
+    * Guardar Filtros permanetnemente
+    * Salvar rango Fechas
+* Vista
+    * Abrir vista
+    * Cambiar vista actual
+    * Cerrar vista actual
+* Usar Filtros
+    * Editar Filtro
+    * Borrar Filtros
+    + Editar Rango Fechas
+    * Borrar rango fechas
+
+* Opciones
+    * Exportar Datos
+    * Trasponer datos
+    * Presentacion
+    * Graficos
+* Funciones de usuario
+    * restaurar valores originales
+    * Funciones generales ...
+    * Funciones especificas ...
+
+
 # Configurar un cubo
 ## configurar la conexion
 ## analizar los datos existentes

@@ -479,7 +479,7 @@ class GuideItem(QStandardItem):
         
         
         """
-        return self.getColumn(idx +1)
+        return self.getColumn(idx +1).data(Qt.UserRole +1)
     
     def setPayloadItem(self,idx,valor):
         """
@@ -494,7 +494,7 @@ class GuideItem(QStandardItem):
         * returns
             a reference to the new column item or None 
        """
-        return self.setUpdateColumn(self,idx +1,valor)
+        return self.setUpdateColumn(idx +1,valor)
     
     def getKey(self):
         """
