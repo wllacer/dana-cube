@@ -62,9 +62,9 @@ Nueva versiion. TodoList para volcar
         
     [SQL: " SELECT  '//', staff_id, sum(public.rental.inventory_id)  FROM public.rental   GROUP BY '//', staff_id ORDER BY 1 , 2  "]
     
-        DONE
+        DONE __COSMETIC__
             fechas no acaban de salir bien (ver datos light)
-        BUG
+        DONE
             Cabeceras de las pestañas es siempre la misma
         TODO
             context menu con los datos estadisticos en la linea
@@ -409,9 +409,11 @@ class DanaCubeWindow(QMainWindow):
             self.views.append(TabMgr(self,**viewData))
         else:
             self.views.append(TabMgr(self))
-        idx = self.tabulatura.addTab(self.views[-1],None) #self.views[-1].getTitleText())
+            
+        titulo = self.views[-1].getTitleText()
+        idx = self.tabulatura.addTab(self.views[-1],titulo)
         self.tabulatura.setCurrentIndex(idx)
-        self.tabulatura.setTabText(idx,self.views[-1].getTitleText())
+        print('created',idx,titulo)
 
     
     def closeView(self):
@@ -660,9 +662,14 @@ class DanaCube(QTreeView):
                     self.vista.agregado,
                     self.vista.campo.split('.')[-1]
                     )
+    
     def setTitle(self):
         tabId = self.parent.tabulatura.currentIndex()
-        self.parent.tabulatura.setTabText(tabId,self.getTitleText())
+        if tabId < 0:
+            return
+        curWidget = self.parent.tabulatura.currentWidget()
+        print('activated',tabId,curWidget.getTitleText())
+        self.parent.tabulatura.setTabText(tabId,curWidget.getTitleText())
             
     def setupFilters(self): #,my_cubos,seleccion):
         #self.cubo = Cubo(my_cubos[seleccion])
@@ -708,13 +715,13 @@ class DanaCube(QTreeView):
         self.setTitle()
 
         
-    def changeVista(self):
-        viewData = self.requestVista()
-        if not viewData:
-            return
-        self.cargaVista(viewData['row'], viewData['col'], viewData['agregado'], viewData['campo'], total=viewData['totalizado'], estad=viewData['stats'])
+    #def changeVista(self):
+        #viewData = self.requestVista()
+        #if not viewData:
+            #return
+        #self.cargaVista(viewData['row'], viewData['col'], viewData['agregado'], viewData['campo'], total=viewData['totalizado'], estad=viewData['stats'])
         
-        self.setTitle()
+        #self.setTitle()
         
     @waiting_effects
     @model_change_control()

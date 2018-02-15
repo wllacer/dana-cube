@@ -11,9 +11,10 @@
     If any of the Items has a blank key (''), it is positioned in different places if it's row or column, and destroys the array
     Example.  at the _datos light_ cube, at the _geo_ or _region_ guide, thre is an entry _España_ which has this property . Just try to traspose it
     
-*  BUG 2 __PRELIMINAR__ __UPSTREAM (?)__
-    An addTab makes all tab headers the same
+*  BUG 2 __SOLVED__
+    An addTab makes all tab headers the same. Not upstream as far as i can tell
 
+    
 ## Database backends
 
 ### Open Issues
