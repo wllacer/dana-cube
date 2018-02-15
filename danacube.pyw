@@ -62,8 +62,12 @@ Nueva versiion. TodoList para volcar
         
     [SQL: " SELECT  '//', staff_id, sum(public.rental.inventory_id)  FROM public.rental   GROUP BY '//', staff_id ORDER BY 1 , 2  "]
     
-        TODO
+        DONE
             fechas no acaban de salir bien (ver datos light)
+        BUG
+            Cabeceras de las pestañas es siempre la misma
+        TODO
+            context menu con los datos estadisticos en la linea
 
 """
 
@@ -405,8 +409,9 @@ class DanaCubeWindow(QMainWindow):
             self.views.append(TabMgr(self,**viewData))
         else:
             self.views.append(TabMgr(self))
-        idx = self.tabulatura.addTab(self.views[-1],self.views[-1].getTitleText())
+        idx = self.tabulatura.addTab(self.views[-1],None) #self.views[-1].getTitleText())
         self.tabulatura.setCurrentIndex(idx)
+        self.tabulatura.setTabText(idx,self.views[-1].getTitleText())
 
     
     def closeView(self):

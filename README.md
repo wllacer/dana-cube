@@ -15,7 +15,7 @@ __Table of Contents__
 * [DANACUBE enters <strong>ALPHA</strong>](#danacube-enters-alpha)
 * [Help Needed](#help-needed)
 * [Out there ...](#out-there-)
-
+* [Contact](#Contact)
 
    
 ## What's the problem:
@@ -240,7 +240,7 @@ __Update 2017/12/27__  We have a new core based on qt standard models. It simpli
 
 
 
-Active tasks can be read [here](../docs/todo.md) (Obsolete )
+Active tasks can be read [here](../docs/todo.md) 
 
 
 
@@ -257,5 +257,9 @@ If you feel my package isn't enough for you  have a look at the following projec
 * [Cubes project](https://github.com/DataBrewery/cubes)
 * [Pandas project](https://pandas.pydata.org/)
 * [Orange3 project](https://github.com/biolab/orange3)
+
+## Contact
+
+You can email me regarding this application thru the address _danacube.sup_ at _gmail_
 
 A.M.D.G. & B.V.M.

@@ -383,14 +383,13 @@ class Cubo:
         cache_parents = [ None for i in range(len(code))]
         ncode = len(code) -ngroupby
         #ndesc = len(columns) - len(code)
-
         for entryNum,row in enumerate(cursor):
             # renormalizamos el contenido del cursor
             for k in range(len(row)):
                 if row[k] is None:
                     row[k] = ''
                 else:
-                    row[k] = str(row[k]).replace(DELIMITER,'/')  #OJO todas las claves son Alfanumericas
+                    row[k] = str(row[k]) #.replace(DELIMITER,'/') #OJO todas las claves son Alfanumericas
             if ndesc == 0:
                 value = ', '.join(row[-ncode:])
             else:
@@ -1223,13 +1222,28 @@ def createVista(cubo,x,y):
     print(vista.row_hdr_idx.numRecords(),'X',vista.col_hdr_idx.numRecords())
     
 
+def bugFecha():
+    from util.jsonmgr import load_cubo
+
+    mis_cubos = load_cubo()
+    cubo = Cubo(mis_cubos["datos light"])
+
+    #vista = Vista(cubo,'geo','partidos importantes','sum','votes_presential',totalizado=True)
+    vista = Vista(cubo,'fecha','partidos importantes','sum','votes_presential',totalizado=True)
+    for item in vista.row_hdr_idx.traverse():
+        print(item.data(Qt.DisplayRole),item.data(Qt.UserRole +1))
+    for line in vista.toList():
+        print(line)
+    print()
+
 def toList():
     from util.jsonmgr import load_cubo
 
     mis_cubos = load_cubo()
     cubo = Cubo(mis_cubos["datos light"])
 
-    vista = Vista(cubo,'geo','partidos importantes','sum','votes_presential',totalizado=True)
+    #vista = Vista(cubo,'geo','partidos importantes','sum','votes_presential',totalizado=True)
+    vista = Vista(cubo,'fecha','partidos importantes','sum','votes_presential',totalizado=True)
     for line in vista.toList():
         print(line)
     print()
@@ -1504,4 +1518,5 @@ if __name__ == '__main__':
     #getHeadersFilter()
     fr = lambda x:x.type() == TOTAL
     fg = lambda x:True
-    testTraspose()
+    #testTraspose()
+    bugFecha()
