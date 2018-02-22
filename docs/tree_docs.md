@@ -123,12 +123,14 @@ Puede especificarse con o sin esquema (las utilidades siempre lo generan con esq
 
 *  \<base_filter\> ::= querySQL
 
-Podemos definir un criterio de filtro previo a la agrupación. El valor de defecto es "", es decir sin filtro. Por ejemplo, si incluimos
+Podemos definir un criterio de filtro previo a la agrupación. El valor de defecto es "", es decir sin filtro. Por ejemplo, si incluimos. 
 
 ```
         "base_filter" = "anyo_eleccion = '2015" 
 ``` 
 sólo se procesaran en el cubo los registos de ese año.
+
+Se recomienda cualificar los nombres de los campos para evitar duplicidades en la ejecución de la query
 
 * \<date_filter\> ::= __*TODO*__
 
@@ -264,7 +266,7 @@ En las guías tipo __date__, al ocuparse sólo de fechas no se requiere este dom
 
 Con esta clausula determinamos el dominio de definición, con __table__ denotando la tabla donde residen los valores, __code__ el campo o campos que corresponden al elemento o elementos de la guía (en relación uno a uno con ellos) y __desc__ el campo o campos que contienen el texto por el que vamos a suusituir los valores en la presentación.
 
-__filter__ nos permite reducir el conjunto de registros de la tabla que queramos procesaran
+__filter__ nos permite reducir el conjunto de registros de la tabla que queramos procesaran. Se recomienda cualificar los nombres de los campos para evitar duplicidades en la ejecución de la query
 
 En dominios jerarquicos puede ser necesario incluir un descriptor que nos indique en los nuveles de jerarquia un campo de agrupación previo que corresponde al nivel anterior. Este campo(s) debe pertenecer a la tabla de datos (no de dominios) . Para ello utilizamos la clausula __grouped by__, p.e. en. De hecho __grouped by__ corresponde a la agregación de los __elem__ de las reglas de producción anteriores.
 

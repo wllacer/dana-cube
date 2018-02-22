@@ -229,7 +229,7 @@
                         "domain": {
                             "code": "code",
                             "desc": "acronym",
-                            "filter": "code in (select distinct partido_id from votos_provincia where votes_percent >= 3)",
+                            "filter": "main.partidos.code in (select distinct partido_id from votos_provincia  where votes_percent >= 3)",
                             "table": "main.partidos"
                         },
                         "elem": "partido_id",
@@ -239,13 +239,13 @@
             },
             {
                 "class": "o",
-                "name": "Comunidad Autonoma",
+                "name": "Comunidad Autónoma",
                 "prod": [
                     {
                         "domain": {
                             "code": "region",
                             "desc": "nombre",
-                            "filter": "provincia = '' and region <> '' ",
+                            "filter": "main.localidades.provincia = '' and localidades.region <> '' ",
                             "table": "main.localidades"
                         },
                         "elem": "region",
@@ -261,7 +261,7 @@
                         "domain": {
                             "code": "provincia",
                             "desc": "nombre",
-                            "filter": "provincia <> '' and municipio = '' and isla = ''",
+                            "filter": "localidades.provincia <> '' and localidades.municipio = '' and localidades.isla = ''",
                             "table": "main.localidades"
                         },
                         "elem": "provincia",
@@ -277,7 +277,7 @@
                         "domain": {
                             "code": "municipio",
                             "desc": "nombre",
-                            "filter": "municipio <> '' and isla = '' ",
+                            "filter": "localidades.municipio <> '' and localidades.isla = '' ",
                             "table": "main.localidades"
                         },
                         "elem": "municipio",
@@ -293,18 +293,18 @@
                         "domain": {
                             "code": "region",
                             "desc": "nombre",
-                            "filter": "provincia = '' ",
+                            "filter": "localidades.provincia = '' ",
                             "table": "main.localidades"
                         },
                         "elem": "region",
                         "fmt": "txt",
-                        "name": "region"
+                        "name": "región"
                     },
                     {
                         "domain": {
                             "code": "provincia",
                             "desc": "nombre",
-                            "filter": "provincia <> '' and municipio = '' and isla = ''",
+                            "filter": "localidades.provincia <> '' and localidades.municipio = '' and localidades.isla = ''",
                             "grouped by": "region",
                             "table": "main.localidades"
                         },

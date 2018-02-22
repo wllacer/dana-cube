@@ -152,6 +152,7 @@ class Cubo:
         # los datos siguientes son la definicion externa del cubo
         #pprint(definicion)
         self.definition = definicion
+        self.file = self.definition.get('table')   #TODO document
         self.nombre = nombre
         if not dbConn:
             self.db = dbConnect(self.definition['connect'])
@@ -440,13 +441,16 @@ class Cubo:
                 #raiz.append(TreeItem(key,entryNum,value),parentId)
     
     
-    def fillGuia(self,guidIdentifier,total=None):
+    def fillGuia(self,guidIdentifier,total=None,generateTree=True):
         '''
+        TODO ripple doc
         Es el metodo con el que creamos la guia; de paso generamos informacion complementaria, el contexto
         Como campo de entrada
         guidIdentifier  es la gua a procesar. sobrecargada como el número de la guia en la lista o el nombre
         total . Si debe crearse con totalizadores. En el caso de QStandardItemModel ha sido la unica manera de
                 hacerlo que no corrompiera el arbol
+        generateTree  si genera el arbol o solo el contexto
+        
         El contexto que genera para cada produccion es
             {'table':table,   -> tabla del dominio de la guia
             'code':code,      -> lista de campos que contienen el code (valor interno) de la produccion
@@ -470,20 +474,21 @@ class Cubo:
         
         date_cache = {}
         contexto = []
-        
-        #arbol = QStandardItemModel()
-        #raiz = arbol.invisibleRootItem()
-        arbol = GuideItemModel()
-        arbol.name = self.lista_guias[guidId]['name']
-        if total:  #el rebase no me ha traido mas que pesadillas
-            raiz = arbol.invisibleRootItem()
-            item = GuideItem()
-            item.setData('Grand Total',Qt.DisplayRole)
-            item.setData('//',Qt.UserRole +1)
-            raiz.insertRow(0,(item,))
-            tree = item
-        else:
-            tree = arbol.invisibleRootItem()  #para que __createProdModel solo necesite invocarse una vez
+
+        if generateTree:
+            #arbol = QStandardItemModel()
+            #raiz = arbol.invisibleRootItem()
+            arbol = GuideItemModel()
+            arbol.name = self.lista_guias[guidId]['name']
+            if total:  #el rebase no me ha traido mas que pesadillas
+                raiz = arbol.invisibleRootItem()
+                item = GuideItem()
+                item.setData('Grand Total',Qt.DisplayRole)
+                item.setData('//',Qt.UserRole +1)
+                raiz.insertRow(0,(item,))
+                tree = item
+            else:
+                tree = arbol.invisibleRootItem()  #para que __createProdModel solo necesite invocarse una vez
         
         # primero expandimos las entradas tipo fecha
         prodExpandida = self._expandDateProductions(guidId)
@@ -494,7 +499,15 @@ class Cubo:
             # for backward compatibility
             if clase == 'h':  
                 clase = 'o'
-            nombre = produccion.get('name',guia.get('name')+'_'+str(prodId).replace(' ','_').strip())
+                
+                        
+            if len(prodExpandida) == 1: 
+                nombre = produccion.get('name',guia.get('name')) 
+            elif produccion.get('name'):
+                nombre = guia.get('name') + '_' + produccion.get('name')
+            else:
+                nombre = guia.get('name')+'_'+str(prodId).replace(' ','_').strip()
+
             table,basefilter,datefilter  = self._setTableName(guia,origId)
             cumgroup = []
             groupby= []
@@ -535,12 +548,13 @@ class Cubo:
                 isSQL = False
                 # esto no es necesario en esta fase
                 code = desc= columns = [caseConstructor(nombre,produccion),]
-                cursor = []
-                for entrada in produccion['categories']:
-                    if 'result' in entrada:
-                        cursor.append([entrada.get('result'),])
-                    else:
-                        cursor.append([entrada.get('default'),])
+                if generateTree:
+                    cursor = []
+                    for entrada in produccion['categories']:
+                        if 'result' in entrada:
+                            cursor.append([entrada.get('result'),])
+                        else:
+                            cursor.append([entrada.get('default'),])
                 
                 if prodId == 0:    
                     elems = code
@@ -565,38 +579,39 @@ class Cubo:
                 isSQL = False
                 code = desc = columns = norm2List(produccion.get('elem'))
                 # obtengo la fecha minima y maxima. Para ello tendre que consultar la base de datos
-                campo = produccion.get('campo_base') #solo podemos   trabajar con un campo
-                if campo in date_cache:
-                    pass
-                else:
-                    #TODO solo se requiere consulta a la base de datos si el formato incluye 'Y'
-                    #REFINE creo que fields sobra
-                    sqlDefDate=dict()
-                    sqlDefDate['tables'] = table
-                    if basefilter is not None:
-                        sqlDefDate['base_filter'] = basefilter
-                    if datefilter is not None:
-                        sqlDefDate['where'] = datefilter
-                    sqlDefDate['fields'] = [[campo,'max'],[campo,'min'],]
-                    sqlDefDate['driver'] = self.dbdriver
-                    try:
-                        sqlStringDate = queryConstructor(**sqlDefDate) 
-                    except:
-                        raise()
-                    row=getCursor(self.db,sqlStringDate)
-                    if not row[0][0]:
-                        # un bypass para que no se note 
-                        date_cache[campo] = [datetime.date.today(),datetime.date.today()]
+                if generateTree:
+                    campo = produccion.get('campo_base') #solo podemos   trabajar con un campo
+                    if campo in date_cache:
+                        pass
                     else:
-                        date_cache[campo] = [row[0][0], row[0][1]] 
-                    #
-                # TODO, desplegarlo todo
+                        #TODO solo se requiere consulta a la base de datos si el formato incluye 'Y'
+                        #REFINE creo que fields sobra
+                        sqlDefDate=dict()
+                        sqlDefDate['tables'] = table
+                        if basefilter is not None:
+                            sqlDefDate['base_filter'] = basefilter
+                        if datefilter is not None:
+                            sqlDefDate['where'] = datefilter
+                        sqlDefDate['fields'] = [[campo,'max'],[campo,'min'],]
+                        sqlDefDate['driver'] = self.dbdriver
+                        try:
+                            sqlStringDate = queryConstructor(**sqlDefDate) 
+                        except:
+                            raise()
+                        row=getCursor(self.db,sqlStringDate)
+                        if not row[0][0]:
+                            # un bypass para que no se note 
+                            date_cache[campo] = [datetime.date.today(),datetime.date.today()]
+                        else:
+                            date_cache[campo] = [row[0][0], row[0][1]] 
+                        #
+                    # TODO, desplegarlo todo
 
-                kmask = produccion.get('mask')     
-                #FIXME valido fechas pero todos los formatos no son compatibles con esa validacion
-                cursor = getDateIndexNew(date_cache[campo][0]  #max_date
-                                            , date_cache[campo][1]  #min_date
-                                            , kmask)
+                    kmask = produccion.get('mask')     
+                    #FIXME valido fechas pero todos los formatos no son compatibles con esa validacion
+                    cursor = getDateIndexNew(date_cache[campo][0]  #max_date
+                                                , date_cache[campo][1]  #min_date
+                                                , kmask)
                 # la correcta asignacion de formatos fecha ha sido hecha al desdoblar
                 if prodId == 0:    
                     elems = norm2List(produccion.get('elem'))
@@ -623,18 +638,25 @@ class Cubo:
             
             contexto.append({'table':table,'code':code,'desc':desc,'groupby':groupby,'columns':columns,
                              #'acumgrp':cumgroup,'filter':basefilter,
-                             'elems':elems,'linkvia':linkvia})
-            if isSQL:
-                cursor = self._getProdCursor(contexto[-1],basefilter,datefilter)
-            
- 
-            self._createProdModel(tree,cursor,contexto[-1],prodId,total)
+                            'name':nombre,'filter':basefilter,'class':clase,   #TODO DOC + ripple to fillGuia
+                            'elems':elems,'linkvia':linkvia})
+            if generateTree:
+                if isSQL:
+                    cursor = self._getProdCursor(contexto[-1],basefilter,datefilter)
+                
+    
+                self._createProdModel(tree,cursor,contexto[-1],prodId,total)
 
             #for item in traverse(tree):
                 #print(item.parent().data(Qt.DisplayRole) if item.parent() is not None else '??',
                       #item.data(Qt.DisplayRole))          
                 
-        return arbol,contexto
+        if generateTree:
+            return arbol,contexto
+        else:
+            return contexto
+
+
 
 class Vista:
     #TODO falta documentar
@@ -1222,6 +1244,7 @@ def createVista(cubo,x,y):
     print(vista.row_hdr_idx.numRecords(),'X',vista.col_hdr_idx.numRecords())
     
 
+    
 def bugFecha():
     from util.jsonmgr import load_cubo
 
@@ -1323,7 +1346,7 @@ def getHeaders(**parms):
     from util.jsonmgr import load_cubo
 
     mis_cubos = load_cubo()
-    cubo = Cubo(mis_cubos["datos light"])
+    cubo = Cubo(mis_cubos["experimental"])
 
     vista = Vista(cubo,'geo','partidos importantes','sum','votes_presential',totalizado=True)
     #pprint(vista.row_hdr_idx.asHdr())
@@ -1519,4 +1542,5 @@ if __name__ == '__main__':
     fr = lambda x:x.type() == TOTAL
     fg = lambda x:True
     #testTraspose()
-    bugFecha()
+    #bugFecha()
+    #extract()

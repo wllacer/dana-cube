@@ -8,7 +8,7 @@ __Tabla de Contenidos__
         * [Obtener la información](#obtener-la-información)
         * [Filtrar la información](#filtrar-la-información)
         * [Mejorar la presentacion](#mejorar-la-presentacion)
-        * [Manikpular los datos](#manikpular-los-datos)
+        * [Manipular los datos](#manipular-los-datos)
         * [Exportar los datos](#exportar-los-datos)
 * [Configurar un cubo](#configurar-un-cubo)
     * [configurar la conexion](#configurar-la-conexion)
@@ -113,9 +113,58 @@ Un ejemplo de resultado con dos vistas abiertas lo tienen aqui
 
 ### Filtrar la información
 
+Con la opcion  _Usar Filtro >Editar Filtro_ podemos filtrar datos del cubo original, seleccionando condiciones para cada uno de los campos de la tabla base. Si la condición lógica admite multiples valores deben separarse por comas. Y recordad que el carácter decimal debe ser el punto '.'
+
+
+![editar](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/create_filter.png)
+
+Para los campos tipo fecha tenemos una opción especial para filtrar _Usar Filtro>Editar Rango Fechas_
+
+![Rango de Fechas](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/Date_Range.png)
+
+Para cada campo tipo fecha podemos elegir
+
+* Un __Periodo__ , i.e. una clase de intervalo temporal  (año, mes, ...) y un __Rango__, es decir el numero de periodos que cubre el intervalo
+
+* Un __tipo de intervalo__, con las opciones
+    * __Todo__   No se filtra por ese campo
+    * __Actual__  El periodo que incluye la fecha actual
+    * __intervalo__ un conjunto de n periodos  (donde n es el rango) que finalizan el día anterior a la fecha actual.
+    * __Ultimo intervalo Abierto__ idm. que finalizan el último día natural del periodo en curso (p.e si es año el 31 de diciembre del año en curso)
+    * __Ultimo intervalo Cerrado__ idm. que finalizan el último día natural del ultimo periodo ya completado (p.e si es año el 31 de diciembre del año anterior)
+
+Los campos __desde__ y __hasta__ del diálogo nos permiten ver que fechas estamos eligiendo para los periodos
+
+
+La opción _Usar Filtro >Borrar Filtros_ o _Usar Filtro>Borrar Rango fechas_ elimina la condición que hayamos elegido anteriormente
+
+En el menu  _Cubo_ existen opciones para hacer esos filtros permanentes para todas las posteriores ejecuciones del Cubo
+
 ### Mejorar la presentacion
 
-### Manikpular los datos
+#### Trasponer datos 
+
+La opción de menú _Opciones>Trasponer datos_ nos permite trasponer la tabla de presentación, es decir convertir las filas en columnas y viceversa. Esta acción se realiza sin necesidad de acudir al gestor de base de datos
+
+#### Formatos de presentacion 
+
+La opción de menú _Opciones>Presentación_ nos permite modificar algunos parametros de presentación
+
+![parametros](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/preferences.png)
+
+* Thousands Separator
+* Decimal Marker
+* Decimal Places
+* Red Negative Numbers
+* Yellow Outliers
+
+#### Gráficos 
+
+![select](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/graph_selector.png) 
+
+![resultado](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/view_graph.png)
+
+### Manipular los datos
 
 ### Exportar los datos
 

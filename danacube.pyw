@@ -413,7 +413,6 @@ class DanaCubeWindow(QMainWindow):
         titulo = self.views[-1].getTitleText()
         idx = self.tabulatura.addTab(self.views[-1],titulo)
         self.tabulatura.setCurrentIndex(idx)
-        print('created',idx,titulo)
 
     
     def closeView(self):
@@ -668,7 +667,6 @@ class DanaCube(QTreeView):
         if tabId < 0:
             return
         curWidget = self.parent.tabulatura.currentWidget()
-        print('activated',tabId,curWidget.getTitleText())
         self.parent.tabulatura.setTabText(tabId,curWidget.getTitleText())
             
     def setupFilters(self): #,my_cubos,seleccion):

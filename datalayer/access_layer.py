@@ -21,7 +21,7 @@ Documentation, License etc.
 #from PyQt4.QtSql import *
 #transitional
 from datalayer.query_constructor import queryFormat
-from  sqlalchemy import create_engine,types 
+from  sqlalchemy import create_engine,types, inspect
 from  sqlalchemy.sql import text
 from PyQt5.QtSql import *    
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
@@ -343,7 +343,19 @@ def getAgrFunctions(db,plista = None):
     #TODO include functions which depend on DB driver
     return lista_funciones
 
+def getDefaultSchema(db):
+    ins = inspect(db.engine)
+    return ins.default_schema_name
 
+def fqn(db,fileName):
+    divfN = fileName.split('.')
+    if len(divfN) == 2:
+        return fileName
+    schema = getDefaultSchema(db)
+    if schema is None:
+        schema = 'main'
+    return '{}.{}'.format(schema,fileName)
+    
 if __name__ == '__main__':
     definition1={'driver':'sqlite','dbname': '/home/werner/projects/scifi/scifi.db',
                 'dbhost':None,'dbuser':None,'dbpass':None,'debug':False } 
@@ -354,6 +366,7 @@ if __name__ == '__main__':
                 'dbhost':'localhost','dbuser':'demo','dbpass':'***','debug':True } 
     
     conn = dbConnect(definition1)
+    print(getDefaultSchema(conn))
     cursor = getCursor(conn,'select * from city')
     pprint(cursor)
     
