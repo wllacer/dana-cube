@@ -345,15 +345,17 @@ def getAgrFunctions(db,plista = None):
 
 def getDefaultSchema(db):
     ins = inspect(db.engine)
-    return ins.default_schema_name
+    schema = ins.default_schema_name
+    if schema is None:  #para SQLITE
+        return 'main'
+    else:
+        return schema
 
 def fqn(db,fileName):
     divfN = fileName.split('.')
     if len(divfN) == 2:
         return fileName
     schema = getDefaultSchema(db)
-    if schema is None:
-        schema = 'main'
     return '{}.{}'.format(schema,fileName)
     
 if __name__ == '__main__':

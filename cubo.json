@@ -319,7 +319,7 @@
                 "name": "fecha",
                 "prod": [
                     {
-                        "elem": "fakedate",
+                        "elem": "votos_locales.fakedate",
                         "fmt": "date"
                     }
                 ]

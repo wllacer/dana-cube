@@ -13,7 +13,7 @@ TODO
     to array y funciones para extraer las cabeceras
 '''
 
-DEBUG = True
+DEBUG = False
 TRACE=True
 DELIMITER=':'
 
@@ -249,16 +249,23 @@ class Cubo:
             guia = {'name':entrada['name'],'class':entrada['class'],'contexto':[],'elem':[]}
             self.lista_guias.append(guia)
 
-    def fillGuias(self):
+    def fillGuias(self,total=None,generateTree=False):
         """
+        TODO ripple doc
+        WARNING API break. No risk because it isn't used
+        
            De una sola operacion generamos toda la información sobre las guias -incluidos los arboles-
            el diccionario ha sigo generado en __setGuias
            
            No se usa internamente, ya que puede consumir recursos excesivos en la inicialización del cubo.
            En otros momentos lo he activado. Lo dejo como opcion a los usuarios
+           
+            generateTree  si genera el arbol o solo el contexto
         """
+        lista = []
         for k,entrada in enumerate(self.lista_guias):
-            entrada['dir_row'],entrada['contexto']=self.fillGuia(k)
+            lista.append(self.fillGuia(k,total=total,generateTree=generateTree))
+        return lista
     
     def _setTableName(self,guia,idx):
         """
@@ -464,6 +471,9 @@ class Cubo:
                                     de agregacion
             })
 
+        __NOTAS__
+        La funcion ahora mismo es algo "heterodoxa". Hace dos cosas al mismo tiempo, genera el arbol y/o el contexto.
+        No estan separadas porque la logica es identica, pero dificil de separar. Además la creacion del arbol necesita del contexto
         '''
         cubo = self.definition
         if isinstance(guidIdentifier,int):
@@ -504,7 +514,7 @@ class Cubo:
             if len(prodExpandida) == 1: 
                 nombre = produccion.get('name',guia.get('name')) 
             elif produccion.get('name'):
-                nombre = guia.get('name') + '_' + produccion.get('name')
+                nombre = guia.get('name') + '_' + produccion.get('name').split('.')[-1]
             else:
                 nombre = guia.get('name')+'_'+str(prodId).replace(' ','_').strip()
 
