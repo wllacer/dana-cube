@@ -8,12 +8,17 @@ __Tabla de Contenidos__
         * [Obtener la información](#obtener-la-información)
         * [Filtrar la información](#filtrar-la-información)
         * [Mejorar la presentacion](#mejorar-la-presentacion)
+        * [Trasponer datos](#trasponer-datos)
+        * [Formatos de presentacion](#formatos-de-presentacion)
+        * [Gráficos](#gráficos)
+        * [Convertir una vista como defecto](#convertir-una-vista-como-defecto)
         * [Manipular los datos](#manipular-los-datos)
         * [Exportar los datos](#exportar-los-datos)
 * [Configurar un cubo](#configurar-un-cubo)
     * [configurar la conexion](#configurar-la-conexion)
     * [analizar los datos existentes](#analizar-los-datos-existentes)
     * [crear el cubo](#crear-el-cubo)
+
 
 __WARNING__ _during development time, images may not appear in this document_
 
@@ -79,7 +84,7 @@ _Si lo que se desea es meramente evaluar las capacidades del producto, recomenda
 
 Invocamos a la funcion de menu _Cubo>Abrir cubo_, y nos aparece un selector
 
-![seleccionar cubo](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/select_cube.png)
+![seleccionar cubo](./image/danacube_UG/select_cube.png)
 
 Con el elegiremos el cubo con el que queramos trabajar en nuestra sesión (para cambiarlo, volvemos a elegir la misma opción). Cada instancia de la aplicación trabaja con un solo cubo.
 
@@ -87,7 +92,7 @@ Si la base de datos requiere conexión con usuario y clave, se la pedirá en est
 
 Inmediatamente nos aparecera otro diálogo en el que debemos especificar la vista que deseamos calcular
 
-![crear vista](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/create_view_filled.png)
+![crear vista](./image/danacube_UG/create_view_filled.png)
 
 En ella debemos elegir:
 
@@ -101,14 +106,14 @@ En ella debemos elegir:
 
 Una vez elegida, se procesarán los datos y nos aparecera el resultado
 
-![resultado](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/view_result.png) 
+![resultado](./image/danacube_UG/view_result.png) 
 
 Si deseamos cambiar alguno de los parametros de la vista usamos el menu _Vista >Cambiar Vista Actual_ 
 
 Si deseamos abrir una pestaña nueva con otra vista sobre el mismo cubo, manteniendo la actual podemos hacerlo con la opción _Vista >Abrir Vista ..._
 Un ejemplo de resultado con dos vistas abiertas lo tienen aqui
 
-![con dos vistas](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/two_open_views.png)
+![con dos vistas](./image/danacube_UG/two_open_views.png)
 
 
 ### Filtrar la información
@@ -116,11 +121,11 @@ Un ejemplo de resultado con dos vistas abiertas lo tienen aqui
 Con la opcion  _Usar Filtro >Editar Filtro_ podemos filtrar datos del cubo original, seleccionando condiciones para cada uno de los campos de la tabla base. Si la condición lógica admite multiples valores deben separarse por comas. Y recordad que el carácter decimal debe ser el punto '.'
 
 
-![editar](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/create_filter.png)
+![editar](./image/danacube_UG/create_filter.png)
 
 Para los campos tipo fecha tenemos una opción especial para filtrar _Usar Filtro>Editar Rango Fechas_
 
-![Rango de Fechas](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/Date_Range.png)
+![Rango de Fechas](./image/danacube_UG/Date_Range.png)
 
 Para cada campo tipo fecha podemos elegir
 
@@ -150,89 +155,95 @@ La opción de menú _Opciones>Trasponer datos_ nos permite trasponer la tabla de
 
 La opción de menú _Opciones>Presentación_ nos permite modificar algunos parametros de presentación
 
-![parametros](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/preferences.png)
+![parametros](./image/danacube_UG/preferences.png)
 
-* Thousands Separator
-* Decimal Marker
-* Decimal Places
-* Red Negative Numbers
-* Yellow Outliers
+* __Thousands Separator__.  Que caraćter es el separador de miles (por defecto .)
+* __Decimal Marker__        Cual es el delimitador de decimales (por defecto ,)
+* __Decimal Places__        Cual es el número de decimales con el que se presentan los datos (si no son enteros)
+* __Red Negative Numbers__  Si los valores negativos se presentan sobre fondo rojo
+* __Yellow Outliers__       Si los valores estadisticamente "outliers" se presentan sobre fondo amarillo
 
 #### Gráficos 
 
-![select](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/graph_selector.png) 
+Con la opción de menú _Opciones>Graficos_ controlamos la aparición de una visualización gráfica de los datos. Si se elige alguna representación gráfica los datos de la  fila actual aparece en la mitad inferior en forma gráfica
 
-![resultado](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/view_graph.png)
+![select](./image/danacube_UG/graph_selector.png) 
+
+Eliga los tipos de gráficos:
+
+* __Ninguno__
+* __Grafico de puntos__
+* __Grafico de barras__
+* __idem vertical__
+* __idem comparando a superiores en la jerarquia__
+* __Grafico en forma de tarta_
+* __Boxplot__
+
+La entrada _"comparando ..."_ es un grafico de barras, que para cada columna tiene tantas barras como niveles jerárquicos tenga. 
+La entrada _boxplot_ es un grafico que permite visualizar "a grosso modo" la distribución estadística de los valores
+
+Como ejemplo, con gráfico de barras:
+
+![resultado](./image/danacube_UG/view_graph.png)
+
+#### Convertir una vista como defecto
+
+Invocando la funcion de menu _Cubo>Convertir vista actual a defecto_ la vista que estamos manejando en ese momento se convertirá en el defecto, es decir, cada vez que se abra la aplicación se cargará directamente esta vista
 
 ### Manipular los datos
 
+A través del menú _Funciones de usuario_ podemos invocar acciones que nos permiten manipular los datos. Ver la documentación [aquí](user_functions.md).
+
+* Funciones generales ... 
+
+Nosotros suministramos algunas funciones de carácter general. 
+
+*  _Funciones de usuario/Porcentaje calculados en la fila_ que nos devuelve los valores en porcentajes (siendo 100% la suma de la fila)
+ 
+![percentage](./image/danacube_UG/uf_percentage.png)
+
+* _Funciones de usuario/Numero de orden descendente en la fila_ que nos devuelve el ordinal dentro de la fila (siendo 1 el de mayor valor)
+
+* _Funciones de usuario/fusiona columnas_ que nos permite agregar el contenido de una columna sobre otra
+
+![fusionar](./image/danacube_UG/fusionar.png)
+
+Eneste caso el nombre de la columna esta indicado por el valor del campo __searchby__ del diálogo. Si contiene __value__ es el valor que aparece en la cabecera; si contiene __key__ es el valor interno si fuera distinto (no es normal su uso)
+
+* _Funciones de usuario/realiza simulaciones_ que nos permite modificar el contenido de una o mas columnas. En la implementación de defecto, ponemos un porcentahe de variación sobre el valor actual
+
+![simular](./image/danacube_UG/simular.png)
+
+* Funciones especificas ...
+
+El submenú _Funciones de usuario/Funciones especificas para ..._ permite acceder a las funciones de usuario sólo definidas para este cubo
+
+* restaurar valores originales
+
+La opcion de menú _Funciones de Usuario/Restaurar valores originales_ devuelve el contenido de la vista a su valor original, antes de ser procesado por funciones de usuario
+
 ### Exportar los datos
 
+COn la funcion _Opciones/Exportar datos_ podemos extraer los datos de una vista para un proceso posterior.
 
-* Cubo
-    * Abrir cubo
-    
-    ![seleccionar cubo](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/select_cube.png)
-    
-    * Convertir vista actual a defecto
-    * Guardar Filtros permanetnemente
-    * Salvar rango Fechas
-* Vista
-    * Abrir vista
-    
-    ![crear vista](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/create_view_filled.png)
-    
+Primero elegimos que información deseamos extraer
 
-    
-    ![con dos vistas](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/two_open_views.png)
-    
-    * Cambiar vista actual
-    * Cerrar vista actual
-* Usar Filtros
-    * Editar Filtro
-    
-    ![editar](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/create_filter.png)
-    
-    ![resultado](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/filter_result.png)
-    
-    * Borrar Filtros
-    + Editar Rango Fechas
-    * Borrar rango fechas
+![Paso 1](./image/danacube_UG/export_filter.png)
 
-* Opciones
-    * Exportar Datos 
-    
-    ![Paso 1](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/export_filter.png)
-    
-    ![Paso 2](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/export_file.png) 
-    
-    ![Paso3](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/export_params.png)
-    
-    * Trasponer datos 
-    
-    ![resultado](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/traspose.png)
-    
-    * Presentacion 
-    
-    ![parametros](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/preferences.png)
-    
-    * Graficos 
-    
-    ![select](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/graph_selector.png) 
-    
-    ![resultado](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/view_graph.png)
-    
-* Funciones de usuario
-    * restaurar valores originales
-    * Funciones generales ... 
-    
-    ![percentage](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/uf_percentage.png)
-    
-    ![fusionar](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/fusionar.png)
-    
-    ![simular](/home/werner/projects/dana-cube.git/docs/image/danacube_UG/simular.png)
-    
-    * Funciones especificas ...
+Luego donde y con que formato lo deseamos extraer
+
+![Paso 2](./image/danacube_UG/export_file.png) 
+
+Actualmente acceptamos los siguientes tipos
+
+* __CSV__ ficheros delimitados por coma 
+* __EXCEL__ ficheros Excel, formato XLSX
+* __JSON__
+* __HTML__ En este caso generamos un fichero con la definición de una tabla HTML no una página web completa
+
+Y finalmente (si es necesario) las opciones necesarias para una correcta descarga de los datos. Se trata de las mismas consideraciones que se utilizan para ficheros CSV
+
+![Paso3](./image/danacube_UG/export_params.png)
 
 
 # Configurar un cubo

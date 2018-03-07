@@ -176,7 +176,7 @@ We provide, also, some administrative tools to work with the cube definitions:
 
 It's a work in progress
 
-* A Beginner's guide to the tool (spanish only now) [here](docs/begin_guide_es.md) (a WIP)
+* An User's guide to the tool (spanish only now) [here](docs/user_guide_es.md) (a WIP)
 * The API for the core functionality us [here](docs/core_api.md)
 * The API for the Guide model trees is [here](docs/tree_api.md)
 * The full definition specs can be found at [this place (spanish only)](docs/tree_docs.md)
