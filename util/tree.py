@@ -479,7 +479,11 @@ class GuideItem(QStandardItem):
         
         
         """
-        return self.getColumn(idx +1).data(Qt.UserRole +1)
+        column = self.getColumn(idx +1)
+        if column:
+            return self.getColumn(idx +1).data(Qt.UserRole +1)
+        else:
+            return None
     
     def setPayloadItem(self,idx,valor):
         """
