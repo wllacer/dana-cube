@@ -2,12 +2,23 @@
 
 Dana-cube is a tool to automate the design, execution and visualization of __cross reference queries__, aka __pivot tables__ aka __multidimensional aggregate queries__.
 
-__Table of Contents__
+*[Go to the english version of the rationale](#rationale-in-english)
 
-* [What's the problem:](#whats-the-problem)
-* [What we provide](#what-we-provide)
-* [Where to run the tool](#where-to-run-the-tool)
-* [The definitions file](#the-definitions-file)
+Dana-cube es una herramienta para automatizar el diseño, ejecución y visualización de __consultas de referencias cruzadas__ aka __tablas pivote__ aka __consultas agregadas multidimensionales__
+
+*[Ir a la descripción de objetivos en Español](#objetivos-en-español)
+
+# Tabla de contenidos / Table of contents
+
+* [dana-cube](#dana-cube)
+* [Objetivos en Español](#objetivos-en-español)
+    * [Cual es el problema:](#cual-es-el-problema)
+    * [Que ofrecemos](#que-ofrecemos)
+    * [Donde funciona](#donde-funciona)
+* [Rationale in English](#rationale-in-english)
+    * [What's the problem:](#whats-the-problem)
+    * [What we provide](#what-we-provide)
+    * [Where to run the tool](#where-to-run-the-tool)
 * [Documentation](#documentation)
 * [Sample Data](#sample-data)
 * [Dependencies](#dependencies)
@@ -15,20 +26,128 @@ __Table of Contents__
 * [DANACUBE enters <strong>ALPHA</strong>](#danacube-enters-alpha)
 * [Help Needed](#help-needed)
 * [Out there ...](#out-there-)
-* [Contact](#Contact)
+* [Contact](#contact)
+
+
+# Objetivos en Español
+
+## Cual es el problema:
+
+
+Lo que realmente necesito es una herramienta que me permita resolver, quizas el más común de los problemas con bases de datos SQL: __resolver una agregación (suma, promedio, ...) por dos o mas parámetros y presentarlos en formato matricial (hoja de calculo)__
+
+Veamoslo con un ejemplo. Imaginen una base de datos de resultados electorales y lo que queremos es una consulta del tipo _Dame la suma de votos cruzados por partido y distrito electoral_. En teoría esto es una consulta muy sencilla en _SQL_
+
+
+```
+    select partido_id,provincia,sum(votes_presential)
+    from votos_locales
+    group by partido_id,provincia
+```
+Que devuelve los resultados de esta forma
+
+```
+"993"	"12"	"2134"
+"993"	"46"	"7101"
+"993"	"47"	"1570"
+"1033"	"23"	"1188"
+"1070"	"24"	"1027"
+"1079"	"01"	"10468"
+"1079"	"02"	"33676"
+"1079"	"03"	"154037"
+"1079"	"04"	"44320"
+"1079"	"05"	"15892"
+"1079"	"06"	"45252"
+"1079"	"07"	"71446"
+....
+```
+Toda la información está aquí, pero un analista resulta mejor servido si los datos pudieran ser presentados de format matricial (partidos como columnas, distritos como filas) y, si es posible, con información mas legible, por ejemplo como
+
+```
+
+                               C's       EH Bildu        EAJ-PNV             PP           PSOE        PODEMOS           GBAI        CCa-PNC        IU-UPeC   ...
+Grand Total               3,500,541        218,467        301,585      7,215,752      5,530,779      3,182,082         30,554         81,750        923,133  
+Araba/Álava                  10,468         21,179         28,297         33,609         25,293         48,265                                        6,794                                                                                                         
+Albacete                     33,676                                       85,152         65,074         32,155                                        9,277                                                                                                         
+Alicante/Alacant            154,037                                      296,709        188,367                                                      33,293
+Almería                      44,320                                      117,407         89,022         39,482                                       10,776                                                                                                         
+Ávila                        15,892                                       46,963         20,129         11,863                                        3,878                                                                                                         
+Badajoz                      45,252                                      137,501        148,347         47,203                                       12,281                                                                                                         
+Balears, Illes               71,446                                      140,542         88,542        111,416                                       11,434
+Barcelona                   386,143                                      321,268        463,612                                                            
+Burgos                       33,373                                       81,780         44,488         36,612                                       10,099                                                                                                         
+Cáceres                      28,293                                       87,729         84,532         34,552                                        7,216                                                                                                         
+Cádiz                        94,707                                      179,054        180,667        130,215                                       38,798                                                                                                         
+Castellón/Castelló           48,220                                       98,341         66,450                                                       9,565
+...
+```
+
+Desgraciadamente este tipo de presentación __NO esta disponible__ en la mayoría de programas de consulta. Algunos productos (como Oracle y MSSQL) ofrecen soluciones privadas para generar este tipo de consultas, pero casi nunca están disponibles en herramientas generals. Las _consultas de referencias cruzadas_ de MS Access y las _tablas Pivot_ en muchas hojas de cálculo ofrecen esta funcionalidad. He visto algunas extremadamente interesantes.
+
+Pero la estabilidad, mantenibilidad, seguridad y las posibilidades de distribuirlas es otra historia totalmente distinta. Mi experiencia con el rendimiento de los enlaces via ODBC es menor que buena. Y como antiguo administrador, "enganchar" a una base de datos corporativa "real", una herramienta tan incontrolable como es la interfaz ODBC, es una pesadilla desde el punto de vista de la seguridad y del rendimiento
+
+## Que ofrecemos
+
+Con _dana-cube_ ofrecemos un módulo (y su _API_) con la intención de simplificar la generación de estas matrices / referencias cruzadas; permitiendo, además integrarlas en cualquier aplicación Python. A traves de esta interfaz, la generación del ejemplo anterio puede reducirse al siguiente código (sin formateo)
+
+```
+from dana-cube.util.jsonmgr import load_cubo
+from dana-cube.core import *
+
+mis_cubos = load_cubo()
+cubo = Cubo(mis_cubos["datos light"])
+vista = Vista(cubo,'provincia','partidos importantes','sum','votes_presential',totalizado=True)
+resultado = vista.toList()
+for linea in resultado:
+    print(linea)
+```
+Como se puede ver en el ekjemplo, __no referenciamos directamente a la base de datos subyacente, sino a una abstracción__
+Cada instancia se ejecuta contra lo que denominamos un __Cubo__ esto es la visión de una tabla de datos (o estructura equivalente), los campos (__fields__) sobre los que queremos hacer las agregaciones y los criterios de agrupación (que denominamos __guias__). Estos criterios pueden ser campos escalares o agrupaciones jerarquizadas. Si las guias son fechas, automaticamente ofrecemos la posibilidad de jeraquizarlos (por años, años-mes, ...). Cada __consulta cruzada__ entre dos guias lo que denominamos __Vista__. 
+Las definiciones de estos _Cubos_ se hacen a través de ficheros de texto (_json__), con lo que los posibles accesos a la base de datos están controlados externamente.
+
+Por encima de esta _API_ ofrecemos un programa __danacube.py__ para que los usuarios puedan ejectuar y visualizar interactivamente las distintas consultas cruzadas que estas definiciones permiten. Asimismo permite generar una serie de gráficos y exportar los resultados a otras herramientas
+
+
+![Screenshot](docs/image/danacube_ss.png "Title")
+
+Un usuario final de la herramienta no puede definir (ni utilizar) nada que no se encuentre en el fichero de configuración. __¿Por qué?__ Una razón es permitir que el usuario trabaje con una visión de los datos que no tiene por que corresponder con la estructura interna de la base de datos, sino a un __modelo conceptual__ mas cercano a su visión de los datos. Por otro lado, es un modo para los DBAs para limitar que esta disponible para consultas dentro de la base de datos, mas alla de la seguridad intrinseca de la base de datos
+
+La herramienta esta abierta a que los usuarios puedan incluir sus propias extensiones de modo que puedan ejecutar tests especiales. Vea [como hacerlo](docs/user_functions.md)
+
+
+Además ofrecemos los programas siguientes
+
+* __cubebrowse.py__ Diseñado para manipular las definiciones de los cubos. Aunque al ser un fichero json pueden ser editados a mano en caso de necesidad
+
+![Screenshot](docs/image/cubebrowse_ss.png "Title")
+
+* __danabrowse.py__ Para navegar por el contenido de los servidores de base de datos en nuestro entoro y, si se considera conveniente, generar directamente definiciones de cubos desde el catalogo de las bases de datos database 
+
+![Screenshot](docs/image/danabrowse_ss.png "Title")
+
+* __danaquery.py__ Una herramienta muy simple para ejecutar consultas _SQL_ en nuestro entorno
+
+![Screenshot](docs/image/danaquery_ss.png "Title")
+
+## Donde funciona
+
+La herramienta está programada con _python3_ + _PyQt5_ (Hemos intentado ser lo mas compatibles posibles con _Python 2.7_ pero hace tiempo que no se prueba). 
+la infraestructa es agnostica respecto del gestor de base de datos. Para ello utilizamos [SqlAlchemy](http://www.sqlalchemy.org/)  como "data backend", de modo que, en teoría cualquier gestor accesible para ella puede ser utilizado con dana-cube; aunque no es descartable que requiera de pequeños ajustes
+
+* [Saltar a la información general -en ingles-](#documentation)
+
+# Rationale in English
+
+__Table of Contents__
+
+* [What's the problem:](#whats-the-problem)
+* [What we provide](#what-we-provide)
+* [Where to run the tool](#where-to-run-the-tool)
+* [The definitions file](#the-definitions-file)
 
    
 ## What's the problem:
 
-I spent most of the last twenty years of my professional life mainly as a DBA and/or system manager  on "big databases" Now and then, i was sent as _"maiden for everything"_ to smaller customers and projects. And i ran also my private projects. Everywhere, be it great corporations or goverment offices, be it small shops or individual users with a database. there was the problem __how to extract information from the mass of data in a database beyond what's preprogrammed in the applications__.
-
-I've seen a lot of propossed solutions (be it named _User reporting tools_, _DataWarehouse_ , _OLAP_ or _Bussiness Inteligence_ ) but the fact is that, whatever the technology, they tend to end as overblown, complex, "professional support and security" needed tools, and as resource hungry, closed and  rigid as the applications it should complement. And let's not talk about the licence costs when not open source. There are, though, a number of other tools for _OLAP_ or _data minig_ less demanding, but usually there tend to be complex , giving innecesary pain to the most basic steps
-
-In real life, and those not "lucky" enough to have access to such a tool, everyone has gone the _Access/Excel_ route. Either by periodically being downloaded data or direct ODBC linking into this tools, users develop the reporting/analisys tools they need. I've seen quite a few more than interesting. Stability,  maintainability, and the chance of distributing it, is another story. My own experience with ODBC linking performance is less than good. And as a former DBA, piggybacking an uncontrollable tool (as the ODBC interface is) on a corporate database is a security and performance nightmare
-
-Try to find an alternative to Access as frontend to external databases, or enter Linux desktop ... You're left out in the cold. Very, very cold. Being honest, _OpenOffice_ and derivatives, have a huge "black hole" regarding database interaction. Neither its _Base_ component, nor its interface to outside databases are even minimally comparable to Microsoft's. [KDE's Kexi](http://www.kexi-project.org/) might have interesting features, but does not address Access' functionality as an interface to external databases ... and so on.
-
-I have no need either for a standalone database or a query tool. You'll find a lot of alternatives out there (even though we provide a very simple query tool as part of the package). But there is a tool __I do need__ 
 
 Probably the most common problem an SQL database users is to solve the need to __resolve an aggregate (sum, aver,...) by two or more parameters and show them in array (spreadsheet) form__.
 
@@ -76,7 +195,9 @@ Cádiz                        94,707                                      179,05
 Castellón/Castelló           48,220                                       98,341         66,450                                                       9,565
 ...
 ```
-Sadly, this is usually __NOT available in most data query programs__. Some DB products (fi. Oracle and MSSQL) offer their own private means of generate such queries, but they're not always available in general tools. MS Access _cross reference queries_ or _Pivot Tables_ available in several spreadsheet programs, DO offer this functionality, but the cost -and most ofter the unwieldness- of linking REAL databases to this products do not make them really sustainable options in the long run.
+Sadly, this is usually __NOT available in most data query programs__. Some DB products (fi. Oracle and MSSQL) offer their own private means of generate such queries, but they're not always available in general tools. MS Access _cross reference queries_ or _Pivot Tables_ available in several spreadsheet programs, DO offer this functionality,I've seen quite a few more than interesting. 
+
+But, stability,  maintainability, and the chance of distributing it, is another story. My own experience with ODBC linking performance is less than good. And as a former DBA, piggybacking an uncontrollable tool (as the ODBC interface is) on a corporate database is a security and performance nightmare
 
 ## What we provide
 
@@ -106,58 +227,7 @@ An end user can not define their own cubes, nor use guides outside what's define
 The tool is open to user extensions, so special test can be run over the data. See [docs here](docs/user_functions.md)-still only spanish- for the user functon module
 
 
-## Where to run the tool
 
-The tool is programmed in _python3_ + _PyQt5_ but it might be possible to be run under _Python2_ (we try to be as much compatible as possible, but haven't tested it in a while). And we have made avaliable the core functionality _without_ the need of using Qt. 
-
-The infrastructure is database agnostic. We use [SqlAlchemy](http://www.sqlalchemy.org/) as data backend, so in theory every database which can be accessed thru it should be available, although a few specific changes might be needed 
-
-## The definitions file
-
-The definition of the Cube is a simple text (Json) file like this
-
-```
-    "datos light": {
-        "base filter": "", 
-        "table": "votos_locales", 
-        "guides": [
-            {
-                "prod": [
-                    {
-                        "source": {
-                            "filter": "", 
-                            "table": "partidos", 
-                            "code": "code", 
-                            "desc": "acronym"
-                        }, 
-                        "fmt": "txt", 
-                        "elem": "partido"
-                    }
-                ], 
-                "name": "partido", 
-                "class": "o"
-            }, 
-            ...
-        ], 
-        "connect": {
-            "dbuser": null, 
-            "dbhost": null, 
-            "driver": "QSQLITE", 
-            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db", 
-            "dbpass": null
-        }, 
-        "fields": [
-            "votes_presential", 
-            "votes_percent", 
-            "ord"
-        ]
-    }, 
- ```
-
-Why a text file for definition? To avoid a dependency to a concrete DB Manager or of their DBA's . Second, text files are easier to distribute and for "emergency' changes. 
-
-You can find the documentation at [this place (spanish only)](docs/tree_docs.md)
-We provide, also, some administrative tools to work with the cube definitions:
 
 * __cubebrowse.py__ Is a tool designed to manipulate the cube definitions. They are a plain Json file (see below) and can be edited by hand if necessary
 
@@ -172,7 +242,14 @@ We provide, also, some administrative tools to work with the cube definitions:
 ![Screenshot](docs/image/danaquery_ss.png "Title")
 
 
-## Documentation
+## Where to run the tool
+
+The tool is programmed in _python3_ + _PyQt5_ but it might be possible to be run under _Python2_ (we try to be as much compatible as possible, but haven't tested it in a while). And we have made avaliable the core functionality _without_ the need of using Qt. 
+
+The infrastructure is database agnostic. We use [SqlAlchemy](http://www.sqlalchemy.org/) as data backend, so in theory every database which can be accessed thru it should be available, although a few specific changes might be needed 
+
+
+# Documentation
 
 It's a work in progress
 
@@ -182,7 +259,7 @@ It's a work in progress
 * The full definition specs can be found at [this place (spanish only)](docs/tree_docs.md)
 * The user functions specs can be found [this place (spanish only)](docs/user_functions.md)
 
-## Sample Data
+# Sample Data
 We will provide a test database (with results of the Spanish General Election in 2015) for several supported databases, with minimal changes between them.
 You will find both a _sample_data.zip_ and a _sample_data.tar.gz_ file in the root directory of the project, there you'll find both a cube definition file and a DB dump for the samples
 
@@ -190,7 +267,7 @@ As a matter of fact, the tool grew analizing those data
 
 
 
-## Dependencies
+# Dependencies
 
 Besides PyQt, we use:
 
@@ -200,7 +277,7 @@ Besides PyQt, we use:
 * [XlsxWriter](https://pypi.python.org/pypi/XlsxWriter) Guess it ...
 * [Matplotlib](http://matplotlib.org/) for all the graphic stuff
 
-## License
+# License
 
 For my part, while I (Werner Llácer Viciano) retain all ownership of the code, this is an open source product.
 
@@ -219,7 +296,7 @@ A few _caveats_ :
 
 Qt, PyQt -and the additional libraries-, licensing might impose other restrictions, please keep an eye on it (AFAIK PyQt is/was __GPL__ licensed)
 
-## DANACUBE enters __ALPHA__
+# DANACUBE enters __ALPHA__
 
 What does it means?
 
@@ -244,13 +321,13 @@ Active tasks can be read [here](../docs/todo.md)
 
 
 
-## Help Needed
+# Help Needed
 
 We could profit from someone knowledgable in UI development. I'm a DBA type and, well, it's kind of difficult for me
 
 Testers are welcome.
 
-## Out there ...
+# Out there ...
 
 If you feel my package isn't enough for you  have a look at the following projects of similar scope and technology. They might be of interest for you
 
@@ -258,7 +335,7 @@ If you feel my package isn't enough for you  have a look at the following projec
 * [Pandas project](https://pandas.pydata.org/)
 * [Orange3 project](https://github.com/biolab/orange3)
 
-## Contact
+# Contact
 
 You can email me regarding this application thru the address _danacube.sup_ at _gmail_
 
