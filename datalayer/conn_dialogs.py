@@ -24,7 +24,7 @@ from util.record_functions import norm2String,dict2row, row2dict
 from util.jsonmgr import *
 from widgets import WPropertySheet
 
-DEBUG = True
+import config
 
 class directConnectDlg(QDialog):
     def __init__(self,configDict,parent=None):

@@ -11,7 +11,7 @@ from util.numeros import stats
 (_ROOT, _DEPTH, _BREADTH) = range(3)
 (_KEY,_ITEM) = range(2)
 
-DELIMITER=':'
+config.DELIMITER=':'
 
 def traverse(tree, key=None, mode=1):
     return tree.traverse(key,mode,output = _ITEM)
@@ -427,9 +427,9 @@ class TreeDict(object):
 
     def getHeader(self,tipo='row',separador='\n',sparse=True):
         if sparse:
-            cabecera = [ item[-1].replace(DELIMITER,'-') for item in self.setHeader() ]
+            cabecera = [ item[-1].replace(config.DELIMITER,'-') for item in self.setHeader() ]
         else:
-            cabecera = [ separador.join([ entry.replace(DELIMITER,'-') for entry in item]) for item in self.setHeader()]
+            cabecera = [ separador.join([ entry.replace(config.DELIMITER,'-') for entry in item]) for item in self.setHeader()]
         if tipo == 'row':
             return cabecera
         else:

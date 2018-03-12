@@ -11,7 +11,7 @@ from util.numeros import stats
 (_ROOT, _DEPTH, _BREADTH) = range(3)
 (_KEY,_ITEM) = range(2)
 
-DELIMITER=':'
+import config
 
 def traverse(tree, key=None, mode=1):
     """
@@ -553,7 +553,7 @@ class GuideItem(QStandardItem):
         if 'content' in parms and parms['content'] == 'key':
                 rol = Qt.UserRole +1
         format = 'single'
-        delim = DELIMITER
+        delim = config.DELIMITER
         if 'format' in parms:
             sparse = parms.get('sparse',False)
             if parms['format'] == 'string':
@@ -596,7 +596,7 @@ class GuideItem(QStandardItem):
     def getFullKey(self):
         """
 
-        obtains the key of the row in string format (i.e each hierachical step separated by DELIMITER ).
+        obtains the key of the row in string format (i.e each hierachical step separated by config.DELIMITER ).
         Key is the DB internal key and Qt.UserRole + 1 data
         
         """

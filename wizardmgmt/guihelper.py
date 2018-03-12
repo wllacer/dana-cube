@@ -38,10 +38,7 @@ from  PyQt5.QtWidgets import QApplication, QMainWindow, QWizard,QWizardPage,QLab
         #else:
             #queue = expansion  + queue[1:]             
     
-
-DEBUG = True
-TRACE=True
-DELIMITER=':'
+import config
 
 #from util.record_functions import *
 #from util.tree import *

@@ -9,7 +9,8 @@ Documentation, License etc.
 
 @package estimaciones
 '''
-DELIMITER = ':'
+import config
+
 from decimal import *
 from pprint import *
 
@@ -132,7 +133,7 @@ def getDateIndexNew(max_date,  min_date, fmt, **opciones):
        TODO esta clarisimo que ademas admite seria optimizacion
        TODO como verificar que van a introducirse valores correctos HINT pasar a fecha python y provocar excepcion
     '''
-    #DELIMITER = '.'
+    #config.DELIMITER = '.'
     previous = []
     next = []
     ranges = []
@@ -152,8 +153,8 @@ def getDateIndexNew(max_date,  min_date, fmt, **opciones):
                 for rango in ranges:
                     entry = list(entrada[:])
                     # TODO garantizar que eso sea una fecha valida
-                    if validate(entry[-1]+DELIMITER+ rango,fmt[0:k+1]):
-                        entry.append(entry[-1]+DELIMITER+ rango)  #k empieza en 0
+                    if validate(entry[-1]+config.DELIMITER+ rango,fmt[0:k+1]):
+                        entry.append(entry[-1]+config.DELIMITER+ rango)  #k empieza en 0
                         next.append(entry)
         
     return next
@@ -170,7 +171,7 @@ def getDateEntry(psource, fmt, driver='sqlite'):
         print('Date conversions for driver %s still not implemented'%driver)
         return None
         
-    #DELIMITER = '.'
+    #config.DELIMITER = '.'
         
     entrada={}
 
@@ -178,7 +179,7 @@ def getDateEntry(psource, fmt, driver='sqlite'):
 
     for char in fmt:
         if fmt_string != '':
-            fmt_string += DELIMITER
+            fmt_string += config.DELIMITER
         fmt_string += marker[char]
     element = fmask.format(function,source,fmt_string)
     

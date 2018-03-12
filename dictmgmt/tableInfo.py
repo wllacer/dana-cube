@@ -39,7 +39,7 @@ from dictmgmt.datadict import DataDict
 
 from datalayer.query_constructor import *
 
-DEBUG = False
+import config
 
 (_ROOT, _DEPTH, _BREADTH) = range(3)
 
@@ -60,21 +60,21 @@ def FQName2array(fqname):
 def getTabRef(dd,confName,schemaName,tableName):
     con = dd.getConnByName(confName)
     if con is None:
-        if DEBUG:
+        if config.DEBUG:
             print('Conexion {} no definida'.format(confName))
         return None
     sch = con.getChildrenByName(schemaName)
     if sch is None:
-        if DEBUG:
+        if config.DEBUG:
             print('Esquema {} no definido'.format(schemaName))
         return None
     tab = sch.getChildrenByName(tableName)
     if tab is None:
-        if DEBUG:
+        if config.DEBUG:
             print('Tabla {} no definida'.format(tableName))
         return None
 
-    if DEBUG:
+    if config.DEBUG:
         print('get Table ->',tab.getFullDesc())
                   
     return tab
@@ -314,7 +314,7 @@ class TableInfo():
 
         sqlContext['sqls'] = queryConstructor(**sqlContext)
         
-        if DEBUG:
+        if config.DEBUG:
             print(queryFormat(sqlContext['sqls']))
         return sqlContext #
 

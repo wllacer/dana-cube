@@ -16,7 +16,7 @@ import re
 from pprint import *
 from copy import deepcopy
 
-DELIMITER=':'
+import config
 
 def norm2List(entrada):
     """
@@ -86,7 +86,7 @@ def getLevel(entrada):
        el : es separador de nivel (espero que eso no entre en conflicto con textos reales TODO
        
     '''
-    level = entrada.count(DELIMITER)
+    level = entrada.count(config.DELIMITER)
     return level
     
 def getRecordLevel(record):
@@ -132,8 +132,8 @@ def regHasher(record,**kwargs):
     try:
         #GENERADOR. Vaya Chapu
         trecord = list(map(str,record[0:num_components]))
-        indice = DELIMITER.join(trecord)
-        #indice = DELIMITER.join(record[0:num_components])
+        indice = config.DELIMITER.join(trecord)
+        #indice = config.DELIMITER.join(record[0:num_components])
     except TypeError:
         print('type error')
         print(num_components)
@@ -153,9 +153,9 @@ def regHasher2D(record,**kwargs):
             pos_ini = dimension['init']
         else:
             pos_ini = 0
-        trecord = list(map(lambda x:str(x).replace(DELIMITER,'/'),record[pos_ini:pos_ini+num_components]))
-        indice[k] = DELIMITER.join(trecord)
-        #indice[k] = DELIMITER.join(record[pos_ini:pos_ini+num_components])
+        trecord = list(map(lambda x:str(x).replace(config.DELIMITER,'/'),record[pos_ini:pos_ini+num_components]))
+        indice[k] = config.DELIMITER.join(trecord)
+        #indice[k] = config.DELIMITER.join(record[pos_ini:pos_ini+num_components])
         
     for k in ('row','col'):
         if k == 'row':

@@ -13,9 +13,7 @@ TODO
     Falta incluir los filtros del cubo
 '''
 
-DEBUG = True
-TRACE=True
-DELIMITER=':'
+import config
 
 #from util.record_functions import *
 #from util.tree import *

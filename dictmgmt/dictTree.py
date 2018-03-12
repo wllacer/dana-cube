@@ -32,7 +32,7 @@ from  sqlalchemy import create_engine,inspect,MetaData, types
 from  sqlalchemy.exc import CompileError, OperationalError, ProgrammingError, InterfaceError
 #from  sqlalchemy.sql import text
 
-DEBUG=True
+import config
 
 
 def showConnectionError(context,detailed_error,title="Error de Conexion"):
@@ -333,12 +333,12 @@ class ConnectionTreeItem(BaseTreeItem):
     def findElement(self,schemaName,tableName):
         sch = self.getChildrenByName(schemaName)
         if sch is None:
-            if DEBUG:
+            if config.DEBUG:
                 print('Esquema >{}< no definido'.format(schemaName))
             return
         tab = sch.getChildrenByName(tableName)
         if tab is None:
-            if DEBUG:
+            if config.DEBUG:
                 print('Tabla {} no definida'.format(tableName))
             return
         return tab
@@ -372,12 +372,12 @@ class ConnectionTreeItem(BaseTreeItem):
                         
                 except ( OperationalError, ProgrammingError) as e:
                     # showConnectionError('Error en {}.{}'.format(schema,table_name),norm2String(e.orig.args),'Error en el diccionario')
-                    if DEBUG:
+                    if config.DEBUG:
                         print('error operativo en ',schema,table_name,norm2String(e.orig.args))
                     continue
                 except AttributeError as e:
                     # showConnectionError('Error en {}.{}, >{}'.format(schema,table_name,fk['referred_table']),norm2String(e.orig.args),'Error en el diccionario')
-                    if DEBUG:
+                    if config.DEBUG:
                         print(schema,table_name,fk['referred_table'],'casca',norm2String(e.orig.args))
                     continue
                 
@@ -570,7 +570,7 @@ class TableTreeItem(BaseTreeItem):
                     #curTableFields.lastChild().getValueSpread()
                 except CompileError: 
                 #except CompileError:
-                    if DEBUG:
+                    if config.DEBUG:
                         print('Columna sin tipo',schema,' ',table_name,' ',name)
                     if name and name != '':
                         tipo = BaseTreeItem(typeHandler(types.Text()))
@@ -589,7 +589,7 @@ class TableTreeItem(BaseTreeItem):
                 referred    = BaseTreeItem(norm2String(fk['referred_columns']))
                 curTableFK.appendRow((name,table,constrained,referred))                         
         except (OperationalError, ProgrammingError) as e:
-            if DEBUG:
+            if config.DEBUG:
                 #showConnectionError('Error en {}.{}'.format(schema,table_name),norm2String(e.orig.args))
                 print('Error en {}.{}'.format(schema,table_name),norm2String(e.orig.args))
                 

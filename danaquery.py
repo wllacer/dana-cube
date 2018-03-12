@@ -53,7 +53,7 @@ from datalayer.access_layer import SYSTEM_SCHEMAS, getCursorLim
 from datalayer.query_constructor import queryFormat
 from datalayer.conn_dialogs import directConnectDlg
 
-DEBUG = True
+import config
 
 DEFAULT_FORMAT = dict(thousandsseparator=".",
                             decimalmarker=",",
@@ -94,7 +94,7 @@ class CursorItem(QStandardItem):
                         if rawData == 'None':
                             return ''
                         else:
-                            if DEBUG:
+                            if config.DEBUG:
                                 print ('error de formato en ',
                                 self.model().recordStructure[index.column()],index.row(),
                                 super(CursorItem,self).data(role))

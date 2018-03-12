@@ -23,7 +23,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QMessageBox
 from pprint import *
 from functools import wraps
 
-DEBUG = True
+import config
 
 def stopwatch(function):
     """
@@ -53,7 +53,7 @@ def waiting_effects(function):
             QMessageBox.warning(QApplication.activeWindow(),
                             "Warning",
                             "Error {}".format(e.args[0]))
-            if DEBUG:
+            if config.DEBUG:
                 print("Error {}".format(e.args[0]))
             raise e
         finally:
@@ -81,7 +81,7 @@ def model_change_control(clas_pos=0):
                 QMessageBox.warning(QApplication.activeWindow(),
                                 "Warning",
                                 "Error {}".format(e.args[0]))
-                if DEBUG:
+                if config.DEBUG:
                     print("Error {}".format(e.args[0]))
                 raise e
             finally:
@@ -106,7 +106,7 @@ def keep_tree_layout(clas_pos=0):
                 QMessageBox.warning(QApplication.activeWindow(),
                                 "Warning",
                                 "Error {}".format(e.args[0]))
-                if DEBUG:
+                if config.DEBUG:
                     print("Error {}".format(e.args[0]))
                 raise e
             finally:
@@ -136,7 +136,7 @@ def model_update_dec(function):
             QMessageBox.warning(QApplication.activeWindow(),
                             "Warning",
                             "Error {}".format(e.args[0]))
-            if DEBUG:
+            if config.DEBUG:
                 print("Error {}".format(e.args[0]))
             raise e
         finally:

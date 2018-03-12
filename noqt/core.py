@@ -11,9 +11,9 @@ Documentation, License etc.
 
 '''
 
-DEBUG = True
-TRACE=True
-DELIMITER=':'
+config.DEBUG = True
+config.TRACE=True
+config.DELIMITER=':'
 
 from util.record_functions import *
 from noqt.tree import *
@@ -115,7 +115,7 @@ class GuideItem(QStandardItem):
         clave = self.data(Qt.UserRole +1)
         pai = self.parent()
         while pai is not None and pai != self.model().invisibleRootItem():
-            clave = pai.data(Qt.UserRole +1) + DELIMITER + clave
+            clave = pai.data(Qt.UserRole +1) + config.DELIMITER + clave
         return clave
         
     def searchChildren(self,value,role=None):
@@ -161,7 +161,7 @@ def getParentKey(clave,debug=False):
     """
     nivel=getLevel(clave)
     if nivel > 0:
-        padreKey = DELIMITER.join(clave.split(DELIMITER)[0:nivel])
+        padreKey = config.DELIMITER.join(clave.split(config.DELIMITER)[0:nivel])
         return padreKey
     else:
        return None
@@ -403,7 +403,7 @@ class Cubo:
             pprint
             raise
         cursor=getCursor(self.db,sqlString)
-        if DEBUG:
+        if config.DEBUG:
             print(time.time(),'Datos ',queryFormat(sqlString))
 
         return cursor
@@ -438,7 +438,7 @@ class Cubo:
                 if row[k] is None:
                     row[k] = ''
                 else:
-                    row[k] = str(row[k]).replace(DELIMITER,'/')  #OJO todas las claves son Alfanumericas
+                    row[k] = str(row[k]).replace(config.DELIMITER,'/')  #OJO todas las claves son Alfanumericas
             if ndesc == 0:
                 value = ', '.join(row[-ncode:])
             else:
@@ -471,8 +471,8 @@ class Cubo:
                     value=', '.join(row)  
                 else:
                     value=', '.join(row[-ndesc:])
-                #clave separada jeraruqicamnet por DELIMITER
-                key=DELIMITER.join(row[0:len(code)])   #asi creo una jerarquia automatica en claves multiples
+                #clave separada jeraruqicamnet por config.DELIMITER
+                key=config.DELIMITER.join(row[0:len(code)])   #asi creo una jerarquia automatica en claves multiples
                 parentId = getParentKey(key)
                 raiz.append(TreeItem(key,entryNum,value),parentId)
     
@@ -538,7 +538,7 @@ class Cubo:
             cursor = None
             elems = []
             linkvia = []
-            if DEBUG:
+            if config.DEBUG:
                 print(self.nombre,guia['name'],nombre)
             """
             El esquema es comun para cada tipo de guia
@@ -853,7 +853,7 @@ class Vista:
                               }
                 cursor = getCursor(self.cubo.db,sqlstring,regTree,**lista_compra)
                 self.array +=cursor #getCursor(self.cubo.db,sqlstring,regTree,**lista_compra)
-                if DEBUG:
+                if config.DEBUG:
                     print(time.time(),'Datos ',queryFormat(sqlstring))
 
         #pprint(self.array)
@@ -872,7 +872,7 @@ class Vista:
                 continue
             except IndexError:
                 print('{} o {} fuera de rango'.format(ind_1,ind_2))
-        if DEBUG:
+        if config.DEBUG:
             print(time.time(),'table ',len(table),self.row_hdr_idx.len(),len(table[0])) 
         return table
 
@@ -977,7 +977,7 @@ class Vista:
             #elem.setData(datos)
             #if self.stats:
                 #elem.setStatistics()
-        #if DEBUG:
+        #if config.DEBUG:
             #print(time.time(),'Tree ',len(array),self.row_hdr_idx.len())  
 
     def toTree2D(self):
@@ -1010,7 +1010,7 @@ class Vista:
                 #elem.setStatistics()
 
                     
-        if DEBUG:       
+        if config.DEBUG:       
             print(time.time(),'Tree ',len(array),self.row_hdr_idx.len())  
 
     def recalcGrandTotal(self):

@@ -15,6 +15,7 @@ Documentation, License etc.
 
 from pprint import pprint
 
+import config
    
 
 from dictmgmt.dictTree import *
@@ -194,7 +195,7 @@ class DataDict():
     
         k = self.getConnNr(confName)
         if not k:
-            if DEBUG:
+            if config.DEBUG:
                 print(confName,' conexion inexistente')
             return
         else:

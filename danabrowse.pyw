@@ -36,7 +36,7 @@ from cubemgmt.cubeutil import info2cube
 from cubebrowse import CubeMgr
 from util.decorators import *
 
-DEBUG = True
+import config
 
 class GenerationSheetDlg(QDialog):
     """
@@ -126,7 +126,7 @@ class DanaBrowseWindow(QMainWindow):
             #self.dictionary._cargaModelo(self.dictionary.baseModel)
         self.setupView()
         self.cubeMgr = None # necesito mas adelante que este definida
-        if DEBUG:
+        if config.DEBUG:
             print('inicializacion completa')
         #CHANGE here
         

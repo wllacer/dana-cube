@@ -25,10 +25,7 @@ from  PyQt5.QtWidgets import QApplication, QMainWindow, QWizard,QWizardPage,QLab
 from datalayer.query_constructor import *
 
 
-
-DEBUG = True
-TRACE=True
-DELIMITER=':'
+import config
 
 from util.record_functions import *
 from util.tree import *

@@ -33,7 +33,8 @@ from filterDlg import filterDialog
 
 from util.decorators import waiting_effects 
 from util.record_functions import defaultFromContext
-DEBUG = True
+
+import config
 
 DEFAULT_FORMAT = dict(thousandsseparator=".",
                             decimalmarker=",",
@@ -71,7 +72,7 @@ class CursorItem(QStandardItem):
                         if rawData == 'None':
                             return ''
                         else:
-                            if DEBUG:
+                            if config.DEBUG:
                                 print ('error de formato en ',
                                 self.model().recordStructure[index.column()],index.row(),
                                 super(CursorItem,self).data(role))
@@ -102,7 +103,7 @@ class TableBrowserWin(QMainWindow):
     def __init__(self,confName,schema,table,pdataDict=None,iters=0):
         super(TableBrowserWin, self).__init__()
         self.view = TableBrowser(confName,schema,table,pdataDict,iters)
-        if DEBUG:
+        if config.DEBUG:
             print('inicializacion completa')
         ##CHANGE here
     

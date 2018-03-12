@@ -505,7 +505,7 @@ def _joinConstructor(**kwargs):
     if num_elem == 0:
         return ''
 
-    #DEBUG print(kwargs[definicion],entrada)
+    #config.DEBUG print(kwargs[definicion],entrada)
     statement = ''
     ind = 0
     texto = []

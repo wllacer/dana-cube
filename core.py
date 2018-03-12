@@ -13,9 +13,7 @@ TODO
     to array y funciones para extraer las cabeceras
 '''
 
-DEBUG = False
-TRACE=True
-DELIMITER=':'
+import config
 
 from util.record_functions import *
 from util.tree import *
@@ -62,7 +60,7 @@ def getParentKey(clave,debug=False):
     """
     nivel=getLevel(clave)
     if nivel > 0:
-        padreKey = DELIMITER.join(clave.split(DELIMITER)[0:nivel])
+        padreKey = config.DELIMITER.join(clave.split(config.DELIMITER)[0:nivel])
         return padreKey
     else:
        return None
@@ -363,7 +361,7 @@ class Cubo:
             pprint
             raise
         cursor=getCursor(self.db,sqlString)
-        if DEBUG:
+        if config.DEBUG:
             print(time.time(),'Datos ',queryFormat(sqlString))
 
         return cursor
@@ -397,7 +395,7 @@ class Cubo:
                 if row[k] is None:
                     row[k] = ''
                 else:
-                    row[k] = str(row[k]) #.replace(DELIMITER,'/') #OJO todas las claves son Alfanumericas
+                    row[k] = str(row[k]) #.replace(config.DELIMITER,'/') #OJO todas las claves son Alfanumericas
             if ndesc == 0:
                 value = ', '.join(row[-ncode:])
             else:
@@ -442,8 +440,8 @@ class Cubo:
                     #value=', '.join(row)  
                 #else:
                     #value=', '.join(row[-ndesc:])
-                ##clave separada jeraruqicamnet por DELIMITER
-                #key=DELIMITER.join(row[0:len(code)])   #asi creo una jerarquia automatica en claves multiples
+                ##clave separada jeraruqicamnet por config.DELIMITER
+                #key=config.DELIMITER.join(row[0:len(code)])   #asi creo una jerarquia automatica en claves multiples
                 #parentId = getParentKey(key)
                 #raiz.append(TreeItem(key,entryNum,value),parentId)
     
@@ -529,7 +527,7 @@ class Cubo:
             cursor = None
             elems = []
             linkvia = []
-            if DEBUG:
+            if config.DEBUG:
                 print(self.nombre,guia['name'],nombre)
             """
             El esquema es comun para cada tipo de guia
@@ -877,7 +875,7 @@ class Vista:
 
                 cursor = getCursor(self.cubo.db,sqlstring,regTreeGuide,**lista_compra)
                 self.array +=cursor 
-                if DEBUG:
+                if config.DEBUG:
                     print(time.time(),'Datos ',queryFormat(sqlstring))
 
         #pprint(self.array)

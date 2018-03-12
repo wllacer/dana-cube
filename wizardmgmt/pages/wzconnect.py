@@ -24,9 +24,7 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem, QColor
 from  PyQt5.QtWidgets import QApplication, QMainWindow, QWizard,QWizardPage,QLabel,QComboBox,QGridLayout,QGroupBox,QRadioButton,QVBoxLayout,QGridLayout,QPlainTextEdit,QListWidget,QCheckBox
     
 
-DEBUG = True
-TRACE=True
-DELIMITER=':'
+import config
 
 from util.record_functions import *
 

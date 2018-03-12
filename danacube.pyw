@@ -104,6 +104,8 @@ import exportWizard as eW
 
 from util.treestate import *
 
+import config
+
 #TODO uso de formato numerico directamente en la view setNumberFormat
 #ALERT dopado para que vaya siempre a datos de prueba
 

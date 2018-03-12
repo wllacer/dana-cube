@@ -18,7 +18,7 @@ from pprint import pprint
 from widgets import * 
  
 """
-  DEBUG DATA start
+  config.DEBUG DATA start
 """
 cubo = None
 

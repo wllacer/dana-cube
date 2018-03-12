@@ -69,7 +69,7 @@ class TreeModel(QAbstractItemModel):
             return None
         
         if index.column() == 0:
-            return item.data(0).split(DELIMITER)[-1]
+            return item.data(0).split(config.DELIMITER)[-1]
         elif item.data(index.column()) is None:
             return None
         else:
@@ -99,7 +99,7 @@ class TreeModel(QAbstractItemModel):
                 texto = self.rowHdr[section]
             if texto:
                 ktexto = texto.split('\n')
-                ktexto[-1] = ktexto[-1].split(DELIMITER)[-1]
+                ktexto[-1] = ktexto[-1].split(config.DELIMITER)[-1]
                 texto = '\n'.join(ktexto)
             else:
                 texto = ''
