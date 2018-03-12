@@ -63,7 +63,7 @@ class previewTree(QTreeView):
 
     def setupModel(self,guia):
   
-        self.baseModel,dummy = self.cubo.fillGuia(guia,qtModel='yes')
+        self.baseModel,dummy = self.cubo.fillGuia(guia) #,qtModel='yes')
         self.hiddenRoot = self.baseModel.invisibleRootItem()       
         parent = self.hiddenRoot = self.baseModel.invisibleRootItem()
         

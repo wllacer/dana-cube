@@ -209,6 +209,7 @@ class filterDialog(QDialog):
                 qfmt = 'f'
             elif formato in ('booleano'):
                 qfmt = 'n' #me parece 
+                
             if len(item[0]) > 1:
                 datos = aslist[0].split(':')
                 for k,campo in enumerate(item[0]):

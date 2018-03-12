@@ -23,25 +23,25 @@ DB_DATE_QUIRKS = {
     "sqlite":{
         "function":'strftime',
         "function_mask":"{0}('{2}',{1})" ,   #0 funcion 1 campo 2 formato
-        "cat":"{} ||':'||'{}' ",
+        "cat":"{{}} ||'{}'||'{{}}' ".format(config.DELIMITER),
         "marker":{ "Y":'%Y', "m":'%m', "W":'%W', "d": '%d',"w": '%w',"J": '%J'},
         },
     "mysql":{
         "function":'DATE_FORMAT',
         "function_mask": "{0}({1},'{2}')",
-        "cat":"CONCAT_WS(':',{},'{}')",
+        "cat":"CONCAT_WS('{}',{{}},'{{}}')".format(config.DELIMITER),
         "marker":{ "Y":'%Y', "m":'%m', "W":'%U', "d": '%d',"w": '%w',"J": '%j'},
         },
     "postgresql":{
         "function":'TO_CHAR',
         "function_mask": "{0}({1},'{2}')",
-        "cat":"{} ||':'||'{}' ",
+        "cat":"{{}} ||'{}'||'{{}}' ".format(config.DELIMITER),
         "marker":{ "Y":'YYYY', "m":'MM', "W":'WW', "d": 'DD',"w": 'D',"J": 'DDD'},
         },
     "oracle":{
         "function":'TO_CHAR',
         "function_mask": "{0}({1},'{2}')",
-        "cat":"{} ||:||'{}' ",
+        "cat":"{{}} ||'{}'||'{{}}' ".format(config.DELIMITER),
         "marker":{ "Y":'YYYY', "m":'MM', "W":'WW', "d": 'DD',"w": 'D',"J": 'DDD'},
         },
     }
@@ -55,7 +55,7 @@ def validate(date_text,fmt):
         if formato == '':
             formato += '%'+char
         else:
-            formato += ':%'+char
+            formato += '{}%'.format(config.DELIMITER)+char
         
     try:
         if date_text != datetime.datetime.strptime(date_text, formato).strftime(formato):
@@ -221,8 +221,8 @@ def makeCaseArrayInterval(interval,driver):
         pyear_stmt = function_mask.format(function,placeholder,year_marker)
     elif interval == 'q':
         selector = function_mask.format(function,placeholder,day_marker)
-        pyear_stmt = function_mask.format(function,placeholder,year_marker+':'+month_marker)
-        cat_stmt = cat_stmt.replace(':','-')
+        pyear_stmt = function_mask.format(function,placeholder,year_marker+config.DELIMITER+month_marker)
+        cat_stmt = cat_stmt.replace(config.DELIMITER,'-')  #por que esta excepcion con las quincenas ??
         nombre = 'quincena'
     else:
         return None

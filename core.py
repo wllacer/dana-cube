@@ -620,6 +620,7 @@ class Cubo:
                     cursor = getDateIndexNew(date_cache[campo][0]  #max_date
                                                 , date_cache[campo][1]  #min_date
                                                 , kmask)
+                    pprint(cursor)
                 # la correcta asignacion de formatos fecha ha sido hecha al desdoblar
                 if prodId == 0:    
                     elems = norm2List(produccion.get('elem'))

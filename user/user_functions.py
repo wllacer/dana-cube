@@ -12,6 +12,7 @@ from pprint import pprint
 from  util import uf_manager as ufm 
 from util.record_functions import norm2List
 
+import config
 """
 Funciones auxiliares
 """
@@ -279,7 +280,7 @@ Funciones particulares de la BD. electoral
 #def senado(item):
 def senado(*parms,**kwparms):
     item = parms[0]
-    prov = item['key'].split(':')[-1]
+    prov = item['key'].split(config.DELIMITER)[-1]
     tmp = [entry if entry else -float('Inf') for entry in item.getPayload() ] 
     ordtmp = [ None for k in range(item.lenPayload())]
     maximo = max(tmp)
@@ -299,7 +300,7 @@ def senado(*parms,**kwparms):
 #def asigna(item):
 def asigna(*parms,**kwparms):
     item = parms[0]
-    prov = item['key'].split(':')[-1]
+    prov = item['key'].split(config.DELIMITER)[-1]
     puestos = escanos(prov)
     if puestos is None:
         item.setPayload([ None for k in range(item.lenPayload())])
@@ -309,7 +310,7 @@ def asigna(*parms,**kwparms):
 
 def asignaCat(*parms,**kwparms):
     item = parms[0]
-    prov = item['key'].split(':')[-1]
+    prov = item['key'].split(config.DELIMITER)[-1]
     puestos = escanosCat(prov)
     if puestos is None:
         item.setPayload([ None for k in range(item.lenPayload())])
