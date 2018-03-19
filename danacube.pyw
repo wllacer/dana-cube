@@ -1049,24 +1049,28 @@ class DanaCube(QTreeView):
             self.drawGraph('row',index)
         
     def drawGraph(self,source,id):
-        if source == 'row':
-            item = self.model().item(id)
-            titulo = item['key']
-            datos = item.getPayload()
-            etiquetas = self.colHdr()
-        elif source == 'col':
-            titulo = self.colHdr[id - 1]
-            datos = []
-            etiquetas = []
-            for entrada in self.model().traverse():
-                if entrada.gpi(id -1) is None:
-                    continue
-                datos.append(entrada.gpi(id -1))
-                etiquetas.append(entrada.getFullHeadInfo())
-        dialog = GraphDlg(self.parent.tabulatura.currentWidget().chartType, self)
+        dialog = GraphDlg(self.parent.tabulatura.currentWidget().chartType, source, self)
         if dialog.exec_():
+            chart = self.parent.tabulatura.currentWidget().chart
             if dialog.result:
-                chart = self.parent.tabulatura.currentWidget().chart
+                if source == 'row':
+                    item = self.model().item(id)
+                    titulo = item['key']
+                    datos = item.getPayload()
+                    etiquetas = self.colHdr()
+                elif source == 'col':
+                    titulo = self.colHdr[id - 1]
+                    datos = []
+                    etiquetas = []
+                    for entrada in self.model().traverse():
+                        if dialog.hojas and not entrada.isLeaf():
+                            continue
+                        if entrada.gpi(id -1) is None:
+                            continue
+                        datos.append(entrada.gpi(id -1))
+                        etiquetas.append(entrada.getFullHeadInfo())
+                        
+                
                 x_text = self.model().name
                 y_text = ''
                 if len(datos) == 0:
