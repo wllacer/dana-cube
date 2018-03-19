@@ -384,8 +384,8 @@ class GuideItem(QStandardItem):
             return None
         
         columna = self.getColumn(col)
-        if columna is None:
-            columna = self.setColumn(col,value)
+        if columna is None or type(columna) == QStandardItem:
+            columna = self.setColumn(col,value,role)
         else:
             if role is None:
                 columna.setData(value,Qt.UserRole +1)
