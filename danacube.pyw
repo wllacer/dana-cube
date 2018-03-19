@@ -1055,7 +1055,7 @@ class DanaCube(QTreeView):
             datos = item.getPayload()
             etiquetas = self.colHdr()
         elif source == 'col':
-            titulo = self.colHdr[id]
+            titulo = self.colHdr[id - 1]
             datos = []
             etiquetas = []
             for entrada in self.model().traverse():
