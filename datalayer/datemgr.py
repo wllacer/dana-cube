@@ -260,7 +260,7 @@ def getIntervalCode(interval,fieldname,driver):
     
     year_stmt = function_mask.format(function,fieldname,year_marker)
     trimestre = {
-            "name": fieldname+"_"+ nombre,
+            "name": fieldname.split('.')[-1]+"_"+ nombre,
             "class":"h",
             "prod": [
                 {

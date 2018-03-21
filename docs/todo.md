@@ -27,7 +27,9 @@ Areas where the product __must__ be improved. They might not be errors but don't
 
 * Move user function list to a text file. Fist option is the config file
 
-* Display of date fields
+* Move definition of DB Drivers to a text file. Fist option is the config file
+
+* __Solved__ Display of date fields. Delimiter is now a global setting; works as specified
 
 * How to make a date filter in sqlite (whre the type does not exist)
 

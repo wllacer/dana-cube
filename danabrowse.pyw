@@ -382,7 +382,7 @@ class DanaBrowseWindow(QMainWindow):
         self.cubeMgr.hide()
         self.cubeMenu.setEnabled(False)
 
-    def test(self,index):
+    def test(self,index):   
         return
         print(index.row(),index.column())
         item = self.baseModel.itemFromIndex(index)

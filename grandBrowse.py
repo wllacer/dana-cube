@@ -28,7 +28,7 @@ from core import *
 #from datalayer.datemgr import getDateEntry, getDateIndexNew
 from pprint import *
 
-
+from util.decorators import *
 
 import time
 
@@ -64,6 +64,7 @@ def toNormString(entrada,placeholder='_'):
 def changeTable(string,oldName,newName):
     import re
     
+ 
     matchpattern=r'(\W*\w*\.)?('+oldName+')'
     filematch = matchpattern+'\W'
     filerepl  = r'\1'+ newName
@@ -78,7 +79,7 @@ def changeTable(string,oldName,newName):
             
 def fullQualifyInString(string,tableName):
     import re
-     
+
     sufix = tableName.split('.')[-1]
     matchpattern=r'([^\w\.])('+sufix+')'  
     filematch = matchpattern+r'(\.\w*)'
@@ -86,6 +87,7 @@ def fullQualifyInString(string,tableName):
  
     if re.search(filematch,string): 
         string = re.sub(filematch,filerepl,string)
+        
     return string
     
 
@@ -212,19 +214,30 @@ def generateFullQuery(cubo):
                     basePfx = tgtPfx
                     baseTbl = tgtTbl
 
-
     # ahora eliminamos joins duplicados
     # la forma un poco convoluta para no alterar los indices en joins antes de la cuenta
     cadenasJoin = [ elem[0] for elem in joins]
+    refJoin = [elem[4] for elem in joins]
     cadenasPfx  = [ elem[1] for elem in campos]
+
     hay = len(cadenasJoin)
     for i,joinQuery in enumerate(cadenasJoin):
         if not joinQuery:
             continue
         for j in range(i +1,hay):
-            if joinQuery == cadenasJoin[j]:
+            if not cadenasJoin[j]:
+                continue
+            if joinQuery.strip() == cadenasJoin[j].strip():
                 cadenasJoin[j] = None
                 joins[j][0] = None
+                while True:
+                    try:
+                        idx = refJoin.index(joins[j][2])
+                        joins[idx][4] = joins[i][2]
+                        refJoin[idx] = None
+                    except ValueError:
+                        break
+                
                 while True:
                     try:
                         idx = cadenasPfx.index(joins[j][2])
@@ -263,7 +276,7 @@ def generateFullQuery(cubo):
     return sqlString
 
 
-
+@stopwatch
 def test():
     from util.jsonmgr import load_cubo
 
@@ -272,8 +285,8 @@ def test():
     cubo = Cubo(mis_cubos["rental"])
     query = generateFullQuery(cubo)
     print(queryFormat(query))
-    cursor = getCursor(cubo.db,query)
-    pprint(cursor)
+    cursor = getCursor(cubo.db,query,LIMIT=1000)
+    #pprint(cursor)
 
 def UberTest():
     from util.jsonmgr import load_cubo

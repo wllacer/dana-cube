@@ -373,7 +373,7 @@ class TableInfo():
         
         for entry in fkList:
             relationship = entry[-1]
-            nombre = '.'.join([ item['name'] for item in entry ])
+            nombre = '_'.join([ item['name'] for item in entry ])
             entrada['guides'].append({'name':nombre,
                         'class':'o',
                         'prod':[{'domain': {
