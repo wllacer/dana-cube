@@ -127,6 +127,7 @@ def getPartialTitle(title,field,lastResource):
         pos = field.lower().find(' as ')
         if pos > 0:
             mcampo = field[pos+4:]
+            return mcampo
         else:
             mcampo = lastResource
     else:
@@ -147,7 +148,7 @@ def generateFullQuery(cubo):
     # para cada nivel en cada guia
     for i,dimension in enumerate(contexto):
         for j,level in enumerate(dimension):
-            
+                        
             lvlTable = fqn(cubo.db,level['table'])
             
             if lvlTable == factTable:
@@ -163,6 +164,7 @@ def generateFullQuery(cubo):
                 # solo tomamos el ultimo elemento,los demas son redundantes
                 campos.append([fieldFqN(level['desc'][-1],lvlTable),prefix,lvlTable,titulo])
             else:
+
                 tmpDesc = list(map(lambda item:fieldFqN(item,lvlTable),level['desc']))
                 #campos.append([catenate(cubo.db,tmpDesc),prefix,lvlTable,titulo])
                 for k,item in enumerate(tmpDesc):
@@ -216,6 +218,8 @@ def generateFullQuery(cubo):
 
     # ahora eliminamos joins duplicados
     # la forma un poco convoluta para no alterar los indices en joins antes de la cuenta
+    #pprint(campos)
+    #pprint(joins)
     cadenasJoin = [ elem[0] for elem in joins]
     refJoin = [elem[4] for elem in joins]
     cadenasPfx  = [ elem[1] for elem in campos]

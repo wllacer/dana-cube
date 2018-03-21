@@ -271,7 +271,7 @@ def getIntervalCode(interval,fieldname,driver):
                 {
                     "elem": fieldname,
                     "case_sql":case_array,
-                    "name": "trimestre",
+                    "name": nombre,
                     "class":"c"
                     }
                 ]

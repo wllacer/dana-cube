@@ -253,7 +253,7 @@ class Cubo:
         WARNING API break. No risk because it isn't used
         
            De una sola operacion generamos toda la información sobre las guias -incluidos los arboles-
-           el diccionario ha sigo generado en __setGuias
+           el diccionario ha sido generado en __setGuias
            
            No se usa internamente, ya que puede consumir recursos excesivos en la inicialización del cubo.
            En otros momentos lo he activado. Lo dejo como opcion a los usuarios
@@ -512,7 +512,13 @@ class Cubo:
             if len(prodExpandida) == 1: 
                 nombre = produccion.get('name',guia.get('name')) 
             elif produccion.get('name'):
-                nombre = guia.get('name') + '_' + produccion.get('name').split('.')[-1]
+                l_prod = produccion.get('name').split('.')[-1]
+                if l_prod == guia.get('name'):
+                    nombre = l_prod + '_' + str(prodId).replace(' ','_').strip()
+                elif l_prod.startswith(guia.get('name')):
+                    nombre = l_prod
+                else:
+                    nombre = guia.get('name') + '_' + l_prod
             else:
                 nombre = guia.get('name')+'_'+str(prodId).replace(' ','_').strip()
 
