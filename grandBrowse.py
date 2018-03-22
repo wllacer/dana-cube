@@ -277,22 +277,45 @@ def generateFullQuery(cubo):
 
         sqlString += 'JOIN {} as {} on {} '.format(tgtTbl,tgtPfx,joinentry)
         
+    # filtros generales
+    
+    filtroGeneral = None
+    filtroFechas  = None
+    if cubo.definition.get('base filter'):
+        filtroGeneral = changeTable(fullQualifyInString(cubo.definition['base filter'],factTable,),factTable,'fact')
+    if cubo.definition.get('date filter'):
+        tmpDF = searchConstructor('where',{'where':cubo.setDateFilter(),'driver':cubo.dbdriver})
+        filtroFechas = changeTable(fullQualifyInString(tmpDF,factTable,),factTable,'fact')
+    if filtroGeneral or filtroFechas:    
+        sqlString += 'WHERE {}'.format(mergeString(filtroGeneral,filtroFechas,'AND'))
     return sqlString
 
 
 @stopwatch
-def test():
+def generaQuery(cubo,mostrar=False,ejecutar=True,salida=False):
+    query = generateFullQuery(cubo)
+    if mostrar:
+        print(queryFormat(query))
+    if ejecutar:
+        try:
+            cursor = getCursor(cubo.db,query,LIMIT=1000)
+            if salida:
+                pprint(cursor)
+        except Exception as e:
+            print('!!!!! ERROR !!!!', cubo.nombre)
+            print(e)
+    
+    
+def test(cuboId,mostrar=True,ejecutar=False,salida=False):
     from util.jsonmgr import load_cubo
 
     # TODO normalizar los nombres de ficheros y campos a FQN
     mis_cubos = load_cubo()
-    cubo = Cubo(mis_cubos["rental"])
-    query = generateFullQuery(cubo)
-    print(queryFormat(query))
-    cursor = getCursor(cubo.db,query,LIMIT=1000)
+    cubo = Cubo(mis_cubos[cuboId])
+    generaQuery(cubo,mostrar,ejecutar,salida)
     #pprint(cursor)
 
-def UberTest():
+def UberTest(mostrar=False,ejecutar=True,salida=False):
     from util.jsonmgr import load_cubo
 
     # TODO normalizar los nombres de ficheros y campos a FQN
@@ -302,9 +325,9 @@ def UberTest():
             continue
         print('Ahora para el cubo ',cuboId)
         cubo = Cubo(mis_cubos[cuboId])
-        query = generateFullQuery(cubo)
-        print(queryFormat(query))
-    
+        cubo.nombre = cuboId
+        generaQuery(cubo,mostrar,ejecutar,salida)
+        
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
     import sys
@@ -312,7 +335,7 @@ if __name__ == '__main__':
     if sys.version_info[0] < 3:
         reload(sys)
         sys.setdefaultencoding('utf-8')
-    export()
+    #export()
     #tabla = toArray()
     #for item in tabla:
         #print(len(item),item)
@@ -322,6 +345,7 @@ if __name__ == '__main__':
     fg = lambda x:True
     #testTraspose()
     #bugFecha()
-    #UberTest()
-    test()
+    config.DEBUG = False
+    #UberTest(mostrar=True,ejecutar=False)
+    test("rental",ejecutar=False)
     

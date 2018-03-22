@@ -238,8 +238,16 @@ class WzDateFilter(QWizardPage):
     def getFormat(self,fieldName):
         formato = 'fecha'
         for item in self.baseFieldList:
-            if item['basename'] == fieldName:
-                formato = item['format']
+            """
+              item 0 full name2
+              item 1 basename
+              item 2 format
+            """  
+            #if item['basename'] == fieldName:
+                #formato = item['format']
+                #break
+            if item[1] == fieldName:
+                formato = item[2]
                 break
         if formato not in ('fecha','fechahora'):
             formato = 'fecha'

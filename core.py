@@ -204,8 +204,9 @@ class Cubo:
             lista_campos = self.lista_campos [ : ]
         return lista_campos
 
-    def _setDateFilter(self):
+    def setDateFilter(self):
         '''
+        TODO doc API change
         convierte la clausula date filter en codigo que puede utilizarse como una clausula where 
         Retorna una tupla de condiciones campo BETWEEN x e y, con un indicador de formato apropiado (fecha/fechahora(
         '''
@@ -290,7 +291,7 @@ class Cubo:
             if len(self.definition.get('base filter','')) > 0:
                 basefilter = self.definition['base filter']
             if 'date filter' in self.definition:
-                datefilter = self._setDateFilter()
+                datefilter = self.setDateFilter()
         return table_name,basefilter,datefilter
             
    
@@ -784,7 +785,7 @@ class Vista:
             
 
     def  __setDateFilter(self):
-        return self.cubo._setDateFilter()
+        return self.cubo.setDateFilter()
         
     def  __setDataMatrix(self):
          #TODO clarificar el codigo
