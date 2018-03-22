@@ -1009,6 +1009,7 @@
             {
                 "class": "h",
                 "name": "rental_date_cuatrimestre",
+                "fmt":"date",
                 "prod": [
                     {
                         "class": "o",
@@ -1443,15 +1444,7 @@
                 ]
             }
         ],
-        "table": "public.rental",
-        "date filter": [
-            {
-                "date class": "intervalo",
-                "date format": "fecha",
-                "date period": "5",
-                "date range": "año",
-                "elem": "public.rental.rental_date"
-            }
-        ]
+        "table": "public.rental"
+
     }
 }

@@ -410,7 +410,10 @@ class DanaCubeWindow(QMainWindow):
         if viewData:  #¿Es realmente necesario ?
             self.views.append(TabMgr(self,**viewData))
         else:
-            self.views.append(TabMgr(self))
+            viewData = self.requestVista()
+            if not viewData:
+                return
+            self.views.append(TabMgr(self,**viewData))
             
         titulo = self.views[-1].getTitleText()
         idx = self.tabulatura.addTab(self.views[-1],titulo)
@@ -529,6 +532,8 @@ class TabMgr(QWidget):
         lay = QGridLayout()
         self.setLayout(lay)
         self.tree = DanaCube(parent,**kwargs)
+        if self.tree.vista is None:
+            return 
         self.chart = SimpleChart()
         self.chartType = None #'barh'
         self.lastItemUsed = None
@@ -631,7 +636,8 @@ class DanaCube(QTreeView):
 
         self.view = self #esto es un por si acaso
         #
-        self.initData(True,**kwargs)
+        if not self.initData(True,**kwargs):   #con el codigo actual es imposible, pero conviene tenerlo en cuenta
+            return
         #self.defineModel()            
         #self = QTreeView(self)
         #self.setModel(modeloActivo)
@@ -647,14 +653,18 @@ class DanaCube(QTreeView):
 
         
     def initData(self,inicial=False,**viewData):
+        #FIXME debo poder escapar y ahora no lo permito
         if viewData:
             pass
         else:
             viewData = self.parent.requestVista()
-        #if not viewData:
+        
+        if not viewData:
+            return False 
         self.cargaVista(viewData['row'], viewData['col'], viewData['agregado'], viewData['campo'], total=viewData['totalizado'], estad=viewData['stats'])
         
         self.defineModel()
+        return True
 
     def getTitleText(self):
         return "{} X {} : {}({})".format(

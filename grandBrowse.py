@@ -10,7 +10,7 @@ from __future__ import unicode_literals
 Documentation, License etc.
 
 TODO
-    Falta incluir los filtros del cubo
+    Free date download. Requires special settings in cubo.json
 '''
 
 import config
@@ -134,7 +134,7 @@ def getPartialTitle(title,field,lastResource):
         mcampo = field.split('.')[-1]
     return '{}_{}'.format(title,mcampo)
     
-def generateFullQuery(cubo):
+def generateFullQuery(cubo, autoDates=True):
     #defSchema = cubo.db.engine().Inspector.default_schema_name
     factTable = fqn(cubo.db,cubo.file)
     
