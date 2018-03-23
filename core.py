@@ -856,7 +856,7 @@ class Vista:
                     join_entrada['join_filter'] = entrada.get('filter')
                     join_entrada['join_clause'] = []
                     for clausula in entrada['clause']:
-                        entrada = (clausula.get('rel_elem'),'=',clausula.get('base_elem'))
+                        entrada = (clausula.get('rel_elem'),clausula.get('condition','='),clausula.get('base_elem'))
                         join_entrada['join_clause'].append(entrada)
                     sqlDef['join'].append(join_entrada)
                 

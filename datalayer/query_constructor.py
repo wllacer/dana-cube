@@ -83,16 +83,16 @@ def _sqlFmt(parametro,**kwargs):
       los precedidos con l y r son de sqlClause para definir el formato del lado izquierdo y derecho de la expresion.
       Tienen prioridad sobre un type
       type
-      ltype
-      rtype  definen el tipo de elemento (ver sqlClause). type es el especifico (ltype y rtype vienen de Clause)
+      ltype | rtype
+            definen el tipo de elemento (ver sqlClause). type es el especifico (ltype y rtype vienen de Clause)
             r referencia (campo). el defecto en la izquierda
             q subquery
             t texto o similar.    el defecto en la derecha
             n numerico o similar
             f fecha o similar (no de momento se asume que es texto      
       table
-      ltable
-      rtable la tabla (prefijo) que hemos de colocar en los campos referencia (ltable y rtable de Clause)
+      ltable  | rtable 
+           la tabla (prefijo) que hemos de colocar en los campos referencia (ltable y rtable de Clause)
       
       side es para indicar si es lado izquierdo (l) o derecho (r) . Implica un cambio en los defectos.
         izquierdo devuelve por defecto referencia (nombre de campo o parametro dinámico)
@@ -518,7 +518,7 @@ def searchConstructor(definicion,kwargs):
     Crea una cadena compatible con sintaxis de busqueda 
     
     kwargs utilizados
-    *   definicion: []  'where',join_clause','having' 
+    *   definicion: []  'where',join_clause','having'. Indicac donde en los argumentos esta la definicion
     
     """
     statement = ''
@@ -530,14 +530,12 @@ def searchConstructor(definicion,kwargs):
     if num_elem == 0:
         return ''
   
-    ind = 0
-    #print(num_elem,entrada)
     texto = []
-    for ind,kelem in enumerate(entrada):
+    for ind,clausula in enumerate(entrada):
         ltype=None
         rtype=None
         #izquierda,comparador,derecha=slicer(kelem,3,None)   
-        izquierda,comparador,derecha,fmt=slicer(kelem,4,None)   
+        izquierda,comparador,derecha,fmt=slicer(clausula,4,None)   
         gargs=_getFmtArgs(**kwargs)
         if fmt:
             gargs['rtype']=fmt
@@ -559,13 +557,32 @@ def _joinConstructor(**kwargs):
     Crea la cadena para el JOIN
     
     kwargs utilizados
-    *   'join': list of dict
-        * ... clausula
+    *   'join': list of dict:
+        * join_clause: list of list
+            * rel_elem
+            * connector, default '='
+            * base_elem
         * join_modifier
         * join_filter
         * table
+        
+    requiere para resolver la clause searchConstructor('join_clause',...)
     
-    
+    ## Sample Use(de core.py)
+    ```
+            for entrada in joins:
+            if len(entrada) == 0:
+                continue
+                join_entrada = dict()
+                join_entrada['join_modifier']='LEFT'
+                join_entrada['table'] = entrada.get('table')
+                join_entrada['join_filter'] = entrada.get('filter')
+                join_entrada['join_clause'] = []
+                for clausula in entrada['clause']:
+                    entrada = (clausula.get('rel_elem'),clausula.get('condition','='),clausula.get('base_elem'))
+                    join_entrada['join_clause'].append(entrada)
+                sqlDef['join'].append(join_entrada)
+    ```
     """
     definicion = 'join'
     if definicion not in kwargs:
@@ -581,15 +598,20 @@ def _joinConstructor(**kwargs):
     statement = ''
     ind = 0
     texto = []
-    search_definicion = 'join_clause'
+
     for elemento in entrada:
+
+        ##args=deepcopy(elemento)
+        #args = elemento
+        #args['rtype']='r'
+        elemento['rtype'] = 'r' 
+        join_clause = mergeStrings('AND',
+                                   searchConstructor('join_clause',elemento),
+                                   elemento.get('join_filter'),
+                                   spaced=True)
+
         prefijo = elemento.get('join_modifier','')
         tabla = elemento.get('table','')
-        join_filter=elemento.get('join_filter','')
-        args=deepcopy(elemento)
-        args['rtype']='r'
-        query_clause = searchConstructor(search_definicion,args)
-        join_clause = mergeString(query_clause,join_filter,'AND')
         texto.append('{} JOIN {} ON {}'.format(prefijo, tabla, join_clause))
         
     statement += ' '.join(texto)
