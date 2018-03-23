@@ -37,10 +37,11 @@ from util.jsonmgr import dump_structure,dump_json
 def toNormString(entrada,placeholder='_'):
     """
     Funcion para convertir una cadena en su "equivalente" ASCII. Funciona para textos españoles, al menos. 
-    FIXME No acaba de salir bien con caracteres ascii expandidos tipo (Þ)
+    
     Pensada para convertir cualquier texto en nombre de campo SQL
     Eliminamos diacriticos,
     Convertimos todo lo que no sea texto o numerico a '_' como marcador
+    SI detecta un caracter irreducible (>128) lo convierte en al cedena u... con ... su valor numerico
     Y todo a minuscula
     
     """
@@ -49,14 +50,23 @@ def toNormString(entrada,placeholder='_'):
     resultado = ""
     for char in norm_form:
         if unicodedata.category(char) == 'Lu': #string uppercase
-            resultado += char.lower()
+            nchar = char.lower()
         elif unicodedata.category(char) in ('Ll','Nd','Nl','No'):
-            resultado += char
+            nchar = char
         elif unicodedata.combining(char):
-            pass
+            continue
         else:
-            resultado += placeholder
+            if ord(char) > 127:
+                nchar = char
+            else:
+                nchar = placeholder
 
+        if ord(nchar) > 128:
+            nchar = 'u' + str(ord(nchar))
+
+        resultado += nchar
+        
+            
     return resultado
     
 
@@ -336,16 +346,22 @@ if __name__ == '__main__':
         reload(sys)
         sys.setdefaultencoding('utf-8')
     #export()
+    cadena = 'Werner Llácer Viciano el niño de la bola ±±±þ Jalisco no te rajes'
+    print(toNormString(cadena))
+    cadena = 'þWerner Llácer Viciano el niño de la bola ±±±þ Jalisco no te rajes'
+    print(toNormString(cadena))
+    #.encode('ascii',"ignore").decode('utf-8'))
+    #print(toNormString(cadena).encode('ascii',"replace").decode('utf-8'))
+    #print(toNormString(cadena).encode('ascii',"xmlcharrefreplace").decode('utf-8'))
+    #print(toNormString(cadena).encode('ascii',"surrogatepass").decode('utf-8'))
     #tabla = toArray()
     #for item in tabla:
         #print(len(item),item)
     #getHeaders()
     #getHeadersFilter()
-    fr = lambda x:x.type() == TOTAL
-    fg = lambda x:True
     #testTraspose()
     #bugFecha()
     config.DEBUG = False
     #UberTest(mostrar=True,ejecutar=False)
-    test("rental",ejecutar=False)
+    #test("rental",ejecutar=False)
     
