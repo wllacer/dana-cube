@@ -33,7 +33,7 @@ from util.fechas import isDate
 
 from datalayer.query_constructor import *
 
-from util.record_functions import empalmador, hasContent 
+from util.cadenas import mergeStrings
 
         
 class filterDialog(QDialog):
@@ -225,8 +225,10 @@ class filterDialog(QDialog):
                                     aslist[0] if len(aslist) == 1 else aslist,
                                     qfmt))
 
-        self.result = empalmador(searchConstructor('where',{'where':self.queryArray,'driver':self.driver}),
-                                 self.freeSql.text(),'AND')
+        self.result = mergeStrings('AND',
+                                    searchConstructor('where',{'where':self.queryArray,'driver':self.driver}),
+                                    self.freeSql.text(),
+                                    spaced=True)
         print(self.result)
         self.data = self.sheet.values()
                 

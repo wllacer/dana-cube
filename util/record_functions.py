@@ -15,6 +15,7 @@ import re
 
 from pprint import *
 from copy import deepcopy
+from util.cadenas import mergeStrings
 
 import config
 
@@ -38,9 +39,11 @@ def norm2List(entrada):
       
 def norm2String(entrada,separador=', '):
     """
-       devuelve una entrada que puede ser una lista o un escalar como escalar siempre con un separador
-       
+    devuelve una entrada que puede ser una lista o un escalar como escalar siempre con un separador
+    Mantiene las instancias sin valor (pero no nulas).
+    Si no se desea ese comportamiento use util.cadenas.mergeStrings
     """
+    
     if not entrada:
         return ''
     if isinstance(entrada,(list,tuple)):
@@ -50,7 +53,7 @@ def norm2String(entrada,separador=', '):
             return separador.join(entrada)
     else:
         return entrada
-   
+    
 def ex(structure,value,defval=None):
     """
       devuelve el valor de la estructura definido por el indice value
@@ -377,22 +380,6 @@ def defaultFromContext(context,*args,**kwargs):
                 results.append(context[k])
     return results
 
-def hasContent(string):
-    if not string:
-        return False
-    elif string == '':
-        return False
-    return True
-        
-def empalmador(left,right,clause):
-    if hasContent(left) and hasContent(right):
-        return '{} {} {}'.format(left,right,clause)
-    elif hasContent(left):
-        return left
-    elif hasContent(right):
-        return right
-    else:
-        return ''
 
 if __name__ == '__main__':
     #prueba de funciones

@@ -86,7 +86,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView , QTabWidget, Q
 from core import Cubo,Vista 
 from dialogs import *
 from util.jsonmgr import *
-from util.cadenas import mergeString
+from util.cadenas import * #mergeString
 
 import user as uf
 

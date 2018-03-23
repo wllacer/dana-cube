@@ -6,6 +6,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 
+
 '''
 Documentation, License etc.
 
@@ -13,18 +14,29 @@ TODO
     to array y funciones para extraer las cabeceras
 '''
 def mergeString(string1,string2,connector):
-    if not string1 :
-        merge = string2
-    elif not string2:
-        merge = string1
-    elif len(string1.strip()) > 0 and len(string1.strip()) > 0:
-        merge ='{} {} {}'.format(string1,connector,string2)
-    elif len(string1.strip()) > 0 or len(string2.strip()) > 0: 
-        merge ='{}{}'.format(string1,string2).strip()
-    else:
-        merge = ''
+    """
+    __OBSOLETE__ use mergeStrings
+    
+    old version, deprecate
+    """
+    return mergeStrings(connector,string1,string2,spaced=True)
 
-    return merge
+
+def mergeStrings(connector,*list,spaced=False):
+    """
+    
+    Permite unir cadenas u objetos convertibles en cadenas en una sola secuencia. Nulos y sin valor son eliminados. Pudes ser invocado con un parametro por elemento o con * co una lista o tupla
+
+    Si se desea mantener las instancias sin valor (pero no nulas) use util.record_functions.norm2String
+    
+    """
+    klist = [ str(item).strip() for item in list if item is not None and len(str(item).strip()) > 0 ]
+    if len(klist) == 0:
+        return ''
+    if spaced:
+        connector = ' '+connector+' '
+    return connector.join(klist)
+
 
 def toNormString(entrada,placeholder='_'):
     """
