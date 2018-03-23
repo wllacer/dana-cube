@@ -264,7 +264,7 @@ class TableBrowser(QTableView):
             qfmt = 'f'
         elif formato in ('booleano'):
             qfmt = 'n' #me parece 
-        pfilter = searchConstructor('where',{'where':((field,'=',value,qfmt),)})
+        pfilter = searchConstructor('where',where=((field,'=',value,qfmt),))
         self.areFiltered = True
         self.loadData(pFilter=pfilter)
         

@@ -401,7 +401,7 @@ def _whereConstructor(kwargs):
     if definicion not in kwargs:
        kstatement = ''
     else:
-       kstatement = searchConstructor(definicion,kwargs)
+       kstatement = searchConstructor(definicion,**kwargs)
      
     if complemento in kwargs:
        if kstatement == '':
@@ -480,7 +480,7 @@ def _groupConstructor(**kwargs):
     
     if statement.strip() != 'GROUP BY':
        if 'having' in kwargs:
-            having_clause = searchConstructor('having',kwargs)
+            having_clause = searchConstructor('having',**kwargs)
             if having_clause.strip() != '':
                 statement += 'HAVING {}'.format(having_clause)
        return statement
@@ -513,7 +513,7 @@ def _orderConstructor(**kwargs):
     statement += ', '.join(texto)
     return statement
     
-def searchConstructor(definicion,kwargs):
+def searchConstructor(definicion,**kwargs):
     """
     Crea una cadena compatible con sintaxis de busqueda 
     
@@ -542,11 +542,11 @@ def searchConstructor(definicion,kwargs):
 
         if isinstance(izquierda,dict):
             args = deepcopy(izquierda) # no quiero efectos secundarios
-            izquierda='({})'.format(searchConstructor(definicion,args))
+            izquierda='({})'.format(searchConstructor(definicion,**args))
             gargs['ltype']='q'
         if isinstance(derecha,dict):
             args = deepcopy(derecha) # no quiero efectos secundarios
-            derecha='({})'.format(searchConstructor(definicion,args)) 
+            derecha='({})'.format(searchConstructor(definicion,**args)) 
             gargs['rtype']='q'  
         texto.append(_sqlClause(izquierda,comparador,derecha,**gargs))
     statement = ' AND '.join(texto)
@@ -600,13 +600,9 @@ def _joinConstructor(**kwargs):
     texto = []
 
     for elemento in entrada:
-
-        ##args=deepcopy(elemento)
-        #args = elemento
-        #args['rtype']='r'
-        elemento['rtype'] = 'r' 
+        
         join_clause = mergeStrings('AND',
-                                   searchConstructor('join_clause',elemento),
+                                   searchConstructor('join_clause',**elemento,rtype='r'),
                                    elemento.get('join_filter'),
                                    spaced=True)
 

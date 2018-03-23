@@ -226,7 +226,7 @@ class filterDialog(QDialog):
                                     qfmt))
 
         self.result = mergeStrings('AND',
-                                    searchConstructor('where',{'where':self.queryArray,'driver':self.driver}),
+                                    searchConstructor('where',where=self.queryArray,driver=self.driver),
                                     self.freeSql.text(),
                                     spaced=True)
         print(self.result)

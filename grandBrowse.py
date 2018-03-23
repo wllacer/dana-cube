@@ -261,7 +261,7 @@ def generateFullQuery(cubo, autoDates=True):
     if cubo.definition.get('base filter'):
         filtroGeneral = changeTable(fullQualifyInString(cubo.definition['base filter'],factTable,),factTable,'fact')
     if cubo.definition.get('date filter'):
-        tmpDF = searchConstructor('where',{'where':cubo.setDateFilter(),'driver':cubo.dbdriver})
+        tmpDF = searchConstructor('where',where=cubo.setDateFilter(),driver=cubo.dbdriver)
         filtroFechas = changeTable(fullQualifyInString(tmpDF,factTable,),factTable,'fact')
     if filtroGeneral or filtroFechas:    
         sqlString += 'WHERE {}'.format(mergeString(filtroGeneral,filtroFechas,'AND'))
