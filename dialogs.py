@@ -22,7 +22,8 @@ from widgets import *
 """
 cubo = None
 
-        
+
+
 class propertySheetDlg(QDialog):
     """
        Genera (mas o menos) una hoja de propiedades
@@ -66,14 +67,27 @@ class propertySheetDlg(QDialog):
         
 
     def accept(self):
-        self.errorMsg.setText('')
-        self.errorMsg.setStyleSheet(None)
+        self.resetError()
         datos = self.sheet.values()
         for k,valor in enumerate(datos):
             if valor == '' and self.context[k][1] is None:
                continue
             self.data[k] = valor
         QDialog.accept(self)
+
+    def inlineError(self,text,widget):
+        """
+        Funcion para presentar errores en propertySheetDlg
+        
+        """
+        widget.setFocus()
+        self.errorMsg.setText(text)
+        self.errorMsg.setStyleSheet("background-color:yellow;")
+        
+    def resetError(self):
+        self.errorMsg.setText('')
+        self.errorMsg.setStyleSheet(None)
+
 
 from util.fechas import *
 
@@ -324,14 +338,11 @@ class VistaDlg(propertySheetDlg):
         #self.sheet.resizeColumnsToContents()
         
     def accept(self):
-        self.errorMsg.setText('')
-        self.errorMsg.setStyleSheet(None)
+        self.resetError()
         datos = self.sheet.values()
         if any(k < 0 for k in datos[0:4]):
             pos = datos[0:4].index(-1)
-            self.sheet.cellWidget(pos,0).setFocus()
-            self.errorMsg.setText('{} debe tener valor'.format(self.context[pos][0]))
-            self.errorMsg.setStyleSheet("background-color:yellow;")
+            self.inlineError('{} debe tener valor'.format(self.context[pos][0]),self.sheet.cellWidget(pos,0))
             return
         for k,valor in enumerate(datos):
             if valor == '' and self.context[k][1] is None:
