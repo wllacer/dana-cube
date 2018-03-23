@@ -29,45 +29,12 @@ from core import *
 from pprint import *
 
 from util.decorators import *
+from util.cadenas import mergeString,toNormString
 
 import time
 
 from util.jsonmgr import dump_structure,dump_json
 
-def toNormString(entrada,placeholder='_'):
-    """
-    Funcion para convertir una cadena en su "equivalente" ASCII. Funciona para textos españoles, al menos. 
-    
-    Pensada para convertir cualquier texto en nombre de campo SQL
-    Eliminamos diacriticos,
-    Convertimos todo lo que no sea texto o numerico a '_' como marcador
-    SI detecta un caracter irreducible (>128) lo convierte en al cedena u... con ... su valor numerico
-    Y todo a minuscula
-    
-    """
-    import unicodedata
-    norm_form = unicodedata.normalize('NFD',entrada)
-    resultado = ""
-    for char in norm_form:
-        if unicodedata.category(char) == 'Lu': #string uppercase
-            nchar = char.lower()
-        elif unicodedata.category(char) in ('Ll','Nd','Nl','No'):
-            nchar = char
-        elif unicodedata.combining(char):
-            continue
-        else:
-            if ord(char) > 127:
-                nchar = char
-            else:
-                nchar = placeholder
-
-        if ord(nchar) > 128:
-            nchar = 'u' + str(ord(nchar))
-
-        resultado += nchar
-        
-            
-    return resultado
     
 
 

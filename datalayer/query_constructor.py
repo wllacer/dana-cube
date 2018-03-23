@@ -10,6 +10,7 @@ Documentation, License etc.
 
 @package estimaciones
 '''
+from util.cadenas import *
 from util.record_functions import *
 
 from pprint import *
@@ -20,6 +21,9 @@ import datalayer.datemgr as datemgr
 CLAUSE_PARMS = ('type','ltype','rtype','table','ltable','rtable','side','warn','driver')
 
 def _getFmtArgs(**kwargs):
+    """
+    Copia de kwargs la lista de parametros de formateo
+    """
     salida = dict()
     for ind in CLAUSE_PARMS:
        if ind in kwargs:
@@ -27,6 +31,10 @@ def _getFmtArgs(**kwargs):
     return salida
 
 def queryFormat(sqlstring):
+    """
+    Presenta la sentencia SQL formateada. Si existe sqlparse lo utiliza
+    
+    """
     try:
         import sqlparse
         return sqlparse.format(sqlstring,reindent=True,keyword_case = 'upper',indent_width=2)+'\n\n'
@@ -303,6 +311,14 @@ def caseConstructor(name,datos=None,**kwargs):
     return clausula
 
 def _selConstructor(**kwargs):
+    """
+    Crea la cadena para el SELECT
+    
+    kwargs utilizados
+    *   'fields':[] 
+    *   'select modifier':  DISTINCT|FIRST
+    
+    """
     statement = 'SELECT '
     definicion = 'fields'
     if definicion not in kwargs:
@@ -336,6 +352,13 @@ def _selConstructor(**kwargs):
     return statement
 
 def _fromConstructor(**kwargs):
+    """
+    Crea la cadena para el FROM
+    
+    kwargs utilizados
+    *   'tables':[] 
+    
+    """
     statement = 'FROM '
     definicion = 'tables'
     if definicion not in kwargs:
@@ -363,6 +386,14 @@ def _fromConstructor(**kwargs):
     return statement
     
 def _whereConstructor(kwargs):
+    """
+    Crea la cadena para el WHERE
+    
+    kwargs utilizados
+    *   'where':[]
+    *   'base_filter: []
+    
+    """    
     statement = 'WHERE '
     definicion = 'where'
     complemento = 'base_filter'
@@ -386,6 +417,13 @@ def _whereConstructor(kwargs):
       return statement + ' ' + kstatement + ' '
       
 def _withConstructor(**kwargs):
+    """
+    Crea la cadena para el WITH
+    
+    kwargs utilizados
+    *   'with':[] 
+    
+    """
     statement = 'WITH '
     definicion = 'with'
     if definicion not in kwargs:
@@ -404,6 +442,14 @@ def _withConstructor(**kwargs):
     statement += ', '.join(texto)
  
 def _groupConstructor(**kwargs):
+    """
+    Crea la cadena para el group
+    
+    kwargs utilizados
+    *   'group':[] 
+    *   'having'
+    
+    """
     statement = 'GROUP BY '
     definicion = 'group'
  
@@ -442,6 +488,13 @@ def _groupConstructor(**kwargs):
        return ''
 
 def _orderConstructor(**kwargs):
+    """
+    Crea la cadena para el ORDER
+    
+    kwargs utilizados
+    *   'order':[] 
+    
+    """
     statement = 'ORDER BY '
     definicion = 'order'
     if definicion not in kwargs:
@@ -461,6 +514,13 @@ def _orderConstructor(**kwargs):
     return statement
     
 def searchConstructor(definicion,kwargs):
+    """
+    Crea una cadena compatible con sintaxis de busqueda 
+    
+    kwargs utilizados
+    *   definicion: []  'where',join_clause','having' 
+    
+    """
     statement = ''
     if definicion not in kwargs:
        return ''    
@@ -495,6 +555,18 @@ def searchConstructor(definicion,kwargs):
     return statement
   
 def _joinConstructor(**kwargs):
+    """
+    Crea la cadena para el JOIN
+    
+    kwargs utilizados
+    *   'join': list of dict
+        * ... clausula
+        * join_modifier
+        * join_filter
+        * table
+    
+    
+    """
     definicion = 'join'
     if definicion not in kwargs:
         return ''
@@ -509,18 +581,15 @@ def _joinConstructor(**kwargs):
     statement = ''
     ind = 0
     texto = []
-    definicion = 'join_clause'
+    search_definicion = 'join_clause'
     for elemento in entrada:
         prefijo = elemento.get('join_modifier','')
         tabla = elemento.get('table','')
         join_filter=elemento.get('join_filter','')
         args=deepcopy(elemento)
         args['rtype']='r'
-        join_clause = searchConstructor(definicion,args)
-        if join_filter != '' and join_clause != '':
-            join_clause = '{} AND {}'.format(join_clause,join_filter).strip()
-        else:
-            join_clause = '{}{}'.format(join_clause,join_filter).strip()
+        query_clause = searchConstructor(search_definicion,args)
+        join_clause = mergeString(query_clause,join_filter,'AND')
         texto.append('{} JOIN {} ON {}'.format(prefijo, tabla, join_clause))
         
     statement += ' '.join(texto)
@@ -592,7 +661,10 @@ if __name__ == '__main__':
   pprint(pepe)
   #pepe['fields'] = '*'
   """
-  print(queryConstructor(**pepe))
+  h1 = 'pepe'
+  h2 = 'paco'
+  print('{} {} {}'.format(h1,'y',h2))
+  #print(queryConstructor(**pepe))
 
 
 #print(queryConstructor(**pepe))

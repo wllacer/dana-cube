@@ -83,9 +83,10 @@ from PyQt5.QtCore import Qt #,QSortFilterProxyModel
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView , QTabWidget, QSplitter
 
-from core import Cubo,Vista, mergeString
+from core import Cubo,Vista 
 from dialogs import *
 from util.jsonmgr import *
+from util.cadenas import mergeString
 
 import user as uf
 

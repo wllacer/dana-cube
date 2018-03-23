@@ -18,6 +18,7 @@ import config
 from util.record_functions import *
 from util.tree import *
 from util.fechas import *
+from util.cadenas import *
 
 from datalayer.access_layer import *
 from datalayer.query_constructor import *
@@ -41,18 +42,6 @@ except ImportError:
 #from cubemgmt.cubetree import CubeItem,traverseTree
 
 
-def mergeString(string1,string2,connector):
-    if not string1 :
-        merge = string2
-    elif not string2:
-        merge = string1
-    elif len(string1.strip()) > 0 and len(string1.strip()) > 0:
-        merge ='{} {} {}'.format(string1,connector,string2)
-    elif len(string1.strip()) > 0 or len(string2.strip()) > 0: 
-        merge ='{}{}'.format(string1,string2).strip()
-    else:
-        merge = ''
-    return merge
 
 def getParentKey(clave,debug=False):
     """
