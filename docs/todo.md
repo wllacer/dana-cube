@@ -33,7 +33,7 @@ Areas where the product __must__ be improved. They might not be errors but don't
 
 * How to make a date filter in sqlite (whre the type does not exist)
 
-* Don't allow in vista dialog to enter without selection of measures
+* __Solved__ Don't allow in vista dialog to enter without selection of measures
 
 ## Needed Enhancements
 

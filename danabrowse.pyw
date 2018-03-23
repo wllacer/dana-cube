@@ -218,7 +218,7 @@ class DanaBrowseWindow(QMainWindow):
     def close(self):
 
         if self.cubeMgr:
-            self.cubeMgr.saveConfigFile()
+            self.saveConfigFile()
             
         for conid in self.conn:
             if self.conn[conid] is None:
