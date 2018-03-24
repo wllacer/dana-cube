@@ -520,6 +520,8 @@ def searchConstructor(definicion,**kwargs):
     kwargs utilizados
     *   definicion: []  'where',join_clause','having'. Indicac donde en los argumentos esta la definicion
     
+    Sample code
+    
     """
     statement = ''
     if definicion not in kwargs:
@@ -534,21 +536,25 @@ def searchConstructor(definicion,**kwargs):
     for ind,clausula in enumerate(entrada):
         ltype=None
         rtype=None
-        #izquierda,comparador,derecha=slicer(kelem,3,None)   
         izquierda,comparador,derecha,fmt=slicer(clausula,4,None)   
         gargs=_getFmtArgs(**kwargs)
+        
         if fmt:
             gargs['rtype']=fmt
 
         if isinstance(izquierda,dict):
-            args = deepcopy(izquierda) # no quiero efectos secundarios
-            izquierda='({})'.format(searchConstructor(definicion,**args))
+            leftString='({})'.format(searchConstructor(definicion,**izquierda))
             gargs['ltype']='q'
+        else:
+            leftString = izquierda
+            
         if isinstance(derecha,dict):
-            args = deepcopy(derecha) # no quiero efectos secundarios
-            derecha='({})'.format(searchConstructor(definicion,**args)) 
+            rightString='({})'.format(searchConstructor(definicion,**derecha)) 
             gargs['rtype']='q'  
-        texto.append(_sqlClause(izquierda,comparador,derecha,**gargs))
+        else:
+            rightString = derecha
+            
+        texto.append(_sqlClause(leftString,comparador,rightString,**gargs))
     statement = ' AND '.join(texto)
     return statement
   
@@ -593,19 +599,16 @@ def _joinConstructor(**kwargs):
     num_elem = len(entrada)    
     if num_elem == 0:
         return ''
-
     #config.DEBUG print(kwargs[definicion],entrada)
     statement = ''
     ind = 0
     texto = []
 
     for elemento in entrada:
-        
         join_clause = mergeStrings('AND',
                                    searchConstructor('join_clause',**elemento,rtype='r'),
                                    elemento.get('join_filter'),
                                    spaced=True)
-
         prefijo = elemento.get('join_modifier','')
         tabla = elemento.get('table','')
         texto.append('{} JOIN {} ON {}'.format(prefijo, tabla, join_clause))
