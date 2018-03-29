@@ -1010,6 +1010,15 @@ class GuideItemModel(QStandardItemModel):
         else:
             return self.orthogonal.numRecords(type=LEAF)
 
+    def clearData(self):
+        """
+        TODO insert in documentation
+        Function to clear all payload in the tree
+        """
+        for elem in self.traverse():
+            elem.setPayload( [None for k in range(elem.lenPayload())])
+
+        
     def searchHierarchy(self,valueList,role=None):
         """
           Does a search thru all the hierarchy given the key/value data
