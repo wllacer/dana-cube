@@ -1015,8 +1015,9 @@ class GuideItemModel(QStandardItemModel):
         TODO insert in documentation
         Function to clear all payload in the tree
         """
+        payloadLen = self.lenPayload()
         for elem in self.traverse():
-            elem.setPayload( [None for k in range(elem.lenPayload())])
+            elem.setPayload( [None for k in range(payloadLen)])
 
         
     def searchHierarchy(self,valueList,role=None):
@@ -1087,36 +1088,40 @@ class GuideItemModel(QStandardItemModel):
             else:
                 return Qt.AlignLeft| Qt.AlignVCenter
         elif role == Qt.BackgroundRole:
+            retorno = item.data(role)
             #TODO TOTAL COLOR begin
-            #if item.type() == TOTAL:
-                #return QColor(Qt.cyan)
-            #if item.type() == BRANCH:
-                #return QColor(Qt.gray)
+            tipoCabecera = item._getHead().type()
+            if tipoCabecera == TOTAL:
+                retorno = QColor(Qt.gray)
+            if tipoCabecera == BRANCH:
+                retorno =  QColor(Qt.lightGray)
             #TOTAL COLOR end
             if item.data(Qt.DisplayRole) is None:
-                return item.data(role)
-            if index.column() != 0:
-                #TOTAL COLOR begin
-                #if item._getHead().type() == TOTAL:
-                    #return QColor(Qt.cyan)
-                #if item._getHead().type() == BRANCH:
-                    #return QColor(Qt.gray)
-                #TOTAL COLOR
+                return retorno
+            elif index.column() != 0:
+                datos = item.data(Qt.DisplayRole)
+                if datos is None or datos == '':
+                    return  retorno
+                datos = float(datos)
                 if self.datos.format['yellowoutliers'] and self.datos.stats:
-                    if isOutlier(item.data(Qt.DisplayRole),item.getStatistics()):
-                        return QColor(Qt.yellow)
-                if self.datos.format['rednegatives'] and item.data(Qt.DisplayRole) < 0 :
-                    return QColor(Qt.red)
-                
+                    if isOutlier(datos,item.getStatistics()):
+                        retorno =  QColor(Qt.yellow)
+                if self.datos.format['rednegatives'] and datos < 0 :
+                    retorno = QColor(Qt.red)
+            return retorno   
+         
         elif role == Qt.DisplayRole:
             datos = item.data(role)
             if index.column() == 0:
                 return datos
-            if datos == None:
+            if datos == None or datos == '':
                 return None
-            else:
-                text, sign = fmtNumber(datos,self.datos.format)
-                return '{}{}'.format(sign if sign == '-' else '',text)               
+            try:
+                datos = int(datos)
+            except ValueError:
+                datos = float(datos)
+            text, sign = fmtNumber(datos,self.datos.format)
+            return '{}{}'.format(sign if sign == '-' else '',text)               
         else:
             return item.data(role)
 
