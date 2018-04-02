@@ -104,6 +104,7 @@ from util.uf_manager import *
 import exportWizard as eW
 
 from util.treestate import *
+from util.tree import GuideItem
 
 import config
 
@@ -649,6 +650,9 @@ class DanaCube(QTreeView):
         self.setAlternatingRowColors(True)
         self.sortByColumn(0, Qt.AscendingOrder)
 
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.openContextMenu)
+
         self.header().setContextMenuPolicy(Qt.CustomContextMenu)
         self.header().customContextMenuRequested.connect(self.openHeaderContextMenu)
 
@@ -1030,6 +1034,7 @@ class DanaCube(QTreeView):
         if self.header().isSectionHidden(columna -1):
             self.ctxMenuHdr.append(menu.addAction("Mostrar Columna oculta",lambda :self.execHeaderAction("unhide",position)))
         self.ctxMenuHdr.append(menu.addAction("Gráfico de la columna",lambda :self.execHeaderAction("graph",position)))
+        self.ctxMenuHdr.append(menu.addAction("Añadir Columna",lambda :self.execHeaderAction("add",position)))
         #self.ctxMenu.append(menu.addAction("Exportar seleccion",lambda :self.execAction("export",position)))
         action = menu.exec_(self.viewport().mapToGlobal(position))
     
@@ -1045,20 +1050,72 @@ class DanaCube(QTreeView):
             self.setColumnHidden(columna -1,False)
         elif function == 'graph':
             self.drawGraph('col',columna)
+        elif function == "add":
+            arbol = self.vista.col_hdr_idx
+            count = 1
+            kindex= None
+            for item in arbol.traverse():
+                if count == columna:
+                    kindex = item.index()
+                    break
+                else:
+                    count += 1
+            self.insertElement('column',kindex)
 
     def openContextMenu(self,position):
         menu = QMenu()
         self.ctxMenu = []
+        self.ctxMenu.append(menu.addAction("Insertar fila",lambda :self.execAction("add",position)))
         self.ctxMenu.append(menu.addAction("Gráfico de la fila",lambda :self.execAction("graph",position)))
         action = menu.exec_(self.viewport().mapToGlobal(position))
         
     def execAction(self,function,position):
-        print(position)
         indexes = self.selectedIndexes()
         if len(indexes) > 0:
             index = indexes[0]
+        if function == 'graph':
             self.drawGraph('row',index)
-        
+        elif function == 'add':
+            self.insertElement('row',index)
+
+     
+    @model_change_control()    
+    def insertElement(self,tipo,index):
+        if not tipo:
+            return 
+        elif tipo == 'row':
+            arbol = self.vista.row_hdr_idx
+            complemento = self.vista.col_hdr_idx
+            kindex = index
+        elif tipo == 'column':            
+            arbol = self.vista.col_hdr_idx
+            complemento = self.vista.row_hdr_idx
+            kindex= index
+        else:
+            return
+        spec = [ ('Nombre',QLineEdit,None) ,
+                 #('Funcion Carga',QLineEdit, None)
+                 ]
+        values = [ None for k in range(len(spec))]
+        parmDialog = propertySheetDlg('Introduzca los datos de {}'.format(tipo),spec,values, self)
+        if parmDialog.exec_():
+            key = value = values[0]
+        else:
+            return
+        parent = arbol.itemFromIndex(kindex.parent())
+        if not parent:
+            parent = arbol.invisibleRootItem()
+        pos = kindex.row()
+        print(parent,pos,arbol.itemFromIndex(kindex))
+        item = GuideItem()
+        item.setData(value,Qt.DisplayRole)
+        item.setData(key,Qt.UserRole +1)
+        parent.insertRow(pos +1,(item,))
+        #
+        self.vista.toNewTree2D()
+        self.defineModel()
+
+    
     def drawGraph(self,source,id):
         dialog = GraphDlg(self.parent.tabulatura.currentWidget().chartType, source, self)
         if dialog.exec_():

@@ -454,8 +454,8 @@ class GuideItem(QStandardItem):
         QStandardItem.columnCount() does not seem to work, it should be lenPayload = columnCount -1.
         In this case the use of the generator seems not that performant
         """
-        if self.hasChildren():
-            return 0
+        #if self.hasChildren():
+            #return 0
         indice = self.index() #self.model().indexFromItem(field)
         idx = 0
         colind = indice.sibling(indice.row(),idx +1)

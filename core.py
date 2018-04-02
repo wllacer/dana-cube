@@ -920,6 +920,7 @@ class Vista:
     def toNewTree2D(self):
         self.row_hdr_idx.clearData()
         self.col_hdr_idx.clearData()
+
         rowdict = self.row_hdr_idx.asDict()
         coldict = self.col_hdr_idx.asDict()
         for record in self.array:
