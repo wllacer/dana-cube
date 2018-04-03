@@ -87,7 +87,21 @@ def searchStandardItem(item,value,role):
             raise
     return None
 
-
+def _getHeadColumn(item):
+    """
+    for a given row, returns the current row header (i.e. the sibling which has column 0)
+    as function not as method
+    * returns
+    the item with column 0 from the current row
+    
+    """
+    if item.column() == 0:
+        return item
+    else:
+        indice = item.index() 
+        colind = indice.sibling(indice.row(),0)
+        return item.model().itemFromIndex(colind)
+    
 class TreeFormat(object):
     """
     This class mantains the format definition (for a display or background roles) for the value contents of an item in GuideItemModel (see the .data method)
@@ -263,19 +277,21 @@ class GuideItem(QStandardItem):
             depth += 1
         return depth
     
-    def _getHead(self):
+    def getHead(self):
         """
+        TODO document now as a public method
         for a given row, returns the current row header (i.e. the sibling which has column 0)
         
         * returns
         the item with column 0 from the current row
         """
-        if self.column() == 0:
-            return self
-        else:
-            indice = self.index() 
-            colind = indice.sibling(indice.row(),0)
-            return self.model().itemFromIndex(colind)
+        return _getHeadColumn(self)
+        #if self.column() == 0:
+            #return self
+        #else:
+            #indice = self.index() 
+            #colind = indice.sibling(indice.row(),0)
+            #return self.model().itemFromIndex(colind)
 
         
         
@@ -506,7 +522,7 @@ class GuideItem(QStandardItem):
         returns the internal key of the current row 
         
         """
-        return self._getHead().data(Qt.UserRole +1)
+        return self.getHead().data(Qt.UserRole +1)
     
     def getLabel(self):
         """
@@ -515,7 +531,7 @@ class GuideItem(QStandardItem):
         
         """
 
-        return self._getHead().data(Qt.DisplayRole)
+        return self.getHead().data(Qt.DisplayRole)
 
         
     """
@@ -565,7 +581,7 @@ class GuideItem(QStandardItem):
                 pass   # revert to single if not specified
             
         # por si no se pide en la columna 0
-        item = self._getHead()
+        item = self.getHead()
         # ahora obtengo los valores cuando no tengo que iterar por la jerarquia
         clave = None
         if format == 'single':
@@ -617,7 +633,7 @@ class GuideItem(QStandardItem):
         returns the statistics gathered for this row 
         
         """
-        return self._getHead().stats
+        return self.getHead().stats
     
     def isTotal(self):
         """
@@ -1085,8 +1101,6 @@ class GuideItemModel(QStandardItemModel):
         if not index.isValid():
             return None
         item = self.itemFromIndex(index)
-        if type(item) == QStandardItem:
-            return item.data(role)
         if role == Qt.TextAlignmentRole:
             if index.column() != 0:
                 return Qt.AlignRight| Qt.AlignVCenter
@@ -1094,8 +1108,11 @@ class GuideItemModel(QStandardItemModel):
                 return Qt.AlignLeft| Qt.AlignVCenter
         elif role == Qt.BackgroundRole:
             retorno = item.data(role)
+            if type(item) == QStandardItem:
+                tipoCabecera = _getHeadColumn(item).type()
+            else:
+                tipoCabecera = item.getHead().type()
             #TODO TOTAL COLOR begin
-            tipoCabecera = item._getHead().type()
             if tipoCabecera == TOTAL:
                 retorno = QColor(Qt.gray)
             if tipoCabecera == BRANCH:

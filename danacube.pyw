@@ -1106,7 +1106,6 @@ class DanaCube(QTreeView):
         if not parent:
             parent = arbol.invisibleRootItem()
         pos = kindex.row()
-        print(parent,pos,arbol.itemFromIndex(kindex))
         item = GuideItem()
         item.setData(value,Qt.DisplayRole)
         item.setData(key,Qt.UserRole +1)
