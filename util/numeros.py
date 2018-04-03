@@ -86,7 +86,22 @@ def is_number(s):
             return False
     return True
 
-
+def s2n(s):
+    """
+     convert string to number (with good format) else None
+    """
+    if not s:
+        return 0
+    try:
+        i = int(s)
+        return i 
+    except ValueError:
+        pass
+    try:
+        f = float(s)
+        return f
+    except ValueError:
+        return None
 
 def median(lista):
     '''

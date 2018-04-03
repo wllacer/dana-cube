@@ -81,7 +81,7 @@ import argparse
 
 from PyQt5.QtCore import Qt #,QSortFilterProxyModel
 from PyQt5.QtGui import QCursor
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView , QTabWidget, QSplitter
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView , QTabWidget, QSplitter, QAbstractItemView
 
 from core import Cubo,Vista 
 from dialogs import *
@@ -104,8 +104,7 @@ from util.uf_manager import *
 import exportWizard as eW
 
 from util.treestate import *
-from util.tree import GuideItem
-
+from util.tree import GuideItem,_getHeadColumn
 import config
 
 #TODO uso de formato numerico directamente en la view setNumberFormat
@@ -219,7 +218,13 @@ class DanaCubeWindow(QMainWindow):
             ,self.tabulatura.currentWidget().tree.restoreData,"Ctrl+R")
         self.restorator.setEnabled(False)
         self.userFunctionsMenu.addSeparator()
-        
+        self.sheetEdit = self.userFunctionsMenu.addAction("&Activar edicion celdas"
+            ,self.tabulatura.currentWidget().tree.activateEdit,"Ctrl+R")
+        self.sheetEdit.setEnabled(True)
+        self.sheetUnEdit = self.userFunctionsMenu.addAction("&Desactivar edicion celdas"
+            ,self.tabulatura.currentWidget().tree.deactivateEdit,"Ctrl+R")
+        self.sheetUnEdit.setEnabled(False)
+        self.userFunctionsMenu.addSeparator()
         self.plugins = dict()
         
         uf_discover(uf,self.plugins)
@@ -656,7 +661,45 @@ class DanaCube(QTreeView):
         self.header().setContextMenuPolicy(Qt.CustomContextMenu)
         self.header().customContextMenuRequested.connect(self.openHeaderContextMenu)
 
+        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         
+    def dataChanged(self, *args,**kwargs):
+        from util.numeros import s2n
+        
+        topLeft = args[0]
+        bottomRight = args[1]
+        roles = args[2]
+        if topLeft == bottomRight:
+            item = self.model().itemFromIndex(topLeft)
+            if item.data(Qt.DisplayRole) != item.data(Qt.UserRole +1):  #ha cambiado
+                if item.data(Qt.DisplayRole) == '':  #revierto los cambios
+                    item.setData(item.data(Qt.UserRole +1),Qt.DisplayRole)
+                else:
+                    self.parent.restorator.setEnabled(True)
+                    delta = s2n(item.data(Qt.DisplayRole)) - s2n(item.data(Qt.UserRole +1))
+                    if type(item) == QStandardItem:
+                        col = topLeft.column() 
+                        cabecera = _getHeadColumn(item)
+                        item = cabecera.setColumn(col,item.data(Qt.DisplayRole))
+                    else:
+                        item.setData(item.data(Qt.DisplayRole),Qt.UserRole +1)
+                    pai = item.parent()
+                    while pai:
+                        pai.spi(topLeft.column() -1,s2n(pai.gpi(topLeft.column() -1)) + delta)
+                        pai = pai.parent()
+
+        super().dataChanged(*args,**kwargs)
+     
+    def activateEdit(self):
+        self.setEditTriggers(QAbstractItemView.DoubleClicked)
+        self.parent.sheetEdit.setEnabled(False)
+        self.parent.sheetUnEdit.setEnabled(True)
+        
+    def deactivateEdit(self):
+        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.parent.sheetEdit.setEnabled(True)
+        self.parent.sheetUnEdit.setEnabled(False)
+
     def initData(self,inicial=False,**viewData):
         #FIXME debo poder escapar y ahora no lo permito
         if viewData:
@@ -878,7 +921,7 @@ class DanaCube(QTreeView):
             if elem[1] is None: #defino un defecto para esta aplicacion
                 elem[1] = 'item'
             self.funDispatch(elem)
-            if 'leaf' in elem[1]:
+            if 'leaf' in elem[1]:                
                 self.vista.recalcGrandTotal()
         #self.model().endResetModel()
         self.isModified = True
