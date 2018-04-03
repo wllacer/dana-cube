@@ -768,8 +768,11 @@ class Vista:
             self.dim_col = len(self.cubo.lista_guias[col]['contexto'])
                 
             self.row_hdr_idx = self.cubo.lista_guias[row]['dir_row']
+            self.row_hdr_idx.orthogonal = None
+            self.row_hdr_idx.vista = None
             self.col_hdr_idx = self.cubo.lista_guias[col]['dir_row']
-                        
+            self.col_hdr_idx.orthogonal = None
+            self.col_hdr_idx.vista = None
             self.__setDataMatrix()
             
 
@@ -953,6 +956,7 @@ class Vista:
 
         return result
 
+ 
     def toArrayFilter(self,filterrow=lambda x:True,filtercol=lambda x:True):
         """        
         Convert the raw data of the view in a two dimensional array, for further processing. Non existing values are returned as None.
@@ -981,7 +985,35 @@ class Vista:
             result[row][col] = record[2]
 
         return result
-            
+    
+    def Tree2Array(self):
+        """
+        TODO document
+        """
+        result= []
+        for row in self.row_hdr_idx.traverse():
+            result.append(row.getPayload())
+        return result
+ 
+    def Tree2ArrayFiltered(self,filterrow=lambda x:True,filtercol=lambda x:True):
+        """
+        TODO document
+        """
+        coldict=self.col_hdr_idx.asDictFilter(filtercol)
+        rowdict=self.row_hdr_idx.asDictFilter(filterrow)
+        result = [ [ None for j in range(len(coldict)) ] for i in range(len(rowdict)) ]
+
+        for row in self.row_hdr_idx.traverse():
+            if row.getFullKey() in rowdict:
+                r= rowdict[row.getFullKey()]['idx']
+                pl = row.getPayload()
+                for col in coldict:
+                    c = coldict[col]['idx']
+                    co = coldict[col]['oidx']
+                    result[r][c]=pl[co]
+
+        return result
+        
     def toList(self,*parms,**kwparms):
         """
         Converts the view results in a list of texts
@@ -1143,9 +1175,14 @@ class Vista:
         numFmt = parms.get('NumFormat',False)
         decChar = parms.get('csvProp',{}).get('decChar','.')
  
-        tmpArray = self.toArrayFilter(lambda x,y=self.dim_row,z=pfilterRow: exportFilter(x,y,z),
-                                      lambda x,y=self.dim_col,z=pfilterCol: exportFilter(x,y,z))
-        
+        # si no esta ya creados los row_hdr_idx con datos (lo que significa ortogonal) ejecuto desde array
+        # si ya lo estan desde el arbol (mas eficiente y tiene datos modificados)
+        if self.row_hdr_idx.orthogonal is None:
+            tmpArray = self.toArrayFilter(lambda x,y=self.dim_row,z=pfilterRow: exportFilter(x,y,z),
+                                        lambda x,y=self.dim_col,z=pfilterCol: exportFilter(x,y,z))
+        else:
+            tmpArray = self.Tree2ArrayFiltered(lambda x,y=self.dim_row,z=pfilterRow: exportFilter(x,y,z),
+                                        lambda x,y=self.dim_col,z=pfilterCol: exportFilter(x,y,z))
         rows = self.row_hdr_idx.asHdrFilter(lambda x,y=self.dim_row,z=pfilterRow: exportFilter(x,y,z),
                                             sparse=row_sparse,format='array') #no puedo usar offset
         cols = self.col_hdr_idx.asHdrFilter(lambda x,y=self.dim_col,z=pfilterCol: exportFilter(x,y,z),
@@ -1203,7 +1240,7 @@ class Vista:
                 return '{0}{1}{0}'.format(txtSep,cadena)
             else:
                 return cadena
-            
+         
         ctable,dim_row,dim_col = self.__getExportData(parms)
         if type == 'csv':
             with open(parms['file'],'w') as f:
@@ -1296,7 +1333,34 @@ def checkFilter():
     parms['content']='branch'
     parms['totals']=False
     pprint(vista.row_hdr_idx.asHdrFilter(lambda x,y=vista.dim_row,z=parms: exportFilter(x,y,z)))
-           
+  
+  
+def checkFilterDerived():
+    from util.jsonmgr import load_cubo
+
+    mis_cubos = load_cubo()
+    cubo = Cubo(mis_cubos["datos light"])
+
+    vista = Vista(cubo,'geo','partidos importantes','sum','votes_presential',totalizado=True)
+    parms = { 'content':'full','totals':True}
+    #pprint(vista.row_hdr_idx.asHdrFilter(lambda x,y=vista.dim_row,z=parms: exportFilter(x,y,z)))
+    parms['content']='branch'
+    parms['totals']=False
+    pprint(vista.row_hdr_idx.asHdrFilter(lambda x,y=vista.dim_row,z=parms: exportFilter(x,y,z)))
+    pprint(vista.row_hdr_idx.asDictFilter(lambda x,y=vista.dim_row,z=parms: exportFilter(x,y,z)))
+    filterArray(vista,parms)
+    print('Ahora el nuevo\n')
+    vista.toNewTree2D()
+    filterTree(vista,parms)
+
+
+@stopwatch
+def filterArray(vista,parms):
+    a1 = vista.toArrayFilter(lambda x,y=vista.dim_row,z=parms: exportFilter(x,y,z),lambda x:True)
+@stopwatch
+def filterTree(vista,parms):
+    a2 = vista.Tree2ArrayFiltered(lambda x,y=vista.dim_row,z=parms: exportFilter(x,y,z),lambda x:True)  
+    
 def checkArrays():
     from util.jsonmgr import load_cubo
 
@@ -1399,6 +1463,9 @@ def export():
     export_parms = {'NumFormat':True,'csvProp':{'decChar':','}}
     export_parms['file'] = 'ejemplo.dat'
     vista.export(export_parms)
+    vista.toNewTree2D()
+    export_parms['file'] = 'ejemplo1.dat'
+    vista.export(export_parms)
 
 def testTree():
     from util.jsonmgr import load_cubo
@@ -1407,8 +1474,11 @@ def testTree():
 
     vista = Vista(cubo,'provincia','partidos importantes','sum','votes_presential',totalizado=True)
     vista.toTree2D()
-    for item in vista.row_hdr_idx.traverse():
-        print(item.simplifyHierarchical())
+    agay = vista.Tree2Array()
+    for lin in agay:
+        print(len(agay),':',lin)
+    #for item in vista.row_hdr_idx.traverse():
+        #print(item.simplifyHierarchical())
         
 def testTraspose():
     from util.jsonmgr import load_cubo

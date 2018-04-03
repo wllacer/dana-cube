@@ -27,7 +27,9 @@ Areas where the product __must__ be improved. They might not be errors but don't
 
 * Menu internationalization
 
-* Move user function list to a text file. Fist option is the config file
+* __NOPE__ Move user function list to a text file. Fist option is the config file. __REASON__ Not feasible with current implementation
+
+* Dynamic reloading of user functions
 
 * Move definition of DB Drivers to a text file. Fist option is the config file
 
@@ -36,6 +38,8 @@ Areas where the product __must__ be improved. They might not be errors but don't
 * How to make a date filter in sqlite (whre the type does not exist)
 
 * __Solved__ Don't allow in vista dialog to enter without selection of measures
+
+* Current export implementation is fast, but does not take into account changes via danacube
 
 ## Needed Enhancements
 

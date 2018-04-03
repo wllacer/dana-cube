@@ -668,7 +668,7 @@ returns a dictionary view of the tree, but only those items for which the filter
 A dictionary whose keys are the fullkeys of the items. The fullkey is a string which concatenates the keys of the tree hierarchy of the item. To each item is attached, as value a dict with following entries
 * __idx__ the ordinal of the item in the filtered tree traversal 
 * __objid__ a reference to the item itself
-*
+* __oidx__ the original index without filter
 
 * Implementation notes
 Enhanced version of the _asDict_ method. Allows any filtering 
