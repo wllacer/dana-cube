@@ -241,7 +241,10 @@ class WPowerTable(QTableWidget):
 
     def set(self,x,y,value):
         if isinstance(self.cellWidget(x,y),QLineEdit):
-            self.cellWidget(x,y).setText(value)
+            if isinstance(value,(int,float)):
+                self.cellWidget(x,y).setText(str(value))
+            else:
+                self.cellWidget(x,y).setText(value)
         elif isinstance(self.cellWidget(x,y),QCheckBox):
             if value is None:
                 self.cellWidget(x,y).setChecked(False)

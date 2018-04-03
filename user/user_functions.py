@@ -17,10 +17,10 @@ import config
 Funciones auxiliares
 """
 def dhont(escanos,data):
-    
+  corte=sum(filter(None,data))*0.03
   res = [0 for i in range(len(data))]
-  tempd = [entry if entry else -float('Inf') for entry in data ] #data[:] compatiblidad v3
-  
+  #aplico el corte del 3%
+  tempd = [entry if entry and entry >= corte else -float('Inf') for entry in data ] #data[:] compatiblidad v3
   for i in range(0,escanos):
     maxResto = max(tempd)
     elem = tempd.index(maxResto) 
@@ -135,7 +135,7 @@ def porcentaje(*parms,**kwparms):
     item = parms[0]
     row = item.getPayload()
     suma=sum(filter(None,row))
-    item.setPayload(list(map(lambda entry: entry*100/suma if entry is not None else None,row)))
+    item.setPayload(list(map(lambda entry: entry*100./suma if entry is not None else None,row)))
 
 
 def ordinal(*parms,**kwparms):
@@ -258,6 +258,79 @@ def consolida(*parms,**kwparms):
             item.spi(difunta,None)
     pass
 
+def transfiere(*parms,**kwparms):
+    """
+    Agrega parte del contenido de una o varias columnas (parametro desde) en otra (parametro hacia) y borra la columna origen.
+    Si el destino es una lista de columnas, se agrega a la primera que encuente con valor. Si no encuentra no se ejecuta.
+    caso que no exista ninguna columna destino con valor se agrega a la última de la lista
+    En esta versión las columnas se identifican por la clave, por lo que necesitamos esta información de las columnas
+    
+    tipo = item,colkey
+    debe usar aux_parm para especificar los parametros
+        desde, columna(s) origen
+        hacia, columna(s) destino
+        porcentaje, porcentaje de la columna origen que va al destino. Sin porcentaje se asume el 100%
+        searchby = (key|value) criterio de busqueda. defecto key
+    opcionalmente puede ejecutarse como kwparm para especificar desde,hacia interactivamente
+    """
+    item = parms[0]
+    column = parms[1]
+    if kwparms.get('searchby','key') == 'key':
+        colkey = [ norm2List(data)[0] for data in column] #compatibilidad de apis por la via rapida
+    elif kwparms.get('searchby') == 'value':
+        colkey = [ norm2List(data)[1] for data in column] #compatibilidad de apis por la via rapida
+    else:
+        return
+    
+    desde=kwparms.get('desde')
+    if desde is None:
+        return 
+    porcentaje=kwparms.get('porcentaje')
+    if porcentaje is None or porcentaje == '100':
+        porcentaje = 1.0
+    else:
+        porcentaje = float(porcentaje)/100.
+        
+    hacia=kwparms.get('hacia')
+    if hacia is None:
+        return
+
+    for idx in norm2List(desde):
+        try:
+            difunta = colkey.index(idx)
+        except ValueError:
+            continue
+        if not item.gpi(difunta):
+            continue
+        for candidatura in norm2List(hacia):
+            try:
+                cakey = colkey.index(candidatura)
+            except ValueError:
+                continue
+            suma = item.gpi(difunta)
+            if type(suma) == int:
+                pasa = int(suma * porcentaje)
+            else:
+                pasa = suma * porcentaje
+            resto = suma - pasa
+                
+            if item.gpi(cakey) is not None:  #se presentaban en la provincia
+                pasa += item.gpi(cakey)    
+                item.spi(cakey,pasa)
+                item.spi(difunta,resto)
+                break
+        else:  #cuando no hay candidaturas destino. va a la ultima de la lista
+            suma = item.gpi(difunta)
+            if type(suma) == int:
+                pasa = int(suma * porcentaje)
+            else:
+                pasa = suma * porcentaje
+            resto = suma - pasa
+            cakey = colkey.index(candidatura)
+            item.spi(cakey,pasa)
+            item.spi(difunta,resto)
+    pass
+
 def exec_map(*parms,**kwparms):
     """
     Ejecuta un map sobre la lista. 
@@ -333,6 +406,9 @@ def register(contexto):
     ufm.registro_funcion(contexto,name='agrupa',entry=consolida,type='colkey,kwparm',seqnr=3, 
                          aux_parm= { 'desde':None,'hacia':None,'searchby':'value'},
                          text='fusiona columnas')
+    ufm.registro_funcion(contexto,name='transfiere',entry=transfiere,type='colkey,kwparm',seqnr=3, 
+                         aux_parm= { 'desde':None,'hacia':None,'porcentaje':100,'searchby':'value'},
+                         text='transfiere parcialmente columnas')
     ufm.registro_funcion(contexto,name='simula',entry=factoriza,type='colparm',seqnr=4,sep=True,
                          text='Realiza simulaciones')
     
