@@ -1013,11 +1013,14 @@ class GuideItemModel(QStandardItemModel):
     def clearData(self):
         """
         TODO insert in documentation
-        Function to clear all payload in the tree
+        Function to clear all payload in the tree. This explicit navigation is the only way I found to reset col.originalValue
         """
-        payloadLen = self.lenPayload()
+        #payloadLen = self.lenPayload()
         for elem in self.traverse():
-            elem.setPayload( [None for k in range(payloadLen)])
+            for col in elem.rowTraverse():
+                col.setData(None,Qt.UserRole +1)
+                col.setData(None,Qt.DisplayRole)
+                col.originalValue = None
 
         
     def searchHierarchy(self,valueList,role=None):
@@ -1082,6 +1085,8 @@ class GuideItemModel(QStandardItemModel):
         if not index.isValid():
             return None
         item = self.itemFromIndex(index)
+        if type(item) == QStandardItem:
+            return item.data(role)
         if role == Qt.TextAlignmentRole:
             if index.column() != 0:
                 return Qt.AlignRight| Qt.AlignVCenter
