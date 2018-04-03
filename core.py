@@ -906,6 +906,8 @@ class Vista:
         return None
         
     def toNewTree(self):
+        self.__setTreeContext(self.row_hdr_idx,self.col_hdr_idx)
+        self.row_hdr_idx.clearData()
         coldict = self.col_hdr_idx.asDict()
         for record in self.array:
             row = record[0]
@@ -914,9 +916,13 @@ class Vista:
         if self.stats:
             self.row_hdr_idx.setStats(True)
 
-        self.__setTreeContext(self.row_hdr_idx,self.col_hdr_idx)
+
         
     def toNewTree2D(self):
+        self.__setTreeContext(self.row_hdr_idx,self.col_hdr_idx)
+        self.row_hdr_idx.clearData()
+        self.col_hdr_idx.clearData()
+
         rowdict = self.row_hdr_idx.asDict()
         coldict = self.col_hdr_idx.asDict()
         for record in self.array:
@@ -931,7 +937,7 @@ class Vista:
             self.row_hdr_idx.setStats(True)
             self.col_hdr_idx.setStats(True)
         
-        self.__setTreeContext(self.row_hdr_idx,self.col_hdr_idx)
+
 
             
     def toArray(self):

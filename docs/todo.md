@@ -5,7 +5,7 @@
 
 Serious errors which are either upstream or we haven't still found a solution
 
-* BUG 0  __UPSTREAM__ __NOTIFY PENDING__ __BYPASSED__ 
+* BUG 0  __UPSTREAM__ __QT__ __NOTIFY PENDING__ __BYPASSED__ 
     QStandardItem.insertColumn does NOT work. QStandardITem.insertColumns behaves erratically.
     Example at _./bug_0.py_
     
@@ -16,7 +16,9 @@ Serious errors which are either upstream or we haven't still found a solution
 *  BUG 2 __SOLVED__
     An addTab makes all tab headers the same. Not upstream as far as i can tell
 
- 
+*  BUG 3. __UPSTREAM__ __SQLITE__ __STUDY PENDING__ __BYPASSED__
+    'Datos light's grandBrowse gets into inacceptable perfomance penalites with more than 6 joins (??) or two quite similar but distinct joins .  Further study needed
+
 ## rough corners
 
 Areas where the product __must__ be improved. They might not be errors but don't feel quite right
@@ -48,6 +50,8 @@ Thing which shall belong to the app and aren't there now
 Things which would be a welcome addition to the application
 
 * Use of CUBE / ROLLUP sintax where available
+
+* Add Column/Row into view. Plus initial loading
 
 * __HOLD__ Use [qtpy](https://pypi.python.org/pypi/QtPy) as a wrapper of the various qt APIs. Doesn't include bindings for QtSQL, but that is no showstopper anymore
 
