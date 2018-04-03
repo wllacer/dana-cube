@@ -990,9 +990,13 @@ class Vista:
         """
         TODO document
         """
+        maxCols = self.col_hdr_idx.numRecords()
         result= []
         for row in self.row_hdr_idx.traverse():
-            result.append(row.getPayload())
+            pl = row.getPayload()
+            if len(pl) < maxCols:
+                pl += [ None for k in range(maxCols - len(pl)) ]
+            result.append(pl)
         return result
  
     def Tree2ArrayFiltered(self,filterrow=lambda x:True,filtercol=lambda x:True):
@@ -1002,11 +1006,14 @@ class Vista:
         coldict=self.col_hdr_idx.asDictFilter(filtercol)
         rowdict=self.row_hdr_idx.asDictFilter(filterrow)
         result = [ [ None for j in range(len(coldict)) ] for i in range(len(rowdict)) ]
-
+        maxCols = self.col_hdr_idx.numRecords()
         for row in self.row_hdr_idx.traverse():
             if row.getFullKey() in rowdict:
                 r= rowdict[row.getFullKey()]['idx']
                 pl = row.getPayload()
+                if len(pl) < maxCols:
+                    pl += [ None for k in range(maxCols - len(pl)) ]
+ 
                 for col in coldict:
                     c = coldict[col]['idx']
                     co = coldict[col]['oidx']
@@ -1614,7 +1621,7 @@ if __name__ == '__main__':
     if sys.version_info[0] < 3:
         reload(sys)
         sys.setdefaultencoding('utf-8')
-    export()
+    checkFilterDerived()
     #tabla = toArray()
     #for item in tabla:
         #print(len(item),item)

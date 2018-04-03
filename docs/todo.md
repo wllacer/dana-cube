@@ -29,8 +29,6 @@ Areas where the product __must__ be improved. They might not be errors but don't
 
 * __NOPE__ Move user function list to a text file. Fist option is the config file. __REASON__ Not feasible with current implementation
 
-* Dynamic reloading of user functions
-
 * Move definition of DB Drivers to a text file. Fist option is the config file
 
 * __Solved__ Display of date fields. Delimiter is now a global setting; works as specified
@@ -39,7 +37,7 @@ Areas where the product __must__ be improved. They might not be errors but don't
 
 * __Solved__ Don't allow in vista dialog to enter without selection of measures
 
-* Current export implementation is fast, but does not take into account changes via danacube
+* __Solved__ Current export implementation is fast, but does not take into account changes via danacube
 
 ## Needed Enhancements
 
@@ -47,7 +45,7 @@ Thing which shall belong to the app and aren't there now
 
 * Local filter at the view data (w/o round trip to the DB)
 * A different filter dialog in which the user selects which fields to append
-
+* Dynamic reloading of user functions
 
 ## Wishlist
 
