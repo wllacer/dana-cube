@@ -36,10 +36,21 @@ def dhont(escanos,data):
           res[i] = None
   return res
 
+def perRatio(original,clave,oldratios,newratios):
+    """
+    oldratios,newratios dict key:value
+    """
+    oldratio = float(oldratios.get(clave,0.))
+    newratio = float(newratios.get(clave,oldratio))
+
+    if oldratio == 0.:  #FIXME para evitar division por 0 pereo no tiene mucho sentido
+        return newratio
+    factor = newratio/oldratio
+    return original*factor
     
 def resultados(original,*entrada):
     partido = entrada[1]
-    newratio = float(entrada[2])
+    newratios = {partido:entrada[2]}
     datos ={
         "C's":14.0382822541147,
         "CCa-PNC":0.327843488841832,
@@ -58,18 +69,32 @@ def resultados(original,*entrada):
         "PP":28.9374594531795,
         "PSOE":22.1801820596102
         }
-    try:
-        oldratio = datos[partido]
-        if oldratio == 0:  #FIXME para evitar division por 0 pereo no tiene mucho sentido
-            return None
-        factor = newratio/oldratio
-        return original*factor
-
-    except KeyError:
-        return None
-
+    return perRatio(original,partido,newratios,datos)
 
 def resultadosAgr(original,*entrada):
+    partido = entrada[1]
+    newratios = {partido:entrada[2]}
+    datos ={
+        "C's":14.0382822541147,
+        "CCa-PNC":0.327843488841832,
+        "DL":2.26783878634305,
+        "EAJ-PNV":1.20945172577815,
+        "EH Bildu":0.876122122040471,
+        #"EN COMÚ":3.72133439799253,
+        "ERC-CATSI":2.40333940776187,
+        "GBAI":0.122531253309765,
+        #"IU-UPeC":3.70205679981684,
+        #"MÉS":0.136074096879415,
+        "NÓS":0.282583040951081,
+        "PODEMOS":12.7611604239852 + 0.136074096879415 + 3.70205679981684 + 2.69120804771348 +1.63769352340476 +3.72133439799253,
+        #"PODEMOS-COMPROMÍS":2.69120804771348,
+        #"PODEMOS-En Marea-ANOVA-EU":1.63769352340476,
+        "PP":28.9374594531795,
+        "PSOE":22.1801820596102
+        }
+    return perRatio(original,partido,newratios,datos)
+
+def resultadosAgrOrig(original,*entrada):
     partido = entrada[1]
     newratio = float(entrada[2])
     datos ={
@@ -91,9 +116,9 @@ def resultadosAgr(original,*entrada):
         "PSOE":22.1801820596102
         }
     try:
-        oldratio = datos[partido]
+        oldratio = datos.get(partido,0)
         if oldratio == 0:  #FIXME para evitar division por 0 pereo no tiene mucho sentido
-            return None
+            return newratio
         factor = newratio/oldratio
         return original*factor
 
@@ -346,6 +371,9 @@ def exec_map(*parms,**kwparms):
         #item.setPayload(list(map(lambda p: function(p, *parms,**kwparms), item.getPayload())))
     #else:    
         #item.setPayload(list(map(function,item.getPayload()))
+"""
+FUnciones auxiliares de agregacion
+"""
 
 """
 Funciones particulares de la BD. electoral

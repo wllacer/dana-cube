@@ -480,7 +480,47 @@ class GuideItem(QStandardItem):
             colind = indice.sibling(indice.row(),idx +1)
         return idx
 
+    def getPayloadFiltered(self,filtro):
+        """
+        TODO add to doc
+        Funcion que retorna el payload (ver getPayload) pero solo de aquellas columnas incluidas en el filtro
+        
+        * Input Parameter
+            * __filtro__ una lista con los indices -de payload- que queremos recuperar
+        
+        * Notas: Para generar el filtro lo mas comodo es 
 
+        ```
+        prefilter =  tree.orthogonal.asDictFilter(lambda x:x.type() == LEAF)
+        filtro = sorted( [ prefilter[entry]['oidx'] for entry in prefilter ])
+        ```
+        """
+        base = self.getPayload()
+        resultado = []
+        if len(base) == len(filtro):
+            return base
+        else:
+            for i in filtro:
+                if i >= len(base):
+                    break
+                resultado.append(base[i])
+            return resultado
+
+    def setPayloadFiltered(self,datos,filtro):
+        """
+        TODO add to doc
+        Funcion que carga el payload (ver setPayload) pero solo de aquellas columnas incluidas en el filtro
+        
+        * Input Parameter
+            * __datos__  la lista de valores que corresponden a cada uno de los elementos del filtro
+            * __filtro__ una lista con los indices -de payload- que queremos grabar
+        
+        * Notas
+        len(Datos) = len(filtro)
+            
+        """
+        for k,i in enumerate(filtro):
+            self.setPayloadItem(i,datos[k])
     
     def getPayloadItem(self,idx):
         """

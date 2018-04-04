@@ -185,6 +185,7 @@ def prueba():
     print( [ table for table in ds.lista] )
     ds.prepareBulkSql()
     #pprint(ds.getFKDeep()[2])
+
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
     import sys

@@ -1287,6 +1287,50 @@ class Vista:
                     worksheet.write(i, j,item.strip())
             workbook.close()
         return 0
+    
+    def agrega(self,dim,list_func):
+        """
+        TODO add to doc
+        Permite obtener agregados sobre filas y columnas
+        
+        *Input parms
+            * __dim__ (row/col) which dim is to be used as guide
+            * __list_func__ a function which admit a list as parameter
+            
+        * Returns a list with three components each
+            * display name of element 
+            * key name of element
+            * result of function for this element 
+        """
+        from PyQt5.QtCore import Qt
+        from util.tree import LEAF
+
+        if dim == 'row':
+            tree = self.row_hdr_idx
+        elif dim == 'col':
+            tree = self.col_hdr_idx
+        prefilter =  tree.orthogonal.asDictFilter(lambda x:x.type() == LEAF)
+        filtro = sorted( [ prefilter[entry]['oidx'] for entry in prefilter ])
+
+        vector = []
+        for elem in tree.traverse():
+            lista = list(filter(None,elem.getPayloadFiltered(filtro)))
+            vector.append([elem.data(Qt.DisplayRole),
+                        elem.data(Qt.UserRole +1),
+                        list_func(lista)
+                        ])
+        return vector
+
+    def agregaPct(self,dim):
+        """
+        TODO add to doc
+        variante de agrega que devuelve el porcentaje del total por dumension
+        """
+        vector = self.agrega(dim,sum)
+        total = sum([v[2] for v in vector if v[2] is not None])
+        for k,entry in enumerate(vector):
+            vector[k][2] = vector[k][2] *100./ total
+        return vector
 # monkeypatch
 Vista.toTree = Vista.toNewTree
 Vista.toTree2D = Vista.toNewTree2D
