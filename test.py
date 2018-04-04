@@ -186,6 +186,22 @@ def prueba():
     ds.prepareBulkSql()
     #pprint(ds.getFKDeep()[2])
 
+def numeros():
+    from util.numeros import s2n
+    a = 1234
+    b = 1234.
+    c = '1234'
+    d = '1234.0'
+    e = '    123.4'
+    f = '  1234.5  '
+    g = '1234.5    '
+    print(s2n(a),type(a))
+    print(s2n(b),type(b))
+    print(s2n(c),type(c))
+    print(s2n(d),type(d))
+    print(s2n(e),type(e))
+    print(s2n(f),type(f))
+    print(s2n(g),type(g))
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
     import sys
@@ -196,4 +212,5 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     #aw = ApplicationWindow()
     #aw.show()
-    prueba()
+    #prueba()
+    numeros()

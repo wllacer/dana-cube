@@ -92,6 +92,8 @@ def s2n(s):
     """
     if not s:
         return 0
+    if type(s) in (int,float):
+        return s
     try:
         i = int(s)
         return i 

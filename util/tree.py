@@ -41,7 +41,7 @@ def traverse(tree, key=None, mode=1):
 from PyQt5.QtCore import Qt 
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtGui import QColor
-from util.numeros import isOutlier,fmtNumber
+from util.numeros import isOutlier,fmtNumber,s2n
 
 LEAF,BRANCH,TOTAL = range(1000,1000+3)
 
@@ -1179,10 +1179,7 @@ class GuideItemModel(QStandardItemModel):
                 return datos
             if datos == None or datos == '':
                 return None
-            try:
-                datos = int(datos)
-            except ValueError:
-                datos = float(datos)
+            datos = s2n(datos)
             text, sign = fmtNumber(datos,self.datos.format)
             return '{}{}'.format(sign if sign == '-' else '',text)               
         else:
