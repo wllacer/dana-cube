@@ -252,10 +252,15 @@ class GuideItem(QStandardItem):
         elif campo == 'value':
             return self.data(Qt.DisplayRole)
         elif isinstance(campo,int):
-            return self.getColumnData(int +1)
+            return self.getColumnData(campo +1)
         else:
             return None
-
+    
+    def clone(self):
+        nitem = GuideItem()
+        nitem.setData(self.data(Qt.UserRole +1),Qt.UserRole +1)
+        nitem.setData(self.data(Qt.DisplayRole),Qt.DisplayRole)
+        return nitem
 
     """
     
@@ -1079,7 +1084,45 @@ class GuideItemModel(QStandardItemModel):
                 col.setData(None,Qt.DisplayRole)
                 col.originalValue = None
 
+    def cloneSubTree(self,entryPoint=None,filter=None,payload=False):
+        """
+        TODO add to doc
+        Generate a new tree from entryPoint and its children
         
+        * Input parms
+            *
+            * __entryPoint__ a GuideItem as hierachical head of what to export
+            * __filter__ a function which does some filtering at the tree (default is no filter)
+            * __payload__ boolean. If True copies the payload
+            
+        * returns
+            a tree
+        
+        """
+        newTree = GuideItemModel()
+        for item in self.traverse(entryPoint):
+            if filter and not filter(item):
+                continue
+            papi = item.parent()
+            npapi = None
+            if papi:
+                ref = papi.getFullHeadInfo(content='key',format='array')
+                while len(ref) > 0:
+                    npapi = newTree.searchHierarchy(ref)
+                    if npapi:
+                        break
+                    else:
+                        ref.remove(ref[0])
+            if not npapi:  
+                npapi = newTree.invisibleRootItem()
+            nitem = item.clone()
+            npapi.appendRow((nitem,))
+            # aqui pues setPayload verifca la columna y solo tiene valor si item en arbol
+            if payload:
+                pl=item.getPayload()
+                nitem.setPayload(pl)
+        return newTree 
+    
     def searchHierarchy(self,valueList,role=None):
         """
           Does a search thru all the hierarchy given the key/value data

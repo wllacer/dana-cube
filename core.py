@@ -477,6 +477,7 @@ class Cubo:
             #arbol = QStandardItemModel()
             #raiz = arbol.invisibleRootItem()
             arbol = GuideItemModel()
+            arbol.setItemPrototype(GuideItem())
             arbol.name = self.lista_guias[guidId]['name']
             if total:  #el rebase no me ha traido mas que pesadillas
                 raiz = arbol.invisibleRootItem()
