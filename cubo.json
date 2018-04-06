@@ -1,360 +1,4 @@
 {
-    "provincia_resumido": {
-        "base filter": "",
-        "connect": {
-            "dbhost": "",
-            "dbname": "/home/werner/elecciones/inebase.db",
-            "dbpass": "",
-            "dbport": "",
-            "dbuser": "",
-            "debug": false,
-            "driver": "sqlite"
-        },
-        "fields": [
-            "main.voto_provincia.votos",
-            "main.voto_provincia.escanos"
-        ],
-        "guides": [
-            {
-                "class": "o",
-                "name": "anyo_elec",
-                "prod": [
-                    {
-                        "elem": "main.voto_provincia.anyo_elec"
-                    }
-                ]
-            },
-            {
-                "class": "o",
-                "name": "comunidad",
-                "prod": [
-                    {
-                        "domain": {
-                            "code": [
-                                "main.supramunicipal.comunidad"
-                            ],
-                            "desc": [
-                                "main.supramunicipal.nombre"
-                            ],
-                            "filter": "supramunicipal.provincia = '99' and supramunicipal.anyo_elec = '2016'",
-                            "table": "main.supramunicipal"
-                        },
-                        "elem": [
-                            "main.voto_provincia.comunidad"
-                        ],
-                        "name": "region"
-                    }
-                ]
-            },
-            {
-                "class": "o",
-                "name": "provincia",
-                "prod": [
-                    {
-                        "domain": {
-                            "code": [
-                                "main.supramunicipal.provincia"
-                            ],
-                            "desc": [
-                                "main.supramunicipal.nombre"
-                            ],
-                            "filter": "supramunicipal.anyo_elec = '2016' and supramunicipal.provincia != '99'",
-                            "table": "main.supramunicipal"
-                        },
-                        "elem": [
-                            "main.voto_provincia.provincia"
-                        ]
-                    }
-                ]
-            },
-            {
-                "class": "o",
-                "name": "candidatura",
-                "prod": [
-                    {
-                        "elem": "main.voto_provincia.candidatura"
-                    }
-                ]
-            },
-            {
-                "class": "o",
-                "name": "partido",
-                "prod": [
-                    {
-                        "elem": "main.voto_provincia.partido"
-                    }
-                ]
-            }
-        ],
-        "name": "provincia_resumido",
-        "table": "main.voto_provincia"
-    },
-    "datos light": {
-        "base filter": "",
-        "connect": {
-            "dbhost": "None",
-            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
-            "dbpass": "None",
-            "dbuser": "None",
-            "driver": "sqlite"
-        },
-        "fields": [
-            "votes_presential",
-            "main.votos_locales.ord",
-            "votes_percent"
-        ],
-        "guides": [
-            {
-                "class": "o",
-                "name": "partido",
-                "prod": [
-                    {
-                        "domain": {
-                            "code": "code",
-                            "desc": "acronym",
-                            "filter": "",
-                            "table": "main.partidos"
-                        },
-                        "elem": "partido_id",
-                        "fmt": "txt"
-                    }
-                ]
-            },
-            {
-                "class": "o",
-                "name": "partidos importantes",
-                "prod": [
-                    {
-                        "domain": {
-                            "code": "code",
-                            "desc": "acronym",
-                            "filter": "main.partidos.code in (select distinct partido_id from votos_provincia  where votes_percent >= 3)",
-                            "table": "main.partidos"
-                        },
-                        "elem": "partido_id",
-                        "fmt": "txt"
-                    }
-                ]
-            },
-            {
-                "class": "o",
-                "name": "Comunidad Autónoma",
-                "prod": [
-                    {
-                        "domain": {
-                            "code": "region",
-                            "desc": "nombre",
-                            "filter": "main.localidades.provincia = '' and localidades.region <> '' ",
-                            "table": "main.localidades"
-                        },
-                        "elem": "region",
-                        "fmt": "txt"
-                    }
-                ]
-            },
-            {
-                "class": "o",
-                "name": "provincia",
-                "prod": [
-                    {
-                        "domain": {
-                            "code": "provincia",
-                            "desc": "nombre",
-                            "filter": "localidades.provincia <> '' and localidades.municipio = '' and localidades.isla = ''",
-                            "table": "main.localidades"
-                        },
-                        "elem": "provincia",
-                        "fmt": "txt"
-                    }
-                ]
-            },
-            {
-                "class": "o",
-                "name": "municipio",
-                "prod": [
-                    {
-                        "domain": {
-                            "code": "municipio",
-                            "desc": "nombre",
-                            "filter": "localidades.municipio <> '' and localidades.isla = '' ",
-                            "table": "main.localidades"
-                        },
-                        "elem": "municipio",
-                        "fmt": "txt"
-                    }
-                ]
-            },
-            {
-                "class": "h",
-                "name": "geo",
-                "prod": [
-                    {
-                        "domain": {
-                            "code": "region",
-                            "desc": "nombre",
-                            "filter": "main.localidades.provincia = '' and localidades.region <> ''",
-                            "table": "main.localidades"
-                        },
-                        "elem": "region",
-                        "fmt": "txt",
-                        "name": "región"
-                    },
-                    {
-                        "domain": {
-                            "code": "provincia",
-                            "desc": "nombre",
-                            "filter": "localidades.provincia <> '' and localidades.municipio = '' and localidades.isla = ''",
-                            "grouped by": "region",
-                            "table": "main.localidades"
-                        },
-                        "elem": "provincia",
-                        "fmt": "txt",
-                        "name": "provincia"
-                    }
-                ]
-            },
-            {
-                "class": "d",
-                "name": "fecha",
-                "prod": [
-                    {
-                        "elem": "votos_locales.fakedate",
-                        "fmt": "date"
-                    }
-                ]
-            }
-        ],
-        "table": "main.votos_locales"
-    },
-    "experimento": {
-        "base filter": "",
-        "connect": {
-            "dbhost": "None",
-            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
-            "dbpass": "None",
-            "dbuser": "None",
-            "driver": "sqlite"
-        },
-        "fields": [
-            "votes_presential",
-            "votes_percent",
-            "seats",
-            "ord"
-        ],
-        "guides": [
-            {
-                "class": "o",
-                "name": "partido",
-                "prod": [
-                    {
-                        "domain": {
-                            "code": "code",
-                            "desc": "acronym",
-                            "filter": "code in (select distinct partido_id from votos_provincia where votes_percent >= 3)",
-                            "table": "main.partidos"
-                        },
-                        "elem": "partido_id",
-                        "fmt": "txt"
-                    }
-                ]
-            },
-            {
-                "class": "o",
-                "name": "provincia",
-                "prod": [
-                    {
-                        "domain": {
-                            "code": "provincia",
-                            "desc": "nombre",
-                            "filter": "localidades.provincia <> '' and localidades.municipio = '' and localidades.isla = ''",
-                            "table": "main.localidades"
-                        },
-                        "elem": "provincia",
-                        "fmt": "txt"
-                    }
-                ]
-            },
-            {
-                "class": "c",
-                "name": "ideologia",
-                "prod": [
-                    {
-                        "categories": [
-                            {
-                                "default": "otros"
-                            },
-                            {
-                                "condition": "in",
-                                "result": "Derecha",
-                                "values": [
-                                    "3316",
-                                    "4688"
-                                ]
-                            },
-                            {
-                                "condition": "in",
-                                "result": "Centro",
-                                "values": [
-                                    "1079",
-                                    "4475"
-                                ]
-                            },
-                            {
-                                "condition": "in",
-                                "result": "Izquierda",
-                                "values": [
-                                    "3484"
-                                ]
-                            },
-                            {
-                                "condition": "in",
-                                "result": "Extrema Izquierda",
-                                "values": [
-                                    "3736",
-                                    "5033",
-                                    "4850",
-                                    "5008",
-                                    "5041",
-                                    "2744",
-                                    "5026"
-                                ]
-                            },
-                            {
-                                "condition": "in",
-                                "result": "Separatistas",
-                                "values": [
-                                    "5063",
-                                    "4991",
-                                    "1528"
-                                ]
-                            },
-                            {
-                                "condition": "in",
-                                "result": "Nacionalistas",
-                                "values": [
-                                    "1533",
-                                    "4744",
-                                    "4223"
-                                ]
-                            }
-                        ],
-                        "elem": "partido_id",
-                        "fmt": "txt"
-                    }
-                ]
-            }
-        ],
-        "table": "main.votos_provincia"
-    },
-    "default": {
-        "cubo": "datos light",
-        "vista": {
-            "elemento": "votes_presential",
-            "agregado": "sum",
-            "row": 5,
-            "col": 1
-        }
-    },
     "datos catalonia": {
         "base filter": "",
         "connect": {
@@ -546,154 +190,7 @@
         ],
         "table": "main.votos_catalonia"
     },
-    "votos_prov_ref": {
-        "base filter": "",
-        "connect": {
-            "dbhost": "",
-            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
-            "dbpass": "",
-            "dbport": "",
-            "dbuser": "",
-            "debug": false,
-            "driver": "sqlite"
-        },
-        "fields": [
-            "main.votos_prov_ref.id",
-            "main.votos_prov_ref.partido_id",
-            "main.votos_prov_ref.votes_presential",
-            "main.votos_prov_ref.votes_percent",
-            "main.votos_prov_ref.seats",
-            "main.votos_prov_ref.ord"
-        ],
-        "guides": [
-            {
-                "class": "o",
-                "name": "nacion",
-                "prod": [
-                    {
-                        "elem": "main.votos_prov_ref.nacion"
-                    }
-                ]
-            },
-            {
-                "class": "o",
-                "name": "region",
-                "prod": [
-                    {
-                        "elem": "main.votos_prov_ref.region"
-                    }
-                ]
-            },
-            {
-                "class": "o",
-                "name": "provincia",
-                "prod": [
-                    {
-                        "elem": "main.votos_prov_ref.provincia"
-                    }
-                ]
-            },
-            {
-                "class": "o",
-                "name": "candidatura_id",
-                "prod": [
-                    {
-                        "elem": "main.votos_prov_ref.candidatura_id"
-                    }
-                ]
-            },
-            {
-                "class": "o",
-                "name": "partido_nombre",
-                "prod": [
-                    {
-                        "elem": "main.votos_prov_ref.partido_nombre"
-                    }
-                ]
-            },
-            {
-                "class": "o",
-                "name": "siglas",
-                "prod": [
-                    {
-                        "elem": "main.votos_prov_ref.siglas"
-                    }
-                ]
-            },
-            {
-                "class": "o",
-                "name": "nombre_geo",
-                "prod": [
-                    {
-                        "elem": "main.votos_prov_ref.nombre_geo"
-                    }
-                ]
-            },
-            {
-                "class": "o",
-                "name": "complejp",
-                "prod": [
-                    {
-                        "domain": {
-                            "code": "pais, region, provincia",
-                            "desc": "pais, region, provincia",
-                            "filter": "",
-                            "table": "main.prov_complex"
-                        },
-                        "elem": "nacion, region, provincia"
-                    }
-                ]
-            },
-            {
-                "class": "h",
-                "name": "jerarquizado",
-                "prod": [
-                    {
-                        "domain": {
-                            "code": [
-                                "main.prov_complex.pais"
-                            ],
-                            "desc": [
-                                "main.prov_complex.pais"
-                            ],
-                            "filter": "",
-                            "table": "main.prov_complex"
-                        },
-                        "elem": [
-                            "main.votos_prov_ref.nacion"
-                        ],
-                        "name": "pais"
-                    },
-                    {
-                        "domain": {
-                            "code": "region",
-                            "desc": "region",
-                            "filter": "",
-                            "grouped by": "pais",
-                            "table": "main.prov_complex"
-                        },
-                        "elem": "region",
-                        "name": "region"
-                    },
-                    {
-                        "domain": {
-                            "code": "provincia",
-                            "desc": "provincia",
-                            "filter": "",
-                            "grouped by": "pais, region",
-                            "table": "main.prov_complex"
-                        },
-                        "elem": "provincia",
-                        "provincia": {
-                            "name": "provincia"
-                        }
-                    }
-                ]
-            }
-        ],
-        "table": "main.votos_prov_ref"
-    },
-    "datos provincia": {
+    "datos light": {
         "base filter": "",
         "connect": {
             "dbhost": "None",
@@ -704,9 +201,8 @@
         },
         "fields": [
             "votes_presential",
-            "votes_percent",
-            "seats",
-            "ord"
+            "main.votos_locales.ord",
+            "votes_percent"
         ],
         "guides": [
             {
@@ -727,13 +223,29 @@
             },
             {
                 "class": "o",
-                "name": "autonomia",
+                "name": "partidos importantes",
+                "prod": [
+                    {
+                        "domain": {
+                            "code": "code",
+                            "desc": "acronym",
+                            "filter": "main.partidos.code in (select distinct partido_id from votos_provincia  where votes_percent >= 3)",
+                            "table": "main.partidos"
+                        },
+                        "elem": "partido_id",
+                        "fmt": "txt"
+                    }
+                ]
+            },
+            {
+                "class": "o",
+                "name": "Comunidad Autónoma",
                 "prod": [
                     {
                         "domain": {
                             "code": "region",
                             "desc": "nombre",
-                            "filter": "localidades.provincia = ''",
+                            "filter": "main.localidades.provincia = '' and localidades.region <> '' ",
                             "table": "main.localidades"
                         },
                         "elem": "region",
@@ -758,6 +270,22 @@
                 ]
             },
             {
+                "class": "o",
+                "name": "municipio",
+                "prod": [
+                    {
+                        "domain": {
+                            "code": "municipio",
+                            "desc": "nombre",
+                            "filter": "localidades.municipio <> '' and localidades.isla = '' ",
+                            "table": "main.localidades"
+                        },
+                        "elem": "municipio",
+                        "fmt": "txt"
+                    }
+                ]
+            },
+            {
                 "class": "h",
                 "name": "geo",
                 "prod": [
@@ -765,12 +293,12 @@
                         "domain": {
                             "code": "region",
                             "desc": "nombre",
-                            "filter": "localidades.provincia = ''",
+                            "filter": "main.localidades.provincia = '' and localidades.region <> ''",
                             "table": "main.localidades"
                         },
                         "elem": "region",
                         "fmt": "txt",
-                        "name": "region"
+                        "name": "región"
                     },
                     {
                         "domain": {
@@ -787,26 +315,20 @@
                 ]
             },
             {
-                "class": "o",
-                "name": "partidos importantes",
+                "class": "d",
+                "name": "fecha",
                 "prod": [
                     {
-                        "domain": {
-                            "code": "code",
-                            "desc": "acronym",
-                            "filter": "partidos.code in (select distinct partido_id from votos_provincia where votes_percent >= 3)",
-                            "table": "main.partidos"
-                        },
-                        "elem": "partido_id",
-                        "fmt": "txt"
+                        "elem": "votos_locales.fakedate",
+                        "fmt": "date"
                     }
                 ]
             }
         ],
-        "table": "main.votos_provincia"
+        "table": "main.votos_locales"
     },
     "datos locales": {
-        "base filter": "votos_locales.partido_id LIKE '1079'",
+        "base filter": " ",
         "connect": {
             "dbhost": "None",
             "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
@@ -939,6 +461,22 @@
                         "elem": "provincia",
                         "fmt": "txt",
                         "name": "provincia"
+                    },
+                    {
+                        "domain": {
+                            "code": [
+                                "main.localidades.municipio"
+                            ],
+                            "desc": [
+                                "main.localidades.nombre"
+                            ],
+                            "filter": "localidades.municipio != '' and localidades.isla = ''",
+                            "table": "main.localidades"
+                        },
+                        "elem": [
+                            "main.votos_locales.municipio"
+                        ],
+                        "name": "municipio"
                     }
                 ]
             },
@@ -979,6 +517,337 @@
         ],
         "table": "main.votos_locales"
     },
+    "datos provincia": {
+        "base filter": "",
+        "connect": {
+            "dbhost": "None",
+            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
+            "dbpass": "None",
+            "dbuser": "None",
+            "driver": "sqlite"
+        },
+        "fields": [
+            "votes_presential",
+            "votes_percent",
+            "seats",
+            "ord"
+        ],
+        "guides": [
+            {
+                "class": "o",
+                "name": "partido",
+                "prod": [
+                    {
+                        "domain": {
+                            "code": "code",
+                            "desc": "acronym",
+                            "filter": "",
+                            "table": "main.partidos"
+                        },
+                        "elem": "partido_id",
+                        "fmt": "txt"
+                    }
+                ]
+            },
+            {
+                "class": "o",
+                "name": "autonomia",
+                "prod": [
+                    {
+                        "domain": {
+                            "code": "region",
+                            "desc": "nombre",
+                            "filter": "localidades.provincia = ''",
+                            "table": "main.localidades"
+                        },
+                        "elem": "region",
+                        "fmt": "txt"
+                    }
+                ]
+            },
+            {
+                "class": "o",
+                "name": "provincia",
+                "prod": [
+                    {
+                        "domain": {
+                            "code": "provincia",
+                            "desc": "nombre",
+                            "filter": "localidades.provincia <> '' and localidades.municipio = '' and localidades.isla = ''",
+                            "table": "main.localidades"
+                        },
+                        "elem": "provincia",
+                        "fmt": "txt"
+                    }
+                ]
+            },
+            {
+                "class": "h",
+                "name": "geo",
+                "prod": [
+                    {
+                        "domain": {
+                            "code": "region",
+                            "desc": "nombre",
+                            "filter": "localidades.provincia = ''",
+                            "table": "main.localidades"
+                        },
+                        "elem": "region",
+                        "fmt": "txt",
+                        "name": "region"
+                    },
+                    {
+                        "domain": {
+                            "code": "provincia",
+                            "desc": "nombre",
+                            "filter": "localidades.provincia <> '' and localidades.municipio = '' and localidades.isla = ''",
+                            "grouped by": "region",
+                            "table": "main.localidades"
+                        },
+                        "elem": "provincia",
+                        "fmt": "txt",
+                        "name": "provincia"
+                    }
+                ]
+            },
+            {
+                "class": "o",
+                "name": "partidos importantes",
+                "prod": [
+                    {
+                        "domain": {
+                            "code": "code",
+                            "desc": "acronym",
+                            "filter": "partidos.code in (select distinct partido_id from votos_provincia where votes_percent >= 3)",
+                            "table": "main.partidos"
+                        },
+                        "elem": "partido_id",
+                        "fmt": "txt"
+                    }
+                ]
+            }
+        ],
+        "table": "main.votos_provincia"
+    },
+    "default": {
+        "cubo": "datos light",
+        "vista": {
+            "agregado": "sum",
+            "col": "1",
+            "elemento": "votes_presential",
+            "row": "5"
+        }
+    },
+    "experimento": {
+        "base filter": "",
+        "connect": {
+            "dbhost": "None",
+            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
+            "dbpass": "None",
+            "dbuser": "None",
+            "driver": "sqlite"
+        },
+        "fields": [
+            "votes_presential",
+            "votes_percent",
+            "seats",
+            "ord"
+        ],
+        "guides": [
+            {
+                "class": "o",
+                "name": "partido",
+                "prod": [
+                    {
+                        "domain": {
+                            "code": "code",
+                            "desc": "acronym",
+                            "filter": "code in (select distinct partido_id from votos_provincia where votes_percent >= 3)",
+                            "table": "main.partidos"
+                        },
+                        "elem": "partido_id",
+                        "fmt": "txt"
+                    }
+                ]
+            },
+            {
+                "class": "o",
+                "name": "provincia",
+                "prod": [
+                    {
+                        "domain": {
+                            "code": "provincia",
+                            "desc": "nombre",
+                            "filter": "localidades.provincia <> '' and localidades.municipio = '' and localidades.isla = ''",
+                            "table": "main.localidades"
+                        },
+                        "elem": "provincia",
+                        "fmt": "txt"
+                    }
+                ]
+            },
+            {
+                "class": "c",
+                "name": "ideologia",
+                "prod": [
+                    {
+                        "categories": [
+                            {
+                                "default": "otros"
+                            },
+                            {
+                                "condition": "in",
+                                "result": "Derecha",
+                                "values": [
+                                    "3316",
+                                    "4688"
+                                ]
+                            },
+                            {
+                                "condition": "in",
+                                "result": "Centro",
+                                "values": [
+                                    "1079",
+                                    "4475"
+                                ]
+                            },
+                            {
+                                "condition": "in",
+                                "result": "Izquierda",
+                                "values": [
+                                    "3484"
+                                ]
+                            },
+                            {
+                                "condition": "in",
+                                "result": "Extrema Izquierda",
+                                "values": [
+                                    "3736",
+                                    "5033",
+                                    "4850",
+                                    "5008",
+                                    "5041",
+                                    "2744",
+                                    "5026"
+                                ]
+                            },
+                            {
+                                "condition": "in",
+                                "result": "Separatistas",
+                                "values": [
+                                    "5063",
+                                    "4991",
+                                    "1528"
+                                ]
+                            },
+                            {
+                                "condition": "in",
+                                "result": "Nacionalistas",
+                                "values": [
+                                    "1533",
+                                    "4744",
+                                    "4223"
+                                ]
+                            }
+                        ],
+                        "elem": "partido_id",
+                        "fmt": "txt"
+                    }
+                ]
+            }
+        ],
+        "table": "main.votos_provincia"
+    },
+    "provincia_resumido": {
+        "base filter": "",
+        "connect": {
+            "dbhost": "",
+            "dbname": "/home/werner/elecciones/inebase.db",
+            "dbpass": "",
+            "dbport": "",
+            "dbuser": "",
+            "debug": false,
+            "driver": "sqlite"
+        },
+        "fields": [
+            "main.voto_provincia.votos",
+            "main.voto_provincia.escanos"
+        ],
+        "guides": [
+            {
+                "class": "o",
+                "name": "anyo_elec",
+                "prod": [
+                    {
+                        "elem": "main.voto_provincia.anyo_elec"
+                    }
+                ]
+            },
+            {
+                "class": "o",
+                "name": "comunidad",
+                "prod": [
+                    {
+                        "domain": {
+                            "code": [
+                                "main.supramunicipal.comunidad"
+                            ],
+                            "desc": [
+                                "main.supramunicipal.nombre"
+                            ],
+                            "filter": "supramunicipal.provincia = '99' and supramunicipal.anyo_elec = '2016'",
+                            "table": "main.supramunicipal"
+                        },
+                        "elem": [
+                            "main.voto_provincia.comunidad"
+                        ],
+                        "name": "region"
+                    }
+                ]
+            },
+            {
+                "class": "o",
+                "name": "provincia",
+                "prod": [
+                    {
+                        "domain": {
+                            "code": [
+                                "main.supramunicipal.provincia"
+                            ],
+                            "desc": [
+                                "main.supramunicipal.nombre"
+                            ],
+                            "filter": "supramunicipal.anyo_elec = '2016' and supramunicipal.provincia != '99'",
+                            "table": "main.supramunicipal"
+                        },
+                        "elem": [
+                            "main.voto_provincia.provincia"
+                        ]
+                    }
+                ]
+            },
+            {
+                "class": "o",
+                "name": "candidatura",
+                "prod": [
+                    {
+                        "elem": "main.voto_provincia.candidatura"
+                    }
+                ]
+            },
+            {
+                "class": "o",
+                "name": "partido",
+                "prod": [
+                    {
+                        "elem": "main.voto_provincia.partido"
+                    }
+                ]
+            }
+        ],
+        "name": "provincia_resumido",
+        "table": "main.voto_provincia"
+    },
     "rental": {
         "base filter": "",
         "connect": {
@@ -1008,8 +877,8 @@
             },
             {
                 "class": "h",
+                "fmt": "date",
                 "name": "rental_date_cuatrimestre",
-                "fmt":"date",
                 "prod": [
                     {
                         "class": "o",
@@ -1445,6 +1314,152 @@
             }
         ],
         "table": "public.rental"
-
+    },
+    "votos_prov_ref": {
+        "base filter": "",
+        "connect": {
+            "dbhost": "",
+            "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
+            "dbpass": "",
+            "dbport": "",
+            "dbuser": "",
+            "debug": false,
+            "driver": "sqlite"
+        },
+        "fields": [
+            "main.votos_prov_ref.id",
+            "main.votos_prov_ref.partido_id",
+            "main.votos_prov_ref.votes_presential",
+            "main.votos_prov_ref.votes_percent",
+            "main.votos_prov_ref.seats",
+            "main.votos_prov_ref.ord"
+        ],
+        "guides": [
+            {
+                "class": "o",
+                "name": "nacion",
+                "prod": [
+                    {
+                        "elem": "main.votos_prov_ref.nacion"
+                    }
+                ]
+            },
+            {
+                "class": "o",
+                "name": "region",
+                "prod": [
+                    {
+                        "elem": "main.votos_prov_ref.region"
+                    }
+                ]
+            },
+            {
+                "class": "o",
+                "name": "provincia",
+                "prod": [
+                    {
+                        "elem": "main.votos_prov_ref.provincia"
+                    }
+                ]
+            },
+            {
+                "class": "o",
+                "name": "candidatura_id",
+                "prod": [
+                    {
+                        "elem": "main.votos_prov_ref.candidatura_id"
+                    }
+                ]
+            },
+            {
+                "class": "o",
+                "name": "partido_nombre",
+                "prod": [
+                    {
+                        "elem": "main.votos_prov_ref.partido_nombre"
+                    }
+                ]
+            },
+            {
+                "class": "o",
+                "name": "siglas",
+                "prod": [
+                    {
+                        "elem": "main.votos_prov_ref.siglas"
+                    }
+                ]
+            },
+            {
+                "class": "o",
+                "name": "nombre_geo",
+                "prod": [
+                    {
+                        "elem": "main.votos_prov_ref.nombre_geo"
+                    }
+                ]
+            },
+            {
+                "class": "o",
+                "name": "complejp",
+                "prod": [
+                    {
+                        "domain": {
+                            "code": "pais, region, provincia",
+                            "desc": "pais, region, provincia",
+                            "filter": "",
+                            "table": "main.prov_complex"
+                        },
+                        "elem": "nacion, region, provincia"
+                    }
+                ]
+            },
+            {
+                "class": "h",
+                "name": "jerarquizado",
+                "prod": [
+                    {
+                        "domain": {
+                            "code": [
+                                "main.prov_complex.pais"
+                            ],
+                            "desc": [
+                                "main.prov_complex.pais"
+                            ],
+                            "filter": "",
+                            "table": "main.prov_complex"
+                        },
+                        "elem": [
+                            "main.votos_prov_ref.nacion"
+                        ],
+                        "name": "pais"
+                    },
+                    {
+                        "domain": {
+                            "code": "region",
+                            "desc": "region",
+                            "filter": "",
+                            "grouped by": "pais",
+                            "table": "main.prov_complex"
+                        },
+                        "elem": "region",
+                        "name": "region"
+                    },
+                    {
+                        "domain": {
+                            "code": "provincia",
+                            "desc": "provincia",
+                            "filter": "",
+                            "grouped by": "pais, region",
+                            "table": "main.prov_complex"
+                        },
+                        "elem": "provincia",
+                        "provincia": {
+                            "name": "provincia"
+                        }
+                    }
+                ]
+            }
+        ],
+        "table": "main.votos_prov_ref"
     }
 }

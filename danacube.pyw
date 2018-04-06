@@ -1142,7 +1142,8 @@ class DanaCube(QTreeView):
         values = [ None for k in range(len(spec))]
         parmDialog = propertySheetDlg('Introduzca los datos de {}'.format(tipo),spec,values, self)
         if parmDialog.exec_():
-            key = value = values[0]
+            value = values[0]
+            key = kindex.data(Qt.UserRole +1) + '1'
         else:
             return
         parent = arbol.itemFromIndex(kindex.parent())

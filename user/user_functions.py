@@ -42,9 +42,8 @@ def perRatio(original,clave,oldratios,newratios):
     """
     oldratio = float(oldratios.get(clave,0.))
     newratio = float(newratios.get(clave,oldratio))
-
     if oldratio == 0.:  #FIXME para evitar division por 0 pereo no tiene mucho sentido
-        return newratio
+        return original
     factor = newratio/oldratio
     return original*factor
     
@@ -69,7 +68,7 @@ def resultados(original,*entrada):
         "PP":28.9374594531795,
         "PSOE":22.1801820596102
         }
-    return perRatio(original,partido,newratios,datos)
+    return perRatio(original,partido,datos,newratios)
 
 def resultadosAgr(original,*entrada):
     partido = entrada[1]
@@ -92,7 +91,7 @@ def resultadosAgr(original,*entrada):
         "PP":28.9374594531795,
         "PSOE":22.1801820596102
         }
-    return perRatio(original,partido,newratios,datos)
+    return perRatio(original,partido,datos,newratios)
 
 def resultadosAgrOrig(original,*entrada):
     partido = entrada[1]
