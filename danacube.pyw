@@ -87,7 +87,8 @@ from core import Cubo,Vista
 from dialogs import *
 from util.jsonmgr import *
 from util.cadenas import * #mergeString
-
+from util.numeros import s2n
+        
 import user as uf
 
 from util.decorators import *
@@ -649,7 +650,7 @@ class DanaCube(QTreeView):
         #self = QTreeView(self)
         #self.setModel(modeloActivo)
         
-        self.expandToDepth(2)
+        #self.expandToDepth(1)
         self.setSortingEnabled(True)
         #self.setRootIsDecorated(False)
         self.setAlternatingRowColors(True)
@@ -664,30 +665,33 @@ class DanaCube(QTreeView):
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         
     def dataChanged(self, *args,**kwargs):
-        from util.numeros import s2n
-        
         topLeft = args[0]
         bottomRight = args[1]
         roles = args[2]
         if topLeft == bottomRight:
+            # debo desactivar las señales porque en caso contrario, el limpiado provoca un recursivo
+            self.model().blockSignals(True)
             item = self.model().itemFromIndex(topLeft)
-            if item.data(Qt.DisplayRole) != item.data(Qt.UserRole +1):  #ha cambiado
-                if item.data(Qt.DisplayRole) == '':  #revierto los cambios
-                    item.setData(item.data(Qt.UserRole +1),Qt.DisplayRole)
+            nuevoDato = s2n(item.data(Qt.DisplayRole))
+            viejoDato = s2n(item.data(Qt.UserRole +1))
+            item.setData(None,Qt.DisplayRole) # ahora reseto. La aplicacion no espera DR en general
+            if nuevoDato != viejoDato:  #ha cambiado
+                if nuevoDato == '':  #revierto los cambios
+                    pass
                 else:
                     self.parent.restorator.setEnabled(True)
-                    delta = s2n(item.data(Qt.DisplayRole)) - s2n(item.data(Qt.UserRole +1))
+                    delta = nuevoDato - viejoDato
                     if type(item) == QStandardItem:
                         col = topLeft.column() 
                         cabecera = _getHeadColumn(item)
-                        item = cabecera.setColumn(col,item.data(Qt.DisplayRole))
+                        item = cabecera.setColumn(col,nuevoDato)
                     else:
-                        item.setData(item.data(Qt.DisplayRole),Qt.UserRole +1)
+                        item.setData(nuevoDato,Qt.UserRole +1)
                     pai = item.parent()
                     while pai:
                         pai.spi(topLeft.column() -1,s2n(pai.gpi(topLeft.column() -1)) + delta)
                         pai = pai.parent()
-
+            self.model().blockSignals(False)
         super().dataChanged(*args,**kwargs)
      
     def activateEdit(self):
@@ -769,7 +773,7 @@ class DanaCube(QTreeView):
             [self.vista.row_hdr_idx.name,]+ 
             self.colHdr )
             #[item.data(Qt.DisplayRole) for item in self.vista.col_hdr_idx.traverse()])
-        self.expandToDepth(2)
+        self.expandToDepth(0)
         self.setTitle()
 
         

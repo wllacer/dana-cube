@@ -76,6 +76,8 @@ def fmtNumber(number, optDict=None):
     
 
 def is_number(s):
+    if not s:
+        return False
     try:
         n=str(float(s))
         if n == "nan" or n=="inf" or n=="-inf" : return False

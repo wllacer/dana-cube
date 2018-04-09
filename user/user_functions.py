@@ -11,6 +11,8 @@ from __future__ import unicode_literals
 from pprint import pprint
 from  util import uf_manager as ufm 
 from util.record_functions import norm2List
+from util.numeros import *
+
 
 import config
 """
@@ -42,6 +44,7 @@ def perRatio(original,clave,oldratios,newratios):
     """
     oldratio = float(oldratios.get(clave,0.))
     newratio = float(newratios.get(clave,oldratio))
+
     if oldratio == 0.:  #FIXME para evitar division por 0 pereo no tiene mucho sentido
         return original
     factor = newratio/oldratio
@@ -68,6 +71,7 @@ def resultados(original,*entrada):
         "PP":28.9374594531795,
         "PSOE":22.1801820596102
         }
+    print(partido,original, perRatio(original,partido,datos,newratios))
     return perRatio(original,partido,datos,newratios)
 
 def resultadosAgr(original,*entrada):
@@ -91,38 +95,8 @@ def resultadosAgr(original,*entrada):
         "PP":28.9374594531795,
         "PSOE":22.1801820596102
         }
+    print(partido,original, perRatio(original,partido,datos,newratios))
     return perRatio(original,partido,datos,newratios)
-
-def resultadosAgrOrig(original,*entrada):
-    partido = entrada[1]
-    newratio = float(entrada[2])
-    datos ={
-        "C's":14.0382822541147,
-        "CCa-PNC":0.327843488841832,
-        "DL":2.26783878634305,
-        "EAJ-PNV":1.20945172577815,
-        "EH Bildu":0.876122122040471,
-        #"EN COMÚ":3.72133439799253,
-        "ERC-CATSI":2.40333940776187,
-        "GBAI":0.122531253309765,
-        #"IU-UPeC":3.70205679981684,
-        #"MÉS":0.136074096879415,
-        "NÓS":0.282583040951081,
-        "PODEMOS":12.7611604239852 + 0.136074096879415 + 3.70205679981684 + 2.69120804771348 +1.63769352340476 +3.72133439799253,
-        #"PODEMOS-COMPROMÍS":2.69120804771348,
-        #"PODEMOS-En Marea-ANOVA-EU":1.63769352340476,
-        "PP":28.9374594531795,
-        "PSOE":22.1801820596102
-        }
-    try:
-        oldratio = datos.get(partido,0)
-        if oldratio == 0:  #FIXME para evitar division por 0 pereo no tiene mucho sentido
-            return newratio
-        factor = newratio/oldratio
-        return original*factor
-
-    except KeyError:
-        return None
 
 
 def escanos(provincia):
@@ -211,22 +185,25 @@ def factoriza(*parms,**kwparms):
         codigo = entrada[0]
         desc = entrada[1]
         valor = entrada[2]            
+        base = item.gpi(k)
         
-        if item.gpi(k) is None:
+        if not base:
             continue
 
         if valor is None or valor in ('','0'):
             continue
-        
+                
         if funAgr:
-            newvalue = funAgr(item.gpi(k),*entrada)
+            newvalue = funAgr(base,*entrada)
             if newvalue:
                 item.spi(k,newvalue)
         else:
-            newratio = float(valor) / 100.0
-            item.spi(k,item.gpi(k)*newratio)
-
-
+                
+            if valor[-1] == '%':
+                dato = base * s2n(valor[:-1])/100
+            else:
+                dato = s2n(valor)
+            item.spi(k,dato)
             
 def consolida(*parms,**kwparms):
     """
@@ -355,6 +332,32 @@ def transfiere(*parms,**kwparms):
             item.spi(difunta,resto)
     pass
 
+def seed(*parms,**kwparms):
+    """
+    TODO doc
+    """
+    item = parms[0]
+    column = parms[1]
+    if kwparms.get('searchby','key') == 'key':
+        colkey = [ norm2List(data)[0] for data in column] #compatibilidad de apis por la via rapida
+    elif kwparms.get('searchby') == 'value':
+        colkey = [ norm2List(data)[1] for data in column] #compatibilidad de apis por la via rapida
+    else:
+        return
+    columna = colkey.index(kwparms.get('destino'))
+    base = kwparms.get('valor inicial')
+
+    if base[-1] == '%':
+        suma = sum(filter(None,item.getPayload()))
+        dato = suma * s2n(base[:-1])/100
+    elif base[-1] == 'P': #promedio:
+        dato = s2n(base[:-1])*avg(filter(None,item.getPayload()))
+    elif base[-1] == 'M': #mediana:
+        dato = s2n(base[:-1])*median(filter(None,item.getPayload()))
+    else:
+        dato = s2n(base)
+    item.spi(columna,dato)
+    
 def exec_map(*parms,**kwparms):
     """
     Ejecuta un map sobre la lista. 
@@ -436,8 +439,11 @@ def register(contexto):
     ufm.registro_funcion(contexto,name='transfiere',entry=transfiere,type='colkey,kwparm',seqnr=3, 
                          aux_parm= { 'desde':None,'hacia':None,'porcentaje':100,'searchby':'value'},
                          text='transfiere parcialmente columnas')
-    ufm.registro_funcion(contexto,name='simula',entry=factoriza,type='colparm',seqnr=4,sep=True,
-                         text='Realiza simulaciones')
+    ufm.registro_funcion(contexto,name='inicializa',entry=seed,type='colkey,kwparm',seqnr=3, 
+                         aux_parm= {'destino':None, 'valor inicial':0,'searchby':'value'},
+                         text='inicializa columna a un valor fijo')
+    #ufm.registro_funcion(contexto,name='simula',entry=factoriza,type='colparm',seqnr=4,sep=True,
+                         #text='Realiza simulaciones')
     
     ufm.registro_funcion(contexto,name='asigna',entry=asigna,type='item,leaf',seqnr=10,
                          text='Asignacion de escaños',
