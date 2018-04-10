@@ -18,6 +18,9 @@ Serious errors which are either upstream or we haven't still found a solution
 
 *  BUG 3. __UPSTREAM__ __SQLITE__ __STUDY PENDING__ __BYPASSED__
     'Datos light's grandBrowse gets into inacceptable perfomance penalites with more than 6 joins (??) or two quite similar but distinct joins .  Further study needed
+    
+*   BUG 4. 
+    setEditTrigger with various tabs seems not to work correctly. Nor can i change menu text directly ???)
 
 ## rough corners
 

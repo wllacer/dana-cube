@@ -152,6 +152,8 @@ class DanaCubeWindow(QMainWindow):
 
         self.filterActions = dict()
         self.dateRangeActions = dict()
+        self.editActions = dict()
+        
         self.restorator = None
         
         self.tabulatura	= QTabWidget()
@@ -218,13 +220,15 @@ class DanaCubeWindow(QMainWindow):
         self.restorator = self.userFunctionsMenu.addAction("&Restaurar valores originales"
             ,self.tabulatura.currentWidget().tree.restoreData,"Ctrl+R")
         self.restorator.setEnabled(False)
+
         self.userFunctionsMenu.addSeparator()
-        self.sheetEdit = self.userFunctionsMenu.addAction("&Activar edicion celdas"
+        self.editActions['active'] = self.userFunctionsMenu.addAction("&Activar edicion celdas"
             ,self.tabulatura.currentWidget().tree.activateEdit,"Ctrl+R")
-        self.sheetEdit.setEnabled(True)
-        self.sheetUnEdit = self.userFunctionsMenu.addAction("&Desactivar edicion celdas"
+        self.editActions['active'].setEnabled(True)
+        self.editActions['inactive'] = self.userFunctionsMenu.addAction("&Desactivar edicion celdas"
             ,self.tabulatura.currentWidget().tree.deactivateEdit,"Ctrl+R")
-        self.sheetUnEdit.setEnabled(False)
+        self.editActions['inactive'].setEnabled(False)
+        
         self.userFunctionsMenu.addSeparator()
         self.plugins = dict()
         
@@ -289,6 +293,14 @@ class DanaCubeWindow(QMainWindow):
         else:
             self.restorator.setEnabled(False)
 
+        print(currentWidget.tree.editTriggers().text(),self.editActions['active'].text())
+        if currentWidget.tree.editTriggers() == QAbstractItemView.NoEditTriggers:
+            self.editActions['active'].setEnabled(True)
+            self.editActions['inactive'].setEnabled(False)
+        else:
+            self.editActions['active'].setEnabled(False)
+            self.editActions['inactive'].setEnabled(True)
+            
     def selectCube(self,inicial=False):
         #FIXME casi funciona ... vuelve a leer el fichero cada vez. NO es especialmente malo
         my_cubos = load_cubo(self.cubeFile)
@@ -662,6 +674,7 @@ class DanaCube(QTreeView):
         self.header().setContextMenuPolicy(Qt.CustomContextMenu)
         self.header().customContextMenuRequested.connect(self.openHeaderContextMenu)
 
+        self.editAllowed = False
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         
     def dataChanged(self, *args,**kwargs):
@@ -687,6 +700,8 @@ class DanaCube(QTreeView):
                         item = cabecera.setColumn(col,nuevoDato)
                     else:
                         item.setData(nuevoDato,Qt.UserRole +1)
+                    #FIXME Solo funciona para sum puros
+                    #self.vista.recalcGrandTotal()
                     pai = item.parent()
                     while pai:
                         pai.spi(topLeft.column() -1,s2n(pai.gpi(topLeft.column() -1)) + delta)
@@ -696,13 +711,15 @@ class DanaCube(QTreeView):
      
     def activateEdit(self):
         self.setEditTriggers(QAbstractItemView.DoubleClicked)
-        self.parent.sheetEdit.setEnabled(False)
-        self.parent.sheetUnEdit.setEnabled(True)
+        self.editAllowed = True
+        self.parent.editActions['active'].setEnabled(False)
+        self.parent.editActions['inactive'].setEnabled(True)
         
     def deactivateEdit(self):
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.parent.sheetEdit.setEnabled(True)
-        self.parent.sheetUnEdit.setEnabled(False)
+        self.editAllowed = False
+        self.parent.editActions['active'].setEnabled(True)
+        self.parent.editActions['inactive'].setEnabled(False)
 
     def initData(self,inicial=False,**viewData):
         #FIXME debo poder escapar y ahora no lo permito
