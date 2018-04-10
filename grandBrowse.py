@@ -13,27 +13,27 @@ TODO
     Free date download. Requires special settings in cubo.json
 '''
 
-import config
+import base.config as config
 
-#from util.record_functions import *
-#from util.tree import *
-#from util.fechas import *
+#from support.util.record_functions import *
+#from base.tree import *
+#from support.util.fechas import *
 
-from datalayer.access_layer import *
-from datalayer.query_constructor import *
-from core import *
+from support.datalayer.access_layer import *
+from support.datalayer.query_constructor import *
+from base.core import *
 
-#from util.numeros import stats,num2text
+#from support.util.numeros import stats,num2text
 
-#from datalayer.datemgr import getDateEntry, getDateIndexNew
+#from support.datalayer.datemgr import getDateEntry, getDateIndexNew
 from pprint import *
 
-from util.decorators import *
-from util.cadenas import mergeString,toNormString
+from support.util.decorators import *
+from support.util.cadenas import mergeString,toNormString
 
 import time
 
-from util.jsonmgr import dump_structure,dump_json
+from support.util.jsonmgr import dump_structure,dump_json
 
     
 
@@ -284,7 +284,7 @@ def generaQuery(cubo,mostrar=False,ejecutar=True,salida=False):
     
     
 def test(cuboId,mostrar=True,ejecutar=False,salida=False):
-    from util.jsonmgr import load_cubo
+    from support.util.jsonmgr import load_cubo
 
     # TODO normalizar los nombres de ficheros y campos a FQN
     mis_cubos = load_cubo()
@@ -293,7 +293,7 @@ def test(cuboId,mostrar=True,ejecutar=False,salida=False):
     #pprint(cursor)
 
 def UberTest(mostrar=False,ejecutar=True,salida=False):
-    from util.jsonmgr import load_cubo
+    from support.util.jsonmgr import load_cubo
 
     # TODO normalizar los nombres de ficheros y campos a FQN
     mis_cubos = load_cubo()

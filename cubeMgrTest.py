@@ -22,37 +22,37 @@ from tablebrowse import *
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from  PyQt5.QtWidgets import QApplication, QMainWindow, QWizard,QWizardPage,QLabel,QComboBox,QGridLayout,QGroupBox,QRadioButton,QVBoxLayout,QGridLayout,QPlainTextEdit,QListWidget,QCheckBox
 
-from datalayer.query_constructor import *
+from support.datalayer.query_constructor import *
 
 
-import config
+import base.config as config
 
-from util.record_functions import *
-from util.tree import *
+from support.util.record_functions import *
+from base.tree import *
 
-from datalayer.access_layer import *
-from datalayer.query_constructor import *
+from support.datalayer.access_layer import *
+from support.datalayer.query_constructor import *
 
-from util.numeros import stats
+from support.util.numeros import stats
 
-from datalayer.datemgr import getDateIndex,getDateEntry
+from support.datalayer.datemgr import getDateIndex,getDateEntry
 from pprint import *
 
-from core import Cubo
+from base.core import Cubo
 
-from cubemgmt.cubeutil import info2cube,isDictionaryEntry,action_class,getCubeList,getCubeItemList,changeTableName,changeSchema
-from cubemgmt.cubetree import *
-from cubemgmt.cubeTypes import *
-#from cubemgmt.cubeCRUD import insertInList
-from dictmgmt.tableInfo import FQName2array,TableInfo
+from admin.cubemgmt.cubeutil import info2cube,isDictionaryEntry,action_class,getCubeList,getCubeItemList,changeTableName,changeSchema
+from base.cubetree import *
+from admin.cubemgmt.cubeTypes import *
+#from admin.cubemgmt.cubeCRUD import insertInList
+from admin.dictmgmt.tableInfo import FQName2array,TableInfo
 
-from dialogs import propertySheetDlg
+from support.gui.dialogs import propertySheetDlg
 
 import cubebrowse as cb
 
 import time
 
-from wizardmgmt.dispatcher import *
+from admin.wizardmgmt.dispatcher import *
 
 def traverse(root,funcion=None):
     if isinstance(root,CubeItem):

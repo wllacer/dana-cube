@@ -21,22 +21,22 @@ from  sqlalchemy import create_engine,inspect,MetaData, types
 from  sqlalchemy.exc import CompileError, OperationalError, ProgrammingError, InterfaceError
 from  sqlalchemy.sql import text
 
-from datalayer.access_layer import *
-from datalayer.conn_dialogs import *
+from support.datalayer.access_layer import *
+from support.datalayer.conn_dialogs import *
 
-from util.record_functions import norm2String,dict2row, row2dict
-from util.jsonmgr import *
-from widgets import WPropertySheet
+from support.util.record_functions import norm2String,dict2row, row2dict
+from support.util.jsonmgr import *
+from support.gui.widgets import WPropertySheet
 
-from dictmgmt.dictTree import *
-from dictmgmt.datadict import *
+from admin.dictmgmt.dictTree import *
+from base.datadict import *
 
 from tablebrowse import *
-from cubemgmt.cubeutil import info2cube
+from admin.cubemgmt.cubeutil import info2cube
 from cubebrowse import CubeMgr
-from util.decorators import *
+from support.util.decorators import *
 
-import config
+import base.config as config
 
 class GenerationSheetDlg(QDialog):
     """

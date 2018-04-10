@@ -34,7 +34,7 @@ from pprint import pprint
 import datetime
 import argparse
 
-#from dictmgmt.datadict import *    
+#from base.datadict import *    
 
 from PyQt5.QtCore import  Qt,QModelIndex
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QColor, QIcon
@@ -44,16 +44,16 @@ from  sqlalchemy import create_engine,inspect,MetaData, types
 from  sqlalchemy.exc import CompileError, OperationalError, ProgrammingError, InterfaceError
 
 
-from util.numeros import fmtNumber               
-from util.jsonmgr import load_cubo,getConfigFileName
-from util.decorators import waiting_effects 
-from util.record_functions import norm2String
+from support.util.numeros import fmtNumber               
+from support.util.jsonmgr import load_cubo,getConfigFileName
+from support.util.decorators import waiting_effects 
+from support.util.record_functions import norm2String
 
-from datalayer.access_layer import SYSTEM_SCHEMAS, getCursorLim
-from datalayer.query_constructor import queryFormat
-from datalayer.conn_dialogs import directConnectDlg
+from support.datalayer.access_layer import SYSTEM_SCHEMAS, getCursorLim
+from support.datalayer.query_constructor import queryFormat
+from support.datalayer.conn_dialogs import directConnectDlg
 
-import config
+import base.config as config
 
 DEFAULT_FORMAT = dict(thousandsseparator=".",
                             decimalmarker=",",

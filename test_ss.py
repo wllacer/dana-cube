@@ -28,11 +28,11 @@ from PyQt5.QtWidgets import QApplication, QDialog, QMenu, QGridLayout, \
      # QAbstractItemView, 
 from PyQt5.QtPrintSupport import *
 
-from core import Cubo,Vista
-from util.tree import GuideItem,GuideItemModel,_getHeadColumn
-from util.decorators import stopwatch,model_change_control
-from util.numeros import is_number
-from dialogs import propertySheetDlg
+from base.core import Cubo,Vista
+from base.tree import GuideItem,GuideItemModel,_getHeadColumn
+from support.util.decorators import stopwatch,model_change_control
+from support.util.numeros import is_number
+from support.gui.dialogs import propertySheetDlg
 
 ASUCAR = [ ['Uno',1,2,3,4 ],
            ['Dos',5,6,7,8 ],
@@ -293,7 +293,7 @@ class PrintView(QTableWidget):
 
     
 def main():
-    from util.jsonmgr import load_cubo
+    from support.util.jsonmgr import load_cubo
     app = QApplication(sys.argv)
     mis_cubos = load_cubo()
     cubo = mis_cubos['datos light']
@@ -303,8 +303,8 @@ def main():
         pass
         sys.exit()
 
-from util.tree import TOTAL,BRANCH,LEAF,TreeFormat
-from util.numeros import s2n,fmtNumber
+from base.tree import TOTAL,BRANCH,LEAF,TreeFormat
+from support.util.numeros import s2n,fmtNumber
 
 class SsModel(QStandardItemModel):
     def __init__(self,*parms,**kwparms):

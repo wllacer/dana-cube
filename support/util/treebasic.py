@@ -11,7 +11,7 @@ from support.util.numeros import stats
 (_ROOT, _DEPTH, _BREADTH) = range(3)
 (_KEY,_ITEM) = range(2)
 
-config.DELIMITER=':'
+import base.config as config
 
 def traverse(tree, key=None, mode=1):
     return tree.traverse(key,mode,output = _ITEM)
@@ -37,7 +37,6 @@ def traverse(tree, key=None, mode=1):
             #queue = queue[1:] + expansion  # width-first
 
 class TreeItem(object):
-    
     def __init__(self, key, ord=None, desc=None, data=None, parent=None):
         self.key= key
         if desc is None:
@@ -268,7 +267,6 @@ class TreeItem(object):
         return 'TreeItem({},{},{})'.format(self.key,self.ord,self.desc)
 
 class TreeDict(object):
-    
     def __init__(self):
         self.content={}
         self.rootItemKey="/"
@@ -453,9 +451,8 @@ class TreeDict(object):
                     clave[k]=''
             lista.append((item,clave,))
         return lista
-            
         
-
+    
 if __name__ == '__main__':
      item=TreeItem('alfa')
      #item.setLabel('omega')

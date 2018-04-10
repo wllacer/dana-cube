@@ -17,9 +17,9 @@ from PyQt5.QtWidgets import QApplication, QTreeView
 from PyQt5.QtGui import QColor
 
 
-from core import Cubo,Vista
-from util.tree import *
-from util.numeros import isOutlier,fmtNumber
+from base.core import Cubo,Vista
+from base.tree import *
+from support.util.numeros import isOutlier,fmtNumber
 
 """ lo dejo como documentacion
 print(trueIndex.internalPointer())

@@ -17,24 +17,24 @@ from pprint import pprint
 
 import datetime
 
-from dictmgmt.datadict import *    
+from base.datadict import *    
 #from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtCore import  QSortFilterProxyModel, QModelIndex, QSize
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QColor, QPalette
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTableView, QSplitter, QMenu, QLineEdit, QComboBox, QLabel, QPlainTextEdit
 
-from datalayer.query_constructor import *
-from dictmgmt.tableInfo import *
+from support.datalayer.query_constructor import *
+from admin.dictmgmt.tableInfo import *
 
-from dialogs import dataEntrySheetDlg
-from util.numeros import fmtNumber               
-from cubemgmt.cubeTypes import LOGICAL_OPERATOR
-from filterDlg import filterDialog
+from support.gui.dialogs import dataEntrySheetDlg
+from support.util.numeros import fmtNumber               
+from admin.cubemgmt.cubeTypes import LOGICAL_OPERATOR
+from base.filterDlg import filterDialog
 
-from util.decorators import waiting_effects 
-from util.record_functions import defaultFromContext
+from support.util.decorators import waiting_effects 
+from support.util.record_functions import defaultFromContext
 
-import config
+import base.config as config
 
 DEFAULT_FORMAT = dict(thousandsseparator=".",
                             decimalmarker=",",
@@ -234,9 +234,9 @@ class TableBrowser(QTableView):
     def filterQuery(self):
         driver=self.localContext[0].conn[self.localContext[1]].dialect.name
         self.areFiltered = True
-        filterDlg = filterDialog(self.baseModel.recordStructure,self,driver=driver)
-        if filterDlg.exec_():
-            self.loadData(pFilter=filterDlg.result)
+        base.filterDlg = filterDialog(self.baseModel.recordStructure,self,driver=driver)
+        if base.filterDlg.exec_():
+            self.loadData(pFilter=base.filterDlg.result)
 
 
     def filterQueryPick(self,index):

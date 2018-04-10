@@ -9,12 +9,12 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from pprint import pprint
-from  util import uf_manager as ufm 
-from util.record_functions import norm2List
-from util.numeros import *
+from support.util import uf_manager as ufm 
+from support.util.record_functions import norm2List
+from support.util.numeros import *
 
 
-import config
+import base.config as config
 """
 Funciones auxiliares
 """

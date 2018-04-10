@@ -12,8 +12,8 @@ Documentation, License etc.
 @package estimaciones
 # 0.3
 '''
-from core import Cubo,Vista
-#from datalayer.query_constructor import *
+from base.core import Cubo,Vista
+#from support.datalayer.query_constructor import *
 #from operator import attrgetter,methodcaller
 
 from pprint import pprint
@@ -21,22 +21,22 @@ from pprint import pprint
 from  PyQt5.QtWidgets import QApplication
 
 
-#import exportWizard as eW
-#from util.numeros import fmtNumber
-#from util.jsonmgr import dump_structure
-from util.mplwidget import SimpleChart
+#import base.exportWizard as eW
+#from support.util.numeros import fmtNumber
+#from support.util.jsonmgr import dump_structure
+from support.util.mplwidget import SimpleChart
   
 #import math
 #import matplotlib.pyplot as plt
 #import numpy as np
-from util.decorators import *
+from support.util.decorators import *
 
 from PyQt5 import QtCore
 #from PyQt5.QtGui import QSizePolicy
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QGridLayout, QSizePolicy, QWidget, QTreeView, QHBoxLayout
 
-from dictmgmt.datadict import DataDict
-from dictmgmt.tableInfo import TableInfo
+from base.datadict import DataDict
+from admin.dictmgmt.tableInfo import TableInfo
 
 (_ROOT, _DEPTH, _BREADTH) = range(3)
 
@@ -136,7 +136,7 @@ def traverse(root,base=None):
 
 #@stopwatch
 #def getValueSpread(conn,sqls):
-    #from datalayer.access_layer import getCursor
+    #from support.datalayer.access_layer import getCursor
     #result = getCursor(conn.data().engine,sqls)
     #pprint(result)
     
@@ -187,7 +187,7 @@ def prueba():
     #pprint(ds.getFKDeep()[2])
 
 def numeros():
-    from util.numeros import s2n
+    from support.util.numeros import s2n
     a = 1234
     b = 1234.
     c = '1234'

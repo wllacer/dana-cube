@@ -14,25 +14,25 @@ from PyQt5.QtWidgets import QApplication
 
 from noqt.danacube import *
 from noqt.core import Cubo,Vista, mergeString
-#from dialogs import *
-#from util.jsonmgr import *
+#from support.gui.dialogs import *
+#from support.util.jsonmgr import *
 #from models import *
 
 #import user as uf
 
-#from util.decorators import *
+#from support.util.decorators import *
 
-#from filterDlg import filterDialog
-#from dictmgmt.datadict import DataDict
-#from cubemgmt.cubetree import traverseTree
-#from datalayer.query_constructor import searchConstructor
+#from base.filterDlg import filterDialog
+#from base.datadict import DataDict
+#from base.cubetree import traverseTree
+#from support.datalayer.query_constructor import searchConstructor
 
-#from util.mplwidget import SimpleChart
-#from util.uf_manager import *
+#from support.util.mplwidget import SimpleChart
+#from support.util.uf_manager import *
 
-#import exportWizard as eW
+#import base.exportWizard as eW
 
-#from util.treestate import *
+#from support.util.treestate import *
 if __name__ == '__main__':
     import sys
 

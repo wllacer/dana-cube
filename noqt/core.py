@@ -15,21 +15,21 @@ config.DEBUG = True
 config.TRACE=True
 config.DELIMITER=':'
 
-from util.record_functions import *
+from support.util.record_functions import *
 from noqt.tree import *
-from util.fechas import *
+from support.util.fechas import *
 
-from datalayer.access_layer import *
-from datalayer.query_constructor import *
+from support.datalayer.access_layer import *
+from support.datalayer.query_constructor import *
 
-from util.numeros import stats,num2text
+from support.util.numeros import stats,num2text
 
-from datalayer.datemgr import getDateEntry, getDateIndexNew
+from support.datalayer.datemgr import getDateEntry, getDateIndexNew
 from pprint import *
 
 import time
 
-from util.jsonmgr import dump_structure,dump_json
+from support.util.jsonmgr import dump_structure,dump_json
 try:
     import xlsxwriter
     XLSOUTPUT = True
@@ -38,7 +38,7 @@ except ImportError:
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
-#from cubemgmt.cubetree import CubeItem,traverseTree
+#from base.cubetree import CubeItem,traverseTree
 
 def searchStandardItem(item,value,role):
     """
@@ -1350,8 +1350,8 @@ class Vista:
     #return lineas
 
 def experimental():
-    from cubemgmt.cubetree import recTreeLoader,dict2tree,navigateTree,CubeItem,traverseTree
-    from util.jsonmgr import load_cubo
+    from base.cubetree import recTreeLoader,dict2tree,navigateTree,CubeItem,traverseTree
+    from support.util.jsonmgr import load_cubo
     def presenta(vista):
         guia=vista.row_hdr_idx
         ind = 0

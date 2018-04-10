@@ -15,26 +15,26 @@ from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView , QTabWidget, QSplitter
 
 from noqt.core import Cubo,Vista, mergeString
-from dialogs import *
-from util.jsonmgr import *
+from support.gui.dialogs import *
+from support.util.jsonmgr import *
 from noqt.models import *
 
 import user as uf
 
-from util.decorators import *
+from support.util.decorators import *
 
-#from util.tree import traverse
-from filterDlg import filterDialog
-from dictmgmt.datadict import DataDict
-from cubemgmt.cubetree import traverseTree
-from datalayer.query_constructor import searchConstructor
+#from base.tree import traverse
+from base.filterDlg import filterDialog
+from base.datadict import DataDict
+from base.cubetree import traverseTree
+from support.datalayer.query_constructor import searchConstructor
 
-from util.mplwidget import SimpleChart
-from util.uf_manager import *
+from support.util.mplwidget import SimpleChart
+from support.util.uf_manager import *
 
-import exportWizard as eW
+import base.exportWizard as eW
 
-from util.treestate import *
+from support.util.treestate import *
 #FIXED 1 zoom view breaks. Some variables weren't available
 #     FIXME zoom doesn't trigger any action with the new interface
 #FIXED 1 config view doesn't fire. Definition too early
@@ -412,8 +412,8 @@ class DanaCubeWindow(QMainWindow):
         self.tabulatura.currentWidget().dispatch(FcnName)
         
     def editConnection(self,configData,nombre=None):         
-        from util.record_functions import dict2row, row2dict
-        from datalayer.conn_dialogs import ConnectionSheetDlg
+        from support.util.record_functions import dict2row, row2dict
+        from support.datalayer.conn_dialogs import ConnectionSheetDlg
         
         attr_list =  ('driver','dbname','dbhost','dbuser','dbpass','dbport','debug')
         if nombre is None:
@@ -751,7 +751,7 @@ class DanaCube(QTreeView):
         app.setOverrideCursor(QCursor(Qt.WaitCursor))
 
     def funDispatch(self,entry):
-        from util.record_functions import norm2String
+        from support.util.record_functions import norm2String
         plugin = entry[0]
         tipo_plugin = entry[1]
         lparm = [None for k in range(4)]
@@ -837,17 +837,17 @@ class DanaCube(QTreeView):
         #self.areFiltered = True
         #self.cubo.recordStructure = self.summaryGuia()
         
-        filterDlg = filterDialog(self.cubo.recordStructure,self,driver=self.cubo.dbdriver)
+        base.filterDlg = filterDialog(self.cubo.recordStructure,self,driver=self.cubo.dbdriver)
         if self.filterValues :
             for k in range(len(self.filterValues)):
-                filterDlg.sheet.set(k,2,self.filterValues[k][0])
-                filterDlg.sheet.set(k,3,self.filterValues[k][1])
+                base.filterDlg.sheet.set(k,2,self.filterValues[k][0])
+                base.filterDlg.sheet.set(k,3,self.filterValues[k][1])
                 
-        if filterDlg.exec_():
-            #self.loadData(pFilter=filterDlg.result)
-            self.filtroCampos=filterDlg.result
+        if base.filterDlg.exec_():
+            #self.loadData(pFilter=base.filterDlg.result)
+            self.filtroCampos=base.filterDlg.result
             self.filtro = mergeString(self.filtroCampos,self.filtroFechas,'AND')
-            self.filterValues = [ (data[2],data[3],) for data in filterDlg.data]
+            self.filterValues = [ (data[2],data[3],) for data in base.filterDlg.data]
             self.cargaVista(self.vista.row_id,self.vista.col_id,
                             self.vista.agregado,self.vista.campo,
                             self.vista.totalizado,self.vista.stats) #__WIP__ evidentemente aqui faltan todos los parametros
@@ -905,7 +905,7 @@ class DanaCube(QTreeView):
                 descriptores.append(item[0])
                 datos.append([0,0,1,None,None])
         #descriptores = [ item[0] for item in camposFecha ]
-        form = dateFilterDlg(descriptores,datos)
+        form = datebase.filterDlg(descriptores,datos)
         if form.exec_():
             sqlGrp = []
             #if self.cubo.definition.get('date filter'):
@@ -965,7 +965,7 @@ class DanaCube(QTreeView):
     
     def export(self):
         #TODO poder hacer una seleccion de area
-        parms = eW.exportWizard()
+        parms = eW.base.exportWizard()
         selArea = dict()
         if not parms.get('file'):
             return

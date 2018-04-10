@@ -23,23 +23,23 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QSplitter, QMenu, \
      QDialog, QInputDialog, QLineEdit, QComboBox, QMessageBox
  
-from dictmgmt.datadict import *    
-from datalayer.query_constructor import *
-from datalayer.access_layer import dbDict2Url
+from base.datadict import *    
+from support.datalayer.query_constructor import *
+from support.datalayer.access_layer import dbDict2Url
 from tablebrowse import *
-from datalayer.datemgr import genTrimestreCode
-from util.jsonmgr import *
-from util.numeros import is_number
-from util.decorators import *
+from support.datalayer.datemgr import genTrimestreCode
+from support.util.jsonmgr import *
+from support.util.numeros import is_number
+from support.util.decorators import *
 
-from dialogs import propertySheetDlg
+from support.gui.dialogs import propertySheetDlg
 
-from cubemgmt.cubetree import *
-from cubemgmt.cubeTypes import *
-from cubemgmt.cubeutil  import *
-#from cubemgmt.cubeCRUD  import *
+from base.cubetree import *
+from admin.cubemgmt.cubeTypes import *
+from admin.cubemgmt.cubeutil  import *
+#from admin.cubemgmt.cubeCRUD  import *
 
-from wizardmgmt.dispatcher import *
+from admin.wizardmgmt.dispatcher import *
 
 (_ROOT, _DEPTH, _BREADTH) = range(3)
 

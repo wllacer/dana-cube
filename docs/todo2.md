@@ -52,7 +52,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 *  __WON'T FIX__ WzBaseFilter no activado. Debe hacerse directamente de DanaCube o edición libre
 *  __DONE__ date filter con campos forzados (es decir no fechas). Para sqlite
 *  __WONT'FIX__ creacion "ex nihilo" de cubo. los cubos deben crearse via Danabrowse o funcion de copia
-*  __PARTIAL__ creadas en cubemgmt.cubeutil funcioes para cambiar esquemas y nombres de tabla. Dudas sobre como usarlo en el codigo. Cambio de fichero realizado (implica entre otras cosas anular la cache). Cambio de esquema en cambio de conexion
+*  __PARTIAL__ creadas en admin.cubemgmt.cubeutil funcioes para cambiar esquemas y nombres de tabla. Dudas sobre como usarlo en el codigo. Cambio de fichero realizado (implica entre otras cosas anular la cache). Cambio de esquema en cambio de conexion
 
 ## Grandes TODO (para pasar de serie)
 
@@ -89,7 +89,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
 * __NOW__ Como hacer que los arboles no se cierren y abran aleatoriamente
     * funciona salvo un problema en borrados
 
-*  Terrible rendimiento (al menos en MySQL) en dictmgmt/dictree.getValueSpread() (select count(*) from (select distinct field from table) as base). Es una funcionalidad utilisima; ahora mismo la he desconectado
+*  Terrible rendimiento (al menos en MySQL) en admin.dictmgmt/dictree.getValueSpread() (select count(*) from (select distinct field from table) as base). Es una funcionalidad utilisima; ahora mismo la he desconectado
     * He modificado la query a select count(distinct campo) from file.  Parece mejorar algo el rendimiento
     * He desactivado de momento esto como opcion directa y lo sustituire por una accion indivudual sobre los campos
 
@@ -157,7 +157,7 @@ __Nota__  el anterior y mas detallado TODO list está como ![este fichero](docs/
     ** __DONE__ supresion de resizeToContent para mejorar -extraordinariamente- el rendimiento en tablas. Me obliga a poner cabeceras
 * El diccionario es pasado entre danabrowse u tablebrowse demasiadas veces
 * Color en mensajes de error
-* Hay funciones en filterDlg que pueden reutilzarse
+* Hay funciones en base.filterDlg que pueden reutilzarse
 
 * __DONE__ NO me genera correctamente los arboles de FK
 * __WIP__ Reescritura del wizard para usarlo mas facilmente
@@ -273,19 +273,19 @@ hold -> danabrowse.pyw:395:            #TODO deberia verificar que se han cambia
 next -> danabrowse.pyw:39:       TODO unificar en un solo sitio
 - danabrowse.pyw:90:       TODO faltan datos adicionales para cada item, otro widget, cfg del widget, formato de salida
 - danabrowse.pyw:91:       FIXME los botones estan fatal colocados
-- dictmgmt.datadict.py:109:    #TODO probablemente padre sea un parametro inncecesario
-+ dictmgmt.datadict.py:128:            #TODO deberia ampliar la informacion de no conexion
-+ dictmgmt.datadict.py:175:                ##TODO gestionar error de conexion no existente
-next ->dictmgmt.datadict.py:44:        #FIXME eliminar parametros espureos
-- dictmgmt.datadict.py:83:        definimos el modelo. Tengo que ejecutarlo cada vez que cambie la vista. TODO no he conseguido hacerlo dinamicamente
-dictmgmt.dictTree.py:263:        #FIXME no podemos poner el icono de momento
-- dictmgmt.dictTree.py:345:        ##TODO cambiar la columna 
-bypass -> dictmgmt.dictTree.py:346:        #TODO de desconectada a conectada
-- dictmgmt.dictTree.py:368:            #FIXME no podemos poner el icono de momento
-dictmgmt.dictTree.py:379:            #TODO deberia verificar que de verdad lo esta
-- dictmgmt.dictTree.py:419:        #FIXME no podemos poner el icono de momento
-- dictmgmt.dictTree.py:448:        #FIXME no podemos poner el icono de momento
-next -> dictmgmt.dictTree.py:579:        #FIXME ver si puede utilizarse nomenclatura fqn() aquí
+- base.datadict.py:109:    #TODO probablemente padre sea un parametro inncecesario
++ base.datadict.py:128:            #TODO deberia ampliar la informacion de no conexion
++ base.datadict.py:175:                ##TODO gestionar error de conexion no existente
+next ->base.datadict.py:44:        #FIXME eliminar parametros espureos
+- base.datadict.py:83:        definimos el modelo. Tengo que ejecutarlo cada vez que cambie la vista. TODO no he conseguido hacerlo dinamicamente
+admin.dictmgmt.dictTree.py:263:        #FIXME no podemos poner el icono de momento
+- admin.dictmgmt.dictTree.py:345:        ##TODO cambiar la columna 
+bypass -> admin.dictmgmt.dictTree.py:346:        #TODO de desconectada a conectada
+- admin.dictmgmt.dictTree.py:368:            #FIXME no podemos poner el icono de momento
+admin.dictmgmt.dictTree.py:379:            #TODO deberia verificar que de verdad lo esta
+- admin.dictmgmt.dictTree.py:419:        #FIXME no podemos poner el icono de momento
+- admin.dictmgmt.dictTree.py:448:        #FIXME no podemos poner el icono de momento
+next -> admin.dictmgmt.dictTree.py:579:        #FIXME ver si puede utilizarse nomenclatura fqn() aquí
 
 # tablebrowse
 
