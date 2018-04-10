@@ -283,27 +283,7 @@ def generaQuery(cubo,mostrar=False,ejecutar=True,salida=False):
             print(e)
     
     
-def test(cuboId,mostrar=True,ejecutar=False,salida=False):
-    from support.util.jsonmgr import load_cubo
 
-    # TODO normalizar los nombres de ficheros y campos a FQN
-    mis_cubos = load_cubo()
-    cubo = Cubo(mis_cubos[cuboId])
-    generaQuery(cubo,mostrar,ejecutar,salida)
-    #pprint(cursor)
-
-def UberTest(mostrar=False,ejecutar=True,salida=False):
-    from support.util.jsonmgr import load_cubo
-
-    # TODO normalizar los nombres de ficheros y campos a FQN
-    mis_cubos = load_cubo()
-    for cuboId in mis_cubos:
-        if cuboId == 'default':
-            continue
-        print('Ahora para el cubo ',cuboId)
-        cubo = Cubo(mis_cubos[cuboId])
-        cubo.nombre = cuboId
-        generaQuery(cubo,mostrar,ejecutar,salida)
         
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona

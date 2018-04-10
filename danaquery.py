@@ -6,9 +6,11 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 
-from admin.danaquery import EditWindow
+from research.danaquery import EditWindow
 from PyQt5.QtWidgets import QApplication    
 
+
+        
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
     import sys
