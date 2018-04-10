@@ -91,7 +91,7 @@ class propertySheetDlg(QDialog):
 
 from support.util.fechas import *
 
-class datebase.filterDlg(QDialog):
+class filterDlg(QDialog):
     def __init__(self,descriptores=None,datos=None,parent=None):   
         """
         """

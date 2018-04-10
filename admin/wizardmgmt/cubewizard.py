@@ -16,7 +16,7 @@ Documentation, License etc.
 from pprint import pprint
 
   
-from tablebrowse import *
+from admin.tablebrowse import *
 
 #from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtCore import Qt
@@ -34,7 +34,7 @@ from admin.cubemgmt.cubeTypes import *
 
 from admin.wizardmgmt.guihelper import *
 
-import support.gui.widgets import *    
+from support.gui.widgets import *    
 from support.util.fechas import dateRange
 
 

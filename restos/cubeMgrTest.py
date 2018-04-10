@@ -16,7 +16,7 @@ Documentation, License etc.
 from pprint import pprint
 
   
-from tablebrowse import *
+from admin.tablebrowse import *
 
 #from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
@@ -48,7 +48,7 @@ from admin.dictmgmt.tableInfo import FQName2array,TableInfo
 
 from support.gui.dialogs import propertySheetDlg
 
-import cubebrowse as cb
+import admin.cubebrowse as cb
 
 import time
 

@@ -33,7 +33,7 @@ from base.datadict import *
 
 from tablebrowse import *
 from admin.cubemgmt.cubeutil import info2cube
-from cubebrowse import CubeMgr
+from admin.cubebrowse import CubeMgr
 from support.util.decorators import *
 
 import base.config as config

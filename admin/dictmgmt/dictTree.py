@@ -22,7 +22,7 @@ from PyQt5.QtWidgets import QMessageBox
 
 from support.datalayer.access_layer import *
 from support.datalayer.query_constructor import queryFormat
-#from cubebrowse import *
+#from admin.cubebrowse import *
 from support.util.record_functions import norm2String,dict2row, row2dict
 from support.util.decorators import *
 #from support.util.jsonmgr import *

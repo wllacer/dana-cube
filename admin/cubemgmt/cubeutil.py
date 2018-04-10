@@ -27,7 +27,7 @@ from admin.dictmgmt.tableInfo import *
 
 from support.datalayer.query_constructor import *
 from support.datalayer.access_layer import dbDict2Url,internal2genericDriver
-from tablebrowse import *
+from admin.tablebrowse import *
 from support.datalayer.datemgr import genTrimestreCode
 from support.util.jsonmgr import *
 from support.util.numeros import is_number

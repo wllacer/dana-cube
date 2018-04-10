@@ -26,7 +26,7 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem
 #from datadict import *    
 #from support.datalayer.query_constructor import *
 #from support.datalayer.access_layer import DRIVERS, AGR_LIST, dbDict2Url
-#from tablebrowse import *
+#from admin.tablebrowse import *
 #from support.datalayer.datemgr import genTrimestreCode
 #from support.util.jsonmgr import *
 #from support.util.numeros import is_number

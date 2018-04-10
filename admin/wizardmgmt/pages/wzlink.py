@@ -16,7 +16,7 @@ Documentation, License etc.
 from pprint import pprint
 
   
-from tablebrowse import *
+from admin.tablebrowse import *
 
 #from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtCore import Qt
