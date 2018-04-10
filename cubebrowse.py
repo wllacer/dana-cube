@@ -195,12 +195,14 @@ class CubeMgr(QTreeView):
         self.view.customContextMenuRequested.connect(self.openContextMenu)
         self.view.doubleClicked.connect(self.test)
         self.view.setModel(self.baseModel)
-        #self.view.hideColumn(2) # eso no interesa al usuario final
+        self.view.hideColumn(2) # eso no interesa al usuario final        
         self.view.expandAll() # es necesario para el resize
+
         for m in range(self.baseModel.columnCount()):
             self.view.resizeColumnToContents(m)
-        #self.view.collapseAll()
-        #self.view.expandToDepth(1)     
+        self.view.collapseAll()
+        #self.view.expandToDepth(0)     
+
         #self.view.verticalHeader().hide()
         #self.view.setHeaderHidden(True)
         #self.view.setSortingEnabled(True)
