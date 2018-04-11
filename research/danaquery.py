@@ -44,56 +44,10 @@ from support.util.record_functions import norm2String
 from support.datalayer.access_layer import SYSTEM_SCHEMAS, getCursorLim
 from support.datalayer.query_constructor import queryFormat
 from support.datalayer.conn_dialogs import directConnectDlg
+from support.datalayer.querywidget import *
 
 import base.config as config
 
-DEFAULT_FORMAT = dict(thousandsseparator=".",
-                            decimalmarker=",",
-                            decimalplaces=2,
-                            rednegatives=False,
-                            yellowoutliers=False)
-
-class CursorItemModel(QStandardItemModel):
-    def __init__(self,parent=None):
-        super(CursorItemModel, self).__init__(parent)
-        self.recordStructure = None
-        
-class CursorItem(QStandardItem):
-    def __init__(self,*args):  #solo usamos valor (str o standarItem)
-        super(CursorItem, self).__init__(*args)
-    
-    def data(self,role=Qt.UserRole +1):
-        '''
-        FIXME realmente no se utiliza (recordStructure es nulo y probablemente tampoco role). Por otro lado el codigo no tiene mucho sentido en este caso (copiado de tablebrowse)
-        '''
-        if self.model() and self.model().recordStructure and role in (Qt.DisplayRole, Qt.TextAlignmentRole):
-            index = self.index()
-            format = self.model().recordStructure[index.column()]['format']
-            if format in ('numerico','entero'):
-                if role == Qt.TextAlignmentRole:
-                    return Qt.AlignRight| Qt.AlignVCenter
-                else:
-                    defFmt = DEFAULT_FORMAT.copy()
-                    try:
-                        if format == 'numerico':
-                            defFmt['decimalplaces'] = 2
-                        else:
-                            defFmt['decimalplaces'] = 0
-                        rawData = super(CursorItem,self).data(role)
-                        text, sign = fmtNumber(float(rawData),defFmt)
-                        return '{}{}'.format(sign,text)
-                    except ValueError:
-                        if rawData == 'None':
-                            return ''
-                        else:
-                            if config.DEBUG:
-                                print ('error de formato en ',
-                                self.model().recordStructure[index.column()],index.row(),
-                                super(CursorItem,self).data(role))
-                            return rawData
-            #else:
-                #return Qt.AlignLeft| Qt.AlignVCenter
-        return super(CursorItem,self).data(role)
     
 def generaArgParser():
     parser = argparse.ArgumentParser(description='Cubo de datos')
@@ -224,7 +178,9 @@ class SesionTab(QWidget):
         self.addQuery()
         
     def addQuery(self):
-        self.tabQueries.addTab(QueryTab(self.conn,self.confName,holder=self.holder),"{}:{}".format(self.confName, self.tabQueries.count() +1))
+        #self.tabQueries.addTab(QueryTab(self.conn,self.confName,holder=self.holder),"{}:{}".format(self.confName, self.tabQueries.count() +1))
+        self.tabQueries.addTab(myQueryTab(self.conn,holder=self.holder),
+                               "{}:{}".format(self.confName,self.tabQueries.count() +1))
         self.tabQueries.setCurrentIndex(self.tabQueries.count() -1)
 
     def openQuery(self):
@@ -245,123 +201,136 @@ class SesionTab(QWidget):
         self.tabQueries.currentWidget().execute()
     def reformat(self):
         self.tabQueries.currentWidget().reformat()
-    
-class QueryTab(QWidget):
-    def __init__(self,conn,confName,holder=None,parent=None):
-        super(QueryTab,self).__init__(parent)
-        self.conn = conn
-        self.holder = holder
-        self.fileName = None
-        self.browser = QTableView()
-        self.browser.setSortingEnabled(True)  
-        self.browser.setAlternatingRowColors(True)
 
-        self.sqlEdit = QTextEdit()
-        self.msgLine = QTextEdit()
-        self.msgLine.setReadOnly(True)
-        self.msgLine.setText("Bienvenido al query masta")
-        
-        split = QSplitter(Qt.Vertical)
-        split.addWidget(self.sqlEdit)
-        split.addWidget(self.browser)
-        split.addWidget(self.msgLine)
-        split.setSizes([50,250,25])
-        #split.setRubberBand(1)
-        
-        meatLayout = QVBoxLayout()
-        meatLayout.addWidget(split)
-        self.setLayout(meatLayout)
-
-    @waiting_effects
-    def execute(self):
-        sqlString = self.sqlEdit.document().toPlainText()
-        if len(sqlString) == 0:
-            return 
-        cursor = None
-
-        self.msgLine.hide()
-        self.msgLine.setText('')
-        try:
-            #TODO opcion para poner un limit
-            cursor = getCursorLim(self.conn,sqlString,LIMIT=1000)
-        except Exception as e:
-            if cursor is not None:
-                cursor.close()
-            self.msgLine.show()
-            self.msgLine.setText(norm2String(e.orig.args))
-            return
-            
-        self.baseModel = CursorItemModel()
-        self.baseModel.setHorizontalHeaderLabels(cursor.keys())
-        for row in cursor:
-            modelRow = [ CursorItem(str(fld)) for fld in row ]
-            self.baseModel.appendRow(modelRow)
-        self.browser.setModel(self.baseModel)
-        cursor.close() #INNECESARIO pero recomendable
-
+class myQueryTab(QueryTab):
     def readQuery(self):
-        #TODO y el contenido actual del script ?
-        if self.fileName is not None and self.sqlEdit.document().isModified():
-            #dialogo de confirmar el salvado de los datos
-             pass
-        filename,filter = QFileDialog.getOpenFileName(self,
-                                                  caption="Nombre del fichero de comandos a editar",
-                                                  directory="script",
-                                                  filter = "sql (*.sql);; All files (*)",
-                                                  initialFilter="sql (*.sql)",
-                                                  )
-        if filename:
-            with open(filename,"r") as file:
-                self.sqlEdit.document().setPlainText(file.read())
-                self.sqlEdit.document().setModified(False)
-            self.fileName = filename
-            #FIXME fugly
+        super().readQuery()
+        if self.fileName:
             pos = self.holder.tabSesiones.currentWidget().tabQueries.currentIndex()
-            self.holder.tabSesiones.currentWidget().tabQueries.setTabText(pos,filename)
-            
-    def writeQuery(self,saveAs=False):
-        if not self.sqlEdit.document().isModified():
-            return
-        if self.fileName is None:
-            filename,filter = QFileDialog.getSaveFileName(self,
-                                                    caption="Salvar el script como",
-                                                    directory="script",
-                                                    filter = "sql (*.sql);; All files (*)",
-                                                    initialFilter="sql (*.sql)",
-                                                    )
-            if filename:
-                pass
-            else:
-                return
+            self.holder.tabSesiones.currentWidget().tabQueries.setTabText(pos,self.fileName)
 
-        elif saveAs:
-            filename,filter = QFileDialog.getSaveFileName(self,"Save as",self.fileName)
-            if filename:
-                pass
-            else:
-                return
-        else:
-            filename = self.fileName
-        with open(self.fileName,"w") as file:
-            file.write(self.sqlEdit.document().toPlainText())
-            
-        if self.fileName is None or saveAs is True:
-            self.fileName = filename
-            #FIXME fugly
+    def writeQuery(self,saveAs=False):
+        super().writeQuery(saveAs)
+        if self.fileName:
             pos = self.holder.tabSesiones.currentWidget().tabQueries.currentIndex()
-            self.holder.tabSesiones.currentWidget().tabQueries.setTabText(pos,filename)
+            self.holder.tabSesiones.currentWidget().tabQueries.setTabText(pos,self.filenName)
+
+#class QueryTab(QWidget):
+    #def __init__(self,conn,confName,holder=None,parent=None):
+        #super(QueryTab,self).__init__(parent)
+        #self.conn = conn
+        #self.holder = holder
+        #self.fileName = None
+        #self.browser = QTableView()
+        #self.browser.setSortingEnabled(True)  
+        #self.browser.setAlternatingRowColors(True)
+
+        #self.sqlEdit = QTextEdit()
+        #self.msgLine = QTextEdit()
+        #self.msgLine.setReadOnly(True)
+        #self.msgLine.setText("Bienvenido al query masta")
+        
+        #split = QSplitter(Qt.Vertical)
+        #split.addWidget(self.sqlEdit)
+        #split.addWidget(self.browser)
+        #split.addWidget(self.msgLine)
+        #split.setSizes([50,250,25])
+        ##split.setRubberBand(1)
+        
+        #meatLayout = QVBoxLayout()
+        #meatLayout.addWidget(split)
+        #self.setLayout(meatLayout)
+
+    #@waiting_effects
+    #def execute(self):
+        #sqlString = self.sqlEdit.document().toPlainText()
+        #if len(sqlString) == 0:
+            #return 
+        #cursor = None
+
+        #self.msgLine.hide()
+        #self.msgLine.setText('')
+        #try:
+            ##TODO opcion para poner un limit
+            #cursor = getCursorLim(self.conn,sqlString,LIMIT=1000)
+        #except Exception as e:
+            #if cursor is not None:
+                #cursor.close()
+            #self.msgLine.show()
+            #self.msgLine.setText(norm2String(e.orig.args))
+            #return
+            
+        #self.baseModel = CursorItemModel()
+        #self.baseModel.setHorizontalHeaderLabels(cursor.keys())
+        #for row in cursor:
+            #modelRow = [ CursorItem(str(fld)) for fld in row ]
+            #self.baseModel.appendRow(modelRow)
+        #self.browser.setModel(self.baseModel)
+        #cursor.close() #INNECESARIO pero recomendable
+
+    #def readQuery(self):
+        ##TODO y el contenido actual del script ?
+        #if self.fileName is not None and self.sqlEdit.document().isModified():
+            ##dialogo de confirmar el salvado de los datos
+             #pass
+        #filename,filter = QFileDialog.getOpenFileName(self,
+                                                  #caption="Nombre del fichero de comandos a editar",
+                                                  #directory="script",
+                                                  #filter = "sql (*.sql);; All files (*)",
+                                                  #initialFilter="sql (*.sql)",
+                                                  #)
+        #if filename:
+            #with open(filename,"r") as file:
+                #self.sqlEdit.document().setPlainText(file.read())
+                #self.sqlEdit.document().setModified(False)
+            #self.fileName = filename
+            ##FIXME fugly
+            #pos = self.holder.tabSesiones.currentWidget().tabQueries.currentIndex()
+            #self.holder.tabSesiones.currentWidget().tabQueries.setTabText(pos,filename)
+            
+    #def writeQuery(self,saveAs=False):
+        #if not self.sqlEdit.document().isModified():
+            #return
+        #if self.fileName is None:
+            #filename,filter = QFileDialog.getSaveFileName(self,
+                                                    #caption="Salvar el script como",
+                                                    #directory="script",
+                                                    #filter = "sql (*.sql);; All files (*)",
+                                                    #initialFilter="sql (*.sql)",
+                                                    #)
+            #if filename:
+                #pass
+            #else:
+                #return
+
+        #elif saveAs:
+            #filename,filter = QFileDialog.getSaveFileName(self,"Save as",self.fileName)
+            #if filename:
+                #pass
+            #else:
+                #return
+        #else:
+            #filename = self.fileName
+        #with open(self.fileName,"w") as file:
+            #file.write(self.sqlEdit.document().toPlainText())
+            
+        #if self.fileName is None or saveAs is True:
+            #self.fileName = filename
+            ##FIXME fugly
+            #pos = self.holder.tabSesiones.currentWidget().tabQueries.currentIndex()
+            #self.holder.tabSesiones.currentWidget().tabQueries.setTabText(pos,filename)
     
-        self.sqlEdit.document().setModified(False)
-    def reformat(self):
-        sqlString = self.sqlEdit.document().toPlainText()
-        self.sqlEdit.setText(queryFormat(sqlString))
+        #self.sqlEdit.document().setModified(False)
+    #def reformat(self):
+        #sqlString = self.sqlEdit.document().toPlainText()
+        #self.sqlEdit.setText(queryFormat(sqlString))
   
-    def close(self):
-        #TODO salvar si es fichero
-        if self.fileName is not None:
-            pass
-        self.conn.close()
-        super().close()
+    #def close(self):
+        ##TODO salvar si es fichero
+        #if self.fileName is not None:
+            #pass
+        #self.conn.close()
+        #super().close()
         
 class EditWindow(QMainWindow):
     def __init__(self): #conn,confName):
