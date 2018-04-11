@@ -283,7 +283,7 @@ def generaQuery(cubo,mostrar=False,ejecutar=True,salida=False):
             print(e)
     return(query)
   
-from research.querywidget import *
+from support.datalayer.querywidget import *
 
 class browsePreview(QDialog):
     def __init__(self,cubo,parent=None):

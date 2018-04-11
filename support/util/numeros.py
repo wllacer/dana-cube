@@ -86,6 +86,8 @@ def is_number(s):
             complex(s) # for complex
         except ValueError:
             return False
+    except TypeError:
+        return False
     return True
 
 def s2n(s):

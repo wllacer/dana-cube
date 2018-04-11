@@ -31,7 +31,7 @@ from support.gui.widgets import WPropertySheet
 from admin.dictmgmt.dictTree import *
 from base.datadict import *
 
-from tablebrowse import *
+from admin.tablebrowse import *
 from admin.cubemgmt.cubeutil import info2cube
 from admin.cubebrowse import CubeMgr
 from support.util.decorators import *
@@ -131,7 +131,7 @@ class DanaBrowseWindow(QMainWindow):
         #CHANGE here
         
          
-        self.queryView = TableBrowser(pdataDict=self.dictionary)  #!!!!???? debe ir delante de la definicion de menu
+        self.queryView = None
         
         self.dictMenu = self.menuBar().addMenu("&Conexiones")
         self.dictMenu.addAction("&New ...", self.newConnection, "Ctrl+N")
@@ -151,7 +151,7 @@ class DanaBrowseWindow(QMainWindow):
         self.cubeMenu.addAction("S&alir", self.hideCube, "Ctrl+D")
         self.cubeMenu.setEnabled(False)
         
-        self.queryModel = self.queryView.baseModel
+        #self.queryModel = self.queryView.baseModel
 
         self.querySplitter = QSplitter(Qt.Vertical)
         self.querySplitter.addWidget(self.view)
@@ -337,15 +337,24 @@ class DanaBrowseWindow(QMainWindow):
   
     @waiting_effects
     def databrowse(self,confName,schema,table,iters=0):
-        self.queryView.loadData(confName,schema,table,self.dictionary,iters)
-        
+        #if self.queryView:
+            #self.queryView.conn.close()
+            #self.queryView.loadData(confName,schema,table,self.dictionary,iters)
+        #else:
+            #self.queryView = TableBrowser(confName,schema,table,self.dictionary,iters)
+        if self.queryView:
+            self.queryView.conn.close()
+        self.queryView = TableBrowser(confName,schema,table,self.dictionary,iters)
+
+        #self.queryView.show()
         self.queryMenu.setEnabled(True)
         if self.querySplitter.count() == 1:  #de momento parece un modo sencillo de no multiplicar en exceso
             self.querySplitter.addWidget(self.queryView)
             
     def hideDatabrowse(self):
+        self.queryView.conn.close()
         self.queryView.hide()
-        self.queryModel.clear()
+        self.queryView = None
         self.queryMenu.setEnabled(False)
         
 
