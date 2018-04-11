@@ -304,23 +304,21 @@ class QueryTab(QWidget):
             columna = index.column()
             fila    = index.row()
         else:
-            columna=self.horizontalHeader().logicalIndexAt(position)
+            index = None
+            columna=self.browser.horizontalHeader().logicalIndexAt(position)
             fila = -1
         
-        menu = QMenu()
+        self.menu = QMenu()
         self.menuActions = []
-        #self.menuActions.append(menu.addAction("Filter query",self.filterQuery))
-        #if fila != -1:
-            #self.menuActions.append(menu.addAction("Filter query (pick this value)",lambda a=index:self.filterQueryPick(a)))
-        #if self.areFiltered:
-            #self.menuActions.append(menu.addAction("remove Filter",self.filterRemove))
-        #self.menuActions.append(menu.addSeparator())
-        self.menuActions.append(menu.addAction("HideColumn",lambda a = columna:self.hideColumn(a)))
+        self.addContextMenuActions(index,fila,columna)
+        action = self.menu.exec_(self.browser.viewport().mapToGlobal(position))
+    
+    def addContextMenuActions(self,index,fila,columna):
+        self.menu.addAction("HideColumn",lambda a = columna:self.hideColumn(a))
         if self.areHidden:
-            self.menuActions.append(menu.addAction("Show hidden columns",self.unhideColumns))
+            self.menu.addAction("Show hidden columns",self.unhideColumns)
         if not self.holder:
-            self.menuActions.append(menu.addAction("save query",self.saveQuery))
-        action = menu.exec_(self.browser.viewport().mapToGlobal(position))
+            self.menu.addAction("save query",self.saveQuery)
         
     def hideColumn(self,pos):
         self.browser.setColumnHidden(pos,True)

@@ -287,6 +287,9 @@ class TableInfo():
         if len(tableDict) == 1:
             sqlContext['fields'] = [ item[1] for item in fieldList]
             sqlContext['formats'] = [item[2] for item in fieldList ]
+            if pFilter:
+                sqlContext['base_filter'] = pFilter #TODO necesita que se le introduzcan los alias
+
             sqlContext['sqls'] = queryConstructor(**sqlContext)
             return sqlContext
          
