@@ -23,10 +23,13 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QSplitter, QMenu, \
      QDialog, QInputDialog, QLineEdit, QComboBox, QMessageBox
  
+import base.config as config
 from base.datadict import *    
+from base.cubetree import *
+
 from support.datalayer.query_constructor import *
 from support.datalayer.access_layer import dbDict2Url
-from admin.tablebrowse import *
+
 from support.datalayer.datemgr import genTrimestreCode
 from support.util.jsonmgr import *
 from support.util.numeros import is_number
@@ -34,7 +37,7 @@ from support.util.decorators import *
 
 from support.gui.dialogs import propertySheetDlg
 
-from base.cubetree import *
+from admin.tablebrowse import *
 from admin.cubemgmt.cubeTypes import *
 from admin.cubemgmt.cubeutil  import *
 #from admin.cubemgmt.cubeCRUD  import *
@@ -195,7 +198,8 @@ class CubeMgr(QTreeView):
         self.view.customContextMenuRequested.connect(self.openContextMenu)
         self.view.doubleClicked.connect(self.test)
         self.view.setModel(self.baseModel)
-        self.view.hideColumn(2) # eso no interesa al usuario final        
+        if not config.DEBUG:
+            self.view.hideColumn(2) # eso no interesa al usuario final        
         self.view.expandAll() # es necesario para el resize
 
         for m in range(self.baseModel.columnCount()):

@@ -63,7 +63,7 @@ from admin.dictmgmt.tableInfo import FQName2array,TableInfo
 #from support.gui.dialogs import propertySheetDlg
 
 #import admin.cubebrowse as cb
-
+from support.util.decorators import *
 #import time
 
 

@@ -281,9 +281,22 @@ def generaQuery(cubo,mostrar=False,ejecutar=True,salida=False):
         except Exception as e:
             print('!!!!! ERROR !!!!', cubo.nombre)
             print(e)
-    
-    
+    return(query)
+  
+from research.querywidget import *
 
+class browsePreview(QDialog):
+    def __init__(self,cubo,parent=None):
+        super().__init__(parent)
+        mis_cubos = load_cubo()
+        cubo = Cubo(mis_cubos[cubo])
+        query = generaQuery(cubo,ejecutar=False)
+        
+        self.tree = QueryTab(cubo.db,script=query)
+        meatLayout=QGridLayout()
+        meatLayout.addWidget(self.tree)
+        self.setLayout(meatLayout)    
+        self.tree.execute()
         
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona

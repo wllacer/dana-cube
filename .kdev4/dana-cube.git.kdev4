@@ -1,10 +1,13 @@
+[Buildset]
+BuildItems=@Variant(\x00\x00\x00\t\x00\x00\x00\x00\x01\x00\x00\x00\x0b\x00\x00\x00\x00\x01\x00\x00\x00\x1a\x00d\x00a\x00n\x00a\x00-\x00c\x00u\x00b\x00e\x00.\x00g\x00i\x00t)
+
 [Launch]
-Launch Configurations=Launch Configuration 0
+Launch Configurations=Launch Configuration 0,Launch Configuration 1
 
 [Launch][Launch Configuration 0]
 Configured Launch Modes=execute
 Configured Launchers=scriptAppLauncher
-Name=Nuevo lanzador de Aplicación de script
+Name=defecto
 Type=Script Application
 
 [Launch][Launch Configuration 0][Data]
@@ -16,6 +19,23 @@ Interpreter=python3
 Output Filtering Mode=2
 Remote Host=
 Run current file=true
+Working Directory=
+
+[Launch][Launch Configuration 1]
+Configured Launch Modes=execute
+Configured Launchers=scriptAppLauncher
+Name=tester
+Type=Script Application
+
+[Launch][Launch Configuration 1][Data]
+Arguments=
+EnvironmentGroup=
+Executable=file:///home/werner/projects/dana-cube.git/test_launch.py
+Execute on Remote Host=false
+Interpreter=python3
+Output Filtering Mode=2
+Remote Host=
+Run current file=false
 Working Directory=
 
 [Project]
