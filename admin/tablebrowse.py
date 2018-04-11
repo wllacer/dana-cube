@@ -106,7 +106,7 @@ import base.config as config
 class TableBrowserWin(QMainWindow):
     def __init__(self,confName,schema,table,pdataDict=None,iters=0):
         super(TableBrowserWin, self).__init__()
-        self.view = TableBrowser(confName,schema,table,pdataDict,iters)
+        self.view = TableBrowse(confName,schema,table,pdataDict,iters)
         if config.DEBUG:
             print('inicializacion completa')
         ##CHANGE here
@@ -120,28 +120,33 @@ class TableBrowserWin(QMainWindow):
 
 from support.datalayer.querywidget import *
 
-class TableBrowser(QueryTab):
+class TableBrowse(QueryTab):
     def __init__(self,confName=None,schema=None,table=None,pdataDict=None,iters=0):
+        super().__init__(None)
+        
+        if confName is None or confName == '':
+            return
+        conn = self.getConnection(confName,schema,table,pdataDict,iters)
+        if conn:
+            self.baseModel = CursorItemModel()
+            self.reconnect(conn)
+            self.executeNewScript(self.generateSQL(confName,schema,table,iters,pFilter=None))
+        
+    def getConnection(self,pdataDict=None,confName=None,schema=None,table=None,iters=0):
         if isinstance(pdataDict,DataDict):
             dataDict = pdataDict
         else:
-            dataDict=DataDict(conName=confName,schema=schema,table=table,iters=iters) #iters todavia no procesamos
-        if not confName or confName == '':
-            return
-        
-        super().__init__(dataDict.conn[confName],script="none")
-        self.baseModel = CursorItemModel()
-        self.script = self.generateSQL(confName,schema,table,dataDict,iters,pFilter=None)
-        self.sqlEdit.setText(queryFormat(self.script))
-        self.execute()
-        
-    def generateSQL(self,confName,schema,table,dataDict,iters,pFilter=None): 
-        
+            dataDict=DataDict(conName=confName,schema=schema,table=table) #iters todavia no procesamos
         self.localContext = (dataDict,confName,schema,table,iters)    
+        return dataDict.conn[confName]
+    
+    def generateSQL(self,confName,schema,table,iters,pFilter=None): 
+        
+        dataDict = self.localContext[0]
         self.tableInfo = TableInfo(dataDict,confName=confName,schemaName=schema,tableName=table,maxlevel=iters)
         sqlContext = self.tableInfo.prepareBulkSql(pFilter)
+        self.sqlEdit.hide()
         self.baseModel.recordStructure = []
-
         for  idx,fld in enumerate(sqlContext['fields']):
             self.baseModel.recordStructure.append({'name':fld,'format':sqlContext['formats'][idx]})
         sqls = sqlContext['sqls'] 
@@ -176,12 +181,7 @@ class TableBrowser(QueryTab):
     #@model_change_control()
     def loadData(self, pconfName=None,pschema=None,ptable=None,pdataDict=None,piters=1,pFilter=None):
         (dataDict,confName,schema,table,iters) = defaultFromContext(self.localContext,*(pdataDict,pconfName,pschema,ptable,piters))
-        #self.baseModel.beginResetModel()
-        self.baseModel.clear()
-        self.script = self.generateSQL(confName,schema,table,dataDict,iters,pFilter=pFilter)
-        self.sqlEdit.setText(queryFormat(self.script))
-        self.execute()
-       
+        self.executeNewScript(self.generateSQL(confName,schema,table,iters,pFilter=None))
 
     def filterRemove(self):
         self.areFiltered = False

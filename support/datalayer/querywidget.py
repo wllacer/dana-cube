@@ -92,8 +92,8 @@ class CursorItemModel(QStandardItemModel):
         elif role == Qt.DisplayRole:
             if not baseData or baseData == '':
                 return None
-            if isinstance(baseData,str) and len(baseData) > 0 and baseData[0] == '=':
-                baseData =  self.ss[baseData]
+            #if isinstance(baseData,str) and len(baseData) > 0 and baseData[0] == '=':
+                #baseData =  self.ss[baseData]
             if is_number(baseData):
                 text, sign = fmtNumber(s2n(baseData),DEFAULT_FORMAT)
                 return '{}{}'.format(sign if sign == '-' else '',text)               
@@ -117,12 +117,13 @@ class CursorItem(QStandardItem):
         if isinstance(args[0],str):
             super(CursorItem, self).__init__(*args)
         elif isinstance(args[0],(int,float)):
-            super(CursorItem, self).__init__(*args)
+            super(CursorItem, self).__init__() #no enviar los datos. Valores altos > 10M probablemente provocan bug
             self.setData(args[0],Qt.DisplayRole)
         elif isinstance(args[0],(datetime.date,datetime.datetime)):
             super(CursorItem, self).__init__(str(args[0]))
         else:
-            super(CursorItem, self).__init__(str(args[0]))
+            print('tipo',type(args[0]),'no soportado actualmente. Contacte con soporte')
+            super(CursorItem, self).__init__()
         #self.setData(args[0],Qt.DisplayRole) #para que funcione con campos numericos
             #self.setData(args[0],Qt.UserRole +1)
 
@@ -149,7 +150,9 @@ class QueryTab(QWidget):
     """
     def __init__(self,conn,**kwparms): #holder=None,script=None,parent=None):
         super(QueryTab,self).__init__(kwparms.get('parent',None))
+        self.limit = 1000
         self.conn = conn
+        self.connClose = kwparms.get('connClose',False)
         self.holder = kwparms.get('holder',None)
         self.script = kwparms.get('script',None)
         self.fileName = None
@@ -205,7 +208,7 @@ class QueryTab(QWidget):
         self.msgLine.setText('')
         try:
             #TODO opcion para poner un limit
-            cursor = getCursorLim(self.conn,sqlString,LIMIT=1000)
+            cursor = getCursorLim(self.conn,sqlString,LIMIT=self.limit)
         except Exception as e:
             if cursor is not None:
                 cursor.close()
@@ -245,7 +248,7 @@ class QueryTab(QWidget):
             #FIXME fugly
             #pos = self.holder.tabSesiones.currentWidget().tabQueries.currentIndex()
             #self.holder.tabSesiones.currentWidget().tabQueries.setTabText(pos,filename)
-            
+        self.execute()
     def writeQuery(self,saveAs=False):
         """
         con el editor es necesario filtrar, 
@@ -289,6 +292,11 @@ class QueryTab(QWidget):
         sqlString = self.sqlEdit.document().toPlainText()
         self.sqlEdit.setText(queryFormat(sqlString))
   
+    def setLimit(self,limit):
+        self.limit = limit
+    def getLimit(self):
+        return self.limit
+    
     def openContextMenu(self,position):
         indexes = self.browser.selectedIndexes()
         if len(indexes) > 0:
@@ -324,10 +332,26 @@ class QueryTab(QWidget):
                 self.browser.showColumn(k)
         self.areHidden = False
      
-
-def close(self):
-        #TODO salvar si es fichero
-        if self.fileName is not None:
-            pass
-        self.conn.close()
-        super().close()
+    def reconnect(self,newConn,connClose=False):
+        if not newConn:
+            return
+        if self.conn and self.connClose:
+            self.conn.close()
+        if self.baseModel:
+            self.baseModel.clear()
+        else:
+            self.baseModel = CursorItemModel()
+        self.conn = newConn
+        self.connClose = connClose
+     
+    def executeNewScript(self,script):
+        self.sqlEdit.setText(queryFormat(script))
+        self.execute()
+        
+    def close(self):
+            #TODO salvar si es fichero
+            if self.fileName is not None:
+                pass
+            if self.connClose:
+                self.conn.close()
+            super().close()

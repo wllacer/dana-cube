@@ -131,7 +131,7 @@ class DanaBrowseWindow(QMainWindow):
         #CHANGE here
         
          
-        self.queryView = None
+        self.queryView = TableBrowse(None)
         
         self.dictMenu = self.menuBar().addMenu("&Conexiones")
         self.dictMenu.addAction("&New ...", self.newConnection, "Ctrl+N")
@@ -337,24 +337,17 @@ class DanaBrowseWindow(QMainWindow):
   
     @waiting_effects
     def databrowse(self,confName,schema,table,iters=0):
-        #if self.queryView:
-            #self.queryView.conn.close()
-            #self.queryView.loadData(confName,schema,table,self.dictionary,iters)
-        #else:
-            #self.queryView = TableBrowser(confName,schema,table,self.dictionary,iters)
-        if self.queryView:
-            self.queryView.conn.close()
-        self.queryView = TableBrowser(confName,schema,table,self.dictionary,iters)
-
-        #self.queryView.show()
+        print(confName,schema,table,self.dictionary.conn[confName])
+        self.queryView.reconnect(self.queryView.getConnection(self.dictionary,confName,schema,table,iters))
+        self.queryView.executeNewScript(self.queryView.generateSQL(confName,schema,table,iters,pFilter=None))
+        if self.queryView.isHidden():
+            self.queryView.show()
         self.queryMenu.setEnabled(True)
         if self.querySplitter.count() == 1:  #de momento parece un modo sencillo de no multiplicar en exceso
             self.querySplitter.addWidget(self.queryView)
             
     def hideDatabrowse(self):
-        self.queryView.conn.close()
         self.queryView.hide()
-        self.queryView = None
         self.queryMenu.setEnabled(False)
         
 
