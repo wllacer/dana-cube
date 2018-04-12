@@ -48,7 +48,7 @@ class TableBrowse(QueryTab):
     """
     def __init__(self,confName=None,schema=None,table=None,pdataDict=None,iters=0):
         super().__init__(None)
-        
+        print('at init',iters)
         if confName is None or confName == '':
             return
         conn = self.getConnection(pdataDict,confName,schema,table,iters)
@@ -81,7 +81,7 @@ class TableBrowse(QueryTab):
         return dataDict.conn[confName]
     
     def generateSQL(self,confName,schema,table,iters,pFilter=None): 
-        
+        print('ITERACIONES',iters)
         dataDict = self.localContext[0]
         self.tableInfo = TableInfo(dataDict,confName=confName,schemaName=schema,tableName=table,maxlevel=iters)
         sqlContext = self.tableInfo.prepareBulkSql(pFilter)
@@ -171,7 +171,7 @@ if __name__ == '__main__':
         reload(sys)
         sys.setdefaultencoding('utf-8')
     app = QApplication(sys.argv)
-    window = TableBrowserWin('Pagila','public','rental',iters=1)
+    window = TableBrowserWin('Pagila','public','rental',iters=2)
     window.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
     window.show()
     sys.exit(app.exec_())

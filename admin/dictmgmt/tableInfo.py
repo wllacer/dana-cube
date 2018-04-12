@@ -269,9 +269,7 @@ class TableInfo():
 
         lista = self.getFKShallow()
         klista = []
-        for k in range(self.maxlevel):
-            if len(lista) >= k:
-                break
+        for k in range(min(self.maxlevel,len(lista))):  #some tables have less references than needed
             klista += lista[k]
 
         tableDict,fieldList,joinDict = self.prepareStmt(klista)

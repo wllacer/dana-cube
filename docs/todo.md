@@ -21,6 +21,8 @@ Serious errors which are either upstream or we haven't still found a solution
     
 *   BUG 4. 
     setEditTrigger with various tabs seems not to work correctly. Nor can i change menu text directly ???)
+    
+*   __STUDY PENDING__ __BYPASSED__ QStandardItem(*args) bombs system if args[0] is int and big (some millions, still not out)
 
 ## rough corners
 

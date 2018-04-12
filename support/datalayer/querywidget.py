@@ -221,8 +221,8 @@ class QueryTab(QWidget):
         self.baseModel.setHorizontalHeaderLabels(cursor.keys())
         idx = 0
         for row in cursor:
-            if idx == 0:
-                self.getDescription(row)                
+            #if idx == 0:
+                #self.getDescription(row)                
             #modelRow = [ CursorItem(str(fld)) for fld in row ]
             modelRow = [ CursorItem(fld) for fld in row ]
             self.baseModel.appendRow(modelRow)
