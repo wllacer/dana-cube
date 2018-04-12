@@ -122,10 +122,8 @@ class CursorItem(QStandardItem):
         elif isinstance(args[0],(datetime.date,datetime.datetime)):
             super(CursorItem, self).__init__(str(args[0]))
         else:
-            print('tipo',type(args[0]),'no soportado actualmente. Contacte con soporte')
             super(CursorItem, self).__init__()
-        #self.setData(args[0],Qt.DisplayRole) #para que funcione con campos numericos
-            #self.setData(args[0],Qt.UserRole +1)
+            self.setData(str(args[0]),Qt.DisplayRole)
 
         
 class SortProxy(QSortFilterProxyModel):
@@ -143,9 +141,7 @@ class SortProxy(QSortFilterProxyModel):
         return leftData < rightData
     
 class QueryTab(QWidget):
-    #def __init__(self,conn,confName,holder=None,parent=None):
     """
-    confName no usado
     
     """
     def __init__(self,conn,**kwparms): #holder=None,script=None,parent=None):
@@ -213,8 +209,9 @@ class QueryTab(QWidget):
             if cursor is not None:
                 cursor.close()
             self.msgLine.show()
-            self.msgLine.setText(norm2String(e.orig.args))
+            self.msgLine.setText(norm2String(e.args))
             return
+
         if not self.baseModel:
             self.baseModel = CursorItemModel()
         else:
@@ -222,13 +219,30 @@ class QueryTab(QWidget):
         self.setupView()
 
         self.baseModel.setHorizontalHeaderLabels(cursor.keys())
+        idx = 0
         for row in cursor:
+            if idx == 0:
+                self.getDescription(row)                
             #modelRow = [ CursorItem(str(fld)) for fld in row ]
             modelRow = [ CursorItem(fld) for fld in row ]
             self.baseModel.appendRow(modelRow)
+            idx += 1
         self.browser.setModel(self.baseModel)
         cursor.close() #INNECESARIO pero recomendable
 
+    def getDescription(self,row):
+        if not row:
+            return 
+        idx = 0
+        desc = []
+        for col in row:
+            info = {}
+            info['name'] = row.keys()[idx]
+            info['pyformat'] = type(col)
+            desc.append(info)
+            idx += 1
+        pprint(desc)
+            
     def readQuery(self):
         #TODO y el contenido actual del script ?
         if self.fileName is not None and self.sqlEdit.document().isModified():
@@ -245,9 +259,6 @@ class QueryTab(QWidget):
                 self.sqlEdit.document().setPlainText(file.read())
                 self.sqlEdit.document().setModified(False)
             self.fileName = filename
-            #FIXME fugly
-            #pos = self.holder.tabSesiones.currentWidget().tabQueries.currentIndex()
-            #self.holder.tabSesiones.currentWidget().tabQueries.setTabText(pos,filename)
         self.execute()
     def writeQuery(self,saveAs=False):
         """
@@ -280,14 +291,8 @@ class QueryTab(QWidget):
             filename = self.fileName
         with open(filename,"w") as file:
             file.write(self.sqlEdit.document().toPlainText())
-            
-        #if self.fileName is None or saveAs is True:
-            #self.fileName = filename
-            ##FIXME fugly
-            #pos = self.holder.tabSesiones.currentWidget().tabQueries.currentIndex()
-            #self.holder.tabSesiones.currentWidget().tabQueries.setTabText(pos,filename)
-    
         self.sqlEdit.document().setModified(False)
+        
     def reformat(self):
         sqlString = self.sqlEdit.document().toPlainText()
         self.sqlEdit.setText(queryFormat(sqlString))

@@ -148,7 +148,7 @@ class TableBrowse(QueryTab):
         
 
 class TableBrowserWin(QMainWindow):
-    def __init__(self,confName,schema,table,pdataDict=None,iters=0):
+    def __init__(self,confName,schema,table,pdataDict=None,iters=2):
         super(TableBrowserWin, self).__init__()
         self.view = TableBrowse(confName,schema,table,pdataDict,iters)
         if config.DEBUG:

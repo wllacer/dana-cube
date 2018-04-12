@@ -21,7 +21,7 @@ from  PyQt5.QtWidgets import QApplication, QMainWindow, QWizard,QWizardPage,QLab
 (ixWFilter,ixWDestination,ixWGraph) = range(3)
 
 
-class base.exportWizard(QWizard):
+class exportWizard(QWizard):
     def __init__(self):
         super(base.exportWizard,self).__init__()
         """
@@ -229,9 +229,9 @@ class WzGraph(QWizardPage):
     
 
 
-def base.exportWizard():
+def exportWizard():
     parms = dict()
-    wizard = base.exportWizard()        
+    wizard = exportWizard()        
     if wizard.exec_() :
         parms['file'] = wizard.page(ixWDestination).nomFichero.text()
         parms['type'] = tipoCorto(wizard.page(ixWDestination).tipoFichero.text())
