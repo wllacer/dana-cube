@@ -953,17 +953,17 @@ class DanaCube(QTreeView):
         #self.areFiltered = True
         #self.cubo.recordStructure = self.getCubeRecordInfo()
         
-        base.filterDlg = filterDialog(self.cubo.recordStructure,self,driver=self.cubo.dbdriver)
+        filterDlg = filterDialog(self.cubo.recordStructure,self,driver=self.cubo.dbdriver)
         if self.filterValues :
             for k in range(len(self.filterValues)):
-                base.filterDlg.sheet.set(k,2,self.filterValues[k][0])
-                base.filterDlg.sheet.set(k,3,self.filterValues[k][1])
+                filterDlg.sheet.set(k,2,self.filterValues[k][0])
+                filterDlg.sheet.set(k,3,self.filterValues[k][1])
                 
-        if base.filterDlg.exec_():
-            #self.loadData(pFilter=base.filterDlg.result)
-            self.filtroCampos=base.filterDlg.result
+        if filterDlg.exec_():
+            #self.loadData(pFilter=filterDlg.result)
+            self.filtroCampos=filterDlg.result
             self.filtro = mergeString(self.filtroCampos,self.filtroFechas,'AND')
-            self.filterValues = [ (data[2],data[3],) for data in base.filterDlg.data]
+            self.filterValues = [ (data[2],data[3],) for data in filterDlg.data]
             self.cargaVista(self.vista.row_id,self.vista.col_id,
                             self.vista.agregado,self.vista.campo,
                             self.vista.totalizado,self.vista.stats) #__WIP__ evidentemente aqui faltan todos los parametros
@@ -1021,7 +1021,7 @@ class DanaCube(QTreeView):
                 descriptores.append(item[0])
                 datos.append([0,0,1,None,None])
         #descriptores = [ item[0] for item in camposFecha ]
-        form = datebase.filterDlg(descriptores,datos)
+        form = datefilterDlg(descriptores,datos)
         if form.exec_():
             sqlGrp = []
             #if self.cubo.definition.get('date filter'):
@@ -1081,7 +1081,7 @@ class DanaCube(QTreeView):
     
     def export(self):
         #TODO poder hacer una seleccion de area
-        parms = eW.base.exportWizard()
+        parms = eW.exportWizard()
         selArea = dict()
         if not parms.get('file'):
             return

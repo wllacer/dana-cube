@@ -39,21 +39,21 @@ ASUCAR = [ ['Uno',1,2,3,4 ],
            ['Tres',8,7,6,5 ],
            ['Cuatro',4,3,2,1 ],
         ]
-def traverse(root,base=None):
-    if base is not None:
-       yield base
-       queue = [ base.child(i) for i in range(0,base.rowCount()) ]
-    else:
-        queue = [ root.child(i) for i in range(0,root.rowCount()) ]
-        #print(queue)
-        #print('')
-    while queue :
-        yield queue[0]
-        expansion = [ queue[0].child(i) for i in range(0,queue[0].rowCount()) ]
-        if expansion is None:
-            del queue[0]
-        else:
-            queue = expansion  + queue[1:]  
+#def traverse(root,base=None):
+    #if base is not None:
+       #yield base
+       #queue = [ base.child(i) for i in range(0,base.rowCount()) ]
+    #else:
+        #queue = [ root.child(i) for i in range(0,root.rowCount()) ]
+        ##print(queue)
+        ##print('')
+    #while queue :
+        #yield queue[0]
+        #expansion = [ queue[0].child(i) for i in range(0,queue[0].rowCount()) ]
+        #if expansion is None:
+            #del queue[0]
+        #else:
+            #queue = expansion  + queue[1:]  
             
 class guidePreview(QDialog):
     def __init__(self,cubo,pos=0,parent=None):

@@ -135,7 +135,7 @@ class WzLink(QWizardPage):
                 self.iterator = 0
             else:
                 self.iterator = base.iterations
-            self.iterator +1
+            self.iterator +=1
             if obj.type() == 'prod':
                 if obj.text() == obj.type():
                     self.midict = self.wizard().diccionario[self.iterator -1].get('link via',[])

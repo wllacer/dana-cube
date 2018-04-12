@@ -23,7 +23,7 @@ from  PyQt5.QtWidgets import QApplication, QMainWindow, QWizard,QWizardPage,QLab
 
 class exportWizard(QWizard):
     def __init__(self):
-        super(base.exportWizard,self).__init__()
+        super(exportWizard,self).__init__()
         """
            convierto los parametros en atributos para poder usarlos en las paginas 
         """
@@ -285,4 +285,4 @@ if __name__ == '__main__':
 
     app = QApplication(sys.argv)
     #miniCube()
-    base.exportWizard()
+    exportWizard()
