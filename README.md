@@ -28,6 +28,10 @@ Dana-cube es una herramienta para automatizar el diseño, ejecución y visualiza
 * [Out there ...](#out-there-)
 * [Contact](#contact)
 
+# __WARNING__ 
+On the __11th of April 2018__ we changed the directory structure severely, which may have affected the stability of the tool and totally broken the API. 
+
+We hope instability is solved now. For those using the old api you migth use the latest Release or the __old_dir_struct__ branch (they're the same and stabilized, but patches are welcome)
 
 # Objetivos en Español
 
@@ -313,8 +317,8 @@ What does it means?
     * Legalese is missing in code (copyrights, licence specs, and so on)
 
 
-__Update 2017/12/27__  We have a new core based on qt standard models. It simplifies a lot programming and has solved a number of perfomance isses with long guides, BUT we keep a pure non-qt core subsystem for those interested. This non-qt subsistem, sadly, is a WIP to assure code as much code compatibility as posible with the new core
-
+__Update 2017/12/27__  We have a new core based on qt standard models. It simplifies a lot programming and has solved a number of perfomance isses with long guides, BUT we keep a pure non-qt core subsystem for those interested __Update 2018/04/13:__. The noqt subsystem has been _taken out_ for the time being (too many changes,too few hands to handle)
+ 
 
 
 Active tasks can be read [here](../docs/todo.md) 
