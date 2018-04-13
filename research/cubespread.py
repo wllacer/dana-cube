@@ -447,7 +447,7 @@ class SpreadSheet:
     def __getitem__(self, key ):
         
         x,y = keyCoord(key)
-        if x and y:
+        if x is not None and y is not None:
             item = self.model.item(y,x)
             c = item.data(Qt.UserRole +1)
             if is_number(c):
@@ -458,8 +458,8 @@ class SpreadSheet:
         if isinstance(c, str) and c[0] == '=':
             while True:
                 try:
-                    resultado = eval(c[1:], SpreadSheet.tools,self._cells)
-                    self._cells.clear()
+                    resultado = eval(c[1:], SpreadSheet.tools,self)
+                    #self._cells.clear()
                     return resultado
                 except NameError as ne:
                     dato = ne.args[0][6:-16]
@@ -474,15 +474,17 @@ def isKey(key):
         return True
     return False
 
-def keyCoord(key):
+def keyCoord(pkey):
+    key = pkey.lower()
     if not isKey(key):
         return None,None
     if key[1].isalpha():
-        x=(ord(key[0].lower())-97)*26+ord(key[1].lower())-97
+        x=(ord(key[0])-97)*26+ord(key[1])-97
         y=int(key[2:])-1
     else:
-        x=ord(key[0].lower())-97
+        x=ord(key[0])-97
         y=int(key[1:])-1
+    print(pkey,'se convierte en',x,y)
     return x,y
 
 if __name__ == '__main__':
