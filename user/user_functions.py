@@ -177,6 +177,7 @@ def factoriza(*parms,**kwparms):
     
     TODO. El comportamiento cuando no existe valor previo no es realista
     """
+
     item = parms[0]
     colparm = parms[3]
     funAgr = kwparms.get('funAgr')

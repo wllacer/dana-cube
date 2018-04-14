@@ -108,6 +108,7 @@ from support.util.treestate import *
 from base.tree import GuideItem,_getHeadColumn
 import base.config as config
 
+from research.ufhandler import Uf_handler
 #TODO uso de formato numerico directamente en la view setNumberFormat
 #ALERT dopado para que vaya siempre a datos de prueba
 
@@ -230,15 +231,17 @@ class DanaCubeWindow(QMainWindow):
         self.editActions['inactive'].setEnabled(False)
         
         self.userFunctionsMenu.addSeparator()
-        self.plugins = dict()
         
-        uf_discover(uf,self.plugins)
-        self.fillUserFunctionMenu(self.userFunctionsMenu) #las comunes
-        self.userFunctionsMenu.addSeparator()
-        self.pluginDbMenu = self.userFunctionsMenu.addMenu("Especificas")
-        self.fillUserFunctionMenu(self.pluginDbMenu,self.cubo.nombre) #las especificas del cubo
+        self.ufHandler = Uf_handler(self.userFunctionsMenu,self.cubo,self.dispatch)
+        self.plugins = self.ufHandler.plugins
+        self.pluginDbMenu = self.ufHandler.specUfMenu
+        #uf_discover(uf,self.plugins)
+        #self.fillUserFunctionMenu(self.userFunctionsMenu) #las comunes
+        #self.userFunctionsMenu.addSeparator()
+        #self.pluginDbMenu = self.userFunctionsMenu.addMenu("Especificas")
+        #self.fillUserFunctionMenu(self.pluginDbMenu,self.cubo.nombre) #las especificas del cubo
             
-        # esto al final para que las distintas opciones raras que van al menu de cubos vayan en su sitio
+        ## esto al final para que las distintas opciones raras que van al menu de cubos vayan en su sitio
         self.cubeMenu.addSeparator()
         self.cubeMenu.addAction("E&xit", self.close, "Ctrl+Q")
 
@@ -246,22 +249,24 @@ class DanaCubeWindow(QMainWindow):
         self.setCentralWidget(self.tabulatura)
      
     def fillUserFunctionMenu(self,menu,db=''):
-        if db != '':
-            menu.clear()
-            menu.setTitle('Funciones especificas para '+ db)
-            subset = { k:self.plugins[k] for k in self.plugins if db in self.plugins[k].get('db','') }
-        else:
-            subset = { k:self.plugins[k] for k in self.plugins if self.plugins[k].get('db','') == '' }
-        if len(subset) == 0:
-            return
-        for k in sorted(subset,
-                    key=lambda x:self.plugins[x].get('seqnr', float('inf'))):
-            entry = self.plugins[k]
-            if entry.get('hidden',False):
-                continue
-            menu.addAction(entry['text'],lambda  idx=k: self.dispatch(idx))
-            if entry.get('sep',False):
-                menu.addSeparator()
+        self.ufHandler.fillUserFunctionMenu(db)
+    #def fillUserFunctionMenu(self,menu,db=''):
+        #if db != '':
+            #menu.clear()
+            #menu.setTitle('Funciones especificas para '+ db)
+            #subset = { k:self.plugins[k] for k in self.plugins if db in self.plugins[k].get('db','') }
+        #else:
+            #subset = { k:self.plugins[k] for k in self.plugins if self.plugins[k].get('db','') == '' }
+        #if len(subset) == 0:
+            #return
+        #for k in sorted(subset,
+                    #key=lambda x:self.plugins[x].get('seqnr', float('inf'))):
+            #entry = self.plugins[k]
+            #if entry.get('hidden',False):
+                #continue
+            #menu.addAction(entry['text'],lambda  idx=k: self.dispatch(idx))
+            #if entry.get('sep',False):
+                #menu.addSeparator()
         
     def checkChanges(self,destino):
         currentWidget = self.tabulatura.currentWidget()   #.tree
@@ -293,7 +298,7 @@ class DanaCubeWindow(QMainWindow):
         else:
             self.restorator.setEnabled(False)
 
-        print(currentWidget.tree.editTriggers().text(),self.editActions['active'].text())
+        #print(currentWidget.tree.editTriggers().text(),self.editActions['active'].text())
         if currentWidget.tree.editTriggers() == QAbstractItemView.NoEditTriggers:
             self.editActions['active'].setEnabled(True)
             self.editActions['inactive'].setEnabled(False)
@@ -858,12 +863,12 @@ class DanaCube(QTreeView):
         self.parent.restorator.setEnabled(False)
 
     def requestFunctionParms(self,spec,values):
-        app.restoreOverrideCursor()
+        QApplication.restoreOverrideCursor()
         parmDialog = propertySheetDlg('Introduzca los valores a simular',spec,values, self)
         if parmDialog.exec_():
             pass
             #print([a_spec[k][1] for k in range(len(a_spec))])
-        app.setOverrideCursor(QCursor(Qt.WaitCursor))
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
 
     def funDispatch(self,entry):
         from support.util.record_functions import norm2String
@@ -948,7 +953,9 @@ class DanaCube(QTreeView):
         self.isModified = True
         self.parent.restorator.setEnabled(True)
         #self.expandToDepth(2)
-        
+    #@waiting_effects 
+    #def dispatch(self,fcnName):
+        #self.parent.ufHandler.dispatch(self.model(),fcnName)
     def setFilter(self):
         #self.areFiltered = True
         #self.cubo.recordStructure = self.getCubeRecordInfo()

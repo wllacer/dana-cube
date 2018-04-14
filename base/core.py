@@ -1289,6 +1289,25 @@ class Vista:
             workbook.close()
         return 0
     
+    def sinAgregado(self,dim):
+        """
+        TODO add to doc
+        devuelve triplas como agrega (v. infra) pero sin datos
+        """
+        vector = []
+        if dim == 'row':
+            tree = self.row_hdr_idx
+        elif dim == 'col':
+            tree = self.col_hdr_idx
+
+        for elem in tree.traverse():
+
+            vector.append([elem.data(Qt.DisplayRole),
+                           elem.data(Qt.UserRole +1),
+                           None
+                        ])
+        return vector
+
     def agrega(self,dim,list_func):
         """
         TODO add to doc
@@ -1306,20 +1325,28 @@ class Vista:
         from PyQt5.QtCore import Qt
         from base.tree import LEAF
 
+        vector = []
         if dim == 'row':
             tree = self.row_hdr_idx
+            prefilter =  tree.orthogonal.asDictFilter(lambda x:x.type() == LEAF)
+            filtro = sorted( [ prefilter[entry]['oidx'] for entry in prefilter ])
+            for elem in tree.traverse():
+                lista = list(filter(None,elem.getPayloadFiltered(filtro)))
+                vector.append([elem.data(Qt.DisplayRole),
+                            elem.data(Qt.UserRole +1),
+                            list_func(lista)
+                            ])
         elif dim == 'col':
+            tabla = self.Tree2ArrayFiltered(filterrow=lambda x:x.type() == LEAF)
+            idx=0
             tree = self.col_hdr_idx
-        prefilter =  tree.orthogonal.asDictFilter(lambda x:x.type() == LEAF)
-        filtro = sorted( [ prefilter[entry]['oidx'] for entry in prefilter ])
-
-        vector = []
-        for elem in tree.traverse():
-            lista = list(filter(None,elem.getPayloadFiltered(filtro)))
-            vector.append([elem.data(Qt.DisplayRole),
-                        elem.data(Qt.UserRole +1),
-                        list_func(lista)
-                        ])
+            for elem in tree.traverse():
+                lista = list(filter(None,[ linea[idx] for linea in tabla ]))
+                vector.append([elem.data(Qt.DisplayRole),
+                            elem.data(Qt.UserRole +1),
+                            list_func(lista)
+                            ])
+                idx +=1
         return vector
 
     def agregaPct(self,dim):
