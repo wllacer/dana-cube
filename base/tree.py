@@ -151,32 +151,68 @@ class TreeFormat(object):
 
 (SHOW,INT,REF,ORIG) = (Qt.DisplayRole,Qt.UserRole +1,Qt.UserRole +2, Qt.UserRole +3)
 
+class ListWrapper():
+    
+    def __init__(self,val):
+        self.val = val
+        
+    def __setitem__(self,idx,value):
+        if idx < len(self.val):
+            self.val[idx] = value
+    
+    def __getitem__(self,idx):
+        if idx < len(self.val):
+            return self.val[idx]
+        else:
+            return None
+    
+    def __repr__(self):
+        cadena = ' '
+        for i in range(len(self.val)):
+            cadena += '{}, '.format(self.val[i])
+        
+        return '[{}]'.format(cadena)
+
+    def __str__(self):
+        return self.__repr__()
+    
 class NewGuideItem(QStandardItem):
-    def __init__(self,*args):
+    
+    keypos=2
+    
+    def __init__(self,*args,**kwargs):
         """
         todo añadir parent
         """
+        key = None
+        value = None
+        if len(args) >= 2:
+            key = args[0]
+            value = args[1]
+        elif len(args) ==1:
+            key =args[0]
+            
         super().__init__()
-        if len(args) > 0:
-            if isinstance(args,(list,tuple)):
-                self.setData(args[0],Qt.UserRole + 2)
-                self.setData(args[0][1],Qt.UserRole +3) 
+        if key:
+            if isinstance(key,(list,tuple)):
+                self.setData(ListWrapper(key),Qt.UserRole +2)
             else:
-                self.setData([None,None,args[0]],Qt.UserRole + 2)
-                self.setData(args[0],Qt.UserRole +3) 
-        else:
-            self.setData([None,None,None],Qt.UserRole + 2)
-            self.setData(None,Qt.UserRole +3) 
+                self.setData(key,Qt.UserRole + 1)
+        if value:
+            self.setData(value,Qt.DisplayRole)
+
 
     def setData(self,value,role):
+                
         if role in (INT,):
-            tmp = self.data(REF)
-            tmp[2]=value
-            self.setData(tmp,REF)
-            print(value,self.data(REF))
+            coredata = self.data(REF)
+            if coredata is None:
+                super().setData(value,role)
+            else:
+                coredata[NewGuideItem.keypos]=value
         else:
             return super().setData(value,role)
-        print(self.data(REF),self.data(INT),self.data(SHOW))
+        #print(self.data(REF),self.data(INT),self.data(SHOW))
         
     def data(self,role):
         if role == SHOW:
@@ -185,8 +221,8 @@ class NewGuideItem(QStandardItem):
             else:
                 return super().data(role)
         if role == INT:
-            if super().data(role) is None:
-                return self.data(REF)[2]
+            if super().data(role) is None and super().data(REF):
+                return self.data(REF)[NewGuideItem.keypos]
             else:
                 return super().data(role)
         else:
@@ -243,8 +279,8 @@ class GuideItem(NewGuideItem):
     ## Methods reimplemented from [QStandardItem](http://doc.qt.io/qt-5/qstandarditem.html). See documentation there
     
     """
-    def __init__(self,*args):  #
-        super(GuideItem, self).__init__(*args)
+    def __init__(self,*args,**kwargs):  #
+        super(GuideItem, self).__init__(*args,**kwargs)
         self.originalValue = self.data(Qt.UserRole +1)
         if self.index().column() == 0:
             self.stats = None
