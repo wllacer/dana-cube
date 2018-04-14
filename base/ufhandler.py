@@ -150,7 +150,7 @@ class Uf_handler():
         from support.util.record_functions import norm2String
         
         index = callbacks.get('index',model2index)
-        initial_Data = callbacks.get('index',initialDataPct)
+        initial_Data = callbacks.get('index',initialDataVoid)
         data_capture = callbacks.get('data capture',presenta)
 
         lparm = [None for k in range(4)]
@@ -183,22 +183,12 @@ class Uf_handler():
             # convierte en parms
             lparm[2] = a_table
             
-        #if 'colparm' in tipo_plugin:
-            #if lparm[1]:
-                #a_table = lparm[1]
-            #else:
-                #a_table = index(model,'col')
-            #lparm[3] = [(a_table[k][0],a_table[k][1],data) for k,data in enumerate(presenta(a_table))]
-            
-        #if 'rowparm' in tipo_plugin:
-            #a_table = index(model,'row')
-            #lparm[2] = [(a_table[k][0],a_table[k][1],data) for k,data in enumerate(presenta(a_table))]
         
         if 'kwparm' in tipo_plugin:
-            a_table = [ [key,key] for key in kparm]
-            m_datos = presenta(a_table,[norm2String(kparm[key[0]]) for key in a_table])
+            a_table = [ [key,key,norm2String(kparm[key])] for key in kparm]
+            m_datos = data_capture(a_table) #,[norm2String(kparm[key[0]]) for key in a_table])
             for i,key in enumerate(a_table):
-                kparm[key[0]] = m_datos[i]
+                kparm[key[0]] = m_datos[i][2]
         
         return lparm,kparm
 

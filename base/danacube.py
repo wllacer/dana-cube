@@ -89,8 +89,6 @@ from support.util.jsonmgr import *
 from support.util.cadenas import * #mergeString
 from support.util.numeros import s2n
         
-import user as uf
-
 from support.util.decorators import *
 
 #from base.tree import traverse
@@ -108,7 +106,7 @@ from support.util.treestate import *
 from base.tree import GuideItem,_getHeadColumn
 import base.config as config
 
-from research.ufhandler import Uf_handler
+from base.ufhandler import Uf_handler
 #TODO uso de formato numerico directamente en la view setNumberFormat
 #ALERT dopado para que vaya siempre a datos de prueba
 
@@ -235,12 +233,6 @@ class DanaCubeWindow(QMainWindow):
         self.ufHandler = Uf_handler(self.userFunctionsMenu,self.cubo,self.dispatch)
         self.plugins = self.ufHandler.plugins
         self.pluginDbMenu = self.ufHandler.specUfMenu
-        #uf_discover(uf,self.plugins)
-        #self.fillUserFunctionMenu(self.userFunctionsMenu) #las comunes
-        #self.userFunctionsMenu.addSeparator()
-        #self.pluginDbMenu = self.userFunctionsMenu.addMenu("Especificas")
-        #self.fillUserFunctionMenu(self.pluginDbMenu,self.cubo.nombre) #las especificas del cubo
-            
         ## esto al final para que las distintas opciones raras que van al menu de cubos vayan en su sitio
         self.cubeMenu.addSeparator()
         self.cubeMenu.addAction("E&xit", self.close, "Ctrl+Q")
@@ -862,100 +854,10 @@ class DanaCube(QTreeView):
         self.isModified = False
         self.parent.restorator.setEnabled(False)
 
-    def requestFunctionParms(self,spec,values):
-        QApplication.restoreOverrideCursor()
-        parmDialog = propertySheetDlg('Introduzca los valores a simular',spec,values, self)
-        if parmDialog.exec_():
-            pass
-            #print([a_spec[k][1] for k in range(len(a_spec))])
-        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-
-    def funDispatch(self,entry):
-        from support.util.record_functions import norm2String
-        plugin = entry[0]
-        tipo_plugin = entry[1]
-        lparm = [None for k in range(4)]
-        kparm = dict()
-        if entry[2]:
-            for key in entry[2]:
-                kparm[key] = entry[2][key]
-
-        def indice2tablas(guia):
-            """
-            funcioncilla para obtener las tablas para parmetrizar y presentar de las cabeceras de fila o columna
-            """
-            m_tabla = []
-            for item in guia.traverse():
-                #m_tabla.append((key.split(':')[-1],guia[key].desc))
-                m_tabla.append((item.getKey(),item.getLabel()))
-            return m_tabla
-        
-        def presenta(a_table,a_data = None):
-            """
-            funcioncilla para presentar los datos
-            """
-            if not a_data:
-                a_data = [ None for k in range(len(a_table))]
-            a_gui_def = [ [a_table[k][1],None,None] for k in range(len(a_table))]
-            self.requestFunctionParms(a_gui_def,a_data)
-            return a_data
-
-        if 'colkey' in tipo_plugin:
-            lparm[1] = indice2tablas(self.vista.col_hdr_idx)
-
-        if 'colparm' in tipo_plugin:
-            if lparm[1]:
-                a_table = lparm[1]
-            else:
-                a_table = indice2tablas(self.vista.col_hdr_idx)
-            lparm[3] = [(a_table[k][0],a_table[k][1],data) for k,data in enumerate(presenta(a_table))]
-            
-        if 'rowparm' in tipo_plugin:
-            a_table = indice2tablas(self.vista.row_hdr_idx)
-            lparm[2] = [(a_table[k][0],a_table[k][1],data) for k,data in enumerate(presenta(a_table))]
-        
-        if 'kwparm' in tipo_plugin:
-            a_table = [ [key,key] for key in kparm]
-            m_datos = presenta(a_table,[norm2String(kparm[key[0]]) for key in a_table])
-            for i,key in enumerate(a_table):
-                kparm[key[0]] = m_datos[i]
-        
-        self.efectiveDispatch(plugin,tipo_plugin,lparm,kparm)
-
-    @keep_tree_layout() 
-    @model_change_control()    
-    def efectiveDispatch(self,plugin,tipo_plugin,lparm,kparm):
-        """
-        separado para evitar efectos secundarios de model_change_control
-        """
-        for item in self.model().traverse():
-                item.setBackup()
-                if 'leaf' in tipo_plugin and not item.isLeaf():
-                    continue
-                lparm[0] = item 
-                plugin(*lparm,**kparm)
-                if self.vista.stats :
-                    item.setStatistics()
-            
-
-            
-    @waiting_effects    
-    def dispatch(self,fcnName):
-        #TODO reducir el numero de arrays temporales
-        #self.model().beginResetModel()
-        for elem in self.parent.plugins[fcnName]['exec']:
-            if elem[1] is None: #defino un defecto para esta aplicacion
-                elem[1] = 'item'
-            self.funDispatch(elem)
-            if 'leaf' in elem[1]:                
-                self.vista.recalcGrandTotal()
-        #self.model().endResetModel()
-        self.isModified = True
-        self.parent.restorator.setEnabled(True)
-        #self.expandToDepth(2)
     #@waiting_effects 
-    #def dispatch(self,fcnName):
-        #self.parent.ufHandler.dispatch(self.model(),fcnName)
+    def dispatch(self,fcnName):
+        self.parent.ufHandler.dispatch(self.model(),fcnName)
+
     def setFilter(self):
         #self.areFiltered = True
         #self.cubo.recordStructure = self.getCubeRecordInfo()

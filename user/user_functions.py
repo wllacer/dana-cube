@@ -71,7 +71,7 @@ def resultados(original,*entrada):
         "PP":28.9374594531795,
         "PSOE":22.1801820596102
         }
-    print(partido,original, perRatio(original,partido,datos,newratios))
+    #print(partido,original, perRatio(original,partido,datos,newratios))
     return perRatio(original,partido,datos,newratios)
 
 def resultadosAgr(original,*entrada):
@@ -95,7 +95,7 @@ def resultadosAgr(original,*entrada):
         "PP":28.9374594531795,
         "PSOE":22.1801820596102
         }
-    print(partido,original, perRatio(original,partido,datos,newratios))
+    #print(partido,original, perRatio(original,partido,datos,newratios))
     return perRatio(original,partido,datos,newratios)
 
 
