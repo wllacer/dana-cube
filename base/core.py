@@ -482,6 +482,7 @@ class Cubo:
             if total:  #el rebase no me ha traido mas que pesadillas
                 raiz = arbol.invisibleRootItem()
                 item = GuideItem()
+                print('//','Grand Total')
                 item.setData('Grand Total',Qt.DisplayRole)
                 item.setData('//',Qt.UserRole +1)
                 raiz.insertRow(0,(item,))

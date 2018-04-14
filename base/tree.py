@@ -83,7 +83,7 @@ def searchStandardItem(item,value,role):
             elif value < val:
                 upper = x
         except TypeError:
-            print(value,item.data(),item.rowCount(),'castañazo')
+            print(value,item.data(role),item.rowCount(),'castañazo')
             raise
     return None
 
@@ -148,8 +148,53 @@ class TreeFormat(object):
             self.format['thousandsseparator'] = "."
             self.format['decimalmarker'] = ","
             self.format['decimalplaces'] = 2
+
+(SHOW,INT,REF,ORIG) = (Qt.DisplayRole,Qt.UserRole +1,Qt.UserRole +2, Qt.UserRole +3)
+
+class NewGuideItem(QStandardItem):
+    def __init__(self,*args):
+        """
+        todo añadir parent
+        """
+        super().__init__()
+        if len(args) > 0:
+            if isinstance(args,(list,tuple)):
+                self.setData(args[0],Qt.UserRole + 2)
+                self.setData(args[0][1],Qt.UserRole +3) 
+            else:
+                self.setData([None,None,args[0]],Qt.UserRole + 2)
+                self.setData(args[0],Qt.UserRole +3) 
+        else:
+            self.setData([None,None,None],Qt.UserRole + 2)
+            self.setData(None,Qt.UserRole +3) 
+
+    def setData(self,value,role):
+        if role in (INT,):
+            tmp = self.data(REF)
+            tmp[2]=value
+            self.setData(tmp,REF)
+            print(value,self.data(REF))
+        else:
+            return super().setData(value,role)
+        print(self.data(REF),self.data(INT),self.data(SHOW))
+        
+    def data(self,role):
+        if role == SHOW:
+            if super().data(role) is None:
+                return self.data(INT)
+            else:
+                return super().data(role)
+        if role == INT:
+            if super().data(role) is None:
+                return self.data(REF)[2]
+            else:
+                return super().data(role)
+        else:
+            return super().data(role)
+        
+        
             
-class GuideItem(QStandardItem):
+class GuideItem(NewGuideItem):
     """
     
     This class is an specialization of [QStandardItem](http://doc.qt.io/qt-5/qstandarditem.html) for use with __GuideItemModel__ 
