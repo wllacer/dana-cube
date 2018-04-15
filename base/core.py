@@ -888,7 +888,7 @@ class Vista:
         Internal function. In fact should be decoupled from the instance
         Sets the column _idx_ of the _item_ with _data_, and performs an initial backup
         """
-        item.setColumn(idx,data)
+        item.setColumn(idx,data,REF)
         cell = item.getColumn(idx)
         cell.setBackup()
         
@@ -917,7 +917,7 @@ class Vista:
         for record in self.array:
             row = record[0]
             colnr = coldict[record[1].getFullKey()]['idx'] + 1
-            self.__setAndBackup(row,colnr,record[2])
+            self.__setAndBackup(row,colnr,record)
         if self.stats:
             self.row_hdr_idx.setStats(True)
 
@@ -936,8 +936,8 @@ class Vista:
             rownr = rowdict[row.getFullKey()]['idx'] + 1
             colnr = coldict[col.getFullKey()]['idx'] + 1
             
-            self.__setAndBackup(row,colnr,record[2])
-            self.__setAndBackup(col,rownr,record[2])
+            self.__setAndBackup(row,colnr,record)
+            self.__setAndBackup(col,rownr,record)
         if self.stats:
             self.row_hdr_idx.setStats(True)
             self.col_hdr_idx.setStats(True)

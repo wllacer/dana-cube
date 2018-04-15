@@ -328,8 +328,8 @@ class GuideItem(NewGuideItem):
     """
     """
     
-    ## Methods reimplemented from [QStandardItem](http://doc.qt.io/qt-5/qstandarditem.html). See documentation there
-    
+    ## Methods reimplemented from [QStandardItem](http://doc.qt.io/qt-5/qstandarditem.html). See documentation there.
+    up to NEW API
     """
     def __init__(self,*args,**kwargs):  #
         super(GuideItem, self).__init__(*args,**kwargs)
