@@ -89,6 +89,8 @@ def searchStandardItem(item,value,role):
 
 def _getHeadColumn(item):
     """
+    __NEW API__
+    
     for a given row, returns the current row header (i.e. the sibling which has column 0)
     as function not as method
     * returns
@@ -98,9 +100,13 @@ def _getHeadColumn(item):
     if item.column() == 0:
         return item
     else:
-        indice = item.index() 
-        colind = indice.sibling(indice.row(),0)
-        return item.model().itemFromIndex(colind)
+        ref = item.data(REF)
+        if ref:
+            return ref[0]
+        else:
+            indice = item.index() 
+            colind = indice.sibling(indice.row(),0)
+            return item.model().itemFromIndex(colind)
     
 class TreeFormat(object):
     """
@@ -149,10 +155,12 @@ class TreeFormat(object):
             self.format['decimalmarker'] = ","
             self.format['decimalplaces'] = 2
 
-(SHOW,INT,REF,ORIG) = (Qt.DisplayRole,Qt.UserRole +1,Qt.UserRole +2, Qt.UserRole +3)
+(SHOW,KEY,REF,ORIG) = (Qt.DisplayRole,Qt.UserRole +1,Qt.UserRole +2, Qt.UserRole +3)
 
 class ListWrapper():
-    
+    """
+    __NEW API__
+    """
     def __init__(self,val):
         self.val = val
         
@@ -177,7 +185,10 @@ class ListWrapper():
         return self.__repr__()
     
 class NewGuideItem(QStandardItem):
+    """
+    __NEW API__
     
+    """
     keypos=2
     
     def __init__(self,*args,**kwargs):
@@ -203,8 +214,7 @@ class NewGuideItem(QStandardItem):
 
 
     def setData(self,value,role):
-                
-        if role in (INT,):
+        if role in (KEY,):
             coredata = self.data(REF)
             if coredata is None:
                 super().setData(value,role)
@@ -215,12 +225,12 @@ class NewGuideItem(QStandardItem):
         #print(self.data(REF),self.data(INT),self.data(SHOW))
         
     def data(self,role):
-        if role == SHOW:
-            if super().data(role) is None:
-                return self.data(INT)
-            else:
-                return super().data(role)
-        if role == INT:
+        #if role == SHOW:              #presumiblemente innecesaria
+            #if super().data(role) is None:
+                #return self.data(INT)
+            #else:
+                #return super().data(role)
+        if role == KEY:
             if super().data(role) is None and super().data(REF):
                 return self.data(REF)[NewGuideItem.keypos]
             else:
@@ -228,7 +238,49 @@ class NewGuideItem(QStandardItem):
         else:
             return super().data(role)
         
+    def __getitem__(self,campo):
+        """
+        ___NEW API__
         
+        We define three types of fields
+        * __'key'__  the UsdrRole content
+        * __'value'__ the DisplaRole content
+        * a number: the playload column
+        
+        """
+        if campo == 'key':
+            return self.data(Qt.UserRole +1)
+        elif campo == 'value':
+            return self.data(Qt.DisplayRole)
+        elif campo == 'rowid':
+            tmp = self.data(REF)
+            if tmp:
+                return tmp[0]
+            else:
+                return _getHeadColumn(self)
+        elif campo == 'colid':
+            tmp = self.data(REF)
+            if tmp:
+                return tmp[1]
+            else:
+                if self.model():
+                    return self.model().orthogonal.pos2item(self.column()-1)  #la columna 0 es el item cabecera
+                else:
+                    return None
+        elif campo == 'rownr':
+            if self.column() == 0:
+                if self.model():
+                    return self.model().item2pos(self)
+                else:
+                    return 0
+            else:
+                return _getHeadColumn(self)['rownr']
+        elif campo == 'colnr':
+            return self.column()
+        elif isinstance(campo,int):
+            return self.getColumnData(campo +1)
+        else:
+            return None        
             
 class GuideItem(NewGuideItem):
     """
@@ -318,29 +370,16 @@ class GuideItem(NewGuideItem):
 
     def __repr__(self):
         return "<" + str(self.data(Qt.UserRole +1)) + ">"
-
-    def __getitem__(self,campo):
-        """
-        
-        We define three types of fields
-        * __'key'__  the UsdrRole content
-        * __'value'__ the DisplaRole content
-        * a number: the playload column
-        
-        """
-        if campo == 'key':
-            return self.data(Qt.UserRole +1)
-        elif campo == 'value':
-            return self.data(Qt.DisplayRole)
-        elif isinstance(campo,int):
-            return self.getColumnData(campo +1)
-        else:
-            return None
     
     def clone(self):
-        nitem = GuideItem()
-        nitem.setData(self.data(Qt.UserRole +1),Qt.UserRole +1)
-        nitem.setData(self.data(Qt.DisplayRole),Qt.DisplayRole)
+        """
+        __NEW API__
+        uso super().data para evitar que se cuelen display data que no son
+        """
+        if self.data(REF):
+            nitem = GuideItem(self.data(REF),super().data(SHOW))
+        else:
+            nitem = GuideItem(self.data(KEY),super().data(SHOW))
         return nitem
 
     """
@@ -372,14 +411,6 @@ class GuideItem(NewGuideItem):
         the item with column 0 from the current row
         """
         return _getHeadColumn(self)
-        #if self.column() == 0:
-            #return self
-        #else:
-            #indice = self.index() 
-            #colind = indice.sibling(indice.row(),0)
-            #return self.model().itemFromIndex(colind)
-
-        
         
     def searchChildren(self,value,role=None):
         """
@@ -423,9 +454,10 @@ class GuideItem(NewGuideItem):
             return self.model().itemFromIndex(colind)
         else:
             return None
-
+        
     def setColumn(self,col,value,role=None):
         """
+        __CONVERT__ __NEW API__
         Method to set , for the current row, a payload entry at position _col_ with value _value_ .
         It's a destructive function: if the column already exist is replaced with the new version
         Can only be executed on GuideItems with column 0 (the head of the row)
@@ -1231,6 +1263,33 @@ class GuideItemModel(QStandardItemModel):
             parent = elem
         return elem
 
+    def item2pos(self,pitem):
+        """
+        dado el item obtengo su posicion relativa en la navegacion de arbol
+        FIXME no performance oriented  (Cost O(N))
+        
+        """
+        idx = 0
+        for item in self.traverse():
+            if item is pitem:
+                return idx
+            idx +=1
+        return None
+    
+    def pos2item(self,pord):
+        """
+        dada la posicion obtengo el item 
+        FIXME no performance oriented
+        """
+        if pord < 0:
+            return None
+        idx = 0
+        for item in self.traverse():
+            if idx == pord:
+                return item
+            idx +=1
+        return None
+    
     def setStats(self,switch):
         """
         Sets (and evaluate) the per row statistics. While they are per row(item) are calculated once per tree
