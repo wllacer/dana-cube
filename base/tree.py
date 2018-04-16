@@ -206,7 +206,8 @@ class NewGuideItem(QStandardItem):
         super().__init__()
         if key:
             if isinstance(key,(list,tuple)):
-                self.setData(ListWrapper(key),Qt.UserRole +2)
+                self.reference = ListWrapper(key)
+                self.setData(self.reference,Qt.UserRole +2)
             else:
                 self.setData(key,Qt.UserRole + 1)
         if value:
@@ -252,33 +253,6 @@ class NewGuideItem(QStandardItem):
             return self.data(Qt.UserRole +1)
         elif campo == 'value':
             return self.data(Qt.DisplayRole)
-        elif campo == 'rowid':
-            tmp = self.data(REF)
-            if tmp:
-                return tmp[0]
-            else:
-                return _getHeadColumn(self)
-        elif campo == 'colid':
-            tmp = self.data(REF)
-            if tmp:
-                return tmp[1]
-            else:
-                if self.model():
-                    return self.model().orthogonal.pos2item(self.column()-1)  #la columna 0 es el item cabecera
-                else:
-                    return None
-        elif campo == 'rownr':
-            if self.column() == 0:
-                if self.model():
-                    return self.model().item2pos(self)
-                else:
-                    return 0
-            else:
-                return _getHeadColumn(self)['rownr']
-        elif campo == 'colnr':
-            return self.column()
-        elif isinstance(campo,int):
-            return self.getColumnData(campo +1)
         else:
             return None        
             
@@ -382,6 +356,46 @@ class GuideItem(NewGuideItem):
             nitem = GuideItem(self.data(KEY),super().data(SHOW))
         return nitem
 
+    def __getitem__(self,campo):
+        """
+        ___NEW API__
+        
+        We define three types of fields
+        * __'key'__  the UsdrRole content
+        * __'value'__ the DisplaRole content
+        * a number: the playload column
+        
+        """
+        if campo == 'rowid':
+            tmp = self.data(REF)
+            if tmp:
+                return tmp[0]
+            else:
+                return _getHeadColumn(self)
+        elif campo == 'colid':
+            tmp = self.data(REF)
+            if tmp:
+                return tmp[1]
+            else:
+                if self.model():
+                    return self.model().orthogonal.pos2item(self.column()-1)  #la columna 0 es el item cabecera
+                else:
+                    return None
+        elif campo == 'rownr':
+            if self.column() == 0:
+                if self.model():
+                    return self.model().item2pos(self)
+                else:
+                    return 0
+            else:
+                return _getHeadColumn(self)['rownr']
+        elif campo == 'colnr':
+            return self.column()
+        elif isinstance(campo,int):
+            return self.getColumnData(campo +1)
+        else:
+            return super().__getitem__(campo)
+
     """
     
     ##  General methods QStandardItem should have
@@ -455,7 +469,7 @@ class GuideItem(NewGuideItem):
         else:
             return None
         
-    def setColumn(self,col,value,role=None):
+    def setColumn(self,col,value,role=Qt.UserRole +1):
         """
         __CONVERT__ __NEW API__
         Method to set , for the current row, a payload entry at position _col_ with value _value_ .
@@ -478,10 +492,46 @@ class GuideItem(NewGuideItem):
             return None
         elif self.column() != 0:
             return None
+    
+        orig = self.getColumn(col)
+        
+        if not orig or orig.data(REF) is None:
+            # creamos una nueva entrada en el array
+            colItem = self.model().orthogonal.pos2item(col)
+            if role == REF:
+                newtuple = value
+            elif role == KEY:
+                newtuple = [self,colItem,value]
+            else:
+                newtupe = [self,colItem,None]
+            self.model().vista.array.append(newtuple)
+            # actualizamos el arbol de fila
+            tree = self.model()
+            pai = self.parent() if self.parent() else self.model.invisibleRootItem()
+            row = self.row()
+            nrItem = GuideItem(value)
+            pai.setChild(row,col,nrItem)
+            if self.model().orthogonal:
+            #actualizamos el arbol de columnas
+                tree = self.model().orthogonal
+                pai = colItem.parent() if colItem.parent() else colItem.model().invisibleRootItem()
+                row = colItem.row()
+                col = self.model().item2pos(self) +1
+                ncItem = GuideItem(value)
+                pai.setChild(row,col,ncItem)
+                #pongo los datos
+            if role and role != KEY:
+                nrItem.setData(value,role)
+            return nrItem
+        else:
+            orig.setData(value,role)
+            return orig
+    
+        """
         # with insertColumns, which does not work again
-        #colItem = GuideItem()
-        #self.insertColumns(col,1,(colItem,))
-        #return colItem
+        colItem = GuideItem()
+        self.insertColumns(col,1,(colItem,))
+        return colItem
         #
         # this is the code needed if insertColumns should behave badly
         row = self.index().row()
@@ -496,7 +546,7 @@ class GuideItem(NewGuideItem):
             colItem.setData(value,role)
         pai.setChild(row,col,colItem)
         return colItem
-        
+        """
     def setUpdateColumn(self,col,value,role=None):
         """
         Method to set , for the current row, a payload entry at position _col_ with value _value_ .
@@ -1192,10 +1242,15 @@ class GuideItemModel(QStandardItemModel):
         """
         #payloadLen = self.lenPayload()
         for elem in self.traverse():
-            for col in elem.rowTraverse():
-                col.setData(None,Qt.UserRole +1)
-                col.setData(None,Qt.DisplayRole)
-                col.originalValue = None
+            papi = elem.parent() if elem.parent() else self.invisibleRootItem()
+            columnas = elem.lenPayload()
+            for ind in range(columnas):
+                papi.setChild(elem.row(),ind +1,None)
+            #for col in elem.rowTraverse():
+                #col.setData(None,REF)
+                #col.setData(None,KEY)
+                #col.setData(None,SHOW)
+                #col.originalValue = None
 
     def cloneSubTree(self,entryPoint=None,filter=None,payload=False):
         """

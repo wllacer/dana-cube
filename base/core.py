@@ -942,9 +942,36 @@ class Vista:
             self.row_hdr_idx.setStats(True)
             self.col_hdr_idx.setStats(True)
         
+    def newTreeLoad(self):
+        self.__setTreeContext(self.row_hdr_idx,self.col_hdr_idx)
+        self.row_hdr_idx.clearData()
+        self.col_hdr_idx.clearData()
 
+        rowdict = self.row_hdr_idx.asDict()
+        coldict = self.col_hdr_idx.asDict()
+        for record in self.array:
+            rownr = rowdict[record[0].getFullKey()]['idx'] + 1
+            colnr = coldict[record[1].getFullKey()]['idx'] + 1
+            tupla= self.__newColumn(rownr,colnr,record)
+            for entry in tupla:
+                entry.setBackup()
 
-            
+    def __newColumn(self,row,col,data):
+        retorno = []
+        for dim,tree in enumerate((self.row_hdr_idx,self.col_hdr_idx)):
+            rowparent = data[dim].parent()
+            if not rowparent:
+                rowparent=tree.invisibleRootItem()
+            rownr = data[dim].row()
+            colItem = GuideItem(data)
+            if dim == 0:
+                colnr = col
+            elif dim == 1:
+                colnr = row
+            rowparent.setChild(rownr,colnr,colItem)
+            retorno.append(colItem)
+        return retorno            
+    
     def toArray(self):
         coldict=self.col_hdr_idx.asDict()
         rowdict=self.row_hdr_idx.asDict()
@@ -1361,8 +1388,10 @@ class Vista:
             vector[k][2] = vector[k][2] *100./ total
         return vector
 # monkeypatch
-Vista.toTree = Vista.toNewTree
-Vista.toTree2D = Vista.toNewTree2D
+Vista.toTree = Vista.newTreeLoad
+Vista.toNewTree = Vista.newTreeLoad
+Vista.toTree2D = Vista.newTreeLoad
+Vista.toNewTree2D = Vista.newTreeLoad
 
 from support.util.decorators import stopwatch
 @stopwatch
