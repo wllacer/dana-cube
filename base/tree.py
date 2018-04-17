@@ -497,17 +497,18 @@ class GuideItem(NewGuideItem):
         
         if not orig or orig.data(REF) is None:
             # creamos una nueva entrada en el array
-            colItem = self.model().orthogonal.pos2item(col)
+            colItem = self.model().orthogonal.pos2item(col -1)
+            print(col,colItem,colItem['key'],colItem['value'])
             if role == REF:
                 newtuple = value
-            elif role == KEY:
+            elif not role or role == KEY:
                 newtuple = [self,colItem,value]
             else:
-                newtupe = [self,colItem,None]
+                newtuple = [self,colItem,None]
             self.model().vista.array.append(newtuple)
             # actualizamos el arbol de fila
             tree = self.model()
-            pai = self.parent() if self.parent() else self.model.invisibleRootItem()
+            pai = self.parent() if self.parent() else self.model().invisibleRootItem()
             row = self.row()
             nrItem = GuideItem(value)
             pai.setChild(row,col,nrItem)
@@ -568,7 +569,7 @@ class GuideItem(NewGuideItem):
             return None
         
         columna = self.getColumn(col)
-        if columna is None or type(columna) == QStandardItem:
+        if columna is None or type(columna) == QStandardItem or columna.data(REF) is None:
             columna = self.setColumn(col,value,role)
         else:
             if role is None:

@@ -229,7 +229,7 @@ class WzGraph(QWizardPage):
     
 
 
-def exportWizard():
+def callExportWizard():
     parms = dict()
     wizard = exportWizard()        
     if wizard.exec_() :
@@ -285,4 +285,4 @@ if __name__ == '__main__':
 
     app = QApplication(sys.argv)
     #miniCube()
-    exportWizard()
+    callExportWizard()

@@ -403,9 +403,9 @@ class Cubo:
                 if total:  #no viene recogido previamente
                     papid = ["//",]+papid
                 if len(papid) == 0:
-                    item = GuideItem()
-                    item.setData(value,Qt.DisplayRole)
-                    item.setData(key,Qt.UserRole +1)
+                    item = GuideItem(key,value)
+                    #item.setData(value,Qt.DisplayRole)
+                    #item.setData(key,Qt.UserRole +1)
                     raiz.appendRow((item,))                    
                 else:
                     #if total:  #no viene recogido previamente
@@ -415,9 +415,9 @@ class Cubo:
                         #print('Ilocalizable',papid)
                         continue
                     else:
-                        item = GuideItem()
-                        item.setData(value,Qt.DisplayRole)
-                        item.setData(key,Qt.UserRole +1)
+                        item = GuideItem(key,value)
+                        #item.setData(value,Qt.DisplayRole)
+                        #item.setData(key,Qt.UserRole +1)
                         parent.appendRow((item,))
             # No aplica ya. Mantenido por si fuera necesario volver
             #elif isinstance(raiz,TreeDict):
@@ -481,10 +481,10 @@ class Cubo:
             arbol.name = self.lista_guias[guidId]['name']
             if total:  #el rebase no me ha traido mas que pesadillas
                 raiz = arbol.invisibleRootItem()
-                item = GuideItem()
-                print('//','Grand Total')
-                item.setData('Grand Total',Qt.DisplayRole)
-                item.setData('//',Qt.UserRole +1)
+                item = GuideItem('//','Grand Total')
+                #print('//','Grand Total')
+                #item.setData('Grand Total',Qt.DisplayRole)
+                #item.setData('//',Qt.UserRole +1)
                 raiz.insertRow(0,(item,))
                 tree = item
             else:
@@ -1184,7 +1184,7 @@ class Vista:
         ctmp = self.col_hdr_idx
         self.row_hdr_idx = ctmp  #self.cubo.lista_guias[self.row_id]['dir_row']
         self.col_hdr_idx = rtmp  #self.cubo.lista_guias[self.col_id]['dir_row']
-
+        #self.newTreeLoad()
 
     def __getExportData(self,parms):
         """
