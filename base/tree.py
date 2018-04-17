@@ -189,8 +189,8 @@ class NewGuideItem(QStandardItem):
     __NEW API__
     
     """
-    keypos=2
-    
+    valpos=2
+
     def __init__(self,*args,**kwargs):
         """
         todo añadir parent
@@ -220,7 +220,7 @@ class NewGuideItem(QStandardItem):
             if coredata is None:
                 super().setData(value,role)
             else:
-                coredata[NewGuideItem.keypos]=value
+                coredata[NewGuideItem.valpos]=value
         else:
             return super().setData(value,role)
         #print(self.data(REF),self.data(INT),self.data(SHOW))
@@ -233,7 +233,7 @@ class NewGuideItem(QStandardItem):
                 #return super().data(role)
         if role == KEY:
             if super().data(role) is None and super().data(REF):
-                return self.data(REF)[NewGuideItem.keypos]
+                return self.data(REF)[NewGuideItem.valpos]
             else:
                 return super().data(role)
         else:
@@ -305,6 +305,8 @@ class GuideItem(NewGuideItem):
     ## Methods reimplemented from [QStandardItem](http://doc.qt.io/qt-5/qstandarditem.html). See documentation there.
     up to NEW API
     """
+    coordinates = (0,1)
+    
     def __init__(self,*args,**kwargs):  #
         super(GuideItem, self).__init__(*args,**kwargs)
         self.originalValue = self.data(Qt.UserRole +1)
@@ -366,18 +368,26 @@ class GuideItem(NewGuideItem):
         * a number: the playload column
         
         """
+        
+        if not self.model():
+            (row_axis,col_axis) = GuideItem.coordinates
+        else:
+            (row_axis,col_axis) = self.model().coordinates
         if campo == 'rowid':
             tmp = self.data(REF)
             if tmp:
-                return tmp[0]
+                return tmp[row_axis]
             else:
-                return _getHeadColumn(self)
+                if self.model():
+                    return _getHeadColumn(self)
+                else:
+                    return None
         elif campo == 'colid':
             tmp = self.data(REF)
             if tmp:
-                return tmp[1]
+                return tmp[col_axis]
             else:
-                if self.model():
+                if self.model() and self.model().orthogonal:
                     return self.model().orthogonal.pos2item(self.column()-1)  #la columna 0 es el item cabecera
                 else:
                     return None
@@ -1026,6 +1036,7 @@ class GuideItemModel(QStandardItemModel):
         #self.colTreeIndex = None
         self.vista = None
         self.orthogonal = None
+        self.coordinates = GuideItem.coordinates
         
     def traverse(self,base=None):
         """

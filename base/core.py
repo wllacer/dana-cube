@@ -898,7 +898,9 @@ class Vista:
         Sets tree.colTreeIndex
         """
         rowTree.vista = self
+        rowTree.coordinates = (1,0)
         colTree.vista = self
+        colTree.coordinates = (1,0)
         rowTree.orthogonal = colTree
         colTree.orthogonal = rowTree
         #colindex = []
