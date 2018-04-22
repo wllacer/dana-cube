@@ -912,37 +912,6 @@ class Vista:
         # rowTree.colTreeIndex['leaf'] = [ idx for idx,obj in enumerate(rowTree.colTreeIndex['idx']) if obj['objid'].type() == LEAF ]
         return None
         
-    def toNewTree(self):
-        self.__setTreeContext(self.row_hdr_idx,self.col_hdr_idx)
-        self.row_hdr_idx.clearData()
-        coldict = self.col_hdr_idx.asDict()
-        for record in self.array:
-            row = record[0]
-            colnr = coldict[record[1].getFullKey()]['idx'] + 1
-            self.__setAndBackup(row,colnr,record)
-        if self.stats:
-            self.row_hdr_idx.setStats(True)
-
-
-        
-    def toNewTree2D(self):
-        self.__setTreeContext(self.row_hdr_idx,self.col_hdr_idx)
-        self.row_hdr_idx.clearData()
-        self.col_hdr_idx.clearData()
-
-        rowdict = self.row_hdr_idx.asDict()
-        coldict = self.col_hdr_idx.asDict()
-        for record in self.array:
-            row = record[0]
-            col = record[1]
-            rownr = rowdict[row.getFullKey()]['idx'] + 1
-            colnr = coldict[col.getFullKey()]['idx'] + 1
-            
-            self.__setAndBackup(row,colnr,record)
-            self.__setAndBackup(col,rownr,record)
-        if self.stats:
-            self.row_hdr_idx.setStats(True)
-            self.col_hdr_idx.setStats(True)
         
     def newTreeLoad(self):
         self.__setTreeContext(self.row_hdr_idx,self.col_hdr_idx)
