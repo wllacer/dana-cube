@@ -1,4 +1,9 @@
 # -*- coding=utf -*-
+"""
+non QT implentation of a tree. Not used @dana-cube. 
+Should be upgraded to an support.util.tree compatible api
+
+"""
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function

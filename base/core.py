@@ -403,9 +403,9 @@ class Cubo:
                 if total:  #no viene recogido previamente
                     papid = ["//",]+papid
                 if len(papid) == 0:
-                    item = GuideItem()
-                    item.setData(value,Qt.DisplayRole)
-                    item.setData(key,Qt.UserRole +1)
+                    item = GuideItem(key,value)
+                    #item.setData(value,Qt.DisplayRole)
+                    #item.setData(key,Qt.UserRole +1)
                     raiz.appendRow((item,))                    
                 else:
                     #if total:  #no viene recogido previamente
@@ -415,9 +415,9 @@ class Cubo:
                         #print('Ilocalizable',papid)
                         continue
                     else:
-                        item = GuideItem()
-                        item.setData(value,Qt.DisplayRole)
-                        item.setData(key,Qt.UserRole +1)
+                        item = GuideItem(key,value)
+                        #item.setData(value,Qt.DisplayRole)
+                        #item.setData(key,Qt.UserRole +1)
                         parent.appendRow((item,))
             # No aplica ya. Mantenido por si fuera necesario volver
             #elif isinstance(raiz,TreeDict):
@@ -481,9 +481,10 @@ class Cubo:
             arbol.name = self.lista_guias[guidId]['name']
             if total:  #el rebase no me ha traido mas que pesadillas
                 raiz = arbol.invisibleRootItem()
-                item = GuideItem()
-                item.setData('Grand Total',Qt.DisplayRole)
-                item.setData('//',Qt.UserRole +1)
+                item = GuideItem('//','Grand Total')
+                #print('//','Grand Total')
+                #item.setData('Grand Total',Qt.DisplayRole)
+                #item.setData('//',Qt.UserRole +1)
                 raiz.insertRow(0,(item,))
                 tree = item
             else:
@@ -887,7 +888,7 @@ class Vista:
         Internal function. In fact should be decoupled from the instance
         Sets the column _idx_ of the _item_ with _data_, and performs an initial backup
         """
-        item.setColumn(idx,data)
+        item.setColumn(idx,data,REF)
         cell = item.getColumn(idx)
         cell.setBackup()
         
@@ -897,7 +898,9 @@ class Vista:
         Sets tree.colTreeIndex
         """
         rowTree.vista = self
+        rowTree.coordinates = (1,0)
         colTree.vista = self
+        colTree.coordinates = (1,0)
         rowTree.orthogonal = colTree
         colTree.orthogonal = rowTree
         #colindex = []
@@ -909,20 +912,8 @@ class Vista:
         # rowTree.colTreeIndex['leaf'] = [ idx for idx,obj in enumerate(rowTree.colTreeIndex['idx']) if obj['objid'].type() == LEAF ]
         return None
         
-    def toNewTree(self):
-        self.__setTreeContext(self.row_hdr_idx,self.col_hdr_idx)
-        self.row_hdr_idx.clearData()
-        coldict = self.col_hdr_idx.asDict()
-        for record in self.array:
-            row = record[0]
-            colnr = coldict[record[1].getFullKey()]['idx'] + 1
-            self.__setAndBackup(row,colnr,record[2])
-        if self.stats:
-            self.row_hdr_idx.setStats(True)
-
-
         
-    def toNewTree2D(self):
+    def newTreeLoad(self):
         self.__setTreeContext(self.row_hdr_idx,self.col_hdr_idx)
         self.row_hdr_idx.clearData()
         self.col_hdr_idx.clearData()
@@ -930,20 +921,28 @@ class Vista:
         rowdict = self.row_hdr_idx.asDict()
         coldict = self.col_hdr_idx.asDict()
         for record in self.array:
-            row = record[0]
-            col = record[1]
-            rownr = rowdict[row.getFullKey()]['idx'] + 1
-            colnr = coldict[col.getFullKey()]['idx'] + 1
-            
-            self.__setAndBackup(row,colnr,record[2])
-            self.__setAndBackup(col,rownr,record[2])
-        if self.stats:
-            self.row_hdr_idx.setStats(True)
-            self.col_hdr_idx.setStats(True)
-        
+            rownr = rowdict[record[0].getFullKey()]['idx'] + 1
+            colnr = coldict[record[1].getFullKey()]['idx'] + 1
+            tupla= self.__newColumn(rownr,colnr,record)
+            for entry in tupla:
+                entry.setBackup()
 
-
-            
+    def __newColumn(self,row,col,data):
+        retorno = []
+        for dim,tree in enumerate((self.row_hdr_idx,self.col_hdr_idx)):
+            rowparent = data[dim].parent()
+            if not rowparent:
+                rowparent=tree.invisibleRootItem()
+            rownr = data[dim].row()
+            colItem = GuideItem(data)
+            if dim == 0:
+                colnr = col
+            elif dim == 1:
+                colnr = row
+            rowparent.setChild(rownr,colnr,colItem)
+            retorno.append(colItem)
+        return retorno            
+    
     def toArray(self):
         coldict=self.col_hdr_idx.asDict()
         rowdict=self.row_hdr_idx.asDict()
@@ -1156,7 +1155,7 @@ class Vista:
         ctmp = self.col_hdr_idx
         self.row_hdr_idx = ctmp  #self.cubo.lista_guias[self.row_id]['dir_row']
         self.col_hdr_idx = rtmp  #self.cubo.lista_guias[self.col_id]['dir_row']
-
+        #self.newTreeLoad()
 
     def __getExportData(self,parms):
         """
@@ -1360,8 +1359,10 @@ class Vista:
             vector[k][2] = vector[k][2] *100./ total
         return vector
 # monkeypatch
-Vista.toTree = Vista.toNewTree
-Vista.toTree2D = Vista.toNewTree2D
+Vista.toTree = Vista.newTreeLoad
+Vista.toNewTree = Vista.newTreeLoad
+Vista.toTree2D = Vista.newTreeLoad
+Vista.toNewTree2D = Vista.newTreeLoad
 
 from support.util.decorators import stopwatch
 @stopwatch

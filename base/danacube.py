@@ -990,7 +990,7 @@ class DanaCube(QTreeView):
     
     def export(self):
         #TODO poder hacer una seleccion de area
-        parms = eW.exportWizard()
+        parms = eW.callExportWizard()
         selArea = dict()
         if not parms.get('file'):
             return
@@ -1080,9 +1080,9 @@ class DanaCube(QTreeView):
         if not parent:
             parent = arbol.invisibleRootItem()
         pos = kindex.row()
-        item = GuideItem()
-        item.setData(value,Qt.DisplayRole)
-        item.setData(key,Qt.UserRole +1)
+        item = GuideItem(key,value)
+        #item.setData(value,Qt.DisplayRole)
+        #item.setData(key,Qt.UserRole +1)
         parent.insertRow(pos +1,(item,))
         #
         self.vista.toNewTree2D()
