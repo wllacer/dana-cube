@@ -103,3 +103,68 @@ def uf_discover(uf,dictionary):
         else:
             # try to call it, without catching any errors
             register_plugin(dictionary)
+
+def uf_discover_file(uf,plugins):
+    """
+    uf libreria (directorio de funciones)
+    dictionary  diccionario de funciones
+    """
+    from support.util.jsonmgr import load_cubo
+    toollist = readUM(uf)
+    definiciones = load_cubo('estructura.json')
+    functions = {}
+    sequences = {}
+    #TODO ordered dict ¿?
+    for item in definiciones:
+        entrada = definiciones[item]
+        if entrada['class'] == 'sequence':
+            sequences[item] = entrada
+            sequences[item]['name'] = item
+        elif entrada['class'] == 'function':
+            functions[item] = entrada
+            functions[item]['name'] = item
+            try:
+                gosh = toollist[entrada['entry']]
+                functions[item]['entry'] = gosh
+            except KeyError:
+                print('Funcion de usuario {} no definida'.format(entrada['entry']))
+                del functions[item]
+                continue
+            if 'aux_parm' in functions[item]:
+                auxiliares = functions[item]['aux_parm']
+                bien = True
+                for parametro in auxiliares:
+                    if parametro.startswith('fun'):
+                        try:
+                            auxiliares[parametro] = toollist[auxiliares[parametro]]
+                        except KeyError:
+                            print('Funcion de usuario {} no definida'.format(auxiliares[parametro]))
+                            bien = False
+                            break
+                if not bien:
+                    del functions[item]
+    #pprint(functions)
+    for entrada in functions:
+        registro_funcion(plugins,**functions[entrada])
+    for entrada in sequences:
+        registro_secuencia(plugins,**sequences[entrada])
+
+def readUM(context,toollist= None):
+    withReturn = False
+    if not toollist:
+        withReturn = True
+        toollist = {}
+    import inspect as ins
+    for entrada in context.__all__:
+        source = getattr(context,entrada)
+        for func in ins.getmembers(source,ins.isfunction):
+            if func[0] in toollist:
+                continue
+            toollist[func[0]] = func[1]
+        
+        for clase in ins.getmembers(source,ins.isclass):
+            if clase[0] in toollist:
+                continue
+            toollist[clase[0]] = clase[1]
+    if withReturn:
+        return toollist

@@ -22,7 +22,8 @@ class Uf_handler():
         self.specUfMenu = None  #menu para subsistema particular
         self.baseSlot = slot
         
-        uf_discover(uf,self.plugins)
+        #uf_discover(uf,self.plugins)
+        uf_discover_file(uf,self.plugins)
         
         if menu and slot:
             self.setupPluginMenu(self.ufMenu,cubo,self.baseSlot)
@@ -303,5 +304,5 @@ def functionFromName(operador,context=None):
         return getattr(builtins,operador)
     except AttributeError :
         pass
-    print('ERROR: operador {} no encontrado en la ejecucion dinamica',operador)
+    print('ERROR: operador {} no encontrado en la ejecucion dinamica'.format(operador))
     return None

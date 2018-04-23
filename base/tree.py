@@ -508,7 +508,7 @@ class GuideItem(NewGuideItem):
         if not orig or orig.data(REF) is None:
             # creamos una nueva entrada en el array
             colItem = self.model().orthogonal.pos2item(col -1)
-            print(col,colItem,colItem['key'],colItem['value'])
+            #print(col,colItem,colItem['key'],colItem['value'])
             if role == REF:
                 newtuple = value
             elif not role or role == KEY:
