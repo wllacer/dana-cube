@@ -16,14 +16,16 @@ from support.util.decorators import keep_tree_layout,model_change_control,waitin
 
 class Uf_handler():
     
-    def __init__(self,menu=None,cubo=None,slot=None):
+    def __init__(self,menu=None,cubo=None,slot=None,configFile=None):
         self.plugins = dict()
         self.ufMenu = menu      #menu principal
         self.specUfMenu = None  #menu para subsistema particular
         self.baseSlot = slot
         
-        #uf_discover(uf,self.plugins)
-        uf_discover_file(uf,self.plugins)
+        if not configFile:
+            uf_discover(uf,self.plugins)
+        else:
+            uf_discover_file(uf,self.plugins,configFile)
         
         if menu and slot:
             self.setupPluginMenu(self.ufMenu,cubo,self.baseSlot)

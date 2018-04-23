@@ -230,7 +230,7 @@ class DanaCubeWindow(QMainWindow):
         
         self.userFunctionsMenu.addSeparator()
         
-        self.ufHandler = Uf_handler(self.userFunctionsMenu,self.cubo,self.dispatch)
+        self.ufHandler = Uf_handler(self.userFunctionsMenu,self.cubo,self.dispatch,'estructura.json')
         self.plugins = self.ufHandler.plugins
         self.pluginDbMenu = self.ufHandler.specUfMenu
         ## esto al final para que las distintas opciones raras que van al menu de cubos vayan en su sitio

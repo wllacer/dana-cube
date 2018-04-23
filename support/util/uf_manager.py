@@ -104,19 +104,24 @@ def uf_discover(uf,dictionary):
             # try to call it, without catching any errors
             register_plugin(dictionary)
 
-def uf_discover_file(uf,plugins):
+def uf_discover_file(uf,plugins,configFile):
     """
     uf libreria (directorio de funciones)
     dictionary  diccionario de funciones
     """
     from support.util.jsonmgr import load_cubo
     toollist = readUM(uf)
-    definiciones = load_cubo('estructura.json')
+    definiciones = load_cubo(configFile)
+    if not definiciones:
+        uf_discover(uf,plugins)
+        return
+    else:
+        defs = definiciones['user functions']
     functions = {}
     sequences = {}
     #TODO ordered dict ¿?
-    for item in definiciones:
-        entrada = definiciones[item]
+    for item in defs:
+        entrada = defs[item]
         if entrada['class'] == 'sequence':
             sequences[item] = entrada
             sequences[item]['name'] = item
