@@ -131,6 +131,10 @@ def generaArgParser():
                         nargs='?',
                         default='cubo.json',
                         help='Nombre del fichero de configuración del cubo actual')    
+    parser.add_argument('--contextFile','--contextfile','--context','-xf',
+                        nargs='?',
+                        default='danacube.json',
+                        help='Nombre del fichero de contexto de danacube')    
     security_parser = parser.add_mutually_exclusive_group(required=False)
     security_parser.add_argument('--secure','-s',dest='secure', action='store_true',
                                  help='Solicita la clave de las conexiones de B.D.')
@@ -148,7 +152,8 @@ class DanaCubeWindow(QMainWindow):
 
         self.cubeFile = args.cubeFile
         self.secure = args.secure
-
+        self.contextFile = args.contextFile
+        
         self.filterActions = dict()
         self.dateRangeActions = dict()
         self.editActions = dict()
@@ -230,7 +235,7 @@ class DanaCubeWindow(QMainWindow):
         
         self.userFunctionsMenu.addSeparator()
         
-        self.ufHandler = Uf_handler(self.userFunctionsMenu,self.cubo,self.dispatch,'estructura.json')
+        self.ufHandler = Uf_handler(self.userFunctionsMenu,self.cubo,self.dispatch,self.contextFile)
         self.plugins = self.ufHandler.plugins
         self.pluginDbMenu = self.ufHandler.specUfMenu
         ## esto al final para que las distintas opciones raras que van al menu de cubos vayan en su sitio
@@ -857,6 +862,7 @@ class DanaCube(QTreeView):
     #@waiting_effects 
     def dispatch(self,fcnName):
         self.parent.ufHandler.dispatch(self.model(),fcnName)
+        self.parent.restorator.setEnabled(True)
 
     def setFilter(self):
         #self.areFiltered = True

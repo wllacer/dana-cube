@@ -46,6 +46,7 @@ _Si lo que se desea es meramente evaluar las capacidades del producto, recomenda
 * Si queremos probar con __sqlite__, sencillamente dejar __ejemplo_dana.db__ en el directorio de trabajo
 * Mover al directorio de trabajo el correspondiente  __cubo\*\.json__ renombrandolo como __cubo.json__ simplemente
 * Modificar en el fichero __cubo.json__ las clausulas __connect__ para adaptarlas al entorno 
+* Mover al directorio de trabajo el fichero __danacube.json__, para obtener las funciones de usuario de defecto
 
 # Trabajar con un cubo
 
