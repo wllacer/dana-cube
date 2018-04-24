@@ -19,11 +19,6 @@ En la aplicación existe un subdirectorio **./user** donde se pueden guardar los
 El sistema esta diseñado para permitir restaurar, en cualquier momento, los valores iniciales del cubo
 
 ## Los modulos de usuario. Requerimientos
- En los fuentes se requiere el siguiente import:
- 
-```
-from  util import uf_manager as ufm 
-```
 
 Por compatibildad con el resto de la aplicación se aconseja incluir lo siguiente (para permitir compatibilidad v2 y v3 de python)
 
@@ -45,6 +40,48 @@ def funcionUsuario (*parms, **kwparms):
 ```
 
 En un apartado posterior se describen que parametros se recibiran. El sistema NO espera retorno de estas funciones
+
+Las funciones, asi como los, parametros que reciben se definene en el apartado __user functions__ del fichero __danacube.json__ para poder ser accedidas, p.e.
+
+```
+{
+    "user functions": {
+        "factoriza": {
+            "entry": "factoriza",
+            "aux_parm": {
+                "funAgr": "resultados"
+            },
+            "type": "colparm",
+            "hidden": true,
+            "api": 1,
+            "class": "function"
+        },
+        
+        "transfiere": {
+            "entry": "transfiere",
+            "type": "colkey,kwparm",
+            "seqnr": 3,
+            "aux_parm": {
+                "desde": null,
+                "hacia": null,
+                "porcentaje": 100,
+                "searchby": "value"
+            },
+```
+
+Como pasos opicionales se recomienda importar
+
+```
+from user.basic import *
+
+```
+Ademas de la definición en el fichero de texto, puede ser interesante incluir en el propio módulo las definiciones de enlace por si el fichero de configuración no estuviera disponible. Para ello,
+
+En los fuentes se requiere el siguiente import:
+ 
+```
+from  util import uf_manager as ufm 
+```
 
 Para incluir una o mas funciones en el subsistema, en el módulo debe incluirse (una sola vez) una funcion __register__ con un único parametro (el contexto), que contiene las llamadas de registro en el sistema que deseemos, p.e.
 
