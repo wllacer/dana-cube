@@ -25,11 +25,13 @@ class WMultiCombo(QComboBox):
         self.Head = None
         self.view().pressed.connect(self.handleItemPressed)
         
-    def load(self,data,dataDisplay):
+    def load(self,data,dataDisplay=None):
         model = QStandardItemModel()
         item = QStandardItem('Seleccione los elementos')
         model.setItem(0,0,item)
         self.Head = item.index()
+        if not dataDisplay:
+            dataDisplay = data
         for i,entrada in enumerate(dataDisplay):
             item = QStandardItem(entrada)
             item.setData(Qt.Unchecked,Qt.CheckStateRole)

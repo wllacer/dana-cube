@@ -1,0 +1,198 @@
+{
+    "user functions": {
+        "factoriza": {
+            "entry": "factoriza",
+            "aux_parm": {
+                "funAgr": "resultados"
+            },
+            "type": "colparm",
+            "hidden": true,
+            "api": 1,
+            "class": "function"
+        },
+        "factorizaAgregado": {
+            "entry": "factoriza",
+            "aux_parm": {
+                "funAgr": "resultadosAgr"
+            },
+            "type": "colparm",
+            "hidden": true,
+            "api": 1,
+            "class": "function"
+        },
+        "porcentaje": {
+            "entry": "porcentaje",
+            "type": "item",
+            "seqnr": 1,
+            "text": "Porcentaje calculados en la fila",
+            "class": "function"
+        },
+        "ordinal": {
+            "entry": "ordinal",
+            "type": "item",
+            "seqnr": 2,
+            "text": "Número de orden descendente en la fila",
+            "class": "function"
+        },
+        "agrupa": {
+            "entry": "consolida",
+            "type": "colkey,kwparm",
+            "seqnr": 3,
+            "aux_parm": {
+                "desde": null,
+                "hacia": null,
+                "searchby": "value"
+            },
+            "text": "fusiona columnas",
+            "class": "function"
+        },
+        "transfiere": {
+            "entry": "transfiere",
+            "type": "colkey,kwparm",
+            "seqnr": 3,
+            "aux_parm": {
+                "desde": null,
+                "hacia": null,
+                "porcentaje": 100,
+                "searchby": "value"
+            },
+            "text": "transfiere parcialmente columnas",
+            "class": "function"
+        },
+        "inicializa": {
+            "entry": "seed",
+            "type": "colkey,kwparm",
+            "seqnr": 3,
+            "aux_parm": {
+                "destino": null,
+                "valor inicial": 0,
+                "searchby": "value"
+            },
+            "text": "inicializa columna a un valor fijo",
+            "class": "function"
+        },
+        "asigna": {
+            "entry": "asigna",
+            "type": "item,leaf",
+            "seqnr": 10,
+            "text": "Asignacion de escaños",
+            "db": "datos locales,datos light",
+            "class": "function"
+        },
+        "asignaCat": {
+            "entry": "asignaCat",
+            "type": "item,leaf",
+            "seqnr": 10,
+            "text": "Asignacion de escaños",
+            "db": "datos catalonia",
+            "class": "function"
+        },
+        "Senado": {
+            "entry": "senado",
+            "type": "item,leaf",
+            "seqnr": 11,
+            "sep": true,
+            "db": "datos locales",
+            "class": "function"
+        },
+        "borraIU": {
+            "entry": "consolida",
+            "aux_parm": {
+                "desde": "4850",
+                "hacia": [
+                    "5008",
+                    "5041",
+                    "5033",
+                    "3736"
+                ]
+            },
+            "type": "colkey",
+            "seqnr": 20,
+            "text": "Integra UI en Podemos",
+            "db": "datos locales,datos light",
+            "class": "function"
+        },
+        "borraMes": {
+            "entry": "consolida",
+            "aux_parm": {
+                "desde": "4976",
+                "hacia": [
+                    "5008",
+                    "5041",
+                    "5033",
+                    "3736"
+                ]
+            },
+            "type": "colkey",
+            "seqnr": 20,
+            "text": "Integra Mès en Podemos",
+            "db": "datos locales,datos light",
+            "class": "function"
+        },
+        "unPodemos": {
+            "entry": "consolida",
+            "aux_parm": {
+                "desde": [
+                    "5008",
+                    "5041",
+                    "5033"
+                ],
+                "hacia": [
+                    "3736"
+                ]
+            },
+            "type": "colkey",
+            "seqnr": 20,
+            "text": "Agrupa en uno las candidaturas de Podemos",
+            "db": "datos locales,datos catalonia,datos light",
+            "class": "function"
+        },
+        "Podemos": {
+            "list": [
+                "borraIU",
+                "borraMes",
+                "unPodemos"
+            ],
+            "seqnr": 23,
+            "sep": true,
+            "text": "Todo lo anterior",
+            "db": "datos locales,datos light",
+            "class": "sequence"
+        },
+        "simul_voto": {
+            "list": [
+                "Podemos",
+                "factorizaAgregado",
+                "porcentaje"
+            ],
+            "seqnr": 31,
+            "text": "Simulacion de voto. Podemos Agregado",
+            "db": "datos locales,datos light",
+            "class": "sequence"
+        },
+        "simul_agregado": {
+            "list": [
+                "Podemos",
+                "factorizaAgregado",
+                "asigna"
+            ],
+            "seqnr": 32,
+            "text": "SImulacion de escaños. Podemos Agregado",
+            "db": "datos locales,datos light",
+            "class": "sequence"
+        },
+        "simul": {
+            "list": [
+                "borraIU",
+                "borraMes",
+                "factoriza",
+                "asigna"
+            ],
+            "sep": true,
+            "seqnr": 33,
+            "text": "SImulacion de escaños. separado",
+            "db": "datos locales",
+            "class": "sequence"
+        }
+    }
+}
