@@ -82,9 +82,9 @@ def isDictFromDef(item):
 """
 Callbacks del editor
 """
-def funclist(item):
+def funclist(*lparm):
     return list(readUM(uf).keys())
-def modlist(item):
+def modlist(*lparm):
     definiciones = load_cubo('danacube.json')
     return list(definiciones['user functions'].keys())
 
@@ -285,7 +285,7 @@ class ufTreeMgrWindow(QMainWindow):
     def __init__(self,parent=None):
         super(ufTreeMgrWindow,self).__init__(parent)
         self.cubeFile = 'danacube.json'
-        self.tree = ufTreeMgr(editAsTree(self.cubeFile),
+        self.tree = TreeMgr(editAsTree(self.cubeFile),
                                             EDIT_TREE,
                                             TOP_LEVEL_ELEMS,
                                             getItemContext)
@@ -320,7 +320,7 @@ class ufTreeMgrDialog(QDialog):
         super().__init__(parent)
         self.cubeFile = 'danacube.json'
         self.cubeFile = 'danacube.json'
-        self.tree = ufTreeMgr(editAsTree(self.cubeFile),
+        self.tree = TreeMgr(editAsTree(self.cubeFile),
                                             EDIT_TREE,
                                             TOP_LEVEL_ELEMS,
                                             getItemContext)

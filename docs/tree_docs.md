@@ -134,6 +134,7 @@ Se recomienda cualificar los nombres de los campos para evitar duplicidades en l
 
 * \<date_filter\> ::= __*TODO*__
 
+
 ### Campos
 *  \<fields\> :: = campo +
 

@@ -33,7 +33,7 @@ Funciones para leer la configuracion de user functions. Reutilizadas, creo
 
 
  
-class ufTreeMgr(QTreeView):
+class TreeMgr(QTreeView):
     """
     """
     def __init__(self,model,treeDef,firstLevelDef,ctxFactory,parent=None):
@@ -43,7 +43,7 @@ class ufTreeMgr(QTreeView):
                            firstLevelDef -> List of first level elements
                            ctxFactory -> generador de contexto
         """
-        super(ufTreeMgr, self).__init__(parent)
+        super(TreeMgr, self).__init__(parent)
         self.parentWindow = parent
         self.view = self  #truco para no tener demasiados problemas de migracion
         self.treeDef = treeDef
@@ -64,7 +64,7 @@ class ufTreeMgr(QTreeView):
             self.view.resizeColumnToContents(m)
         self.view.collapseAll()
 
-        delegate = ufTreeDelegate(self)
+        delegate = TreeDelegate(self)
         self.setItemDelegate(delegate)
 
         self.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -177,7 +177,7 @@ class ufTreeMgr(QTreeView):
                 funcion(item,values)
             
           
-class ufTreeDelegate(QStyledItemDelegate):
+class TreeDelegate(QStyledItemDelegate):
     def __init__(self,parent=None):
         super().__init__(parent)
         self.context = None 
@@ -227,7 +227,7 @@ class ufTreeDelegate(QStyledItemDelegate):
             editor = defeditor()
             orlist = edit_format.get('source',[])
             if callable(orlist):
-                lista = sorted(orlist(item))
+                lista = sorted(orlist(item,self.parent()))
             else:
                 lista = orlist
             if defeditor ==  QComboBox:
@@ -274,6 +274,8 @@ class ufTreeDelegate(QStyledItemDelegate):
             if self.context.get('rowHead').hasChildren():
                 return
             editor = defeditor()
+            if isinstance(editor,QLineEdit) and edit_format.get('hidden',False):
+                editor.setEchoMode(QLineEdit.Password)
             editor.setText(dato)
         return editor
             
@@ -310,6 +312,9 @@ class ufTreeDelegate(QStyledItemDelegate):
                 dvalue = ivalue = editor.get()
             elif isinstance(editor,WPowerTable):
                 return
+            elif isinstance(editor,QLineEdit) and self.context.get('edit_tree',{}).get('hidden',False):
+                dvalue = '****'
+                ivalue = editor.text()
             else:
                 dvalue = ivalue = editor.text()
     
@@ -344,7 +349,7 @@ class ufTreeDelegate(QStyledItemDelegate):
             return True
         else:
             for entry in validators:
-                if not validators(self.context.get('editPos'),editor,*lparms,**kwparms):
+                if not entry(self.context.get('editPos'),self.parent()): #editor,*lparms,**kwparms):
                     return False
         return True
                 

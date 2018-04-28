@@ -898,7 +898,7 @@ class DanaCube(QTreeView):
 
     
     def saveFilter(self):
-        nuevo_filtro = mergeString(self.filtroCampos,self.cubo.definition['base filter'],'AND')
+        nuevo_filtro = mergeString(self.filtroCampos,self.cubo.definition.get('base filter',''),'AND')
         my_cubos = load_cubo(self.parent.cubeFile)
         my_cubos[self.cubo.nombre]['base filter'] = nuevo_filtro
         dump_structure(my_cubos,self.parent.cubeFile,secure=True)
