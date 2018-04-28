@@ -278,7 +278,34 @@ def dict2tree(parent,key,data,tipo=None):
                 clave = str(idx)
                 datos = elem
                 dict2tree(newparent,clave,datos,tipo)  
-  
+ 
+def isDictFromDef(item):
+    """
+    determina si el nodo es la cabeza de un diccionario viendo como son los hijos.
+    Es demasiado simple para otra cosa que lo que tenemos
+    
+    """
+    if item.hasChildren():
+        contexto = getItemContext(item)
+        type_context =  contexto.get('edit_tree',{}).get('objtype')
+        if type_context == 'dict':
+            return True
+        elif type_context is not None:
+            return False
+        
+        firstChild = item.child(0,0)
+        firstChildTipo = item.child(0,2)
+        if not firstChildTipo:                             #los elementos de una lista pura no tienen tipo y no deberian tener ese elemento
+            return False
+        elif firstChildTipo.data() is None:
+            return False
+        elif firstChild.data() is None:                 #los elementos de una lista no tienen nombre
+            return False
+        else:
+            return True
+    else:
+        return False
+    
 def tree2dict(rootItem,esdiccionario=None,role=None):
     """
        convertir un nodo de  estructura arbol en una entrada de cubo en memoria (diccionario) -recursiva-
@@ -587,10 +614,10 @@ EDIT_TREE = {
     
 }
     
-def editAsTree():
+def editAsTree(fichero):
     from base.core import Cubo
     from support.util.jsonmgr import load_cubo
-    definiciones = load_cubo('danacube.json')
+    definiciones = load_cubo(fichero)
     mis_cubos = definiciones['user functions']
 
     #cubo = Cubo(mis_cubos['experimento'])
@@ -685,37 +712,88 @@ def getItemContext(item_ref):
 """
 Funciones GUI principales 
 """
-  
+
+
+
 class ufTreeMgrWindow(QMainWindow):
     """
     """
     def __init__(self,parent=None):
         super(ufTreeMgrWindow,self).__init__(parent)
+        self.cubeFile = 'danacube.json'
         self.tree = ufTreeMgr()
-        
-
         self.setCentralWidget(self.tree)
- 
     def closeEvent(self,event):
         self.close()
         
     def close(self):
-        print('a close')
-        #pprint(tree2dict(self.tree.model().invisibleRootItem(),isDictFromDef))
+
+        self.saveFile()
         return True
-         
-class ufTreeMgr(QTreeView):
+ 
+    def saveFile(self):
+        if self.saveDialog():
+            definiciones = load_cubo(self.cubeFile)
+            definiciones['user functions'] = tree2dict(self.tree.model().invisibleRootItem(),isDictFromDef)
+            dump_config(definiciones, self.cubeFile,total=True,secure=False)
+
+    def saveDialog(self):
+        if (QMessageBox.question(self,
+                "Salvar",
+                "Desea salvar los cambios del fichero de configuracion {}?".format(self.cubeFile),
+                QMessageBox.Yes|QMessageBox.No) == QMessageBox.Yes):
+            return True
+        else:
+            return False
+
+class ufTreeMgrDialog(QDialog):
     """
     """
     def __init__(self,parent=None):
+        super().__init__(parent)
+        self.cubeFile = 'danacube.json'
+        self.tree = ufTreeMgr()
+        self.msgLine = QLabel()
+        meatLayout = QGridLayout()
+        meatLayout.addWidget(self.tree,0,0)
+        meatLayout.addWidget(self.msgLine,1,1)
+        self.setLayout(meatLayout)
+        
+    def closeEvent(self,event):
+        self.close()
+        
+    def close(self):
+
+        self.saveFile()
+        return True
+ 
+    def saveFile(self):
+        if self.saveDialog():
+            definiciones = load_cubo(self.cubeFile)
+            definiciones['user functions'] = tree2dict(self.tree.model().invisibleRootItem(),isDictFromDef)
+            dump_json(definiciones,self.cubeFile)
+
+    def saveDialog(self):
+        if (QMessageBox.question(self,
+                "Salvar",
+                "Desea salvar los cambios del fichero de configuracion {}?".format(self.cubeFile),
+                QMessageBox.Yes|QMessageBox.No) == QMessageBox.Yes):
+            return True
+        else:
+            return False
+ 
+class ufTreeMgr(QTreeView):
+    """
+    """
+    def __init__(self,fichero='danacube.json',parent=None):
         super(ufTreeMgr, self).__init__(parent)
         self.parentWindow = parent
-        
+        self.cubeFile = fichero
         self.view = self  #truco para no tener demasiados problemas de migracion
         self.view.setAlternatingRowColors(True)
         #self.view.setEditTriggers(QAbstractItemView.DoubleClicked|QAbstractItemView.SelectedClicked)
         
-        self.baseModel  = editAsTree()
+        self.baseModel  = editAsTree(self.cubeFile)
         parent = self.hiddenRoot = self.baseModel.invisibleRootItem()
         self.view.setModel(self.baseModel)
         
@@ -772,7 +850,7 @@ class ufTreeMgr(QTreeView):
 
         if edit_data.get('objtype','atom') == 'dict' and edit_data.get('elements',None) is None:
             self.ctxMenu.append(menu.addAction("Add name/value pair",lambda i=n:self.actionNameValue(n)))
-        pprint(context)
+
         if context.get('topLevel',False) or ( not context.get('mandatory',False)):
             self.ctxMenu.append(menu.addAction("Borrar",lambda i=n:self.actionRemove(i)))
         else:
@@ -822,7 +900,7 @@ class ufTreeMgr(QTreeView):
         self.actionRename(newHead)
         
     def actionNameValue(self,item):
-        print('hello dolly')
+
         context = getItemContext(item)
         form = WNameValue()
         form.show()
@@ -863,8 +941,7 @@ class ufTreeDelegate(QStyledItemDelegate):
             return
         #edit_format = EDIT_TREE.get(self.context.get('editType'),{})
         edit_format = self.context.get('edit_tree',{})
-        if not edit_format:
-            pprint(self.context)
+
         item = self.context.get('editPos')
         display = item.data(Qt.DisplayRole)
         dato = item.data(Qt.UserRole +1)
@@ -961,7 +1038,6 @@ class ufTreeDelegate(QStyledItemDelegate):
                 item.appendRow(makeRow(None,entrada))
         else:
             if isinstance(editor, QComboBox):
-                print('voy',self.context.get('mandatory'))
                 dvalue = ivalue = editor.currentText() #Un poco valiente
                 if dvalue in ('True','False'):
                     ivalue = str2bool(dvalue)            
@@ -1001,7 +1077,6 @@ class ufTreeDelegate(QStyledItemDelegate):
                 return False
         else:
             dvalue,ivalue = lparms[0:2]
-            print(dvalue,ivalue)
             if self.context.get('mandatory') and (ivalue is None or dvalue == ''):
                 print('sin valor')
                 return False
@@ -1014,23 +1089,6 @@ class ufTreeDelegate(QStyledItemDelegate):
                     return False
         return True
                 
-        
-"""
-modulos de prueba
-"""    
-class Selector(QDialog):
-    def __init__(self,parent=None):
-        super().__init__(parent)
-        self.selector = WMultiList()
-        self.ok = QPushButton('Ok')
-        self.ok.clicked.connect(self.accept)
-        meatLayout = QGridLayout()
-        meatLayout.addWidget(self.selector,0,0)
-        meatLayout.addWidget(self.ok,1,0)
-        self.setLayout(meatLayout)
-        
-    def accept(self):
-        QDialog.accept(self)
 
 import sys
 def pruebaGeneral():
@@ -1042,18 +1100,8 @@ def pruebaGeneral():
         #pass
         #sys.exit()
     sys.exit(app.exec_())
-def testSelector():
-    app = QApplication(sys.argv)
-    lista = ['1','2','3','4','5','6','7','8','9','10']
-    initial = '3,5'
-    form = Selector()#(lista,initial)
-    form.selector.load(lista,'1,5')
-    form.show()
-    if form.exec_():
-        print(form.selector.seleList)
-        sys.exit()
-    #sys.exit(app.exec_())
-  
+
+    
  
 if __name__ == '__main__':
     #readConfig()
