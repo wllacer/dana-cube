@@ -17,6 +17,167 @@ from pprint import pprint
 from support.util.record_functions import norm2List,norm2String
  
 
+class WMultiList(QWidget):
+    """
+    WIP
+    Widget para seleccionar elementos de una lista y enviarlos a otra.
+    """
+    def __init__(self,lista=None,initial=None,parent=None):
+        super().__init__(parent)
+        self.disponible = QListWidget()
+        self.selecto = QListWidget()
+        self.anyade = QPushButton('Añadir')
+        self.elimina = QPushButton('Eliminar')
+        
+        origenlayout=QVBoxLayout()
+        self.origenCabecera = QLabel('Elementos disponibles')
+        origenlayout.addWidget(self.origenCabecera)
+        origenlayout.addWidget(self.disponible)
+        
+        destinolayout=QVBoxLayout()
+        self.destinoCabecera = QLabel('Elementos seleccionados')
+        destinolayout.addWidget(self.destinoCabecera)
+        destinolayout.addWidget(self.selecto)
+
+        boxlayout = QGridLayout()
+        boxlayout.addWidget(self.anyade,2,0)
+        boxlayout.addWidget(self.elimina,3,0)
+
+        meatlayout = QGridLayout()
+        meatlayout.addLayout(origenlayout,0,0)
+        meatlayout.addLayout(boxlayout,0,2)
+        meatlayout.addLayout(destinolayout,0,3)
+        
+        self.setLayout(meatlayout)
+
+        self.anyade.clicked.connect(self.selectItem)
+        self.elimina.clicked.connect(self.removeItem)
+        
+        self.origList = []
+        self.freeList = []
+        self.seleList = []
+        
+        self.load(lista,initial)
+        
+    def load(self,lista,initial):
+        self.disponible.clear()
+        if lista is not None:
+            self.origList = [ entry for entry in lista ]
+        self.freeList = [ entry for entry in self.origList]
+        self.disponible.addItems(self.freeList)
+        self.selecto.clear()
+        self.seleList = []
+        if initial is not None:
+            self.setSelectedEntries(initial)
+    
+    # slots
+    def selectItem(self,checked):
+        """
+        checked is not used
+        """
+        lista = self.disponible.selectedItems()
+        for item in lista:
+            valor = item.data(0)
+            idx = self.freeList.index(valor)
+            del self.freeList[idx]
+            self.seleList.append(valor)
+            mitem = self.disponible.takeItem(idx)
+            self.selecto.addItem(mitem)
+
+    def removeItem(self,checked):
+        """
+        checked is not used
+        #TODO devolver a la posicion original
+        """
+        lista = self.selecto.selectedItems()
+        for item in lista:
+            valor = item.data(0)
+            idx = self.seleList.index(valor)
+            del self.seleList[idx]
+            self.freeList.append(valor)
+            mitem = self.selecto.takeItem(idx)
+            self.disponible.addItem(mitem)
+
+
+    def selectEntry(self,entrada):
+        if entrada not in self.seleList:
+            self.seleList.append(entrada)
+            self.selecto.addItem(entrada)
+        ande = self.freeList.index(entrada)
+        self.disponible.takeItem(ande)
+        del self.freeList[ande]
+
+    def removeEntry(self,entrada):
+        if entrada not in self.freeList:
+            self.freeList.append(entrada)  #TODO devolver a la posicion original
+            self.disponible.addItem(entrada)
+        ande = self.seleList.index(entrada)
+        self.selecto.takeItem(ande)
+        del self.seleList[ande]
+
+    def setSelectedEntries(self,lista):
+        conjunto = norm2List(lista)
+        for entrada in conjunto:
+            self.selectEntry(entrada)
+
+    ## signals
+    #def itemSelected(self,item): #signal
+        #pass
+    #def itemRemoved(self,item):  #signal
+        #pass
+    ## methods
+    
+    #def getAvailableItems(self):
+        #pass
+    #def setAvailableItems(self,lista):
+        #pass
+    #def getAvailableItemsLabel(self):
+        #pass
+    #def setAvailableItemsLabel(self,label):
+        #pass
+    #def getSelectedItems(self):
+        #pass
+    #def setSelectedItems(self,lista):
+        #pass
+    #def getSelectedItemsLabel(self):
+        #pass    
+    #def setSelectedItemsLabel(self,label):
+        #pass
+    ## protected member
+    #def addSelectedItem(self):
+        #pass
+    #def removeSelectedItem(self):
+        #pass
+
+class WNameValue(QDialog):
+    """
+    WIP
+    Widget para editar libremente pares nombre/valor
+    
+    """
+    def __init__(self,parent=None):
+        super().__init__(parent)
+        self.sheet = WPowerTable(5,2)
+        self.ok = QPushButton('ok')
+        
+        self.ok.clicked.connect(self.accept)
+        
+        meatlayout = QGridLayout()
+        meatlayout.addWidget(self.sheet,0,0)
+        meatlayout.addWidget(self.ok,1,0)
+        self.setLayout(meatlayout)
+        self.prepareData()
+        
+    def prepareData(self):
+        self.sheet.setHorizontalHeaderLabels(('nombre','valor                                                    '))
+        context = []
+        context.append((QLineEdit,{'setEnabled':True},None))
+        context.append((QLineEdit,{'setEnabled':True},None))
+        for x in range(self.sheet.rowCount()):
+            for y,colDef in enumerate(context):
+                self.sheet.addCell(x,y,colDef,defVal=None)
+            self.sheet.resizeRowsToContents()
+
 class WMultiCombo(QComboBox):
     """ Una variante de combo con seleccion multiple
     """
