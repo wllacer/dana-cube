@@ -41,8 +41,16 @@ def childItems(treeItem):
 def makeRow(*parms):
     retorno = []
     for k in range(len(parms)):
-        elem = QStandardItem(str(parms[k]) if parms[k] is not None else None)
-        elem.setData(parms[k],Qt.UserRole +1)
+        doublet = [None,None]
+        if isinstance(parms[k],(list,tuple)):
+            doublet[0] = parms[k][0]
+            doublet[1] = str(parms[k][1]) if len(parms[k] > 1) or parms[k][1] is not None else None
+        else:
+            doublet[0] = parms[k]
+            doublet[1] = str(parms[k]) if parms[k] is not None else None
+        
+        elem = QStandardItem(doublet[1])
+        elem.setData(doublet[0],Qt.UserRole +1)
         retorno.append(elem)
     return retorno
 
@@ -144,7 +152,7 @@ def tree2dict(rootItem,esdiccionario=None,role=None):
                     result_d[nombre]= dato
 
         return result_d
-
+    
 def cloneSubTree(entryPoint): #,filter=None,payload=False):
     """
     TODO add to doc
@@ -220,12 +228,26 @@ def cloneSubTree(entryPoint): #,filter=None,payload=False):
         last = [n,newRow[0]]            
     return newHead
 
-def traverse(model, key=None):
-    if key is not None:
+def traverse(*lparms):
+    if len(lparms) >=2:
+        model = lparms[0]
+        key = lparms[1]
+    elif len(lparms) == 1:
+        if isinstance(lparms[0],QStandardItemModel):
+            model = lparms[0]
+            key = model.invisibleRootItem()
+        else:
+            key = lparms[0]
+            model = lparms[0].model()
+            
+    if key == model.invisibleRootItem():
+        queue = childItems(model.invisibleRootItem())
+    elif key is not None:
         yield key
         queue = childItems(key)
     else:
         queue = childItems(model.invisibleRootItem())
+        
     while queue:
         yield queue[0] 
         expansion = childItems(queue[0])
@@ -296,7 +318,25 @@ def branch2text(headItem):
         text ='['+text+']'
     return text
         
- 
+def getItemTopDown(parent,namearr):
+    name = namearr[0]
+    hijo  = getChildByName(parent,name)
+    if not hijo:
+        print('no encontre nada para',name)
+        return None
+    else:
+        del namearr[0]
+        if len(namearr) > 0:
+            return getItemTopDown(hijo,namearr)
+        else:
+            return hijo
+                
+def getChildByName(parent,name):
+    for entry in childItems(parent):
+        if entry.data() == name:
+            return entry
+    return None
+
 if __name__ == '__main__':
     #readConfig()
     #testSelector()

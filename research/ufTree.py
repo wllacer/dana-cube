@@ -1,6 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+
+
+para validar contenido
+definir una señal validate 
+en el slot de validate
+   validar el primero
+        en la validacion invocar a la señal recursivamente
 """
 
 from __future__ import division
@@ -78,7 +85,8 @@ def isDictFromDef(item):
             return True
     else:
         return False
-    
+
+
 """
 Callbacks del editor
 """
@@ -242,7 +250,7 @@ def getItemContext(item_ref):
     isReadOnly = False
     if tp:
         elementosPadre = EDIT_TREE.get(tp.data(),{}).get('elements',[[None,None,None]])
-        if t.data():
+        if t and t.data():
             try:
                 idx  = [ dato[0] for dato in elementosPadre ].index(t.data())
                 isMandatory = elementosPadre[idx][1]

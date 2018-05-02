@@ -64,7 +64,7 @@ class TreeMgr(QTreeView):
             self.view.resizeColumnToContents(m)
         self.view.collapseAll()
 
-        delegate = TreeDelegate(self)
+        delegate = TreeDelegateNew(self)
         self.setItemDelegate(delegate)
 
         self.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -91,6 +91,14 @@ class TreeMgr(QTreeView):
             self.ctxMenu.append(menu.addAction("Copy",lambda i=n:self.actionCopy(i)))
             self.ctxMenu.append(menu.addAction("Rename",lambda i=n:self.actionRename(i))) 
             menu.addSeparator()
+        
+        for linea in edit_data.get('menuActions',[]):
+            self.ctxMenu.append(menu.addAction(linea[1],lambda i=n:linea[0](i,self)))
+            
+        if context.get('topLevel',False) or ( not context.get('mandatory',False)):
+            self.ctxMenu.append(menu.addAction("Borrar",lambda i=n:self.actionRemove(i)))
+            menu.addSeparator()
+
         if 'elements' in edit_data:
             # creo que es lo mas sensible hacer. Localizo los elementos que ya existen
             existentes = set()
@@ -110,10 +118,6 @@ class TreeMgr(QTreeView):
         if edit_data.get('objtype','atom') == 'dict' and edit_data.get('elements',None) is None:
             self.ctxMenu.append(menu.addAction("Add name/value pair",lambda i=n:self.actionNameValue(n)))
 
-        if context.get('topLevel',False) or ( not context.get('mandatory',False)):
-            self.ctxMenu.append(menu.addAction("Borrar",lambda i=n:self.actionRemove(i)))
-        else:
-            pass
         
         action = menu.exec_(self.viewport().mapToGlobal(position))
         
@@ -131,7 +135,13 @@ class TreeMgr(QTreeView):
             parent = item
         else:
             parent = item.model().itemFromIndex(item.index().sibling(item.row(),0))
-        newRow = makeRow(newItemType,edit_data.get('default',None),newItemType)
+        def_val = edit_data.get('default',None)
+        valor_defecto = None
+        if def_val and callable(def_val):
+            valor_defecto = def_val(item,self)
+        else:
+            valor_defecto = def_val
+        newRow = makeRow(newItemType,valor_defecto,newItemType)
         if parent is None:
             self.model().appendRow(newRow)
         else:
@@ -176,6 +186,305 @@ class TreeMgr(QTreeView):
             for funcion in context.get('edit_tree',{}).get('setters',[]):
                 funcion(item,values)
             
+
+class TreeDelegateNew(QStyledItemDelegate):
+    def __init__(self,parent=None):
+        super().__init__(parent)
+        self.context = None 
+        #para los objetos con lista
+        self.isDouble = False
+        self.fullList = None
+        self.currentList = None 
+        
+    def createEditor(self,parent,option,index):
+        """
+
+        """
+        if index.column() != 1:
+            return 
+        self.context = self.parent().ctxFactory(index)
+        if self.context.get('topLevel',False):
+            return 
+        if self.context.get('readonly',False):
+            return
+        edit_format = self.context.get('edit_tree',{})
+
+        item = self.context.get('editPos')
+        defeditor = edit_format.get('editor',QLineEdit)
+        
+        if defeditor ==  QCheckBox:
+            #TODO hay que ponerle un nombre
+            editor = QCheckBox(self.context.get('name'),parent)
+            
+        elif defeditor ==  QSpinBox:
+            editor = QSpinBox(parent)
+            editor.setMaximum(edit_format.get('max',99))
+            editor.setMinimum(edit_format.get('min',0))
+            
+        elif defeditor in (QComboBox,WMultiCombo,WMultiList):
+            #FIXME parche de presentacion
+            if defeditor != WMultiList:   
+                editor = defeditor(parent=parent )
+            else:
+                editor = defeditor()
+                
+            orlist = edit_format.get('source',[])
+            if callable(orlist):
+                self.fullList = sorted(orlist(item,self.parent()))
+            else:
+                self.fullList = orlist
+            if isinstance(self.fullList[0],(list,tuple)):
+                x,y = zip(*self.fullList)
+                self.currentList = list(y)
+                self.isDouble = True
+            else:
+                self.currentList = self.fullList
+                self.isDouble = False
+
+            if defeditor in (WMultiCombo,) :   #WMC siempre antes que QCB ya que es una especializacion
+                if self.isDouble:
+                    editor.load([ entry[0] for entry in self.fullList],self.currentList)
+                else:
+                    editor.load(self.currentList)
+                #editor.setEditable(edit_format.get('editable',False))
+            if defeditor ==  QComboBox:
+                editor.addItems(self.currentList)
+                editor.setEditable(edit_format.get('editable',False))
+            elif defeditor in (WMultiList, ):
+                editor.load(self.currentList,[])
+                
+        elif defeditor == WPowerTable :
+            editor = defeditor(self.context('rowHead').rowCount() +2,2)
+            editor.setHorizontalHeaderLabels(('nombre','valor'))
+            context = []
+            context.append((QLineEdit,{'setEnabled':False},None))
+            context.append((QLineEdit,{'setEnabled':True},None))
+            for x in range(item.rowCount()):
+                for y,colDef in enumerate(context):
+                    editor.addCell(x,y,colDef,defVal=None)
+            editor.resizeRowsToContents()
+            
+        else:
+            if self.context.get('rowHead').hasChildren():
+                return
+            editor = defeditor(parent)
+            if isinstance(editor,QLineEdit) and edit_format.get('hidden',False):
+                editor.setEchoMode(QLineEdit.Password)
+            #editor.setText(dato)
+        return editor
+            
+    def setEditorData(self, editor, index):
+        model = index.model()
+
+        edit_format = self.context.get('edit_tree',{})
+        item = self.context.get('editPos')
+        display = item.data(Qt.DisplayRole)
+        dato = item.data(Qt.UserRole +1)
+        tipo = type(dato)
+
+        setters = self.context.get('setters')
+        if setters:
+            for funcion in setters:
+                dato,display = funcion(item,self.parent(),dato,display)
+            
+        valor_defecto = None    
+        if isinstance(editor,QSpinBox):
+            def_value = self.context.get('default',0)
+        elif isinstance(editor,QCheckBox):
+            def_value = self.context.get('default',False)
+        else:
+            def_value = self.context.get('default')
+        if callable(def_value):
+            valor_defecto = def_value(item,self.parent())
+        else:
+            valor_defecto = def_value
+            
+        if isinstance(editor,WMultiList):
+            inicial = []
+            n,i,t = getRow(item)
+            if n.hasChildren():
+                for x in range(n.rowCount()):
+                    nh,ih,th = getRow(n.child(x))
+                    editor.selectEntry(ih.data())
+            elif valor_defecto is not None:
+                editor.selectEntry(valor_defecto)
+                
+        elif isinstance(editor,WMultiCombo): # WMC siemre antes que QCB porque es una especializacion
+            #TODO doble seleccion 
+            # TODO con insercion
+            if self.context.get('dtype','atom') == 'list':
+                aceptados = []
+                n,i,t = getRow(item)
+                if n.hasChildren():
+                    for x in range(n.rowCount()):
+                        nh,ih,th = getRow(n.child(x))
+                        aceptados.append(ih.data())
+            else:
+                aceptados = norm2List(dato)
+            for entrada in aceptados:
+                editor.set(entrada)
+            if len(aceptados) == 0 and valor_defecto is not None:
+                editor.set(valor_defecto)
+                
+        elif isinstance(editor,QComboBox):
+            
+            isEditable = edit_format.get('editable',False)
+            
+            if dato is not None:
+                try:
+                    pos = [ entry[0] for entry in self.fullList].index(dato)
+                except ValueError:
+                    if self.isDouble:
+                        try:
+                            pos = self.currentList.index(dato)
+                        except ValueError:
+                            if isEditable:
+                                self.currentList.append(dato)
+                                self.fullList.append([dato,dato])
+                                pprint(self.fullList)
+                                editor.addItem(dato)
+                                pos = len(self.currentList) -1
+                            else:
+                                raise
+                    else:
+                        if isEditable:
+                            self.currentList.append(dato)
+                            editor.addItem(dato)
+                            pos = len(self.currentList) -1
+                        else:
+                            raise
+                editor.setCurrentIndex(pos)
+            elif valor_defecto is not None:
+                editor.setCurrentIndex(self.currentList.index(valor_defecto))
+
+        elif isinstance(editor, QSpinBox):
+            if dato is not None:
+                editor.setValue(dato)
+            else:
+                editor.setValue(valor_defecto)
+
+        elif isinstance(editor, QCheckBox):
+            if dato is not None:
+                editor.setCheckState(dato)
+            else:
+                editor.setChecked(valor_defecto)
+
+        elif isinstance(editor,WPowerTable):
+            for x in range(item.rowCount()):
+                childIdx = item.index().child(x,0)
+                nomItem,sitem,typeItem = getRow(childIdx)
+                datos = [nomItem.data(),branch2text(nomItem)]
+                for y in range(2):
+                    editor.cellWidget(x,y).setText(datos[y])
+            editor.resizeRowsToContents()
+        
+        else:
+            if dato is not None:
+                editor.setText(dato)
+            elif valor_defecto is not None:
+                editor.setText(valor_defecto)
+        
+    def setModelData(self,editor,model,index):
+        """
+        TODO dobleSeleccion
+        """
+        def _redoTree(item,values):
+            if item.column() != 0:
+                item = item.model().itemFromIndex(item.index().sibling(item.row(),0))
+            contador = item.rowCount()
+            for k in range(contador):
+                model.removeRow(0,item.index())
+            for entrada in values:
+                item.appendRow(makeRow(None,entrada))
+            
+        def _changeItem(model,index,ivalue,dvalue):
+                        
+            if not dvalue:
+                model.setData(index,str(index.data(Qt.UserRole +1)),Qt.EditRole)
+            else:
+                model.setData(index,dvalue, Qt.EditRole)                
+            model.setData(index,ivalue, Qt.UserRole +1)
+            item = model.itemFromIndex(index.sibling(index.row(),0))
+            return item
+        
+        model = index.model()
+        if isinstance(editor, WMultiList):
+            values = editor.seleList
+
+            if not self.validator(editor,values):
+                print('Rechazada la validacion')
+                return
+            item = self.context.get('editPos')
+            _redoTree(item,values)
+            
+        elif isinstance(editor, WMultiCombo):
+                #TODO falta multiple selection
+            if self.context.get('dtype','atom') == 'list':
+                values = norm2List(editor.get())
+                item = self.context.get('editPos')
+                _redoTree(item,values)
+            else:
+                dvalue = ivalue = editor.get()
+                if not self.validator(editor,dvalue,ivalue):
+                    print('Rechazada la validacion')
+                    return
+                item = _changeItem(model,index,ivalue,dvalue)
+                
+        else:
+            if isinstance(editor, QComboBox):
+                if self.isDouble:
+                    dvalue = self.currentList[editor.currentIndex()]
+                    ivalue =  self.fullList[editor.currentIndex()][0]
+                else:
+                    dvalue = ivalue = self.currentList[editor.currentIndex()]
+                if dvalue in ('True','False'):
+                    ivalue = str2bool(dvalue)            
+            elif isinstance(editor, QSpinBox):
+                ivalue = editor.value()
+                dvalue = str(ivalue)
+            elif isinstance(editor, QCheckBox):
+                ivalue = editor.isChecked()
+                dvalue = str(ivalue)
+            elif isinstance(editor,WPowerTable):
+                return
+            elif isinstance(editor,QLineEdit) and self.context.get('edit_tree',{}).get('hidden',False):
+                dvalue = '****'
+                ivalue = editor.text()
+            else:
+                dvalue = ivalue = editor.text()
+    
+            if not self.validator(editor,dvalue,ivalue):
+                print('Rechazada la validacion')
+                return
+            
+            item = _changeItem(model,index,ivalue,dvalue)
+        
+        setters = self.context.get('edit_tree',{}).get('setters',[])
+        for funcion in setters:
+            funcion(item,self.parent())
+
+    def validator(self,editor,*lparms,**kwparms):
+        if isinstance(editor,(WMultiList,)):
+            values = lparms[0]
+            if self.context.get('mandatory') and len(values) == 0:
+                print('No hay entradas')
+                return False
+        else:
+            dvalue,ivalue = lparms[0:2]
+            if self.context.get('mandatory') and (ivalue is None or dvalue == ''):
+                print('sin valor')
+                return False
+        validators = self.context.get('edit_tree',{}).get('validators',[])
+        if len(validators) == 0:
+            return True
+        else:
+            for entry in validators:
+                if not entry(self.context.get('editPos'),self.parent()): #editor,*lparms,**kwparms):
+                    return False
+        return True
+                
+
+ 
           
 class TreeDelegate(QStyledItemDelegate):
     def __init__(self,parent=None):
@@ -210,13 +519,13 @@ class TreeDelegate(QStyledItemDelegate):
  
         if tipo == bool or defeditor ==  QCheckBox:
             #TODO hay que ponerle un nombre
-            editor = QCheckBox(self.context.get('name'))
+            editor = QCheckBox(self.context.get('name'),parent)
             if dato is not None:
                 editor.setCheckState(dato)
             else:
                 editor.setChecked(edit_format.get('default',False))
         elif defeditor ==  QSpinBox:
-            editor = QSpinBox()
+            editor = QSpinBox(parent)
             editor.setMaximum(edit_format.get('max',99))
             editor.setMinimum(edit_format.get('min',0))
             if dato is not None:
@@ -224,7 +533,11 @@ class TreeDelegate(QStyledItemDelegate):
             else:
                 editor.setValue(edit_format.get('default',0))
         elif defeditor in (QComboBox,WMultiCombo,WMultiList):
-            editor = defeditor()
+            #FIXME parche de presentacion
+            if defeditor != WMultiList:   
+                editor = defeditor(parent=parent )
+            else:
+                editor = defeditor()
             orlist = edit_format.get('source',[])
             if callable(orlist):
                 lista = sorted(orlist(item,self.parent()))
@@ -273,14 +586,15 @@ class TreeDelegate(QStyledItemDelegate):
         else:
             if self.context.get('rowHead').hasChildren():
                 return
-            editor = defeditor()
+            editor = defeditor(parent)
             if isinstance(editor,QLineEdit) and edit_format.get('hidden',False):
                 editor.setEchoMode(QLineEdit.Password)
             editor.setText(dato)
         return editor
             
     def setModelData(self,editor,model,index):
-
+        """
+        """
         model = index.model()
         if isinstance(editor, WMultiList):
             values = editor.seleList
@@ -298,7 +612,10 @@ class TreeDelegate(QStyledItemDelegate):
             for entrada in values:
                 item.appendRow(makeRow(None,entrada))
         else:
-            if isinstance(editor, QComboBox):
+            if isinstance(editor, WMultiCombo):
+   
+                dvalue = ivalue = editor.get()
+            elif isinstance(editor, QComboBox):
                 dvalue = ivalue = editor.currentText() #Un poco valiente
                 if dvalue in ('True','False'):
                     ivalue = str2bool(dvalue)            
@@ -308,8 +625,6 @@ class TreeDelegate(QStyledItemDelegate):
             elif isinstance(editor, QCheckBox):
                 ivalue = editor.isChecked()
                 dvalue = str(ivalue)
-            elif isinstance(editor, WMultiCombo):
-                dvalue = ivalue = editor.get()
             elif isinstance(editor,WPowerTable):
                 return
             elif isinstance(editor,QLineEdit) and self.context.get('edit_tree',{}).get('hidden',False):

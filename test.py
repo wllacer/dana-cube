@@ -38,6 +38,8 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QGridLayout, QSize
 from base.datadict import DataDict
 from admin.dictmgmt.tableInfo import TableInfo
 
+from research.cubeTree import *
+
 (_ROOT, _DEPTH, _BREADTH) = range(3)
 
 def generaArgParser():
@@ -60,7 +62,7 @@ def generaArgParser():
 
     return parser
 
-def traverse(root,base=None):
+def traverse(root,base=None,order='depth'):
     if base is not None:
        yield base
        queue = base.listChildren() 
@@ -74,7 +76,10 @@ def traverse(root,base=None):
         if expansion is None:
             del queue[0]
         else:
-            queue = expansion  + queue[1:]      
+            if order == 'depth':
+                queue = expansion  + queue[1:]      
+            else:
+                queue = queue[1:] +expansion
 #def pruebaTableInfo():
     #parser = generaArgParser()
     #args = parser.parse_args()
@@ -155,36 +160,47 @@ def traverse(root,base=None):
     ##aw = ApplicationWindow()
     ##aw.show()
     #pruebaTableInfo()
+    
+
+
 
 def prueba():
+
     parser = generaArgParser()
     args = parser.parse_args()
     print(args)
     #dd = DataDict(defFile=args.configFile,secure=args.secure)
     # dd= DataDict(conn=confName,schema=schema)
-    confName=  '$$TEMP'
-    schema=  'public' # None #'dana_sample'
-    table=  'rental' #None #'votos_locales'
-    iters=  2
-    confData=  {'driver': 'postgresql', 'dbname': 'pagila', 'dbhost': 'localhost', 'dbuser': 'werner', 'dbpass': ''}
-
-    dd= DataDict(conName=confName,schema=schema,table=table,iters=iters +1
-                 ,confData=confData,
-                 defFile=args.configFile,secure=args.secure) 
+    #confName=  '$$TEMP'
+    #schema=  'public' # None #'dana_sample'
+    #table=  'rental' #None #'votos_locales'
+    #confData=  {'driver': 'postgresql', 'dbname': 'pagila', 'dbhost': 'localhost', 'dbuser': 'werner', 'dbpass': ''}
+    #iters=  2
+    #dd= DataDict(conName=confName,schema=schema,table=table,iters=iters +1
+                 #,confData=confData,
+                 ##defFile=args.configFile,secure=args.secure) 
+                 #)
+    #pprint(tree2dict(dd.hiddenRoot,isDictFromDef))
     #pprint(dd.configData)
     ##print(dd.baseModel)
     #pprint(dd.conn)
     #print(dd.hiddenRoot)
-    for entry in traverse(dd.hiddenRoot):
-        tabs = '\t'*entry.depth()
-        if not entry.isAuxiliar() and not entry.getTypeText() == '' :
-            print(tabs,entry.getTypeText(),':',entry.getFullDesc()) #entry.fqn(),entry.getFullDesc(), entry.getRow(),entry.gpi()) #(tabs,entry) #entry.text(),'\t',entry.getRow())
+    dd = file2datadict('testcubo.json')
+    diccionario = tree2dict(dd.hiddenRoot)
+    pprint(diccionario)
+    #
+    #for entry in traverse(dd.hiddenRoot):
+        #tabs = '\t'*entry.depth()
+        #print(tabs,entry.text(),' > ',entry.fqn(),':',entry.getRow())
+        #print(tabs,entry.getTypeText(),':',entry.getRow())
+        #if not entry.isAuxiliar():# and not entry.getTypeText() == '' :
+            #print(tabs,entry.getTypeText(),':',entry.getFullDesc(),entry.gpi()[0],entry.gpi()[1]) #entry.fqn(),entry.getFullDesc(), entry.getRow(),entry.gpi()) #(tabs,entry) #entry.text(),'\t',entry.getRow())
 
-    ds = TableInfo(dd,confName,schema,table,maxlevel= iters)
-    pprint(ds.info2cube())
-    print( [ table for table in ds.lista] )
-    ds.prepareBulkSql()
-    #pprint(ds.getFKDeep()[2])
+    #ds = TableInfo(dd,confName,schema,table,maxlevel= iters)
+    #pprint(ds.info2cube())
+    ##print( [ table for table in ds.lista] )
+    #ds.prepareBulkSql()
+    ##pprint(ds.getFKDeep()[2])
 
 def numeros():
     from support.util.numeros import s2n
@@ -212,5 +228,5 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     #aw = ApplicationWindow()
     #aw.show()
-    #prueba()
-    numeros()
+    prueba()
+    #numeros()

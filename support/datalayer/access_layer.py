@@ -8,6 +8,7 @@ BACKEND = 'Alchemy' #'Alchemy' #or 'QtSql'
 DRIVERS = ('sqlite','mysql','postgresql','oracle','db2','odbc') #todavia no implementadas las dos ultimas
 AGR_LIST = ('count', 'max', 'min', 'avg', 'sum')
 CURR_HANDLERS = {'sqlite':'pysqlite','mysql':'mysqlconnector','postgresql':'psycopg2','oracle':'cx_oracle','db2':None,'odbc':None}
+DEFAULT_SCHEMA = {'sqlite':'main','mysql':'@dbname','postgresql':'public','oracle':'@dbuser','db2':None,'odbc':None}
 SYSTEM_SCHEMAS = {'mysql':('information_schema','mysql','performance_schema'),
                   'postgresql':('information_schema',),
                   'oracle':('anonymous','apex_public_user','apex_040000','ctxsys','flows_files','mdsys','outln','sys','system','xdb','xs$null')

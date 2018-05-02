@@ -136,7 +136,7 @@ class DataDict():
 
         padre = self.hiddenRoot
         if 'confData' in kwargs:
-            conf = kwargs['confData'][confName]   
+            conf = kwargs['confData'] #[confName]   
             # asi tengo acceso a esos datos aunque sea dinamica
             if not self.configData:
                 self.configData = {'Conexiones':{confName:conf}}
