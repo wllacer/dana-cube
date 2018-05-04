@@ -62,7 +62,7 @@ class WMultiList(QWidget):
     def load(self,lista,initial):
         self.disponible.clear()
         if lista is not None:
-            self.origList = [ entry for entry in lista ]
+            self.origList = lista #[ entry for entry in lista ]
         self.freeList = [ entry for entry in self.origList]
         self.disponible.addItems(self.freeList)
         self.selecto.clear()
@@ -103,10 +103,13 @@ class WMultiList(QWidget):
         if entrada not in self.seleList:
             self.seleList.append(entrada)
             self.selecto.addItem(entrada)
-        ande = self.freeList.index(entrada)
-        self.disponible.takeItem(ande)
-        del self.freeList[ande]
-
+        try:
+            ande = self.freeList.index(entrada)
+            self.disponible.takeItem(ande)
+            del self.freeList[ande]
+        except ValueError:                           
+            self.origList.append(entrada)
+            
     def removeEntry(self,entrada):
         if entrada not in self.freeList:
             self.freeList.append(entrada)  #TODO devolver a la posicion original

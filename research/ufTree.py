@@ -117,8 +117,9 @@ def checkMandatory(*lparms):
         if context.get('mandatory',False) and ( context['data'] is None or context['data'] == '' ):
             editIndex = n.child(k,1).index()
             view.setCurrentIndex(editIndex)
+            break
             #view.edit(editIndex)
-            view.edit(editIndex)
+            #view.edit(editIndex)
         
         
     

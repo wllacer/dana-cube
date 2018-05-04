@@ -337,6 +337,72 @@ def getChildByName(parent,name):
             return entry
     return None
 
+def getParentByName(item,name):
+    pai = item #por si acaso
+    while pai:  #evitamos 
+        if pai.data() == name:
+            return pai
+        pai = pai.parent()
+    return None
+
+def getChildByType(parent,type):
+    for entry in childItems(parent):
+        n,i,typeItem = getRow(entry)
+        if typeItem and typeItem.data() == type:
+            return entry
+    return None
+
+def getParentByType(item,type):
+    pai = item #por si acaso
+    while pai:  #evitamos 
+        n,i,typeItem = getRow(pai)
+        if typeItem and typeItem.data() == type:
+            return pai
+        pai = pai.parent()
+    return None
+
+
+def mergeEditData(parentData,childData):
+    """
+    
+    TODO hacerlo de modo que utilice ambos sin saber cuales son
+    
+    """
+    attr =('objtype','subtypes','discriminator','elements','getters','setters','diggers','validator','text','menuActions')
+    fromChild = ('objtype','text','subtypes','discriminator')
+    fromParent = ()
+    common =('elements','getters','setters','diggers','validator','menuActions')
+    new_edit = {}
+    for entry in fromParent:
+        if parentData.get(entry):
+            new_edit[entry] = parentData.get(entry)
+    for entry in fromChild:
+        if childData.get(entry):
+            new_edit[entry] = childData.get(entry)
+    for entry in common:
+        lista = []
+        if parentData.get(entry):
+            lista += parentData.get(entry)
+        if childData.get(entry):
+            lista += childData.get(entry)
+        if len(lista) > 0:  
+            new_edit[entry] = lista
+            
+    return new_edit
+        
+def subTypeDiscover(item,edit_data):
+        rowHead,i,t = getRow(item)
+        subtipo = None
+        discriminador = edit_data.get('discriminator','subtype')
+        if discriminador and callable(discriminador):
+            subtipo = discriminador(rowHead,None)
+        else:
+            subItem = getChildByType(discriminador)
+            if subItem:
+                nh,ni,nj = getRow(subItem)
+                subtipo = ni.data()
+        return subtipo
+
 if __name__ == '__main__':
     #readConfig()
     #testSelector()
