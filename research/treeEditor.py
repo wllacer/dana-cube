@@ -118,6 +118,7 @@ class TreeMgr(QTreeView):
             tipoAEditar = context.get('editType')    
             self.ctxMenu.append(menu.addAction("Add {}".format(tipoAEditar),
                                                    lambda i=rowHead,j=tipoAEditar:self.actionAdd(i,j)))
+        
         else:
             if context.get('repeatInstance',False):
                 self.ctxMenu.append(menu.addAction("Copy",lambda i=rowHead:self.actionCopy(i)))
@@ -137,7 +138,9 @@ class TreeMgr(QTreeView):
                     ns,js,ts = getRow(child.index())
                     if ts.data():
                         existentes.add(ts.data())
-                for elemento in edit_data['elements']:
+                        
+                elementos = getFullElementList(self.treeDef,edit_data.get('elements',[]))                    
+                for elemento in elementos:
                     if elemento[0] in existentes:
                         pass
                     else:
@@ -175,26 +178,31 @@ class TreeMgr(QTreeView):
         else:
             valor_defecto = def_val
         
-        newRow = makeRow(newItemType,valor_defecto,newItemType)
-        if parent is None:
-            self.model().appendRow(newRow)
-        else:
-            parent.appendRow(newRow)
+        if edit_data.get('objtype','atom') != 'group':
+            newRow = makeRow(newItemType,valor_defecto,newItemType)
+            if parent is None:
+                self.model().appendRow(newRow)
+            else:
+                parent.appendRow(newRow)
+                
+            self.addChildren(newRow[0],edit_data,newItemType)
             
-        self.addChildren(newRow[0],edit_data,newItemType)
-        
-        self.setCurrentIndex(newRow[0].index())
-        
+            self.setCurrentIndex(newRow[0].index())
         # este es el sitio para realizar el cambio de nombre
-        if 'elements' in edit_data:
-            campos = [elem[0] for elem in edit_data['elements'] ]
-            if 'name' in campos or 'result' in campos:
-                self.actionRename(newRow[0])
-
-        for funcion in edit_data.get('setters',[]):
-            funcion(newRow[0],self)
-        return newRow[0]
-    
+            if 'elements' in edit_data:
+                campos = [elem[0] for elem in getFullElementList(self.treeDef,edit_data['elements']) ]
+                if 'name' in campos or 'result' in campos:
+                    self.actionRename(newRow[0])
+                for funcion in edit_data.get('setters',[]):
+                    funcion(newRow[0],self)
+        
+            return newRow[0]
+        else:
+            self.addChildren(item,edit_data,newItemType)
+            self.setCurrentIndex(item.index())
+            return item
+            
+        
 
     def addChildren(self,newHead,edit_data,tipo):
         """
@@ -217,14 +225,14 @@ class TreeMgr(QTreeView):
             self.addChildren(newHead,edit_data,subtipo)
         else:
             if edit_data.get('elements'):
-                for entrada in edit_data.get('elements'):
+                for entrada in getFullElementList(self.treeDef,edit_data['elements']) :
                     #FIXME solo los obligatorios:
                     if len(entrada) > 3 and entrada[3]: # es solo un repeat
                         newHead.appendRow(makeRow(entrada[0],None,entrada[0]))
                     elif entrada[1]:
                         self.actionAdd(newHead,entrada[0])
         #TODO falta colocar el foco y validar obligatorios
-        
+    
     def actionAddTop(self,item,newItemType):
         pos = self.actionAdd(item,newItemType)
         self.actionRename(pos)

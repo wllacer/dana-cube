@@ -403,6 +403,54 @@ def subTypeDiscover(item,edit_data):
                 subtipo = ni.data()
         return subtipo
 
+def getFullElementList(treeDef,orlist):
+    """
+    devuelve una lista de elementos con los grupos resueltos
+    parametros:
+        treeDef -> la definicion del arbol
+        orlist -> la lista original
+    """
+    elementos = orlist  #una copia o puedo organizar un guirigay
+    # voy ahora a cargar los grupos en la lista de elementos 
+    # este bucle a la antigua es para evitar problemas porqu estoy expandiendo dinamicamente la lista de elementos
+    k = 0
+    grupos = set()
+    while k < len(elementos):
+        elemento = elementos[k]
+        tipo = treeDef.get(elemento[0],{}).get('objtype','atom')
+        if tipo == 'group': 
+            grupos.add(elemento[0])
+            # si no me casca el for es lo mas interesante, porque permite recursividad
+            for entrada in treeDef.get(elemento[0],{}).get('elements',[]):
+                elementos.append(entrada)
+        k += 1
+    # ahora elimino de la lista los grupos, porque ya no los necesito
+    for grupo in grupos:
+        idx = [ entry[0] for entry in elementos].index(grupo)
+        del elementos[idx]
+    return elementos
+
+def getRealType(item,treeDef,editType):
+    definicion = treeDef.get(editType,{})
+    if len(definicion.get('subtypes',[])) > 0:
+        retorno = subTypeDiscover(item,definicion)
+        if retorno:
+            return retorno
+    return editType
+
+def getRealEditDefinition(item,treeDef,original):   
+    tipo = original
+    definicion = treeDef.get(original,{})
+    if len(definicion.get('subtypes',[])) > 0:
+        retorno = subTypeDiscover(item,definicion)
+        if retorno:
+            tipo = retorno
+            print(original,retorno)
+            definicion = mergeEditData(treeDef.get(original),treeDef.get(retorno))
+    #TODO incluir los elementos desplegados. Desactivado de momento
+    if 'elements' in definicion:
+            definicion['elements'] = getFullElementList(treeDef,definicion.get('elements',[]))
+    return original,definicion
 if __name__ == '__main__':
     #readConfig()
     #testSelector()

@@ -250,7 +250,8 @@ def getItemContext(item_ref):
     isMandatory = False
     isReadOnly = False
     if tp:
-        elementosPadre = EDIT_TREE.get(tp.data(),{}).get('elements',[[None,None,None]])
+        listaOriginal = EDIT_TREE.get(tp.data(),{}).get('elements',[[None,None,None,None]])
+        elementosPadre = getFullElementList(EDIT_TREE,listaOriginal)
         if t and t.data():
             try:
                 idx  = [ dato[0] for dato in elementosPadre ].index(t.data())
