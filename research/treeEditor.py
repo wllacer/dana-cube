@@ -82,7 +82,6 @@ class TreeMgr(QTreeView):
             index = indexes[0]
         context = self.ctxFactory(index)
         n = context.get('rowHead')
-        
         edit_data = self.treeDef.get(context.get('editType'),{})
         if context.get('topLevel',False):
             for entrada in self.firstLevelDef:
@@ -93,12 +92,25 @@ class TreeMgr(QTreeView):
             menu.addSeparator()
         
         for linea in edit_data.get('menuActions',[]):
-            self.ctxMenu.append(menu.addAction(linea[1],lambda i=n:linea[0](i,self)))
+            linea[0](n,self,self.ctxMenu,menu,linea[1])
+            #self.ctxMenu.append(menu.addAction(linea[1],lambda i=n:linea[0](i,self)))
             
         if context.get('topLevel',False) or ( not context.get('mandatory',False)):
-            self.ctxMenu.append(menu.addAction("Borrar",lambda i=n:self.actionRemove(i)))
-            menu.addSeparator()
-
+            self.ctxMenu.append(menu.addAction("Remove",lambda i=n:self.actionRemove(i)))
+            
+        if context.get('edit_tree',{}).get('editor',None) is None:
+            if context.get('dtype','atom') == 'list':
+                if not context.get('listMember',False):  # cabeza
+                    self.ctxMenu.append(menu.addAction("Clear list",lambda i=n:self.clearList(i)))
+                    self.ctxMenu.append(menu.addAction("Add entry",lambda i=n:self.addEntry(i)))
+                datos = n.model().itemFromIndex(n.index().sibling(n.row(),1) )        
+                if datos.data():
+                    self.ctxMenu.append(menu.addAction("entry to list ",lambda i=n:self.convertToList(i)))
+            elif edit_data.get('objtype','atom') == 'dict' and edit_data.get('elements',None) is None:
+                self.ctxMenu.append(menu.addAction("Add name/value pair",lambda i=n:self.actionNameValue(n)))
+    
+        menu.addSeparator()
+        
         self.getMenuOptionsDetail(menu,n,context)
         
         action = menu.exec_(self.viewport().mapToGlobal(position))
@@ -148,8 +160,6 @@ class TreeMgr(QTreeView):
                                                     lambda i=rowHead,j=elemento[0]:self.actionAdd(i,j)))
             menu.addSeparator()
         
-        if edit_data.get('objtype','atom') == 'dict' and edit_data.get('elements',None) is None:
-            self.ctxMenu.append(menu.addAction("Add name/value pair",lambda i=rowHead:self.actionNameValue(n)))
 
     def actionRemove(self,item):
         rownr = item.row()
@@ -165,6 +175,7 @@ class TreeMgr(QTreeView):
                 dig(pai,self)
     
     def actionAdd(self,item,newItemType):
+        print('action add',item.data(),newItemType)
         edit_data = self.treeDef.get(newItemType,{})
         if item.column() == 0:
             parent = item
@@ -189,10 +200,14 @@ class TreeMgr(QTreeView):
             
             self.setCurrentIndex(newRow[0].index())
         # este es el sitio para realizar el cambio de nombre
-            if 'elements' in edit_data:
-                campos = [elem[0] for elem in getFullElementList(self.treeDef,edit_data['elements']) ]
-                if 'name' in campos or 'result' in campos:
-                    self.actionRename(newRow[0])
+            ftype,fedit_data = getRealEditDefinition(newRow[0],self.treeDef,newItemType)
+            print('action rename',newRow[0].data(),ftype,fedit_data)
+            if 'elements' in fedit_data:
+                campos = [elem[0] for elem in fedit_data['elements'] ]
+                for nombre in ('name','result'):
+                    if nombre in campos:
+                        self.actionRename(newRow[0],nombre)
+                        break
                 for funcion in edit_data.get('setters',[]):
                     funcion(newRow[0],self)
         
@@ -208,6 +223,7 @@ class TreeMgr(QTreeView):
         """
         separada 
         """
+        print('action addChildren',newHead.data(),tipo)
         if edit_data.get('subtypes'):
             ok = False
             lista = []
@@ -237,7 +253,8 @@ class TreeMgr(QTreeView):
         pos = self.actionAdd(item,newItemType)
         self.actionRename(pos)
        
-    def actionRename(self,item):
+    def actionRename(self,item,campo=None):
+        #TODO necesita un alta ¿?
         text = QInputDialog.getText(None, "Nuevo nombre para el nodo: "+item.data(),"Nodo", QLineEdit.Normal,item.data())
         if text[0] and text[0] != '':
             item.setData(text[0],Qt.EditRole)
@@ -257,7 +274,8 @@ class TreeMgr(QTreeView):
         self.actionRename(newHead)
         
     def actionNameValue(self,item):
-
+        """
+        """
         context = self.ctxFactory(item)
         form = WNameValue()
         form.show()
@@ -273,7 +291,29 @@ class TreeMgr(QTreeView):
                 item.appendRow(makeRow(entrada[0],entrada[1],entrada[0]))
             for funcion in context.get('edit_tree',{}).get('setters',[]):
                 funcion(item,values)
-            
+ 
+    def clearList(self,item):
+        nitem = item.model().itemFromIndex(item.index().sibling(item.row(),0) )                    
+        while nitem.rowCount() > 0:
+            item.removeRow(0)
+
+    def addEntry(self,item):
+        nitem = item.model().itemFromIndex(item.index().sibling(item.row(),0) )       
+        text,ok = QInputDialog.getText(None, "Nueva entrada para: "+nitem.data(),"Valor", QLineEdit.Normal,'')
+        if ok and text:
+            nRow = makeRow(None,text,None)
+            nitem.appendRow(nRow)
+
+    def convertToList(self,item):
+        n,i,t = getRow(item)
+        if not i.data():
+            return 
+        for entrada in norm2List(i.data()):
+            nRow = makeRow(None,entrada,None)
+            n.appendRow(nRow)
+        i.setData(None,Qt.EditRole)
+        i.setData(None,Qt.UserRole +1)
+ 
 
 class TreeDelegate(QStyledItemDelegate):
     def __init__(self,parent=None):

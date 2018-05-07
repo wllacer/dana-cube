@@ -445,12 +445,46 @@ def getRealEditDefinition(item,treeDef,original):
         retorno = subTypeDiscover(item,definicion)
         if retorno:
             tipo = retorno
-            print(original,retorno)
             definicion = mergeEditData(treeDef.get(original),treeDef.get(retorno))
     #TODO incluir los elementos desplegados. Desactivado de momento
     if 'elements' in definicion:
             definicion['elements'] = getFullElementList(treeDef,definicion.get('elements',[]))
     return original,definicion
+
+
+def numEntries(tree):
+    k = 0
+    k = 0
+    for item in traverse(tree):
+        k +=1
+    print('hay ',k, ' entradas')
+    return k
+
+def padd(lista,num,default=None,pos='after'):
+    """
+    devuelve una copia con el relleno que indico
+    """
+    original = len(lista)
+    if original >= num:
+        return lista[:]
+    resultado = lista[:]
+    for k in range(num - len(lista)):
+        if pos == 'after':
+            resultado.append(default)
+        elif pos == 'before':
+            resultado.insert(0,default)
+    return resultado
+
+def fullKey(item):
+    result = []
+    n,i,t = getRow(item)
+    result.append(n.data())
+    pai = n.parent()
+    while pai:
+        result.insert(0,pai.data())
+        pai = pai.parent()
+    return result
+
 if __name__ == '__main__':
     #readConfig()
     #testSelector()
