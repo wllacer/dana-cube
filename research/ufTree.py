@@ -23,7 +23,7 @@ import math
 from support.util.uf_manager import *
 from base.ufhandler import functionFromName
 from support.util.jsonmgr import *
-from support.gui.widgets import WMultiCombo,WPowerTable, WMultiList, WNameValue
+from support.gui.widgets import WMultiCombo,WPowerTable, WMultiList
 from support.util.record_functions import norm2List,norm2String
 import base.config as config
 
@@ -31,7 +31,7 @@ from PyQt5.QtCore import Qt,QModelIndex,QItemSelectionModel
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QTreeView, QSplitter, QMenu, \
      QDialog, QInputDialog, QLineEdit, QComboBox, QMessageBox,QGridLayout, \
-     QAbstractItemView, QTableView, QStyledItemDelegate, QSpinBox, QListWidget, QPushButton, QVBoxLayout,QLabel, QWidget, QCheckBox
+     QAbstractItemView, QTableView, QStyledItemDelegate, QSpinBox, QListWidget, QPushButton, QVBoxLayout,QLabel, QWidget, QCheckBox, QStatusBar
 
 from research.ufTreeUtil import *
 """
@@ -66,7 +66,7 @@ def isDictFromDef(item):
     FIXME depende de getItemContext()
     """
     if item.hasChildren():
-        contexto = getItemContext(item)
+        contexto = Context(item)
         type_context =  contexto.get('edit_tree',{}).get('objtype')
         if type_context == 'dict':
             return True
@@ -113,7 +113,7 @@ def checkMandatory(*lparms):
     view = lparms[1]
     n,i,t = getRow(item)
     for k in range(n.rowCount()):
-        context = getItemContext(n.child(k,0))
+        context = Context(n.child(k,0))
         if context.get('mandatory',False) and ( context['data'] is None or context['data'] == '' ):
             editIndex = n.child(k,1).index()
             view.setCurrentIndex(editIndex)
@@ -150,7 +150,11 @@ EDIT_TREE = {
                         ],
                     'getter':[],                   #antes de editar
                     'setter':[qualifyClass, checkMandatory],      #despues de editar (por el momento tras add
-                    'validator':[]                 #validacion de entrada
+                    'validator':[] ,                #validacion de entrada
+                    'hint': """
+                              Esta entrada esta pensada para albergar la definición de una funcion individual
+                              """,
+                    'text':'Función elemental',
                     },
     'sequence': {'objtype': 'dict',
                     'elements': [
@@ -165,25 +169,38 @@ EDIT_TREE = {
                         ],
                     'getter':[],
                     'setter':[qualifyClass,],
-                    'validator':[]
+                    'validator':[],
+                    'hint': """
+                              Esta entrada esta pensada para albergar la definición de secuencia de funciones (u otras secuencias)
+                              ejecutadas como una unidad
+                              """,
+                    'text':'Secuencia de funciones',
+                    
                     },
-    'name': {'editor':QLineEdit},
-    'entry':{'editor':QComboBox,'source':funclist},
+    'name': {'editor':QLineEdit,
+             'text':'nombre'},
+    'entry':{'editor':QComboBox,'source':funclist, 
+             "hint":"El nombre de la funcion a ejecutar, seleccione de la lista una de las dispoinibles",
+             'text':'funcion a ejecutar',},
     'type': {'editor':WMultiCombo,
                 'source':['item','leaf','colparm','rowparm','colkey','rowkey','kwparm'],
-                'default':'item'
+                'default':'item',
+                'text':'tipo de parametros',
             },
     'text':{'editor':QLineEdit},
-    'aux_parm':{'objtype':'dict'},  #TODO mejorable
-    'db': {'editor':QLineEdit},
-    'seqnr': {'editor':QSpinBox},
-    'sep': {'editor':QComboBox,'source':['True','False'],'default':False},
-    'hidden':{'editor':QComboBox,'source':['True','False'],'default':False},
-    'sep': {'editor':QCheckBox,'default':False},
-    'hidden':{'editor':QCheckBox,'default':False},
+    'aux_parm':{'objtype':'dict',
+                'text':'Parametros auxiliares'},  #TODO mejorable
+    'db': {'editor':QLineEdit,
+           'text':'cubos en los que se usa'},
+    'seqnr': {'editor':QSpinBox,
+              'text':'número de orden en el menú'},
+    #'sep': {'editor':QComboBox,'source':['True','False'],'default':False,
+            #'text':'con separador'},
+    'sep': {'editor':QCheckBox,'default':False,'text':'con separador'},
+    'hidden':{'editor':QCheckBox,'default':False,'text':'oculta'},
     'list' : {'editor':WMultiList,'source':modlist},
-    'api': {'editor':QSpinBox,'default':1,'max':1,'min':1},
-    'class':{'editor':QComboBox,'source':('function','sequence')}
+    'api': {'editor':QSpinBox,'default':1,'max':1,'min':1,'text':'versión de la interfaz'},
+    'class':{'editor':QComboBox,'source':('function','sequence'),'text':'clase de entrada'}
     
 }
     
@@ -194,7 +211,7 @@ def editAsTree(fichero):
     mis_cubos = definiciones['user functions']
 
     #cubo = Cubo(mis_cubos['experimento'])
-    model = QStandardItemModel()
+    model = displayTree()
     model.setItemPrototype(QStandardItem())
     hiddenRoot = model.invisibleRootItem()
     parent = hiddenRoot
@@ -206,81 +223,81 @@ def editAsTree(fichero):
         dict2tree(parent,entrada,mis_cubos[entrada],tipo)
     return model
 
-def getItemContext(item_ref):
-    # sobrecargo tanto para item como indice
-    if isinstance(item_ref,QModelIndex):
-        item = item_ref.model().itemFromIndex(item_ref)
-    else:
-        item = item_ref
-    model = item.model()  
-    if item == model.invisibleRootItem():
-        print('Cabecera de cartel, nada que hacer de momento')
-        return
-    # obtengo la fila entera
-    n,d,t = getRow(item.index())
-    # obtengo el padre
-    if n.parent() is None:
-        isTopLevel = True
-        np = dp = tp = None
-    else:
-        np,dp,tp = getRow(n.parent().index())
-        isTopLevel = False
+#def Context(item_ref):
+    ## sobrecargo tanto para item como indice
+    #if isinstance(item_ref,QModelIndex):
+        #item = item_ref.model().itemFromIndex(item_ref)
+    #else:
+        #item = item_ref
+    #model = item.model()  
+    #if item == model.invisibleRootItem():
+        #print('Cabecera de cartel, nada que hacer de momento')
+        #return
+    ## obtengo la fila entera
+    #n,d,t = getRow(item.index())
+    ## obtengo el padre
+    #if n.parent() is None:
+        #isTopLevel = True
+        #np = dp = tp = None
+    #else:
+        #np,dp,tp = getRow(n.parent().index())
+        #isTopLevel = False
     
-    if not t or ( not isTopLevel and t.data() == tp.data()):
-        isListMember = True
-    else:
-        isListMember = True
-    #obtengo el primer hijo
-    if n.hasChildren():
-        nh,dh,th = getRow(n.child(0,0).index())
-        if nh.data() is None:
-            dataType = 'list'
-        else:
-            dataType = 'dict'
-    else:
-        dataType = 'atom'
-    # datos de edicion
-    if not t or t.data() is None:
-        editPosition = dp
-        editType = tp.data()
-    else:
-        editPosition = d
-        editType = t.data()
+    #if not t or ( not isTopLevel and t.data() == tp.data()):
+        #isListMember = True
+    #else:
+        #isListMember = True
+    ##obtengo el primer hijo
+    #if n.hasChildren():
+        #nh,dh,th = getRow(n.child(0,0).index())
+        #if nh.data() is None:
+            #dataType = 'list'
+        #else:
+            #dataType = 'dict'
+    #else:
+        #dataType = 'atom'
+    ## datos de edicion
+    #if not t or t.data() is None:
+        #editPosition = dp
+        #editType = tp.data()
+    #else:
+        #editPosition = d
+        #editType = t.data()
     
-    isMandatory = False
-    isReadOnly = False
-    if tp:
-        listaOriginal = EDIT_TREE.get(tp.data(),{}).get('elements',[[None,None,None,None]])
-        elementosPadre = getFullElementList(EDIT_TREE,listaOriginal)
-        if t and t.data():
-            try:
-                idx  = [ dato[0] for dato in elementosPadre ].index(t.data())
-                isMandatory = elementosPadre[idx][1]
-                isReadOnly = elementosPadre[idx][2]
-            except ValueError:
-                pass
+    #isMandatory = False
+    #isReadOnly = False
+    #if tp:
+        #listaOriginal = EDIT_TREE.get(tp.data(),{}).get('elements',[[None,None,None,None]])
+        #elementosPadre = getFullElementList(EDIT_TREE,listaOriginal)
+        #if t and t.data():
+            #try:
+                #idx  = [ dato[0] for dato in elementosPadre ].index(t.data())
+                #isMandatory = elementosPadre[idx][1]
+                #isReadOnly = elementosPadre[idx][2]
+            #except ValueError:
+                #pass
             
         
         
-    return {
-            'rowHead':n,
-            'name':n.data(),
-            'data':d.data(),
-            'type':t.data() if t else None,
-            'dtype':dataType,
-            'topLevel':isTopLevel,
-            'listMember':isListMember,
-            'editPos': editPosition,
-            'editType':editType,
-            'mandatory':isMandatory,
-            'readonly':isReadOnly,
-            'edit_tree':EDIT_TREE.get(t.data() if t else tp.data(),{})
-            }
-    #print('datos ->{}:{} ({})  tipo:{} TopLevel:{}, ListMember:{} edit type {} and edit position {}'.format(
-            #n.data(),d.data(),t.data() if t else None,
-            #dataType,isTopLevel,isListMember,
-            #editType.data(), editPosition.data()
-          #))
+    #return {
+            #'rowHead':n,
+            #'name':n.data(),
+            #'data':d.data(),
+            #'type':t.data() if t else None,
+            #'dtype':dataType,
+            #'topLevel':isTopLevel,
+            #'listMember':isListMember,
+            #'editPos': editPosition,
+            #'editType':editType,
+            #'mandatory':isMandatory,
+            #'readonly':isReadOnly,
+            #'edit_tree':EDIT_TREE.get(t.data() if t else tp.data(),{})
+            #}
+    ##print('datos ->{}:{} ({})  tipo:{} TopLevel:{}, ListMember:{} edit type {} and edit position {}'.format(
+            ##n.data(),d.data(),t.data() if t else None,
+            ##dataType,isTopLevel,isListMember,
+            ##editType.data(), editPosition.data()
+          ##))
     
     
 """
@@ -294,12 +311,19 @@ class ufTreeMgrWindow(QMainWindow):
     """
     def __init__(self,parent=None):
         super(ufTreeMgrWindow,self).__init__(parent)
+        Context.EDIT_TREE = EDIT_TREE
         self.cubeFile = 'danacube.json'
         self.tree = TreeMgr(editAsTree(self.cubeFile),
                                             EDIT_TREE,
                                             TOP_LEVEL_ELEMS,
-                                            getItemContext)
+                                            Context,
+                                            msgLine=self.msgLine)
         self.setCentralWidget(self.tree)
+        self.statusBar = QStatusBar()
+        self.msgLine = QLabel()
+        self.statusBar.addWidget(self.msgLine)
+        self.setStatusBar(self.statusBar)
+        
     def closeEvent(self,event):
         self.close()
         
@@ -330,10 +354,11 @@ class ufTreeMgrDialog(QDialog):
         super().__init__(parent)
         self.cubeFile = 'danacube.json'
         self.cubeFile = 'danacube.json'
+        Context.EDIT_TREE = EDIT_TREE
         self.tree = TreeMgr(editAsTree(self.cubeFile),
                                             EDIT_TREE,
                                             TOP_LEVEL_ELEMS,
-                                            getItemContext)
+                                            Context)
         self.msgLine = QLabel()
         meatLayout = QGridLayout()
         meatLayout.addWidget(self.tree,0,0)

@@ -16,7 +16,7 @@ import math
 from support.util.uf_manager import *
 from base.ufhandler import functionFromName
 from support.util.jsonmgr import *
-from support.gui.widgets import WMultiCombo,WPowerTable, WMultiList, WNameValue
+from support.gui.widgets import WMultiCombo,WPowerTable, WMultiList 
 from support.util.record_functions import norm2List,norm2String
 import base.config as config
 
@@ -148,34 +148,34 @@ def datadict2dict(head):
 Funciones para leer la configuracion de user functions. Reutilizadas, creo
 """
 
-class displayTree(QStandardItemModel):
-    """
-    Overloaded QStandardITemModel
-    Just for domain specific changes
-    Quizas me he pasado de colorines
-    """
-    def data(self,index,role=Qt.UserRole +1):
-        if index.column() == 1:
-            if role in  (Qt.DisplayRole,Qt.BackgroundRole):
-                context = getItemContext(index)
-                rowHead = context.get('rowHead')
-                if role == Qt.DisplayRole and context.get('edit_tree',{}).get('hidden',False):
-                    return '****'
-                if ( context.get('edit_tree',{}).get('objtype','atom') != 'atom' and
-                    context.get('edit_tree',{}).get('editor',None) is not None):
-                    if role == Qt.DisplayRole and not rowHead.hasChildren():
-                            return 'pulse aquí para editar la lista'
-                    elif role == Qt.DisplayRole: # and context.get('objtype','atom') == 'list':
-                            return branch2text(rowHead)
-                    elif role == Qt.BackgroundRole and context.get('mandatory',False) and not rowHead.hasChildren():
-                        return QColor(Qt.yellow)
-                    elif role == Qt.BackgroundRole:
-                        return QColor(Qt.cyan)
-                if role == Qt.BackgroundRole and context.get('readonly',False):
-                    return QColor(Qt.gray)
-                if role == Qt.BackgroundRole and context.get('mandatory',False) and not rowHead.hasChildren():
-                    return QColor(Qt.yellow)
-        return super().data(index,role)
+#class displayTree(QStandardItemModel):
+    #"""
+    #Overloaded QStandardITemModel
+    #Just for domain specific changes
+    #Quizas me he pasado de colorines
+    #"""
+    #def data(self,index,role=Qt.UserRole +1):
+        #if index.column() == 1:
+            #if role in  (Qt.DisplayRole,Qt.BackgroundRole):
+                #context = getItemContext(index)
+                #rowHead = context.get('rowHead')
+                #if role == Qt.DisplayRole and context.get('edit_tree',{}).get('hidden',False):
+                    #return '****'
+                #if ( context.get('edit_tree',{}).get('objtype','atom') != 'atom' and
+                    #context.get('edit_tree',{}).get('editor',None) is not None):
+                    #if role == Qt.DisplayRole and not rowHead.hasChildren():
+                            #return 'pulse aquí para editar la lista'
+                    #elif role == Qt.DisplayRole: # and context.get('objtype','atom') == 'list':
+                            #return branch2text(rowHead)
+                    #elif role == Qt.BackgroundRole and context.get('mandatory',False) and not rowHead.hasChildren():
+                        #return QColor(Qt.yellow)
+                    #elif role == Qt.BackgroundRole:
+                        #return QColor(Qt.cyan)
+                #if role == Qt.BackgroundRole and context.get('readonly',False):
+                    #return QColor(Qt.gray)
+                #if role == Qt.BackgroundRole and context.get('mandatory',False) and not rowHead.hasChildren():
+                    #return QColor(Qt.yellow)
+        #return super().data(index,role)
 
 def isDictFromDef(item):
     """
@@ -185,7 +185,7 @@ def isDictFromDef(item):
     FIXME depende de getItemContext()
     """
     if item.hasChildren():
-        contexto = getItemContext(item)
+        contexto = Context(item)
         type_context =  contexto.get('edit_tree',{}).get('objtype')
         if type_context == 'dict':
             return True
@@ -318,7 +318,7 @@ parametros comunes
 def srcSchemas(*lparm):
     item = lparm[0]
     view = lparm[1]
-    context = getItemContext(item)
+    context = Context(item)
     confName,confData = getConnection(item,name=True)
     resultado = [ entrada for entrada in view.diccionario[confName].keys() if entrada[0] != '@' ]
     return resultado
@@ -334,10 +334,10 @@ def defaultSchema(*lparm):
     from support.datalayer.access_layer import DEFAULT_SCHEMA
     item = lparm[0]
     view = lparm[1]
-    context = getItemContext(item)
-    context = getItemContext(item)
+    context = Context(item)
+    context = Context(item)
     
-    baseFile = getChildaByType(getParentByType(item,'base'),'table')
+    baseFile = getChildByType(getParentByType(item,'base'),'table')
     n,baseName,t = getRow(baseFile)
     return getSchema(baseName.data())
     
@@ -378,7 +378,7 @@ def srcNumFields(*lparm):
 def srcFields(*lparm):
     item = lparm[0]
     view = lparm[1]
-    context = getItemContext(item)
+    context = Context(item)
     confName,confData = getConnection(item,name=True)
     table = getFile(item)
     esquema = getSchema(item,table)
@@ -498,7 +498,7 @@ def setClass(*lparm):
                         }
     item = lparm[0]
     view = lparm[1]
-    context = getItemContext(item)
+    context = Context(item)
     
     tipo = conversor.get(context.get('editType',None),'o')
     
@@ -775,123 +775,123 @@ def editAsTree(fichero):
         dict2tree(parent,entrada,mis_cubos[entrada],tipo)
     return model
 
-def getItemContext(item_ref):
-    #obtengo la referencias sea item_ref index o item 
-    if isinstance(item_ref,QModelIndex):
-        item = item_ref.model().itemFromIndex(item_ref)
-    else:
-        item = item_ref
-    model = item.model()  
-    if item == model.invisibleRootItem():
-        print('Cabecera de cartel, nada que hacer de momento')
-        return
+#def Context(item_ref):
+    ##obtengo la referencias sea item_ref index o item 
+    #if isinstance(item_ref,QModelIndex):
+        #item = item_ref.model().itemFromIndex(item_ref)
+    #else:
+        #item = item_ref
+    #model = item.model()  
+    #if item == model.invisibleRootItem():
+        #print('Cabecera de cartel, nada que hacer de momento')
+        #return
     
-    #obtengo la fila entera y cargo los defectos
-    n,d,t = getRow(item.index())
-    # obtengo el padre
-    if n.parent() is None:
-        isTopLevel = True
-        np = dp = tp = None
-    else:
-        np,dp,tp = getRow(n.parent().index())
-        isTopLevel = False
-    editPosition = d
-    if t:
-        editType,edit_data = getRealEditDefinition(item,EDIT_TREE,t.data())
-    else:
-        editType = None
-        edit_data = {}
+    ##obtengo la fila entera y cargo los defectos
+    #n,d,t = getRow(item.index())
+    ## obtengo el padre
+    #if n.parent() is None:
+        #isTopLevel = True
+        #np = dp = tp = None
+    #else:
+        #np,dp,tp = getRow(n.parent().index())
+        #isTopLevel = False
+    #editPosition = d
+    #if t:
+        #editType,edit_data = getRealEditDefinition(item,EDIT_TREE,t.data())
+    #else:
+        #editType = None
+        #edit_data = {}
     
-    if editType:
-        dataType = EDIT_TREE.get(editType,{}).get('objtype','atom')
-    else:
-        dataType = 'atom'
-   # corrigo para listas implicitas
-    if n.hasChildren() and dataType == 'atom':
-        nh,dh,th = getRow(n.child(0,0).index())
-        if nh.data() is None:
-            dataType = 'list'
-        else:
-            dataType = 'dict'
+    #if editType:
+        #dataType = EDIT_TREE.get(editType,{}).get('objtype','atom')
+    #else:
+        #dataType = 'atom'
+   ## corrigo para listas implicitas
+    #if n.hasChildren() and dataType == 'atom':
+        #nh,dh,th = getRow(n.child(0,0).index())
+        #if nh.data() is None:
+            #dataType = 'list'
+        #else:
+            #dataType = 'dict'
 
-    # ahora determino los atributos que dependen del padre
-    isMandatory = False
-    isReadOnly = False
-    isRepeteable = False
-    isRepeatInstance = False
-    isListMember = False
+    ## ahora determino los atributos que dependen del padre
+    #isMandatory = False
+    #isReadOnly = False
+    #isRepeteable = False
+    #isRepeatInstance = False
+    #isListMember = False
 
-    if tp:
-        tpType,tpEdit_data = getRealEditDefinition(np,EDIT_TREE,tp.data())
-        tipoPadre =  tpEdit_data.get('objtype')
-        if tipoPadre == 'dict':
-            elementosPadre = tpEdit_data.get('elements',[]) #ya esta expandido
-            if t and t.data():
-                try:
-                    idx  = [ dato[0] for dato in elementosPadre ].index(t.data())
-                    isMandatory = elementosPadre[idx][1]
-                    isReadOnly = elementosPadre[idx][2]
-                    if len(elementosPadre[idx]) > 3:
-                        isRepeteable = elementosPadre[idx][3]
-                except ValueError:
-                    pass
-            #de momento desactivado
-            #if edit_data.get('editor') is None:
+    #if tp:
+        #tpType,tpEdit_data = getRealEditDefinition(np,EDIT_TREE,tp.data())
+        #tipoPadre =  tpEdit_data.get('objtype')
+        #if tipoPadre == 'dict':
+            #elementosPadre = tpEdit_data.get('elements',[]) #ya esta expandido
+            #if t and t.data():
+                #try:
+                    #idx  = [ dato[0] for dato in elementosPadre ].index(t.data())
+                    #isMandatory = elementosPadre[idx][1]
+                    #isReadOnly = elementosPadre[idx][2]
+                    #if len(elementosPadre[idx]) > 3:
+                        #isRepeteable = elementosPadre[idx][3]
+                #except ValueError:
+                    #pass
+            ##de momento desactivado
+            ##if edit_data.get('editor') is None:
+                ##editPosition = dp
+                ##editType,edit_data = getRealEditDefinition(np,EDIT_TREE,tpType)
+                ##dataType = 'dict'
+                ##if tpEdit_data.get('editor') is None:
+                    ##edit_data['editor'] = WNameValue
+        #elif tipoPadre == 'list':
+            #isListMember = True
+            #hijosPadre = tpEdit_data.get('children')
+            #edit_ctx_hijo = EDIT_TREE.get(hijosPadre)
+            ##cuando es una lista sin tipos hijo, solo dejamos editar en la cabeza
+            #if edit_ctx_hijo:
+                #if not t:
+                    #editType,edit_data = getRealEditDefinition(np,EDIT_TREE,hijosPadre)
+            #else:
                 #editPosition = dp
                 #editType,edit_data = getRealEditDefinition(np,EDIT_TREE,tpType)
-                #dataType = 'dict'
-                #if tpEdit_data.get('editor') is None:
-                    #edit_data['editor'] = WNameValue
-        elif tipoPadre == 'list':
-            isListMember = True
-            hijosPadre = tpEdit_data.get('children')
-            edit_ctx_hijo = EDIT_TREE.get(hijosPadre)
-            #cuando es una lista sin tipos hijo, solo dejamos editar en la cabeza
-            if edit_ctx_hijo:
-                if not t:
-                    editType,edit_data = getRealEditDefinition(np,EDIT_TREE,hijosPadre)
-            else:
-                editPosition = dp
-                editType,edit_data = getRealEditDefinition(np,EDIT_TREE,tpType)
-                dataType = 'list'
+                #dataType = 'list'
                 
-        else: #es hijo de un atom
-            isListMember = True
-            if not t or t.data() is None:
-                editPosition = dp
-                editType,edit_data = getRealEditDefinition(np,EDIT_TREE,tpType) if tp else [None,{}]
-                dataType = 'list'
+        #else: #es hijo de un atom
+            #isListMember = True
+            #if not t or t.data() is None:
+                #editPosition = dp
+                #editType,edit_data = getRealEditDefinition(np,EDIT_TREE,tpType) if tp else [None,{}]
+                #dataType = 'list'
            
-        if t and t.data() and t.data() == tpType:  #es un elemento repetible
-            isRepeatInstance = True
+        #if t and t.data() and t.data() == tpType:  #es un elemento repetible
+            #isRepeatInstance = True
     
         
-     #TODO puede ser interesante para name vlaue paisrs
-    hasName = False if not isTopLevel else True
-    if edit_data and  'elements' in edit_data:
-        elementos = [ elements[0] for elements in getFullElementList(EDIT_TREE,edit_data['elements']) ]
-        if editType == 'category item':
-            print(elementos)
-        if 'name' in elementos or 'result' in elementos:
-            hasName = True
+     ##TODO puede ser interesante para name vlaue paisrs
+    #hasName = False if not isTopLevel else True
+    #if edit_data and  'elements' in edit_data:
+        #elementos = [ elements[0] for elements in getFullElementList(EDIT_TREE,edit_data['elements']) ]
+        #if editType == 'category item':
+            #print(elementos)
+        #if 'name' in elementos or 'result' in elementos:
+            #hasName = True
    
-    return {
-            'rowHead':n,
-            'name':n.data(),
-            'data':d.data(),
-            'type':t.data() if t else None,
-            'dtype':dataType,
-            'topLevel':isTopLevel,
-            'listMember':isListMember,
-            'editPos': editPosition,
-            'editType':editType,
-            'mandatory':isMandatory,
-            'readonly':isReadOnly,
-            'repeteable':isRepeteable,
-            'repeatInstance':isRepeatInstance,
-            'edit_tree':edit_data,
-            'hasname':hasName,
-            }
+    #return {
+            #'rowHead':n,
+            #'name':n.data(),
+            #'data':d.data(),
+            #'type':t.data() if t else None,
+            #'dtype':dataType,
+            #'topLevel':isTopLevel,
+            #'listMember':isListMember,
+            #'editPos': editPosition,
+            #'editType':editType,
+            #'mandatory':isMandatory,
+            #'readonly':isReadOnly,
+            #'repeteable':isRepeteable,
+            #'repeatInstance':isRepeatInstance,
+            #'edit_tree':edit_data,
+            #'hasname':hasName,
+            #}
     
  
         
@@ -906,6 +906,7 @@ class cubeTree(TreeMgr):
     connChanged = pyqtSignal(str,str)
     
     def __init__(self,treeDef,firstLevelDef,ctxFactory,file,parent=None):
+        Context.EDIT_TREE = EDIT_TREE
         self.dataDict  = file2datadict(file)
         self.diccionario = datadict2dict(self.dataDict.hiddenRoot)
         self.tree = editAsTree(file)
@@ -992,7 +993,7 @@ class cubeMgrWindow(QMainWindow):
         self.tree = cubeTree(
                                             EDIT_TREE,
                                             TOP_LEVEL_ELEMS,
-                                            getItemContext,
+                                            Context,
                                             self.cubeFile)
         self.setCentralWidget(self.tree)
     def closeEvent(self,event):
@@ -1024,11 +1025,11 @@ class cubeMgrDialog(QDialog):
     def __init__(self,parent=None):
         super().__init__(parent)
         self.cubeFile = 'testcubo.json'
-
+        Context.EDIT_TREE = EDIT_TREE
         self.tree = TreeMgr(editAsTree(self.cubeFile),
                                             EDIT_TREE,
                                             TOP_LEVEL_ELEMS,
-                                            getItemContext)
+                                            Context)
         self.msgLine = QLabel()
         meatLayout = QGridLayout()
         meatLayout.addWidget(self.tree,0,0)

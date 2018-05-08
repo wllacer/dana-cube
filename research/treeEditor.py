@@ -16,12 +16,13 @@ import math
 from support.util.uf_manager import *
 from base.ufhandler import functionFromName
 from support.util.jsonmgr import *
-from support.gui.widgets import WMultiCombo,WPowerTable, WMultiList, WNameValue
-from support.util.record_functions import norm2List,norm2String
+from support.gui.widgets import WMultiCombo,WPowerTable, WMultiList
+from support.gui.dialogs import WNameValue
+from support.util.record_functions import norm2List,norm2String,osSplit
 import base.config as config
 
 from PyQt5.QtCore import Qt,QModelIndex,QItemSelectionModel
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
+from PyQt5.QtGui import QStandardItemModel, QStandardItem , QColor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QTreeView, QSplitter, QMenu, \
      QDialog, QInputDialog, QLineEdit, QComboBox, QMessageBox,QGridLayout, \
      QAbstractItemView, QTableView, QStyledItemDelegate, QSpinBox, QListWidget, QPushButton, QVBoxLayout,QLabel, QWidget, QCheckBox
@@ -30,13 +31,244 @@ from research.ufTreeUtil import *
 """
 Funciones para leer la configuracion de user functions. Reutilizadas, creo
 """
+class displayTree(QStandardItemModel):
+    """
+    Overloaded QStandardITemModel
+    Just for domain specific changes at the EDIT_TREE
+    
+    Quizas me he pasado de colorines
+    """
+    def data(self,index,role=Qt.UserRole +1):
+        if index.column() == 1:
+            if role in (Qt.DisplayRole, ):
+                context = Context(index)
+                rowHead = context.get('rowHead')
+                if role == Qt.DisplayRole and context.get('edit_tree',{}).get('hidden',False):
+                    return '****'
+                if ( context.get('edit_tree',{}).get('objtype','atom') != 'atom' and
+                    context.get('edit_tree',{}).get('editor',None) is not None):
+                    if not rowHead.hasChildren():
+                            return 'pulse aquí para editar la lista'
+                    else:
+                            return branch2text(rowHead)
+            elif role in (Qt.BackgroundRole,):
+                # la sintaxis es para que el data sea del item y no del arbol
+                # si la celda tiene algun tipo de color se lo mantenemos
+                orig = self.itemFromIndex(index).data(role)
+                if orig is not None:
+                    return orig
+                context = Context(index)
+                rowHead = context.get('rowHead')
+                if ( context.get('edit_tree',{}).get('objtype','atom') != 'atom' and
+                    context.get('edit_tree',{}).get('editor',None) is not None):
+                    if context.get('mandatory',False) and not rowHead.hasChildren():
+                        return QColor(Qt.yellow)
+                    else:
+                        return QColor(Qt.cyan)
+                if context.get('readonly',False):
+                    return QColor(Qt.gray)
+                if context.get('mandatory',False) and not rowHead.hasChildren():
+                    return QColor(Qt.yellow)
+            #if role in  (Qt.DisplayRole,Qt.BackgroundRole):
+                #context = Context(index)
+                #rowHead = context.get('rowHead')
+                #if role == Qt.DisplayRole and context.get('edit_tree',{}).get('hidden',False):
+                    #return '****'
+                #if ( context.get('edit_tree',{}).get('objtype','atom') != 'atom' and
+                    #context.get('edit_tree',{}).get('editor',None) is not None):
+                    #if role == Qt.DisplayRole and not rowHead.hasChildren():
+                            #return 'pulse aquí para editar la lista'
+                    #elif role == Qt.DisplayRole: # and context.get('objtype','atom') == 'list':
+                            #return branch2text(rowHead)
+                    #elif role == Qt.BackgroundRole and context.get('mandatory',False) and not rowHead.hasChildren():
+                        #return QColor(Qt.yellow)
+                    #elif role == Qt.BackgroundRole:
+                        #return QColor(Qt.cyan)
+                #if role == Qt.BackgroundRole and context.get('readonly',False):
+                    #return QColor(Qt.gray)
+                #if role == Qt.BackgroundRole and context.get('mandatory',False) and not rowHead.hasChildren():
+                    #return QColor(Qt.yellow)
+            elif role == Qt.ToolTipRole:
+                context = Context(index)
+                if context.get('edit_tree',{}).get('hint'):
+                    return context.get('edit_tree',{}).get('hint')
+                elif context.get('edit_tree',{}).get('text'):
+                    return context.get('edit_tree',{}).get('text')
+                    
+        return super().data(index,role)
 
+class Context():
+    """
+    Esta clase es la interfaz en tiempo de ejecucion del contexto dentro del arbol en que se encuentra el item.
+    El contexto como tal se almacena en el diccionario self.content, con los siguientes contenidos
+         self.content = {
+                'rowHead': el elemento 0 de la fila, es por el que se navega
+                'name': el nombre del elemento
+                'data': el valor del elemento (fila) 
+                'type': el tipo en el dominio del problema de elemento si lo tiene
+                'dtype': tipo de entrada (atom ica, list una lista ordenada dict una coleccion de nombres:valores
+                'topLevel': si es el elemento de mas alta jerarquia 
+                'listMember': si la entrada forma parte de una lista
+                'editPos': donde va el cursor de edición (al mismo elemento o en bloque por su padre
+                'editType': el tipo, dentro del dominio de edicion, del elemento
+                'mandatory': si es obligatorio en ese contexto
+                'readonly': si es solo lectura
+                'repeteable': si es un elemento repetible (en cabecera), p.e. una lista de reglas de produccion
+                'repeatInstance': si este elemento es una instancia indidual de un elemento repetibke
+                'edit_tree': los detalles de edicion para este tipo de elemento
+                'hasname': si tiene un atributo nombre
+            
+        La forma actual se debe que comenzo su vida como un diccioario simple, y hemos decidido mantener una sintaxis
+        compatible
+        Cada instanciacion -en nuestro ordenador- tarda sobre 10-4 s, con lo que, en un entorno interactivo no parece miy costoso.
+        Por comparar, como llamada a una funcion que creara el diccionario la instanciacion era un 20% mas rápido, pero a largo plazo como objeto parece mas sensible (la posibilidad de determinar entrdas en tiempo real), y el margen parece seguro
+        
+        Importante que antes de usarlo se defina el atributo de clase EDIT_TREE para rellenar con las definiciones del dominio problema, bien con
+        ```
+           Context.EDIT_TREE = arbol_local
+           ...
+           var = Context(item)
+        ```
+        para toda la sesion del programa
+        o al inicializar el contexto individual
+        ```
+            var = Context(item,arbol_local)
+        ```
+   
+    """
+    EDIT_TREE = None
+    def __init__(self,item_ref,Tree = None):
+        if isinstance(item_ref,QModelIndex):
+            item = item_ref.model().itemFromIndex(item_ref)
+        else:
+            item = item_ref
+        model = item.model()  
+        if item == model.invisibleRootItem():
+            print('Cabecera de cartel, nada que hacer de momento')
+            return
+        
+        if Tree is None:
+            self.tree = Context.EDIT_TREE
+        else:
+            self.tree = Tree
+        #obtengo la fila entera y cargo los defectos
+        n,d,t = getRow(item.index())
+        # obtengo el padre
+        if n.parent() is None:
+            isTopLevel = True
+            np = dp = tp = None
+        else:
+            np,dp,tp = getRow(n.parent().index())
+            isTopLevel = False
+        editPosition = d
+        if t:
+            editType,edit_data = getRealEditDefinition(item,self.tree,t.data())
+        else:
+            editType = None
+            edit_data = {}
+        
+        if editType:
+            dataType = self.tree.get(editType,{}).get('objtype','atom')
+        else:
+            dataType = 'atom'
+    # corrigo para listas implicitas
+        if n.hasChildren() and dataType == 'atom':
+            nh,dh,th = getRow(n.child(0,0).index())
+            if nh.data() is None:
+                dataType = 'list'
+            else:
+                dataType = 'dict'
+
+        # ahora determino los atributos que dependen del padre
+        isMandatory = False
+        isReadOnly = False
+        isRepeteable = False
+        isRepeatInstance = False
+        isListMember = False
+
+        if tp:
+            tpType,tpEdit_data = getRealEditDefinition(np,self.tree,tp.data())
+            tipoPadre =  tpEdit_data.get('objtype')
+            if tipoPadre == 'dict':
+                elementosPadre = tpEdit_data.get('elements',[]) #ya esta expandido
+                if t and t.data():
+                    try:
+                        idx  = [ dato[0] for dato in elementosPadre ].index(t.data())
+                        isMandatory = elementosPadre[idx][1]
+                        isReadOnly = elementosPadre[idx][2]
+                        if len(elementosPadre[idx]) > 3:
+                            isRepeteable = elementosPadre[idx][3]
+                    except ValueError:
+                        pass
+                #de momento desactivado
+                #if edit_data.get('editor') is None:
+                    #editPosition = dp
+                    #editType,edit_data = getRealEditDefinition(np,self.tree,tpType)
+                    #dataType = 'dict'
+                    #if tpEdit_data.get('editor') is None:
+                        #edit_data['editor'] = WNameValue
+            elif tipoPadre == 'list':
+                isListMember = True
+                hijosPadre = tpEdit_data.get('children')
+                edit_ctx_hijo = self.tree.get(hijosPadre)
+                #cuando es una lista sin tipos hijo, solo dejamos editar en la cabeza
+                if edit_ctx_hijo:
+                    if not t:
+                        editType,edit_data = getRealEditDefinition(np,self.tree,hijosPadre)
+                else:
+                    editPosition = dp
+                    editType,edit_data = getRealEditDefinition(np,self.tree,tpType)
+                    dataType = 'list'
+                    
+            else: #es hijo de un atom
+                isListMember = True
+                if not t or t.data() is None:
+                    editPosition = dp
+                    editType,edit_data = getRealEditDefinition(np,self.tree,tpType) if tp else [None,{}]
+                    dataType = 'list'
+            
+            if t and t.data() and t.data() == tpType:  #es un elemento repetible
+                isRepeatInstance = True
+        
+            
+        #TODO puede ser interesante para name vlaue paisrs
+        hasName = False if not isTopLevel else True
+        if edit_data and  'elements' in edit_data:
+            elementos = [ elements[0] for elements in getFullElementList(self.tree,edit_data['elements']) ]
+            if editType == 'category item':
+                print(elementos)
+            if 'name' in elementos or 'result' in elementos:
+                hasName = True
+    
+        self.content = {
+                'rowHead':n,
+                'name':n.data() if n else None,
+                'data':d.data() if d else None,
+                'type':t.data() if t else None,
+                'dtype':dataType,
+                'topLevel':isTopLevel,
+                'listMember':isListMember,
+                'editPos': editPosition,
+                'editType':editType,
+                'mandatory':isMandatory,
+                'readonly':isReadOnly,
+                'repeteable':isRepeteable,
+                'repeatInstance':isRepeatInstance,
+                'edit_tree':edit_data,
+                'hasname':hasName,
+                }
+    def get(self,entrada,default=None):
+        return self.content.get(entrada,default)
+    def __getItem__(self,entrada):
+        return self.content[entrada]
+    def __setitem__(self,entrada,valor):
+        self.content[entrada] = valor
 
  
 class TreeMgr(QTreeView):
     """
     """
-    def __init__(self,model,treeDef,firstLevelDef,ctxFactory,parent=None):
+    def __init__(self,model,treeDef,firstLevelDef,ctxFactory,msgLine=None,parent=None):
         """
         parametros model .-> modelo a procesar
                            treeDef -> Definicion del arbol
@@ -51,7 +283,10 @@ class TreeMgr(QTreeView):
         self.ctxFactory = ctxFactory
         self.view.setAlternatingRowColors(True)
         #self.view.setEditTriggers(QAbstractItemView.DoubleClicked|QAbstractItemView.SelectedClicked)
-        
+        if msgLine:
+            self.msgLine = msgLine
+        else:
+            self.msgLine = QLabel()  #nunca va a funcionar pero asi no debe darme errores 
         self.baseModel  = model
         parent = self.hiddenRoot = self.baseModel.invisibleRootItem()
         self.view.setModel(self.baseModel)
@@ -85,7 +320,8 @@ class TreeMgr(QTreeView):
         edit_data = self.treeDef.get(context.get('editType'),{})
         if context.get('topLevel',False):
             for entrada in self.firstLevelDef:
-                self.ctxMenu.append(menu.addAction("Add new {}".format(entrada),
+                texto = context.get('edit_tree',{}).get('text',entrada)
+                self.ctxMenu.append(menu.addAction("Add new {}".format(texto),
                                     lambda i=self.model().invisibleRootItem(),j=entrada:self.actionAddTop(i,j))) 
             self.ctxMenu.append(menu.addAction("Copy",lambda i=n:self.actionCopy(i)))
             self.ctxMenu.append(menu.addAction("Rename",lambda i=n:self.actionRename(i))) 
@@ -107,7 +343,7 @@ class TreeMgr(QTreeView):
                 if datos.data():
                     self.ctxMenu.append(menu.addAction("entry to list ",lambda i=n:self.convertToList(i)))
             elif edit_data.get('objtype','atom') == 'dict' and edit_data.get('elements',None) is None:
-                self.ctxMenu.append(menu.addAction("Add name/value pair",lambda i=n:self.actionNameValue(n)))
+                self.ctxMenu.append(menu.addAction("Edit as name/value pairs",lambda i=n:self.actionNameValue(n)))
     
         menu.addSeparator()
         
@@ -128,7 +364,8 @@ class TreeMgr(QTreeView):
         
         if context.get('repeteable',False):
             tipoAEditar = context.get('editType')    
-            self.ctxMenu.append(menu.addAction("Add {}".format(tipoAEditar),
+            texto = context.get('edit_tree',{}).get('text',tipoAEditar)
+            self.ctxMenu.append(menu.addAction("Add {}".format(texto),
                                                    lambda i=rowHead,j=tipoAEditar:self.actionAdd(i,j)))
         
         else:
@@ -156,7 +393,8 @@ class TreeMgr(QTreeView):
                     if elemento[0] in existentes:
                         pass
                     else:
-                        self.ctxMenu.append(menu.addAction("Add {}".format(elemento[0]),
+                        texto = self.treeDef.get(elemento[0],{}).get('text',elemento[0])
+                        self.ctxMenu.append(menu.addAction("Add {}".format(texto),
                                                     lambda i=rowHead,j=elemento[0]:self.actionAdd(i,j)))
             menu.addSeparator()
         
@@ -277,20 +515,52 @@ class TreeMgr(QTreeView):
         """
         """
         context = self.ctxFactory(item)
-        form = WNameValue()
+        cab = context.get('rowHead')
+        datos = []
+        for k in range(cab.rowCount()):
+            nombre = cab.child(k,0).data()
+            valor = branch2text(cab.child(k,0))
+            datos.append([nombre,valor])
+        form = WNameValue(datos)
+        form.setWindowTitle('Edicion de {}'.format(nombre))
         form.show()
         form.raise_()
         if form.exec():
-            values = form.sheet.values()
-            for funcion in context.get('edit_tree',{}).get('validators',[]):
-                if not funcion(item,values):
-                    print('validacion fallida')  #TODO a mensaje o similar
-                    #form.sheet.cellWidget(0,0).setFocus()
-                    return
-            for entrada in values:
-                item.appendRow(makeRow(entrada[0],entrada[1],entrada[0]))
-            for funcion in context.get('edit_tree',{}).get('setters',[]):
-                funcion(item,values)
+            resultado = form.result
+            #self.msgLine.setText('Validacion para {} realizada'.format(nombre))
+        else:
+            return 
+        # eliminado, aqui no parece apropiado
+        #for funcion in context.get('edit_tree',{}).get('validators',[]):
+            #if not funcion(item,resultado):
+                #self.msgLine.setText('Validacion para {} fallida'.format(nombre))
+                #print('validacion fallida')  #TODO a mensaje o similar
+                #self.setCurrentIndex()
+                #return
+        
+        pai = cab.parent()
+        rownr = cab.row()
+        nombre = cab.data()
+        texto = context.get('data')
+        tipo = context.get('type')
+        if pai is None: #topLevel
+            pai = item.model().invisibleRootItem()
+            item.model().removeRow(rownr)
+        else:
+            item.model().removeRow(rownr,pai.index())
+
+        dict2tree(pai,nombre,resultado,tipo=tipo)
+
+        for funcion in context.get('edit_tree',{}).get('setters',[]):
+            funcion(item,resultado)
+
+        #form = WNameValue(datos)
+        #form.show()
+        #form.raise_()
+        #if form.exec():
+            #values = form.sheet.values()
+            #for entrada in values:
+                #item.appendRow(makeRow(entrada[0],entrada[1],entrada[0]))
  
     def clearList(self,item):
         nitem = item.model().itemFromIndex(item.index().sibling(item.row(),0) )                    
@@ -559,11 +829,12 @@ class TreeDelegate(QStyledItemDelegate):
                         values.append(self.fullList[idx][0])
                     except IndexError:
                         values.append(entry)
-                                  
-            if not self.validator(editor,values):
-                print('Rechazada la validacion')
-                return
+
+ 
             item = self.context.get('editPos')
+            if not self.generalValidation(index,editor,values):
+                return
+                
             _redoTree(item,values)
             
         elif isinstance(editor, WMultiCombo):
@@ -574,10 +845,11 @@ class TreeDelegate(QStyledItemDelegate):
                 _redoTree(item,values)
             else:
                 dvalue = ivalue = editor.get()
-                if not self.validator(editor,dvalue,ivalue):
-                    print('Rechazada la validacion')
-                    return
-                item = _changeItem(model,index,ivalue,dvalue)
+                
+            if not self.generalValidation(index,editor,values):
+                return
+            
+            item = _changeItem(model,index,ivalue,dvalue)
                 
         else:
             if isinstance(editor, QComboBox):
@@ -602,8 +874,7 @@ class TreeDelegate(QStyledItemDelegate):
             else:
                 dvalue = ivalue = editor.text()
     
-            if not self.validator(editor,dvalue,ivalue):
-                print('Rechazada la validacion')
+            if not self.generalValidation(index,editor,dvalue,ivalue):
                 return
             
             item = _changeItem(model,index,ivalue,dvalue)
@@ -612,24 +883,40 @@ class TreeDelegate(QStyledItemDelegate):
         for funcion in setters:
             funcion(item,self.parent())
 
+    def generalValidation(self,index,editor,*lparms,**kwparms):
+        # de momento suprimo el color rojo de fondo, ya que los cambios se pierden
+        #index.model().setData(index,None,Qt.BackgroundRole)
+        self.parent().msgLine.setText('')
+        self.parent().msgLine.setStyleSheet(None)
+        ok, text = self.validator(editor,*lparms,**kwparms)
+        if not ok:
+            self.parent().msgLine.setText('Rechazada la validacion para {} : {}'.format(self.context.get('name'),text))
+            self.parent().msgLine.setStyleSheet("background-color:yellow;")
+            #index.model().setData(index,QColor(Qt.red),Qt.BackgroundRole)
+            self.parent().setCurrentIndex(index)
+            return False
+        return True
+
     def validator(self,editor,*lparms,**kwparms):
+        msg = ''
         if isinstance(editor,(WMultiList,)):
             values = lparms[0]
             if self.context.get('mandatory') and len(values) == 0:
-                print('No hay entradas')
-                return False
+                msg = 'sin valor'
+                return False , msg
         else:
             dvalue,ivalue = lparms[0:2]
             if self.context.get('mandatory') and (ivalue is None or dvalue == ''):
-                print('sin valor')
-                return False
+                msg = 'sin valor'
+                return False, msg
         validators = self.context.get('edit_tree',{}).get('validators',[])
         if len(validators) == 0:
-            return True
+            return True, ''
         else:
-            for entry in validators:
-                if not entry(self.context.get('editPos'),self.parent()): #editor,*lparms,**kwparms):
-                    return False
+            for entry in validators:                
+                ok,text = entry(self.context.get('editPos'),editor,*lparms,**kwparms)
+                if not ok:
+                    return False, text
         return True
                 
 

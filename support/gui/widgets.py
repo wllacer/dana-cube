@@ -152,35 +152,7 @@ class WMultiList(QWidget):
     #def removeSelectedItem(self):
         #pass
 
-class WNameValue(QDialog):
-    """
-    WIP
-    Widget para editar libremente pares nombre/valor
-    
-    """
-    def __init__(self,parent=None):
-        super().__init__(parent)
-        self.sheet = WPowerTable(5,2)
-        self.ok = QPushButton('ok')
         
-        self.ok.clicked.connect(self.accept)
-        
-        meatlayout = QGridLayout()
-        meatlayout.addWidget(self.sheet,0,0)
-        meatlayout.addWidget(self.ok,1,0)
-        self.setLayout(meatlayout)
-        self.prepareData()
-        
-    def prepareData(self):
-        self.sheet.setHorizontalHeaderLabels(('nombre','valor                                                    '))
-        context = []
-        context.append((QLineEdit,{'setEnabled':True},None))
-        context.append((QLineEdit,{'setEnabled':True},None))
-        for x in range(self.sheet.rowCount()):
-            for y,colDef in enumerate(context):
-                self.sheet.addCell(x,y,colDef,defVal=None)
-            self.sheet.resizeRowsToContents()
-
 class WMultiCombo(QComboBox):
     """ Una variante de combo con seleccion multiple
     """
@@ -309,7 +281,7 @@ class WPowerTable(QTableWidget):
         #self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum);
         #self.resizeRowsToContents()
         #self.resizeColumnsToContents()
-
+        self.rowModelDef = None
         
     def openContextMenu(self,position):
         print('abro menu')
@@ -324,14 +296,32 @@ class WPowerTable(QTableWidget):
         if action == 'append':
             self.appendRow(self.rowCount())
 
-    def addCell(self,x,y,colDef,defVal=None):
+    def setRowModelDef(self,contexto):
+        """
+        contexto es un array que define cada una de las columnas de una fila .
+        Muy util para el add row
+        """
+        self.rowModelDef = contexto
+    def addCell(self,x,y,colDef=None,defVal=None):
         item = defVal
-        type = colDef[0]
-        typeSpec = colDef[1]
-        if len(colDef) > 2:
-            listVals = colDef[2]
+        if colDef:
+            type = colDef[0]
+            typeSpec = colDef[1]
+            if len(colDef) > 2:
+                listVals = colDef[2]
+            else:
+                listVals = None
+        elif self.rowModelDef and len(self.rowModelDef) < y:
+            type = self.rowModelDefault[y][0]
+            typeSpec = self.rowModelDefault[y][1]
+            if len(self.rowModelDefault[y]) > 2:
+                listVals = self.rowModelDefault[y][2]
+            else:
+                listVals = None
         else:
-            listVals = None
+            #fall back to standard widget
+            return 
+            
         editItem = None
         if type is None or type == QLineEdit:
             editItem = QLineEdit()
@@ -458,8 +448,11 @@ class WPowerTable(QTableWidget):
         
    
     def appendRow(self,row):
-       self.insertRow(row)
-       self.addRow(row)
+        self.insertRow(row)
+        if self.rowModelDef:
+            for k in range(min(len(self.rowModelDef),self.columnCount())):
+                self.addCell(row,k,self.rowModelDef[k])
+
        
 class WDataSheet(WPowerTable):
     """

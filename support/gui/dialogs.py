@@ -462,7 +462,95 @@ class NumberFormatDlg(QDialog):
                 self.sheet.get(3,0))
 
         self.callback()
-                
+  
+class WNameValue(QDialog):
+    """
+    WIP
+    Widget para editar libremente pares nombre/valor
+    
+    """
+    def __init__(self,load=None,parent=None):
+        super().__init__(parent)
+        if load:
+            self.sheet = WPowerTable(len(load) +2,2)
+        else:
+            self.sheet = WPowerTable(5,2)
+
+        self.setMinimumSize(QSize(440,220))
+        
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok| QDialogButtonBox.Cancel)
+        buttonBox.accepted.connect(self.accept)
+        buttonBox.rejected.connect(self.reject)        
+        self.msgLine = QLabel()
+        
+        meatlayout = QGridLayout()
+        meatlayout.addWidget(self.sheet,0,0)
+        meatlayout.addWidget(self.msgLine,1,0)
+        meatlayout.addWidget(buttonBox,2,0)
+        
+        self.setLayout(meatlayout)
+        self.prepareData(load)
+        
+    def prepareData(self,load=None):
+        self.sheet.setHorizontalHeaderLabels(('nombre','valor                                                    '))
+        context = []
+        context.append((QLineEdit,{'setEnabled':True},None))
+        context.append((QLineEdit,{'setEnabled':True},None))
+        self.sheet.setRowModelDef(context)
+        if load:
+            inicial = load
+        else:
+            inicial = [[None, None ],]
+        for x in range(self.sheet.rowCount()):
+            for y,colDef in enumerate(context):
+                if x < len(inicial):
+                    self.sheet.addCell(x,y,colDef,defVal=inicial[x][y])
+                else:
+                    self.sheet.addCell(x,y,colDef,defVal=None)
+            self.sheet.resizeRowsToContents()
+        self.sheet.resizeColumnsToContents()
+        
+    def accept(self):
+        from support.util.record_functions import osSplit
+        
+        def __limpia(texto):
+            return texto.replace("'",'')
+        
+        def __procesaEntrada(texto):
+            cabeza = texto[0]
+            if cabeza in ( '[','{'):
+                texto = texto.strip()[1:-1]
+                lista = osSplit(texto)
+                if cabeza == '[':
+                    resultado = []
+                    for row in lista:
+                        resultado.append(__procesaEntrada(row))
+                elif cabeza == '{':
+                    resultado = {}
+                    for row in lista:
+                        nombre,valor = row.split(':')
+                        resultado[__limpia(nombre)] = __procesaEntrada(valor)
+            else:
+                resultado = texto[0]
+            return resultado
+
+        self.result = {}
+        k = 0
+        for entrada in self.sheet.values():
+            self.msgLine.setText('')
+            self.msgLine.setStyleSheet(None)
+            if entrada[0].strip() == '':
+                continue
+            try:
+                self.result[entrada[0]] = __procesaEntrada(entrada[1])
+            except ValueError as e:
+                self.msgLine.setText(str(e))
+                self.msgLine.setStyleSheet("background-color:yellow;")
+                self.sheet.cellWidget(k,1).setFocus()
+                return
+            k += 1
+        super().accept()
+
 def mainNF():
     app = QApplication(sys.argv)
 

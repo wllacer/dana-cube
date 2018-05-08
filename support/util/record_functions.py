@@ -380,6 +380,57 @@ def defaultFromContext(context,*args,**kwargs):
                 results.append(context[k])
     return results
 
+def osSplit(texto,delim=','):
+    """
+    Old style split navegando toda la cadena
+    La version basada en re (norm2List) no funciona si los agrupadores no son parentesis y tampoco si estan anidados
+    No se sustituye porque osSplit es mucho mas cara que norm2List  (en una cadena normalita 41 uS frente a 7 uS (la u el el micro)
+    en el uso que he dado hasta ahora norm2List me vale 
+    
+    WIP
+    """
+    openclose = { '(':')','[':']','{':'}' }
+    ani = 0
+    literal = None
+    resultado = []
+    ultpos = 0
+    stack = []
+    for k in range(len(texto)):
+        """
+        orden de precedencia --> comillas
+                                                 parentesis y barras ahora mismo se consideran equivalentes. Esto funciona de milagro
+                                                 separadores
+        """
+        # las comillas no funciona el tema del stack porque pueden aparecer no apareadas siempre que alternen 
+        # uso una logica "ternaria" o asi None -> no hay texto, Literal hay y es el delimitador que sea
+        if texto[k] in ("'",'"'):
+            if literal == texto[k]:
+                literal = None
+            elif literal:
+                pass
+            else:
+                literal = texto[k]
+        # para los pares de caracteres uso un contador de anidacion y un stack con los cars. de apertura
+        # al detectar un cierre saco la ultima entrada del stack y veo si es el correspondiente cierre.
+        # el contador me evita consultar el stack vacio y me permite verificar el cierre al final (podria hacerlo con len(stack)
+        # pero ...
+        if texto[k] in ('(','[','{') and not literal:
+            ani += 1
+            stack.append(texto[k])
+        elif texto[k] in (')',']','}') and not literal:
+            ani -= 1
+            if ani < 0 or openclose[stack.pop()] != texto[k]:
+                raise ValueError('Parentesis no balanceados en {}'.format(texto))
+        elif texto[k] == delim:
+            if ani == 0 and literal is None:  #debe ser cero pero nunca se sabe
+                resultado.append(texto[ultpos:k])
+                ultpos = k +1
+    else:
+        if ani != 0 or literal is not None:
+            raise ValueError('Parentesis o cadenas de texto no balanceados en {}'.format(texto))
+        else:
+            resultado.append(texto[ultpos:])
+    return resultado
 
 if __name__ == '__main__':
     #prueba de funciones
