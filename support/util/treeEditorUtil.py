@@ -460,13 +460,16 @@ def numEntries(tree):
     print('hay ',k, ' entradas')
     return k
 
-def padd(lista,num,default=None,pos='after'):
+def padd(lista,num,default=None,pos='after',truncate=True):
     """
     devuelve una copia con el relleno que indico
     """
     original = len(lista)
     if original >= num:
-        return lista[:]
+        if not truncate:
+            return lista[:]
+        else:
+            return lista[:num]
     resultado = lista[:]
     for k in range(num - len(lista)):
         if pos == 'after':

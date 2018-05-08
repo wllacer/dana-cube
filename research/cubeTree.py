@@ -26,7 +26,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QTreeView, QSpli
      QDialog, QInputDialog, QLineEdit, QComboBox, QMessageBox,QGridLayout, \
      QAbstractItemView, QTableView, QStyledItemDelegate, QSpinBox, QListWidget, QPushButton, QVBoxLayout,QLabel, QWidget, QCheckBox
 
-from research.ufTreeUtil import *
+from support.util.treeEditorUtil import *
 
 from support.datalayer.access_layer import DRIVERS, AGR_LIST 
 from support.util.fechas import CLASES_INTERVALO, TIPOS_INTERVALO
@@ -222,7 +222,7 @@ def getSchemaFromConnection(item):
     
     fileItem = getChildByType(getParentByType(item,'base'),'table')
     fileItem = fileItem.parent().child(fileItem.row(),1).data()  
-    schema,fName = padd(file.split('.'),pos='before')
+    schema,fName = padd(file.split('.'),2,pos='before')
     if schema:
         return schema
     
@@ -258,13 +258,19 @@ def getSchema(item,file=None):
 
     schema = None
     if file is not None:
-        schema,fName = padd(file.split('.'),pos='before')
+        schema,fName = padd(file.split('.'),2,pos='before')
         if schema:
             return schema
     return getSchemaFromConnection(item)
         
         
-def getFile(item):
+def getFile(item,show='fqn'):
+    """
+    tres salidas:
+    fqn  o fullqualifiedName -> el nombre cualificado (de hecho el que aparece en el item
+    base -> solo basename
+    list   -> array [schema,basename]
+    """
     n,i,t = getRow(item)
     fileItem = None
     if t.data () == 'rel_elem':
@@ -297,7 +303,14 @@ def getFile(item):
     #elif t.data() in ( 'fields','date_filter'):
         fileItem = getChildByType(getParentByType(item,'base'),'table')
     # la sintaxis para obtener erma
-    return fileItem.parent().child(fileItem.row(),1).data()  
+    fileName = fileItem.parent().child(fileItem.row(),1).data()  
+    if show == 'fqn':
+        return fileName
+    esquema,baseName = padd(fileName.split('.'),2,pos='before')
+    if show == 'base':
+        return baseName
+    elif show == 'list':
+        return esquema,baseName
 
     
 """
@@ -377,11 +390,19 @@ def srcNumFields(*lparm):
 
 def srcFields(*lparm):
     item = lparm[0]
-    view = lparm[1]
+    view = lparm[1] 
+    if len(lparm) > 2:
+        idx = lparm[2] 
+        delta = lparm[3]
+    else:
+        idx = '@fmt'
+        delta = lambda i:True
+        
     context = Context(item)
     confName,confData = getConnection(item,name=True)
-    table = getFile(item)
-    esquema = getSchema(item,table)
+    esquema,table = getFile(item,show='list')
+    if not esquema:   
+        esquema = getSchema(item,table)
 
     dict_ref = view.diccionario[confName][esquema][table]['FIELDS']
     resultado = [ ['{}.{}.{}'.format(esquema,table,entrada),entrada]
@@ -898,7 +919,7 @@ def editAsTree(fichero):
 """
 Funciones GUI principales 
 """
-from research.treeEditor import *
+from support.gui.treeEditor import *
 from base.datadict import DataDict
 
 class cubeTree(TreeMgr):

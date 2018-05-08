@@ -33,7 +33,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QTreeView, QSpli
      QDialog, QInputDialog, QLineEdit, QComboBox, QMessageBox,QGridLayout, \
      QAbstractItemView, QTableView, QStyledItemDelegate, QSpinBox, QListWidget, QPushButton, QVBoxLayout,QLabel, QWidget, QCheckBox, QStatusBar
 
-from research.ufTreeUtil import *
+from support.util.treeEditorUtil import *
 """
 Funciones para leer la configuracion de user functions. Reutilizadas, creo
 """
@@ -142,7 +142,7 @@ EDIT_TREE = {
                         ('text',True,False),
                         ('class',True,True),
                         ('aux_parm',False,False), #o no ? TODO
-                        ('db',True,False), #o no ?
+                        ('db',False,False), #o no ?
                         ('seqnr',False,False),
                         ('sep',False,False),
                         ('hidden',False,False),
@@ -303,7 +303,7 @@ def editAsTree(fichero):
 """
 Funciones GUI principales 
 """
-from research.treeEditor import *
+from support.gui.treeEditor import *
 
 
 class ufTreeMgrWindow(QMainWindow):
@@ -312,6 +312,11 @@ class ufTreeMgrWindow(QMainWindow):
     def __init__(self,parent=None):
         super(ufTreeMgrWindow,self).__init__(parent)
         Context.EDIT_TREE = EDIT_TREE
+        
+        self.statusBar = QStatusBar()
+        self.msgLine = QLabel()
+        self.statusBar.addWidget(self.msgLine)
+
         self.cubeFile = 'danacube.json'
         self.tree = TreeMgr(editAsTree(self.cubeFile),
                                             EDIT_TREE,
@@ -319,9 +324,6 @@ class ufTreeMgrWindow(QMainWindow):
                                             Context,
                                             msgLine=self.msgLine)
         self.setCentralWidget(self.tree)
-        self.statusBar = QStatusBar()
-        self.msgLine = QLabel()
-        self.statusBar.addWidget(self.msgLine)
         self.setStatusBar(self.statusBar)
         
     def closeEvent(self,event):
@@ -353,16 +355,16 @@ class ufTreeMgrDialog(QDialog):
     def __init__(self,parent=None):
         super().__init__(parent)
         self.cubeFile = 'danacube.json'
-        self.cubeFile = 'danacube.json'
+        self.msgLine = QLabel()
         Context.EDIT_TREE = EDIT_TREE
         self.tree = TreeMgr(editAsTree(self.cubeFile),
                                             EDIT_TREE,
                                             TOP_LEVEL_ELEMS,
-                                            Context)
-        self.msgLine = QLabel()
+                                            Context,
+                                            msgLine=self.msgLine)
         meatLayout = QGridLayout()
         meatLayout.addWidget(self.tree,0,0)
-        meatLayout.addWidget(self.msgLine,1,1)
+        meatLayout.addWidget(self.msgLine,1,0)
         self.setLayout(meatLayout)
         
     def closeEvent(self,event):

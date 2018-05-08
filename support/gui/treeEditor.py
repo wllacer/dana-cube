@@ -27,7 +27,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QTreeView, QSpli
      QDialog, QInputDialog, QLineEdit, QComboBox, QMessageBox,QGridLayout, \
      QAbstractItemView, QTableView, QStyledItemDelegate, QSpinBox, QListWidget, QPushButton, QVBoxLayout,QLabel, QWidget, QCheckBox
 
-from research.ufTreeUtil import *
+from support.util.treeEditorUtil import *
 """
 Funciones para leer la configuracion de user functions. Reutilizadas, creo
 """
@@ -846,7 +846,7 @@ class TreeDelegate(QStyledItemDelegate):
             else:
                 dvalue = ivalue = editor.get()
                 
-            if not self.generalValidation(index,editor,values):
+            if not self.generalValidation(index,editor,dvalue,ivalue):
                 return
             
             item = _changeItem(model,index,ivalue,dvalue)
