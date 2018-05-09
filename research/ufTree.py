@@ -18,20 +18,16 @@ from __future__ import unicode_literals
 from pprint import pprint
 
 import user as uf
-import math 
-
 from support.util.uf_manager import *
-from base.ufhandler import functionFromName
 from support.util.jsonmgr import *
-from support.gui.widgets import WMultiCombo,WPowerTable, WMultiList
-from support.util.record_functions import norm2List,norm2String
+
+from support.gui.widgets import WMultiCombo,WMultiList
 import base.config as config
 
-from PyQt5.QtCore import Qt,QModelIndex,QItemSelectionModel
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QTreeView, QSplitter, QMenu, \
-     QDialog, QInputDialog, QLineEdit, QComboBox, QMessageBox,QGridLayout, \
-     QAbstractItemView, QTableView, QStyledItemDelegate, QSpinBox, QListWidget, QPushButton, QVBoxLayout,QLabel, QWidget, QCheckBox, QStatusBar
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QStandardItem
+from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog,QGridLayout,   \
+     QLineEdit, QComboBox, QMessageBox, QSpinBox, QLabel, QCheckBox, QStatusBar
 
 from support.util.treeEditorUtil import *
 """

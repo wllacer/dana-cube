@@ -24,7 +24,7 @@ from PyQt5.QtCore import Qt,QModelIndex,QItemSelectionModel,pyqtSignal
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QColor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QTreeView, QSplitter, QMenu, \
      QDialog, QInputDialog, QLineEdit, QComboBox, QMessageBox,QGridLayout, \
-     QAbstractItemView, QTableView, QStyledItemDelegate, QSpinBox, QListWidget, QPushButton, QVBoxLayout,QLabel, QWidget, QCheckBox
+     QAbstractItemView, QTableView, QStyledItemDelegate, QSpinBox, QListWidget, QPushButton, QVBoxLayout,QLabel, QWidget, QCheckBox,QStatusBar
 
 from support.util.treeEditorUtil import *
 
@@ -144,38 +144,7 @@ def datadict2dict(head):
 
     return resultado
 
-"""
-Funciones para leer la configuracion de user functions. Reutilizadas, creo
-"""
 
-#class displayTree(QStandardItemModel):
-    #"""
-    #Overloaded QStandardITemModel
-    #Just for domain specific changes
-    #Quizas me he pasado de colorines
-    #"""
-    #def data(self,index,role=Qt.UserRole +1):
-        #if index.column() == 1:
-            #if role in  (Qt.DisplayRole,Qt.BackgroundRole):
-                #context = getItemContext(index)
-                #rowHead = context.get('rowHead')
-                #if role == Qt.DisplayRole and context.get('edit_tree',{}).get('hidden',False):
-                    #return '****'
-                #if ( context.get('edit_tree',{}).get('objtype','atom') != 'atom' and
-                    #context.get('edit_tree',{}).get('editor',None) is not None):
-                    #if role == Qt.DisplayRole and not rowHead.hasChildren():
-                            #return 'pulse aquí para editar la lista'
-                    #elif role == Qt.DisplayRole: # and context.get('objtype','atom') == 'list':
-                            #return branch2text(rowHead)
-                    #elif role == Qt.BackgroundRole and context.get('mandatory',False) and not rowHead.hasChildren():
-                        #return QColor(Qt.yellow)
-                    #elif role == Qt.BackgroundRole:
-                        #return QColor(Qt.cyan)
-                #if role == Qt.BackgroundRole and context.get('readonly',False):
-                    #return QColor(Qt.gray)
-                #if role == Qt.BackgroundRole and context.get('mandatory',False) and not rowHead.hasChildren():
-                    #return QColor(Qt.yellow)
-        #return super().data(index,role)
 
 def isDictFromDef(item):
     """
@@ -602,7 +571,7 @@ EDIT_TREE = {
                         ('fields',True,False),
                         ('guides',True,False,True),
                         ('table',True,False), 
-                        ('date filter',False,False,True)
+                        ('date filter',False,False,True),
                     ],
                     'getters':[],                   #antes de editar
                     'setters':[],      #despues de editar (por el momento tras add
@@ -744,13 +713,29 @@ EDIT_TREE = {
                 },
     'clause':{'objtype':'dict',
               'elements':[
-                  ('base elem',True,False),
+                  ('base_elem',True,False),
                   ('condition',False,False),
-                  ('rel elem',True,False)
+                  ('rel_elem',True,False)
                   ],
               },
-    'base elem':{'editor':QComboBox,'editable':True,'source':srcFields},  #TODO source
-    'rel elem':{'editor':QComboBox,'editable':True,'source':srcFields},     #TODO source
+    'base_elem':{'editor':QComboBox,'editable':True,'source':srcFields},  #TODO source
+    'rel_elem':{'editor':QComboBox,'editable':True,'source':srcFields},     #TODO source
+    #TODO concretar cuando puede usarse date start,date end, date format. Es cuestion de teoria
+    'date filter':{'objtype':'dict',
+                   'elements': [
+                       ('elem',True,False),
+                       ('date class',True,False),
+                       ('date range',False,False),
+                       ('date period',False,False),
+                       ('date start',False,True),
+                       ('date end',False,True),
+                       ('date format',False,True),
+                    ],
+                   },
+    'date class':{'editor':QComboBox,'source':CLASES_INTERVALO},
+    'date range':{'editor':QComboBox,'source':TIPOS_INTERVALO},
+    'date period':{'editor':QSpinBox,'min':1},
+    'date format':{'default':'fecha'},
     'default base': { 'objtype':'dict',
                      'elements':[],
                      'getters':[],
@@ -926,12 +911,12 @@ class cubeTree(TreeMgr):
     # señal para controlar el cambio de la conexion. Realmente solo la usa en el check. Overkill ¿?
     connChanged = pyqtSignal(str,str)
     
-    def __init__(self,treeDef,firstLevelDef,ctxFactory,file,parent=None):
-        Context.EDIT_TREE = EDIT_TREE
+    def __init__(self,treeDef,firstLevelDef,ctxFactory,file,msgLine,parent=None):
+        Context.EDIT_TREE = treeDef
         self.dataDict  = file2datadict(file)
         self.diccionario = datadict2dict(self.dataDict.hiddenRoot)
         self.tree = editAsTree(file)
-        super().__init__(self.tree,treeDef,firstLevelDef,ctxFactory)
+        super().__init__(self.tree,treeDef,firstLevelDef,ctxFactory,msgLine)
         
         self.connChanged.connect(self.checkConexion)
     """
@@ -1011,12 +996,20 @@ class cubeMgrWindow(QMainWindow):
     def __init__(self,parent=None):
         super(cubeMgrWindow,self).__init__(parent)
         self.cubeFile = 'testcubo.json'
+        Context.EDIT_TREE = EDIT_TREE
+        
+        self.statusBar = QStatusBar()
+        self.msgLine = QLabel()
+        self.statusBar.addWidget(self.msgLine)
         self.tree = cubeTree(
                                             EDIT_TREE,
                                             TOP_LEVEL_ELEMS,
                                             Context,
-                                            self.cubeFile)
+                                            self.cubeFile,
+                                            msgLine = self.msgLine)
         self.setCentralWidget(self.tree)
+        self.setStatusBar(self.statusBar)
+        
     def closeEvent(self,event):
         self.close()
         
@@ -1046,12 +1039,15 @@ class cubeMgrDialog(QDialog):
     def __init__(self,parent=None):
         super().__init__(parent)
         self.cubeFile = 'testcubo.json'
-        Context.EDIT_TREE = EDIT_TREE
-        self.tree = TreeMgr(editAsTree(self.cubeFile),
+        self.msgLine = QLabel()
+        
+        self.tree = cubeTree(
                                             EDIT_TREE,
                                             TOP_LEVEL_ELEMS,
-                                            Context)
-        self.msgLine = QLabel()
+                                            Context,
+                                            self.cubeFile,
+                                            msgLine = self.msgLine)
+
         meatLayout = QGridLayout()
         meatLayout.addWidget(self.tree,0,0)
         meatLayout.addWidget(self.msgLine,1,1)

@@ -10,22 +10,15 @@ from __future__ import unicode_literals
 
 from pprint import pprint
 
-import user as uf
-import math 
-
-from support.util.uf_manager import *
-from base.ufhandler import functionFromName
-from support.util.jsonmgr import *
 from support.gui.widgets import WMultiCombo,WPowerTable, WMultiList
 from support.gui.dialogs import WNameValue
-from support.util.record_functions import norm2List,norm2String,osSplit
+from support.util.record_functions import norm2List,osSplit
 import base.config as config
 
-from PyQt5.QtCore import Qt,QModelIndex,QItemSelectionModel
-from PyQt5.QtGui import QStandardItemModel, QStandardItem , QColor
-from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QTreeView, QSplitter, QMenu, \
-     QDialog, QInputDialog, QLineEdit, QComboBox, QMessageBox,QGridLayout, \
-     QAbstractItemView, QTableView, QStyledItemDelegate, QSpinBox, QListWidget, QPushButton, QVBoxLayout,QLabel, QWidget, QCheckBox
+from PyQt5.QtCore import Qt,QModelIndex
+from PyQt5.QtGui import QStandardItemModel,QColor
+from PyQt5.QtWidgets import QTreeView, QMenu, QStyledItemDelegate, QInputDialog, QMessageBox,\
+    QSpinBox, QListWidget, QPushButton,QLabel, QCheckBox , QLineEdit, QComboBox
 
 from support.util.treeEditorUtil import *
 """
@@ -47,7 +40,8 @@ class displayTree(QStandardItemModel):
                     return '****'
                 if ( context.get('edit_tree',{}).get('objtype','atom') != 'atom' and
                     context.get('edit_tree',{}).get('editor',None) is not None):
-                    if not rowHead.hasChildren():
+                    # algunas veces la cabecera tiene ya los datos
+                    if not rowHead.hasChildren() and super().data(index,role) is None:
                             return 'pulse aquí para editar la lista'
                     else:
                             return branch2text(rowHead)
@@ -69,25 +63,6 @@ class displayTree(QStandardItemModel):
                     return QColor(Qt.gray)
                 if context.get('mandatory',False) and not rowHead.hasChildren():
                     return QColor(Qt.yellow)
-            #if role in  (Qt.DisplayRole,Qt.BackgroundRole):
-                #context = Context(index)
-                #rowHead = context.get('rowHead')
-                #if role == Qt.DisplayRole and context.get('edit_tree',{}).get('hidden',False):
-                    #return '****'
-                #if ( context.get('edit_tree',{}).get('objtype','atom') != 'atom' and
-                    #context.get('edit_tree',{}).get('editor',None) is not None):
-                    #if role == Qt.DisplayRole and not rowHead.hasChildren():
-                            #return 'pulse aquí para editar la lista'
-                    #elif role == Qt.DisplayRole: # and context.get('objtype','atom') == 'list':
-                            #return branch2text(rowHead)
-                    #elif role == Qt.BackgroundRole and context.get('mandatory',False) and not rowHead.hasChildren():
-                        #return QColor(Qt.yellow)
-                    #elif role == Qt.BackgroundRole:
-                        #return QColor(Qt.cyan)
-                #if role == Qt.BackgroundRole and context.get('readonly',False):
-                    #return QColor(Qt.gray)
-                #if role == Qt.BackgroundRole and context.get('mandatory',False) and not rowHead.hasChildren():
-                    #return QColor(Qt.yellow)
             elif role == Qt.ToolTipRole:
                 context = Context(index)
                 if context.get('edit_tree',{}).get('hint'):
@@ -134,7 +109,9 @@ class Context():
         ```
             var = Context(item,arbol_local)
         ```
-   
+    
+    Existe un problema con el contexto,y es que esta preparado para la estructura trina que utilizo en los arboles (nombre,valor,tipo) y puede no reflejar otras situaciones tipo arbol
+    
     """
     EDIT_TREE = None
     def __init__(self,item_ref,Tree = None):
@@ -413,6 +390,25 @@ class TreeMgr(QTreeView):
                 dig(pai,self)
     
     def actionAdd(self,item,newItemType):
+        """
+        """
+        def __repeaterStatus(parent):
+        #correccion para el caso de que sean elementos repetibles y sea el primero
+            ctxParent = Context(parent)
+            if ctxParent.get('editType') == newItemType:
+                return True,parent
+            else:
+                elementosPadre = ctxParent.get('edit_tree',{}).get('elements',[])
+                idx = [elemento[0] for elemento in elementosPadre].index(newItemType)
+                if len(elementosPadre[idx]) > 3 and elementosPadre[idx][3]:  #repetible, con esto ya deberia valer pero aseguro la situacion
+                    cabeceraCartel = getChildByType(parent,newItemType)
+                    if not cabeceraCartel:
+                        newHeader = makeRow(newItemType,None,newItemType)
+                        parent.appendRow(newHeader)
+                        parent = newHeader[0]
+                    return True,parent
+            return False,parent
+                
         print('action add',item.data(),newItemType)
         edit_data = self.treeDef.get(newItemType,{})
         if item.column() == 0:
@@ -420,6 +416,9 @@ class TreeMgr(QTreeView):
         else:
             parent = item.model().itemFromIndex(item.index().sibling(item.row(),0))
             
+        #correccion para el caso de que sean elementos repetibles y sea el primero
+        repeatInstance,parent = __repeaterStatus(parent)
+                
         def_val = edit_data.get('default',None)
         valor_defecto = None
         if def_val and callable(def_val):
@@ -446,6 +445,10 @@ class TreeMgr(QTreeView):
                     if nombre in campos:
                         self.actionRename(newRow[0],nombre)
                         break
+                else:
+                    if repeatInstance:
+                        newRow[0].setData(newRow[0].row(),Qt.UserRole +1)
+                        newRow[0].setData(str(newRow[0].row()),Qt.EditRole)
                 for funcion in edit_data.get('setters',[]):
                     funcion(newRow[0],self)
         
@@ -461,7 +464,6 @@ class TreeMgr(QTreeView):
         """
         separada 
         """
-        print('action addChildren',newHead.data(),tipo)
         if edit_data.get('subtypes'):
             ok = False
             lista = []
@@ -672,6 +674,23 @@ class TreeDelegate(QStyledItemDelegate):
             #editor.setText(dato)
         return editor
             
+    def __multiListLoad(self,editor,dato):
+        """
+        convenience for just this
+        """
+        if self.isDouble:                            #para presentar correctamente
+            try:
+                pos = self.currentList.index(dato)
+            except ValueError:
+                try:
+                    pos  = [ entry[0] for entry in self.fullList ].index(dato)
+                except ValueError:
+                    self.currentList.append(dato)
+                    self.fullList.append([dato,dato])
+                    pos = len(self.currentList) -1
+            dato = self.currentList[pos]
+        editor.selectEntry(dato)
+
     def setEditorData(self, editor, index):
         model = index.model()
 
@@ -705,18 +724,11 @@ class TreeDelegate(QStyledItemDelegate):
                 for x in range(n.rowCount()):
                     nh,ih,th = getRow(n.child(x))
                     dato = ih.data()
-                    if self.isDouble:                            #para presentar correctamente
-                        try:
-                            pos = self.currentList.index(dato)
-                        except ValueError:
-                            try:
-                                pos  = [ entry[0] for entry in self.fullList ].index(dato)
-                            except ValueError:
-                                self.currentList.append(dato)
-                                self.fullList.append([dato,dato])
-                                pos = len(self.currentList) -1
-                        dato = self.currentList[pos]
-                    editor.selectEntry(dato)
+                    self.__multiListLoad(editor,dato)
+            elif i.data() is not None:  # hay varios casos en que la lista se ha colapsado en un solo campo
+                lista = osSplit(i.data())   #aqui si merece la pena
+                for dato  in lista:
+                    self.__multiListLoad(editor,dato)           
             elif valor_defecto is not None:
                 editor.selectEntry(valor_defecto)
                 

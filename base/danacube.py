@@ -936,7 +936,7 @@ class DanaCube(QTreeView):
                 descriptores.append(item[0])
                 datos.append([0,0,1,None,None])
         #descriptores = [ item[0] for item in camposFecha ]
-        form = datefilterDlg(descriptores,datos)
+        form = dateFilterDlg(descriptores,datos)
         if form.exec_():
             sqlGrp = []
             #if self.cubo.definition.get('date filter'):

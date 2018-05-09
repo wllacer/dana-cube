@@ -10,8 +10,8 @@ from __future__ import unicode_literals
 
 from pprint import pprint
 
-from support.util.uf_manager import *
-from support.util.jsonmgr import *
+#from support.util.uf_manager import *
+#from support.util.jsonmgr import *
 
 from PyQt5.QtCore import Qt,QModelIndex
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
@@ -109,9 +109,9 @@ def tree2dict(rootItem,esdiccionario=None,role=None):
     toList = False
     toDict = False
     if rootItem == rootItem.model().invisibleRootItem() :
-            toDictionary = True #la raiz siempre genera directorio
+            toDict = True #la raiz siempre genera directorio
     elif esdiccionario and esdiccionario(rootItem):   
-        toDictionary = True
+        toDict = True
     else:
        toList = True
        
@@ -497,7 +497,6 @@ if __name__ == '__main__':
     #pprint(tools)
     #print(readUM(uf))
     exit()
-    pruebaGeneral()
     #modelo =editAsTree()
             
             

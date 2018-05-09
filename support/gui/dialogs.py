@@ -91,7 +91,7 @@ class propertySheetDlg(QDialog):
 
 from support.util.fechas import *
 
-class filterDlg(QDialog):
+class dateFilterDlg(QDialog):
     def __init__(self,descriptores=None,datos=None,parent=None):   
         """
         """
@@ -105,7 +105,7 @@ class filterDlg(QDialog):
         else:
             self.data = datos
             
-        super(datebase.filterDlg, self).__init__(parent)
+        super(dateFilterDlg, self).__init__(parent)
         # cargando parametros de defecto
         self.context = []
 
