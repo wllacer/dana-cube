@@ -13,6 +13,7 @@ from pprint import pprint
 import user as uf
 from support.util.uf_manager import *
 from support.util.decorators import keep_tree_layout,model_change_control,waiting_effects
+from support.util.uf_menuEditor import ufTreeMgrDialog
 
 class Uf_handler():
     
@@ -194,6 +195,7 @@ class Uf_handler():
                 kparm[key[0]] = m_datos[i][2]
         
         return lparm,kparm
+
 
 
 def requestFunctionParms(spec,values):

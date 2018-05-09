@@ -576,6 +576,7 @@ EDIT_TREE = {
                     'getters':[],                   #antes de editar
                     'setters':[],      #despues de editar (por el momento tras add
                     'validator':[],                 #validacion de entrada
+                    'text':'definción de cubo',
                     },
     'connect': { 'objtype':'dict',
                      'elements':[
@@ -590,13 +591,22 @@ EDIT_TREE = {
                      'setters':[],
                     'validator':[],
                     'menuActions':[ [addConnectionMenu,'Comprueba la conexión'],],
+                    'text':'parámetros de conexion a la base de datos',
                     },
-    'driver': {'editor':QComboBox, 'source':DRIVERS},
-    'dbname':{ 'editor':QLineEdit},
-    'dbhost':{'editor':QLineEdit},
-    'dbuser':{'editor':QLineEdit, 'default':''},
-    'dbpass':{'editor':QLineEdit, 'hidden':True},   # manipulando displayRole en presentacion
-    'schema':{'editor':QComboBox,'source':srcSchemas,'default':defaultSchema},
+    'driver': {'editor':QComboBox, 'source':DRIVERS,
+               'text':'gestor de base de datos a usar',
+               },
+    'dbname':{ 'editor':QLineEdit,
+              'text':'Nombre de la instancia de  base de datos'},
+    'dbhost':{'editor':QLineEdit,
+              'text':'Servidor donde reside la base de datos'},
+    'dbuser':{'editor':QLineEdit, 'default':'',
+              'text':'Usuario de la base de datos por defecto',},
+    'dbpass':{'editor':QLineEdit, 'hidden':True,
+              'text':'clave del usuario en la B.D. (desaconsejado)'},   
+    'schema':{'editor':QComboBox,'source':srcSchemas,'default':defaultSchema,
+              'text':'Esquema de la B.D. a utilizar por defecto',
+              },
     'table' : { 'editor':QComboBox, 'source':srcTables, 'default':defaultTable,'editable':True },
     'base filter': {'editor':QLineEdit},   #aceptaria un validator
     'date filter': {'objtype':'list'},

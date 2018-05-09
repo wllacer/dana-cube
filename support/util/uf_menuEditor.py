@@ -24,10 +24,10 @@ from support.util.jsonmgr import *
 from support.gui.widgets import WMultiCombo,WMultiList
 import base.config as config
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QStandardItem
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog,QGridLayout,   \
-     QLineEdit, QComboBox, QMessageBox, QSpinBox, QLabel, QCheckBox, QStatusBar
+     QLineEdit, QComboBox, QMessageBox, QSpinBox, QLabel, QCheckBox, QStatusBar, QDialogButtonBox
 
 from support.util.treeEditorUtil import *
 """
@@ -209,6 +209,7 @@ def editAsTree(fichero):
     #cubo = Cubo(mis_cubos['experimento'])
     model = displayTree()
     model.setItemPrototype(QStandardItem())
+    model.setHorizontalHeaderLabels(['Nombre','Contenido','Tipo'])
     hiddenRoot = model.invisibleRootItem()
     parent = hiddenRoot
     for entrada in mis_cubos:
@@ -348,11 +349,16 @@ class ufTreeMgrWindow(QMainWindow):
 class ufTreeMgrDialog(QDialog):
     """
     """
-    def __init__(self,parent=None):
+    def __init__(self,contextFile='danacube.json',parent=None):
         super().__init__(parent)
-        self.cubeFile = 'danacube.json'
-        self.msgLine = QLabel()
+        self.cubeFile = contextFile
         Context.EDIT_TREE = EDIT_TREE
+        
+        self.msgLine = QLabel()
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok| QDialogButtonBox.Cancel)
+        buttonBox.accepted.connect(self.accept)
+        buttonBox.rejected.connect(self.reject)        
+        
         self.tree = TreeMgr(editAsTree(self.cubeFile),
                                             EDIT_TREE,
                                             TOP_LEVEL_ELEMS,
@@ -361,18 +367,32 @@ class ufTreeMgrDialog(QDialog):
         meatLayout = QGridLayout()
         meatLayout.addWidget(self.tree,0,0)
         meatLayout.addWidget(self.msgLine,1,0)
+        meatLayout.addWidget(buttonBox)
         self.setLayout(meatLayout)
+        self.setMinimumSize(QSize(440,220))
+        
+        
+    def accept(self):
+        """
+        cuando salgo por ok, no pregunto, salvo directamente
+        
+        """
+        self.saveFile()
+        super().accept()
         
     def closeEvent(self,event):
         self.close()
         
     def close(self):
 
-        self.saveFile()
+        self.saveFile(True)
         return True
  
-    def saveFile(self):
-        if self.saveDialog():
+    def saveFile(self,dialog=False):
+        """
+        notese que salvo sin versiones. A la larga es un fichero solo de trabajo
+        """
+        if not dialog or self.saveDialog():
             definiciones = load_cubo(self.cubeFile)
             definiciones['user functions'] = tree2dict(self.tree.model().invisibleRootItem(),isDictFromDef)
             dump_json(definiciones,self.cubeFile)

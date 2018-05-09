@@ -158,7 +158,7 @@ class DanaCubeWindow(QMainWindow):
         self.dateRangeActions = dict()
         self.editActions = dict()
         
-        self.restorator = None
+        self.editActions = {}
         
         self.tabulatura	= QTabWidget()
         self.tabulatura.currentChanged[int].connect(self.checkChanges)
@@ -205,25 +205,13 @@ class DanaCubeWindow(QMainWindow):
         self.dateRangeActions['drop'].setEnabled(False)
         self.dateRangeActions['save'].setEnabled(False)
 
-        self.optionsMenu = self.menuBar().addMenu("&Opciones")
-        self.optionsMenu.addAction("&Exportar datos ...",
-                                   self.exportData,
-                                   "CtrlT")
-        self.optionsMenu.addAction("&Trasponer datos",
-                                   self.trasposeData,
-                                   "CtrlT")
-        self.optionsMenu.addAction("&Presentacion ...",
-                                   self.setNumberFormat,
-                                   "Ctrl+F")
-        self.optionsMenu.addSeparator()
-        self.optionsMenu.addAction("&Graficos",self.setGraph,"Ctrl+G")
 
         # esta es la version nueva del menu funcional
         
         self.userFunctionsMenu = self.menuBar().addMenu("&Funciones de usuario")
-        self.restorator = self.userFunctionsMenu.addAction("&Restaurar valores originales"
+        self.editActions['restore'] = self.userFunctionsMenu.addAction("&Restaurar valores originales"
             ,self.tabulatura.currentWidget().tree.restoreData,"Ctrl+R")
-        self.restorator.setEnabled(False)
+        self.editActions['restore'].setEnabled(False)
 
         self.userFunctionsMenu.addSeparator()
         self.editActions['active'] = self.userFunctionsMenu.addAction("&Activar edicion celdas"
@@ -238,41 +226,64 @@ class DanaCubeWindow(QMainWindow):
         self.ufHandler = Uf_handler(self.userFunctionsMenu,self.cubo,self.dispatch,self.contextFile)
         self.plugins = self.ufHandler.plugins
         self.pluginDbMenu = self.ufHandler.specUfMenu
+        ## opciones
+        self.optionsMenu = self.menuBar().addMenu("&Opciones")
+        self.optionsMenu.addAction("&Exportar datos ...",
+                                   self.exportData,
+                                   "CtrlT")
+        self.optionsMenu.addAction("&Trasponer datos",
+                                   self.trasposeData,
+                                   "CtrlT")
+        self.optionsMenu.addAction("&Presentacion ...",
+                                   self.setNumberFormat,
+                                   "Ctrl+F")
+        self.optionsMenu.addSeparator()
+        self.optionsMenu.addAction("&Graficos",self.setGraph,"Ctrl+G")
+        self.optionsMenu.addSeparator()
+        self.optionsMenu.addAction("Mantenimiento de funciones de usuario",self.adminUF,"Ctrl+G")
         ## esto al final para que las distintas opciones raras que van al menu de cubos vayan en su sitio
         self.cubeMenu.addSeparator()
         self.cubeMenu.addAction("E&xit", self.close, "Ctrl+Q")
 
 
         self.setCentralWidget(self.tabulatura)
-     
+    
+    def adminUF(self):
+        """ 
+        manejo el editor de funciones a traves de un dialogo
+        Cuando retorna elimino todas las funciones del menu que no son genericas y reinicializo el gestor de funciones
+        de usuario.
+        TODO La pena es que en teoria al menos no recoge los cambios en los modulos, sólo en el menú. para eso tengo que modificar el proceso de import en ufHandler
+        """
+        from support.util.uf_menuEditor import ufTreeMgrDialog
+        form = ufTreeMgrDialog(self.contextFile)#(lista,initial)
+        form.show()
+        if form.exec_():
+            # la logica para borrar entrqas del menu a veces es un poco esoterica. Aqui tengo claro cuantos elementos
+            # quedan, tres entradas y dos separadores, asi que puedo ir directamente por el numero
+            acciones = self.userFunctionsMenu.actions()
+            for k in range(5,len(acciones)):
+                #print('borro',acciones[k].text())
+                self.userFunctionsMenu.removeAction(acciones[k])
+            #reinicializo el contexto
+            self.ufHandler = Uf_handler(self.userFunctionsMenu,self.cubo,self.dispatch,self.contextFile)
+            self.plugins = self.ufHandler.plugins
+            self.pluginDbMenu = self.ufHandler.specUfMenu
+            if self.cubo:
+                self.fillUserFunctionMenu(self.pluginDbMenu,self.cubo.nombre)
+
+#            self.fillUserFunctionMenu()        
     def fillUserFunctionMenu(self,menu,db=''):
         self.ufHandler.fillUserFunctionMenu(db)
-    #def fillUserFunctionMenu(self,menu,db=''):
-        #if db != '':
-            #menu.clear()
-            #menu.setTitle('Funciones especificas para '+ db)
-            #subset = { k:self.plugins[k] for k in self.plugins if db in self.plugins[k].get('db','') }
-        #else:
-            #subset = { k:self.plugins[k] for k in self.plugins if self.plugins[k].get('db','') == '' }
-        #if len(subset) == 0:
-            #return
-        #for k in sorted(subset,
-                    #key=lambda x:self.plugins[x].get('seqnr', float('inf'))):
-            #entry = self.plugins[k]
-            #if entry.get('hidden',False):
-                #continue
-            #menu.addAction(entry['text'],lambda  idx=k: self.dispatch(idx))
-            #if entry.get('sep',False):
-                #menu.addSeparator()
         
     def checkChanges(self,destino):
         currentWidget = self.tabulatura.currentWidget()   #.tree
-        if not self.filterActions or not self.dateRangeActions or not self.restorator:
+        if not self.filterActions or not self.dateRangeActions or not self.editActions['restore']:
             return
         if not currentWidget:
             self.filterActions['drop'].setEnabled(False)
             self.filterActions['save'].setEnabled(False)
-            self.restorator.setEnabled(False)
+            self.editActions['restore'].setEnabled(False)
             return 
         
         if currentWidget.tree.filtroCampos != '':
@@ -291,9 +302,9 @@ class DanaCubeWindow(QMainWindow):
             self.dateRangeActions['save'].setEnabled(False)
 
         if currentWidget.tree.isModified:
-            self.restorator.setEnabled(True)
+            self.editActions['restore'].setEnabled(True)
         else:
-            self.restorator.setEnabled(False)
+            self.editActions['restore'].setEnabled(False)
 
         #print(currentWidget.tree.editTriggers().text(),self.editActions['active'].text())
         if currentWidget.tree.editTriggers() == QAbstractItemView.NoEditTriggers:
@@ -694,7 +705,7 @@ class DanaCube(QTreeView):
                 if nuevoDato == '':  #revierto los cambios
                     pass
                 else:
-                    self.parent.restorator.setEnabled(True)
+                    self.parent.editActions['restore'].setEnabled(True)
                     delta = nuevoDato - viejoDato
                     if type(item) == QStandardItem:
                         col = topLeft.column() 
@@ -857,12 +868,12 @@ class DanaCube(QTreeView):
         #self.expandToDepth(2)
         #app.restoreOverrideCursor()
         self.isModified = False
-        self.parent.restorator.setEnabled(False)
+        self.parent.editActions['restore'].setEnabled(False)
 
     #@waiting_effects 
     def dispatch(self,fcnName):
         self.parent.ufHandler.dispatch(self.model(),fcnName)
-        self.parent.restorator.setEnabled(True)
+        self.parent.editActions['restore'].setEnabled(True)
 
     def setFilter(self):
         #self.areFiltered = True

@@ -392,11 +392,23 @@ class TreeMgr(QTreeView):
     def actionAdd(self,item,newItemType):
         """
         """
-        def __repeaterStatus(parent):
+        def __getParentRepeatStatus(itm):
+            """
+            Determino cual es el elemento padre de este elemento
+            determino si el elemento forma parte de un repeat group. Si lo es cambia el parent (parece que aqui no ha funcionado lo
+            del objeto como parametro es referencia, por eso lo hago explicitamente
+            Si es un repeat group y no hay cabecera, la da de alta al paso ...
+            """
+            if itm.column() == 0:
+                parent = itm
+            else:
+                parent = itm.model().itemFromIndex(itm.index().sibling(itm.row(),0))
+            if not parent:
+                return None,False
         #correccion para el caso de que sean elementos repetibles y sea el primero
-            ctxParent = Context(parent)
+            ctxParent = self.ctxFactory(parent)
             if ctxParent.get('editType') == newItemType:
-                return True,parent
+                return parent,True
             else:
                 elementosPadre = ctxParent.get('edit_tree',{}).get('elements',[])
                 idx = [elemento[0] for elemento in elementosPadre].index(newItemType)
@@ -405,19 +417,12 @@ class TreeMgr(QTreeView):
                     if not cabeceraCartel:
                         newHeader = makeRow(newItemType,None,newItemType)
                         parent.appendRow(newHeader)
-                        parent = newHeader[0]
-                    return True,parent
-            return False,parent
+                    return newHeader[0],True
+            return parent,False
                 
-        print('action add',item.data(),newItemType)
         edit_data = self.treeDef.get(newItemType,{})
-        if item.column() == 0:
-            parent = item
-        else:
-            parent = item.model().itemFromIndex(item.index().sibling(item.row(),0))
-            
-        #correccion para el caso de que sean elementos repetibles y sea el primero
-        repeatInstance,parent = __repeaterStatus(parent)
+
+        parent, repeatInstance= __getParentRepeatStatus(item)
                 
         def_val = edit_data.get('default',None)
         valor_defecto = None

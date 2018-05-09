@@ -32,7 +32,8 @@
             "entry": "ordinal",
             "seqnr": 2,
             "text": "Número de orden descendente en la fila",
-            "type": "item"
+            "type": "item",
+            "hidden": true
         },
         "agrupa": {
             "aux_parm": {
@@ -161,7 +162,7 @@
         },
         "simul_voto": {
             "class": "sequence",
-            "db": "datos locales,datos light",
+            "db": "datos locales",
             "list": [
                 "Podemos",
                 "factorizaAgregado",
