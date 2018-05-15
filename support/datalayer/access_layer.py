@@ -209,7 +209,8 @@ def dbDict2Url(conDict):
     return context
 
 def dbConnectAlch(conDict):
-
+    """
+    """
     context = dbDict2Url(conDict)
     if 'debug' in conDict:
         debug=conDict['debug']

@@ -236,7 +236,7 @@ class Context():
                 }
     def get(self,entrada,default=None):
         return self.content.get(entrada,default)
-    def __getItem__(self,entrada):
+    def __getitem__(self,entrada):
         return self.content[entrada]
     def __setitem__(self,entrada,valor):
         self.content[entrada] = valor
@@ -292,6 +292,8 @@ class TreeMgr(QTreeView):
         indexes = self.selectedIndexes()
         if len(indexes) > 0:
             index = indexes[0]
+        else:
+            return
         context = self.ctxFactory(index)
         n = context.get('rowHead')
         edit_data = self.treeDef.get(context.get('editType'),{})
@@ -411,7 +413,18 @@ class TreeMgr(QTreeView):
                 return parent,True
             else:
                 elementosPadre = ctxParent.get('edit_tree',{}).get('elements',[])
-                idx = [elemento[0] for elemento in elementosPadre].index(newItemType)
+                try:
+                    idx = [elemento[0] for elemento in elementosPadre].index(newItemType)
+                except ValueError:
+                    # FIXME esto es un parche, no una solucion coherente
+                    # en un alta es posible que no conozcamos todavia que subtipo 
+                    # por tanto tenemos que forzar un pastiche incluyendo todos los subtipos
+                    if ctxParent.get('edit_tree',{}).get('subtypes'):
+                        for subtipo in ctxParent.get('edit_tree',{}).get('subtypes'):
+                            elementosPadre += getFullElementList(self.treeDef,self.treeDef[subtipo].get('elements'))
+                        idx = [elemento[0] for elemento in elementosPadre].index(newItemType)
+                    else:
+                        raise
                 if len(elementosPadre[idx]) > 3 and elementosPadre[idx][3]:  #repetible, con esto ya deberia valer pero aseguro la situacion
                     cabeceraCartel = getChildByType(parent,newItemType)
                     if not cabeceraCartel:
@@ -705,9 +718,9 @@ class TreeDelegate(QStyledItemDelegate):
         dato = item.data(Qt.UserRole +1)
         tipo = type(dato)
 
-        setters = self.context.get('setters')
-        if setters:
-            for funcion in setters:
+        getters = self.context.get('getters')
+        if getters:
+            for funcion in getters:
                 dato,display = funcion(item,self.parent(),dato,display)
             
         valor_defecto = None    
@@ -898,11 +911,11 @@ class TreeDelegate(QStyledItemDelegate):
         
         setters = self.context.get('edit_tree',{}).get('setters',[])
         for funcion in setters:
-            funcion(item,self.parent())
+            funcion(item,self.parent(),self.context)
 
     def generalValidation(self,index,editor,*lparms,**kwparms):
         # de momento suprimo el color rojo de fondo, ya que los cambios se pierden
-        #index.model().setData(index,None,Qt.BackgroundRole)
+        index.model().setData(index,None,Qt.BackgroundRole)
         self.parent().msgLine.setText('')
         self.parent().msgLine.setStyleSheet(None)
         ok, text = self.validator(editor,*lparms,**kwparms)
@@ -912,6 +925,8 @@ class TreeDelegate(QStyledItemDelegate):
             #index.model().setData(index,QColor(Qt.red),Qt.BackgroundRole)
             self.parent().setCurrentIndex(index)
             return False
+        elif text and len(text.strip()) > 0:
+            self.parent().msgLine.setText('{} : {}'.format(self.context.get('name'),text))
         return True
 
     def validator(self,editor,*lparms,**kwparms):
@@ -930,11 +945,14 @@ class TreeDelegate(QStyledItemDelegate):
         if len(validators) == 0:
             return True, ''
         else:
+            text = None
             for entry in validators:                
-                ok,text = entry(self.context.get('editPos'),editor,*lparms,**kwparms)
+                ok,ptext = entry(self.context,editor,*lparms,**kwparms)
                 if not ok:
-                    return False, text
-        return True
+                    return False, ptext
+                if ptext and len(ptext.strip()) > 0:
+                    text = '; '.join([text,ptext]) if text else ptext
+        return True,text
                 
 
  

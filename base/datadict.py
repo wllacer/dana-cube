@@ -299,6 +299,7 @@ class DataDict():
                 
                 )
         parmDialog = ConnectionSheetDlg('Edite la conexion',context,datos, None)
+        parmDialog.show()
         if parmDialog.exec_():
             #TODO deberia verificar que se han cambiado los datos
             configData['connect'] = row2dict(datos[1:],attr_list)

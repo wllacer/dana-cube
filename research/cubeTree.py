@@ -1,6 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+Todo list tras completar validators y setters
+-> en repeatable add debe dividirse en (insert after, insert before, append). General de editTree
+-> Incluir llamada a la consulta de guia
+-> Incluir llamada al grand total
+-> Las fechas artificiales (trimestres, cuatrimestres, ...) como opciones de menu aqui y no en info2*
+-> Para sqlite que el selector de base de datos sea el selector de ficheros del sistema
+
 """
 
 from __future__ import division
@@ -18,6 +25,7 @@ from base.ufhandler import functionFromName
 from support.util.jsonmgr import *
 from support.gui.widgets import WMultiCombo,WPowerTable, WMultiList 
 from support.util.record_functions import norm2List,norm2String
+
 import base.config as config
 
 from PyQt5.QtCore import Qt,QModelIndex,QItemSelectionModel,pyqtSignal
@@ -31,6 +39,9 @@ from support.util.treeEditorUtil import *
 from support.datalayer.access_layer import DRIVERS, AGR_LIST 
 from support.util.fechas import CLASES_INTERVALO, TIPOS_INTERVALO
 from admin.cubemgmt.cubeTypes import GUIDE_CLASS, ENUM_FORMAT,LOGICAL_OPERATOR
+
+import os
+
 #from admin.cubemgmt.cubeTypes import 
 """
 utility functions to read from DD
@@ -77,6 +88,155 @@ def _hName(item):
         pai = pai.parent()
     return fullName
 
+def getFKLinks(tableDdItem,order='FK'):
+    """
+    parent y child son siempre en el sentido FK, en el caso de FK_REFERENCE realmetne es al refves
+    """
+    
+    def _getFKs(tabla,order):
+        entradas = []
+        for k in range(tabla.rowCount()):
+            if tabla.child(k).text() ==order:
+                fklist = tabla.child(k)
+                for j in range(fklist.rowCount()):
+                    fkelem = fklist.child(j)
+                    tabla_ref = fkelem.getRow()[1].split('.')[-1]
+                    #entradas.append([tabla_ref,fkelem,tabla.text()])
+                    entradas.append({'parent':tabla_ref,'ref':fkelem,'child':tabla.text()})
+        return entradas
+    
+    def _locateFile(entrada):
+        pai =entrada['ref'].parent()
+        while pai.getTypeText().lower() != 'schema':
+            pai = pai.parent()
+        for k in range(pai.rowCount()):
+            if pai.child(k,0).text() == entrada['parent']:  #no del todo
+                tabla =pai.child(k,0)
+                return tabla
+        return None
+    
+    def _getNextLevel(visited,pendientes,processed,order):
+            nextlevel = []
+            for entrada in pendientes:
+                if entrada['ref'].text() in processed:
+                    continue
+                else:
+                    processed.add(entrada['ref'].text())
+                    
+                if entrada['parent'] not in visited:
+                    tabla = _locateFile(entrada)
+                    if not tabla:
+                        continue
+                    npendientes = _getFKs(tabla,order)
+                    visited[entrada['parent']] = npendientes
+                else:
+                    npendientes = visited[entrada['parent']]
+                    for k in range(len(npendientes)):
+                        npendientes[k]['child'] = entrada['parent']
+                nextlevel += npendientes
+            return nextlevel
+        
+    def _getDest(hacia,biglist,maxlevel):
+        results = []
+        for row in range(maxlevel):
+            destinos = [ k for k,entrada in enumerate(biglist[row]) if entrada['parent'] == hacia ]
+            #destinos = [ entrada[0] for entrada in biglist[k]]
+            for col in destinos:
+                results.append((row,col))
+        #print('hay ',len(results),' rutas directas posibles para ',hacia,' en el nivel',maxlevel -1)
+        return results
+  
+    def _navega(hacia,rutas,biglist,maxlevel,desde):
+        if maxlevel <0:
+            return rutas
+        nrutas = []
+        caminos = _getDest(hacia,biglist,maxlevel)
+        for entry in caminos:
+            row = entry[0]
+            col = entry[1]
+            entrada = biglist[row][col]
+            #print('estoy en',entrada,row)
+            fuente = biglist[row][col]['child']
+            if fuente == desde:
+                nrutas += [ [entrada,],]
+                continue
+            else:
+                #print('ahora voy a',fuente,row)
+                nrutas += _navega(fuente,[[entrada,],],biglist,row,desde)
+        resultado = []
+        if len(rutas) == 0:
+            resultado = nrutas
+        else:
+            for ruta in rutas:
+                for nruta in nrutas:
+                    resultado.append(nruta + ruta)
+        #print('hacia',hacia,' maxlevel',maxlevel)
+        #pprint(resultado)
+        return resultado
+
+    def _path2cadena(path):
+        cadena = ''
+        for arc in path:
+            cadena += '-> {} ({}) '.format(arc['parent'],arc['ref'].text().replace('_fkey',''))
+        return cadena
+
+    desde = tableDdItem.text()
+    visited = dict()
+    processed = set()        
+    pendientes = _getFKs(tableDdItem,order)
+    if not pendientes:
+        print('sin fks definidas, mal vamos')
+        return None
+    if tableDdItem.text() not in visited:
+        visited[tableDdItem.text()] = pendientes
+    biglist = []
+    biglist.append(pendientes)
+    cantidaz = len(processed)
+    k = 1
+    while True: 
+        thislevel = _getNextLevel(visited,biglist[ -1],processed,order)
+        if len(thislevel) != 0:
+            biglist.append(thislevel)
+        else:
+            break
+        if len(processed) == cantidaz:  #no he encontrado una FK nueva
+            break
+        cantidaz = len(processed)
+        k += 1
+        if k == 10:
+            print('salgo escopetado')
+            break
+    
+
+    tdict = {}    
+    superres = []
+    for row,lista in enumerate(biglist):
+        for linea in lista:
+            resultado = _navega(linea['parent'],[],biglist,row +1,desde)
+            superres += resultado
+            for entrada in resultado:
+                parent = entrada[-1]['parent']
+                child     = entrada[0]['child']
+                if parent in tdict:
+                    tdict[parent][_path2cadena(entrada)] =entrada
+                else:
+                    tdict[parent]= dict()
+                    tdict[parent][_path2cadena(entrada)] =entrada
+    return tdict
+    pprint(tdict)
+    
+def changeTable(string,oldName,newName):
+    import re
+    """
+    replace strings which are first level on a dot hierarchy
+    re explanation ... find a chain oldname (conveniently stripped of its dots) between
+                                SOL or a delimiter -except . and
+                                any delimiter or EOL
+    """
+    pattern = r'(^|[^A-Za-z0-9_\.])('+oldName.replace('.',r'\.') + ')(\W|\.|$)'
+    fileRepl   = r'\1'+ newName + r'\3'
+    result = re.sub(pattern,fileRepl,string)
+    return result
 
 def file2datadict(fileName):
     """
@@ -155,10 +315,13 @@ def isDictFromDef(item):
     """
     if item.hasChildren():
         contexto = Context(item)
-        type_context =  contexto.get('edit_tree',{}).get('objtype')
-        if type_context == 'dict':
+        repeat = contexto.get('repeteable',False)
+        if repeat:
+            return False
+        objtype_context =  contexto.get('edit_tree',{}).get('objtype')
+        if objtype_context == 'dict':
             return True
-        elif type_context is not None:
+        elif objtype_context is not None:
             return False
         
         firstChild = item.child(0,0)
@@ -191,11 +354,11 @@ def getSchemaFromConnection(item):
     
     fileItem = getChildByType(getParentByType(item,'base'),'table')
     fileItem = fileItem.parent().child(fileItem.row(),1).data()  
-    schema,fName = padd(file.split('.'),2,pos='before')
+    schema,fName = padd(fileItem.split('.'),2,pos='before')
     if schema:
         return schema
     
-    confName,confData = getConnection(item,name=True)
+    confData = getConnection(item,name=False)
     if 'schema' in confData:
         return confData['schema']
     else:
@@ -218,7 +381,29 @@ def getConnection(item,**kwparm):
         ih  = n.child(k,1)
         datos[nh.data()] = ih.data()
     if kwparm.get('name',False):
-        return _toConfName(datos),datos
+        dd = kwparm.get('dict',None)
+        if dd:
+            defConex = dd.configData['Conexiones'] #just debug
+        else :
+            defConex ={}
+        normName = _toConfName(datos)
+        if dd and normName not in defConex:
+            attrlist = ('driver','dbhost','dbname','dbuser')
+            for entrada in defConex:
+                es = True
+                for attr in attrlist:
+                    if ( _getNorm(defConex[entrada],attr,'' if attr != 'dbhost' else 'localhost') != 
+                        _getNorm(datos,attr,'' if attr != 'dbhost' else 'localhost') ):
+                        es = False
+                        break
+                if not es:
+                    continue
+                return entrada,datos
+            else:
+                raise ValueError('Conexion ',normName,' no existe en diccionario')
+                
+        else:
+            return _toConfName(datos),datos
     else:
         return datos
 
@@ -301,7 +486,7 @@ def srcSchemas(*lparm):
     item = lparm[0]
     view = lparm[1]
     context = Context(item)
-    confName,confData = getConnection(item,name=True)
+    confName,confData = getConnection(item,name=True,dict=view.dataDict)
     resultado = [ entrada for entrada in view.diccionario[confName].keys() if entrada[0] != '@' ]
     return resultado
           
@@ -317,7 +502,7 @@ def defaultSchema(*lparm):
     item = lparm[0]
     view = lparm[1]
     context = Context(item)
-    context = Context(item)
+    #context = Context(item)
     
     baseFile = getChildByType(getParentByType(item,'base'),'table')
     n,baseName,t = getRow(baseFile)
@@ -343,7 +528,7 @@ def defaultSchema(*lparm):
 def srcTables(*lparm):
     item = lparm[0]
     view = lparm[1]
-    confName,confData = getConnection(item,name=True)
+    confName,confData = getConnection(item,name=True,dict=view.dataDict)
     schema = getSchema(item)
     resultado = [ ['{}.{}'.format(schema,entrada),entrada]
                             for entrada in view.diccionario[confName][schema].keys() 
@@ -368,7 +553,7 @@ def srcFields(*lparm):
         delta = lambda i:True
         
     context = Context(item)
-    confName,confData = getConnection(item,name=True)
+    confName,confData = getConnection(item,name=True,dict=view.dataDict)
     esquema,table = getFile(item,show='list')
     if not esquema:   
         esquema = getSchema(item,table)
@@ -382,7 +567,7 @@ def srcFields(*lparm):
     
   
 def defaultTable(*lparm):
-    return 'esta es de prueba'
+    return None
 
 def addConnectionMenu(*lparms):
     item = lparms[0]
@@ -435,7 +620,12 @@ def addDefault(*lparms):
         newRow = makeRow('default',text,'default')
         pai.appendRow(newRow)
     
+  
+def addNetworkPath(*lparm):
+    item = lparm[0]
+    view = lparm[1]
     
+
 def discProd(*lparm):
     """
     ('prod_std','prot_cat','prod_case','prod_date')
@@ -456,8 +646,10 @@ def discProd(*lparm):
         return 'prod_cat'
     elif 'case_sql' in elem_hijos:
             return 'prod_case'
-    else:
+    elif 'elem' in elem_hijos:
         return 'prod_std'
+    else:
+        return 'prod'
         
 #    return None
                 
@@ -488,7 +680,10 @@ def setClass(*lparm):
                         }
     item = lparm[0]
     view = lparm[1]
-    context = Context(item)
+    if len(lparm) > 2:
+        context = lparm[2] 
+    else:
+        context = Context(item)
     
     tipo = conversor.get(context.get('editType',None),'o')
     
@@ -519,7 +714,100 @@ def setClass(*lparm):
     else:
        newRow = makeRow('class',tipo,'class')
        claseGuide.appendRow(newRow)
-        
+  
+def setTable(*lparm):
+    def _cmpTableName(value1,value2):
+        resultado = False
+        val1 = value1.split('.')
+        val2 = value2.split('.')
+        if len(val1) == len(val2):   # ambos con los mismos componentes
+            if value1 != value2:
+                return False
+            else:
+                return True
+        if val1[-1] == val2[-1]:
+            return True
+        else:
+            return False
+            
+    def _propagateTableName(item,view,oldValue,newValue):
+        """
+        #absolutamente a lo bruto ... busca cadena con el contenido de la tabla y luego lo convierte
+        """
+        n,i,t = getRow(item)
+        view.expand(item.index())
+        if not i or not i.data():
+            return
+        if not isinstance(i.data(),str):
+            return
+        oval = i.data()
+        schema,ofName = padd(oldValue.split('.'),2,pos='before') #FIXME y si no es un fichero ¿?
+        #if ofName not in i.data():
+            #continue
+        nValue = oval
+        if oldValue in oval:  #fqn
+            nValue = changeTable(oval,oldValue,newValue)
+        elif ofName in oval:
+            nValue = changeTable(oval,ofName,newValue)        
+        if oval == nValue:
+            pass
+        else:
+            i.setData(nValue,Qt.UserRole +1)
+            i.setData(nValue,Qt.DisplayRole)
+            i.setData(QColor(Qt.darkYellow),Qt.BackgroundRole)
+       
+    print('set table',lparm)
+    item = lparm[0]
+    view = lparm[1]
+    if len(lparm) > 2:   
+        context = lparm[2] 
+    else:
+        context = Context(item)
+    #WARNING realmente solo funciona bien si se pasa el contexto
+    oldValue = context.get('data')
+    newValue =  item.parent().child(item.row(),1).data()
+    #ahora buscamos el subarbol para el que es válida
+    # a continuacion rectifico los datos
+    # caso general:
+    #      a continuacion
+    # caso particular
+    #   table en prod rule
+    #        si no existe link via -> crear con table en ultimo elemento
+    #   table en link via
+    #       ver lv[row()-1] ahi tambien se referencia el elemento
+    #        si row() == -1 la regla de produccion tambien esta afectada
+    pai = item.parent()
+    np,ip,tp = getRow(pai)
+    if tp and tp.data() in ('base','domain'):
+        head = pai
+    elif tp and tp.data() == 'link via':
+        head = pai.parent()  #el abuelo (que deberia ser link_via a secas), ya que aparece en lv(n) como rel y en lv(n+1) como base
+        if pai.row() == head.rowCount() -1: #es el ultimo link
+            head = pai.parent() #la propia regla de produccion debe ser, ya que elem pertence a esta tabla. No me gusta ver el caso de prod
+    elif tp and tp.data() == 'prod':
+        head = pai
+        lv = getChildByType(head,'link via')
+        if not lv or lv.rowCount() == 0:
+            # no existe link via a ella, debemos crearla
+            pass
+        else:
+            last_link = getChildByType(lv.child(lv.rowCount() -1,0),'table') #asi abrevio
+            # tres casos last_link = oldValue -> nfa; last_link = newValue -> nfa, otro caso --> ir al de arriba
+            rh,ih,th = getRow(last_link)
+            if _cmpTableName(oldValue,ih.data()):
+                pass # atropella luego la propagacion
+            elif _cmpTableName(newValue,ih.data()):
+                pass #estamos hablando de la misma tabla, FIXME propagar FQN 
+            else:
+                pass #aqui si requiero trabajo de marqueteria fina
+            
+    for item in traverse(head):
+        _propagateTableName(item,view,oldValue,newValue)
+    view.setCurrentIndex(head.index())
+    
+    
+
+    
 def digClass(*lparm):
     conversor = {'prod_std':'o',
                           'prod_case':'c',
@@ -551,6 +839,37 @@ def digClass(*lparm):
             i.setData(tipo,Qt.UserRole +1)
     if numero == 0:
         item.model().removeRow(claseGuide.row(),claseGuide.parent().index())
+        
+def valConnect(context,editor,*lparms,**kwparms):
+    ok = True
+    Text = 'Compruebe que es posible realizar la conexion con la opcion correspondiente en connect'
+
+    item = context.get('editPos')
+    ovalue = context.get('data')
+    attr = context.get('editType')
+    dvalue = lparms[0]
+    ivalue = lparms[1]
+    if ovalue == ivalue:
+        return ok,Text
+    conData = getConnection(item,name=False)
+    conData[attr]=ivalue
+    """
+    sqlite el fichero debe existir
+    ^sqlite,pgsql usuario debe estar definido
+    ^sqlite host debe estar definido
+    """
+    if conData['driver'] == 'sqlite':
+        #verificar la existencia del fichero
+        if not os.path.isfile(conData['dbname']):
+            return False,'Fichero {} no existe'.format(conData['dbname'])
+        
+    if  conData['driver'] not in ('sqlite','postgresql')  and _getNorm(conData,'dbuser') == '':
+            return False,'{} necesita de usuario'.format(conData['driver'])
+            
+    if conData['driver'] not in ('sqlite','oracle') and _getNorm(conData,'dbhost') == '':
+            return False,'{} necesita especificar un host. Utilice "localhost" para el local'.format(conData['driver'])
+    #TODO o no. Verificar que es posible la conexion
+    return ok,Text
 """
 
 Nuevo mojo del arbol
@@ -575,39 +894,43 @@ EDIT_TREE = {
                     ],
                     'getters':[],                   #antes de editar
                     'setters':[],      #despues de editar (por el momento tras add
-                    'validator':[],                 #validacion de entrada
+                    'validators':[],                 #validacion de entrada
                     'text':'definción de cubo',
                     },
     'connect': { 'objtype':'dict',
                      'elements':[
                          ('driver',True,False),
                          ('dbname',True,False),
-                         ('dbhost',True,False),
+                         ('dbhost',False,False),
                          ('dbuser',True,False),
                          ('dbpass',False,False),
                          ('schema',False,False),
                         ],
                      'getters':[],
                      'setters':[],
-                    'validator':[],
+                    'validators':[],
                     'menuActions':[ [addConnectionMenu,'Comprueba la conexión'],],
                     'text':'parámetros de conexion a la base de datos',
                     },
     'driver': {'editor':QComboBox, 'source':DRIVERS,
                'text':'gestor de base de datos a usar',
+               'validators':[valConnect,],
                },
     'dbname':{ 'editor':QLineEdit,
-              'text':'Nombre de la instancia de  base de datos'},
+              'text':'Nombre de la instancia de  base de datos',
+              'validators':[valConnect,],},
     'dbhost':{'editor':QLineEdit,
-              'text':'Servidor donde reside la base de datos'},
+              'text':'Servidor donde reside la base de datos',
+              'validators':[valConnect,],},
     'dbuser':{'editor':QLineEdit, 'default':'',
-              'text':'Usuario de la base de datos por defecto',},
+              'text':'Usuario de la base de datos por defecto',
+              'validators':[valConnect,],},
     'dbpass':{'editor':QLineEdit, 'hidden':True,
               'text':'clave del usuario en la B.D. (desaconsejado)'},   
     'schema':{'editor':QComboBox,'source':srcSchemas,'default':defaultSchema,
               'text':'Esquema de la B.D. a utilizar por defecto',
               },
-    'table' : { 'editor':QComboBox, 'source':srcTables, 'default':defaultTable,'editable':True },
+    'table' : { 'editor':QComboBox, 'source':srcTables,'editable':True,'setters':[setTable,] },
     'base filter': {'editor':QLineEdit},   #aceptaria un validator
     'date filter': {'objtype':'list'},
     'fields' : { 'objtype':'list', 'editor' : WMultiList, 'source': srcNumFields,
@@ -620,18 +943,23 @@ EDIT_TREE = {
                        ('class',True,True),
                        ('fmt',False,False),
                        ('prod',True,False,True,'class'),                       
-                       ]
+                       ],
+                    'text':'Guia de agrupación',
                    },
     'name':{'editor':QLineEdit },
     'class' :{'editor':QComboBox,'source':GUIDE_CLASS,'default':'o'},
     'fmt' :{'editor':QComboBox,'source': ENUM_FORMAT ,'default':'txt' },
-    'prod':{'objtype':'dict','subtypes':('prod_std','prod_cat','prod_case','prod_date'),'discriminator':discProd,
-            'setters':[setClass,],'diggers':[digClass,],
+    'prod':{'objtype':'dict','subtypes':('prod_std','prod_cat','prod_case','prod_date'),
+            'discriminator':discProd,
+            'setters':[setClass,],
+            'diggers':[digClass,],
+            'menuActions':[[addNetworkPath,'Añada una regla remota'],],
             'elements':[
                     ('name',True,True),
                     ('class',False,True),         
                     ('fmt',False,False),
                 ],
+            'text':'Regla de produccion de guía',
             },
     'prod_std':{'objtype':'dict',
                 'elements':[
@@ -750,7 +1078,7 @@ EDIT_TREE = {
                      'elements':[],
                      'getters':[],
                      'setters':[],
-                    'validator':[],
+                    'validators':[],
                     },
     
     #'entry':{'editor':QComboBox,'source':funclist},
@@ -772,11 +1100,18 @@ EDIT_TREE = {
     
 }
     
-def editAsTree(fichero):
+def editAsTree(file=None,rawCube=None):
     from base.core import Cubo
     from support.util.jsonmgr import load_cubo
-    definiciones = load_cubo(fichero)
-    mis_cubos = definiciones
+    
+    if not file and not rawCube:
+        raise NameError('Para editAsTree no se especificaron los parametros necesarios')
+    
+    if not rawCube:
+        definiciones = load_cubo(file)
+        mis_cubos = definiciones
+    else:
+        mis_cubos = rawCube
 
     #cubo = Cubo(mis_cubos['experimento'])
     model = displayTree() #QStandardItemModel()
@@ -921,11 +1256,20 @@ class cubeTree(TreeMgr):
     # señal para controlar el cambio de la conexion. Realmente solo la usa en el check. Overkill ¿?
     connChanged = pyqtSignal(str,str)
     
-    def __init__(self,treeDef,firstLevelDef,ctxFactory,file,msgLine,parent=None):
+    def __init__(self,treeDef,firstLevelDef,ctxFactory,file,msgLine,**kwparms):
         Context.EDIT_TREE = treeDef
-        self.dataDict  = file2datadict(file)
+        if 'dataDict' in kwparms:
+            self.dataDict = kwparms['dataDict']
+        else:
+            self.dataDict  = file2datadict(file)
+            
         self.diccionario = datadict2dict(self.dataDict.hiddenRoot)
-        self.tree = editAsTree(file)
+        
+        if 'rawCube' in kwparms:
+            self.tree = editAsTree(rawCube = kwparms['rawCube'])
+        else:
+            self.tree = editAsTree(file=file)
+            
         super().__init__(self.tree,treeDef,firstLevelDef,ctxFactory,msgLine)
         
         self.connChanged.connect(self.checkConexion)
@@ -1086,6 +1430,79 @@ class cubeMgrDialog(QDialog):
         else:
             return False
  
+
+class CubeMgr(cubeTree):
+    """
+    confName,schema,table son puramente por compatibilidad
+    self.cubeMgr = CubeMgr(self,confName,
+                                                schema,
+                                                table,
+                                                self.dictionary,rawCube=infox,
+                                                cubeFile=self.cubeFile)
+    """
+    def __init__(self,parent=None,
+                 confName=None,
+                 schema=None,
+                 table=None,
+                 pdataDict=None,
+                 cubeFile=None,
+                 rawCube=None,
+                 msgLine = None
+                ):
+        config.DEBUG =True
+        self.cubeFile = cubeFile if cubeFile else 'testcubo.json'
+        if not msgLine:
+            self.msgLine = QLabel()
+        else:
+            self.msgLine = msgLine
+        
+        super().__init__(EDIT_TREE,
+                                TOP_LEVEL_ELEMS,
+                                Context,
+                                self.cubeFile,
+                                msgLine = self.msgLine,
+                                dataDict = pdataDict,
+                                rawCube=rawCube,
+                                confName = confName,
+                                schema = schema,
+                                table = table,
+                                )
+        
+    def saveDialog(self):
+        if (QMessageBox.question(self,
+                "Salvar",
+                "Desea salvar los cambios del fichero de configuracion {}?".format(self.cubeFile),
+                QMessageBox.Yes|QMessageBox.No) == QMessageBox.Yes):
+            return True
+        else:
+            return False
+
+
+    def saveCubeFile(self):
+        if self.saveDialog():
+            print('Voy a salvar el fichero')
+            newcubeStruct = tree2dict(self.model().invisibleRootItem(),isDictFromDef)
+            if isinstance(self.parentWindow,(cubeMgrWindow,cubeMgrDialog)):
+                total=True
+            else:
+                total = False
+            dump_structure(newcubeStruct,self.cubeFile,total=total)
+            
+
+    #@waiting_effects
+    #@model_change_control()
+    def restoreCubeFile(self):
+        #self.baseModel.beginResetModel()
+        self.baseModel.clear()
+        if self.particular:
+            self.setupModel(*self.particularContext)
+        else:
+            self.setupModel()
+        self.setupView()
+        #self.baseModel.endResetModel()
+    
+    def test(self):
+        return
 
 
 import sys
