@@ -28,17 +28,21 @@ from support.util.record_functions import norm2List,norm2String
 
 import base.config as config
 
-from PyQt5.QtCore import Qt,QModelIndex,QItemSelectionModel,pyqtSignal
+from PyQt5.QtCore import Qt,QModelIndex,QItemSelectionModel,pyqtSignal,QSize
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QColor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QTreeView, QSplitter, QMenu, \
      QDialog, QInputDialog, QLineEdit, QComboBox, QMessageBox,QGridLayout, \
-     QAbstractItemView, QTableView, QStyledItemDelegate, QSpinBox, QListWidget, QPushButton, QVBoxLayout,QLabel, QWidget, QCheckBox,QStatusBar
+     QAbstractItemView, QTableView, QStyledItemDelegate, QSpinBox, QListWidget, QPushButton, QVBoxLayout,QLabel, QWidget, QCheckBox,QStatusBar,QDialogButtonBox
 
 from support.util.treeEditorUtil import *
 
-from support.datalayer.access_layer import DRIVERS, AGR_LIST 
+from support.datalayer.access_layer import DRIVERS, AGR_LIST, DEFAULT_SCHEMA 
 from support.util.fechas import CLASES_INTERVALO, TIPOS_INTERVALO
 from admin.cubemgmt.cubeTypes import GUIDE_CLASS, ENUM_FORMAT,LOGICAL_OPERATOR
+
+from support.util.jsonmgr import load_cubo
+from admin.wizardmgmt.pages.guidePreview import guidePreview
+from base.core import Cubo    
 
 import os
 
@@ -238,12 +242,11 @@ def changeTable(string,oldName,newName):
     result = re.sub(pattern,fileRepl,string)
     return result
 
-def file2datadict(fileName):
+def file2datadict(fileName,secure=True,exclude=True):
     """
     de cubo a DataDictionary
     
     """
-    from support.util.jsonmgr import load_cubo
     mis_cubos = load_cubo('testcubo.json')
     dd = None
     for cubo in mis_cubos:
@@ -253,12 +256,12 @@ def file2datadict(fileName):
         #el driver tambien forma parte de la identificacion
         confName = _toConfName(confData)
         if not dd:
-            dd = DataDict(conName = confName,confData=confData,secure=True)
+            dd = DataDict(conName = confName,confData=confData,secure=secure,sysExclude=exclude)
         elif _exists(dd,confName):
             print('conexion <',confName,'> ya existe')
             continue
         else:
-            dd.appendConnection(confName=confName,confData=confData,secure=True)
+            dd.appendConnection(confName=confName,confData=confData,secure=secure,sysExclude=exclude)
     return dd
 
 def datadict2dict(head):
@@ -349,9 +352,7 @@ def getSchemaFromConnection(item):
     2) esquema de la conexion
     3) esquema defecto del gestor
         
-    """
-    from support.datalayer.access_layer import DEFAULT_SCHEMA
-    
+    """    
     fileItem = getChildByType(getParentByType(item,'base'),'table')
     fileItem = fileItem.parent().child(fileItem.row(),1).data()  
     schema,fName = padd(fileItem.split('.'),2,pos='before')
@@ -371,7 +372,7 @@ def getSchemaFromConnection(item):
 principales
 """
 def getConnection(item,**kwparm):
-    from research.cubeTree import _toConfName
+    #from research.cubeTree import _toConfName
     conItem = getChildByType(getParentByType(item,'base'),'connect')
     n,i,t = getRow(conItem)
     datos = {}
@@ -498,7 +499,6 @@ def defaultSchema(*lparm):
     2) esquema de la conexion
     3) esquema defecto del gestor
     """
-    from support.datalayer.access_layer import DEFAULT_SCHEMA
     item = lparm[0]
     view = lparm[1]
     context = Context(item)
@@ -533,7 +533,6 @@ def srcTables(*lparm):
     resultado = [ ['{}.{}'.format(schema,entrada),entrada]
                             for entrada in view.diccionario[confName][schema].keys() 
                             if entrada[0] != '@']
-    pprint(resultado)
     return resultado
 
 def srcNumFields(*lparm):
@@ -542,7 +541,7 @@ def srcNumFields(*lparm):
     kparm.insert(3,lambda i:i in ('entero', 'numerico'))
     return srcFields(*kparm)
 
-def srcFields(*lparm):
+def srcFields(*lparm,**kparm):
     item = lparm[0]
     view = lparm[1] 
     if len(lparm) > 2:
@@ -551,10 +550,13 @@ def srcFields(*lparm):
     else:
         idx = '@fmt'
         delta = lambda i:True
-        
+    
     context = Context(item)
     confName,confData = getConnection(item,name=True,dict=view.dataDict)
-    esquema,table = getFile(item,show='list')
+    if 'file' in kparm:
+        esquema,table = padd(kparm['file'].split('.'),2,pos='before')  # FIXME de momento asumo que es fqntable
+    else:
+        esquema,table = getFile(item,show='list')
     if not esquema:   
         esquema = getSchema(item,table)
 
@@ -620,11 +622,228 @@ def addDefault(*lparms):
         newRow = makeRow('default',text,'default')
         pai.appendRow(newRow)
     
-  
+def _getDictTable(dd,confName,schema,table):
+    baseName = table.split('.')[-1]
+    for k in range(dd.hiddenRoot.rowCount()):
+        if dd.hiddenRoot.child(k,0).text() == confName:
+            conn = dd.hiddenRoot.child(k,0)
+            break
+    else:
+        raise ValueError('{} {} no en diccionario'.format('Conexión',confName))
+    for k in range(conn.rowCount()):
+        if conn.child(k,0).text() == schema:
+            schem = conn.child(k,0)
+            break
+    else:
+        raise ValueError('{} {} no en diccionario para {}'.format('Esquema',schema,confName))
+    for k in range(schem.rowCount()):
+        if schem.child(k,0).text() == baseName:
+            break
+    else:
+        raise ValueError('{} {} no en diccionario para {}.{}'.format('Tabla',baseName,confName,schema))
+
+    return schem.child(k)
+
+def addNetworkMenuItem(*lparms):
+    """
+    aqui incluyo las opciones de menu para las guias. ¿Deberia separarlo?
+    """
+    item = lparms[0]
+    view = lparms[1]
+    menuStruct = lparms[2]
+    menu = lparms[3]
+    text = lparms[4]
+    n,i,t=getRow(item)
+    print('ANMI',n.data())
+    if n.data() == 'guides':
+        menuStruct.append(menu.addAction(text,lambda i=item,j=view:addNetworkPath(i,j)))
+    else:
+        menuStruct.append(menu.addAction('Ver conjunto de prueba',lambda i=lparms:sampleData(*lparms)))
+        classItem = getChildByType(item,'class')
+        if classItem:
+            clase = getRow(classItem)[1].data()
+        else:
+            clase = 'o'
+        if clase == 'd':
+            menuStruct.append(menu.addAction('Añadir agrupaciones especiales por fecha',lambda i=lparms:addDateGroups(*lparms)))
+
+class FKNetworkDialog(QDialog):
+    def __init__(self,item,view,cubeTable,routeData,parent=None):
+
+        super().__init__(parent)
+        self.setMinimumSize(QSize(640,330))
+        
+        self.manualBB = QPushButton('Ir a manual')
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok| QDialogButtonBox.Cancel)
+        buttonBox.addButton(self.manualBB, QDialogButtonBox.ActionRole)
+        buttonBox.accepted.connect(self.accept)
+        buttonBox.rejected.connect(self.reject)        
+        buttonBox.clicked.connect(self.procBotones)
+        
+        self.msgLine = QLabel()
+        titleLabel = QLabel('Nombre de la guia')
+        destLabel =QLabel('Tabla por la que queremos agrupar')
+        destFLabel    =QLabel('Campos por los que queremos agrupar')
+        routeLabel  = QLabel('Ruta para acceder a al tabla destino')
+        
+        self.titleText = QLineEdit()
+        self.titleText.setStyleSheet("background-color:yellow;")
+
+        
+        self.destTable = QComboBox()
+        self.destField = WMultiCombo()
+        self.destRoutes = QComboBox()
+        
+        meatlayout = QGridLayout()
+        x = 0
+        meatlayout.addWidget(titleLabel,x,0)
+        meatlayout.addWidget(self.titleText,x,1)
+        x +=1
+        meatlayout.addWidget(destLabel,x,0)
+        meatlayout.addWidget(self.destTable,x,1)
+        x +=1
+        meatlayout.addWidget(destFLabel,x,0)
+        meatlayout.addWidget(self.destField,x,1)
+        x += 1
+        meatlayout.addWidget(routeLabel,x,0)
+        meatlayout.addWidget(self.destRoutes,x,1,1,2)
+        x += 2
+        meatlayout.addWidget(self.msgLine,x,0)
+        x += 1
+        meatlayout.addWidget(buttonBox,x,1)
+        
+        self.setLayout(meatlayout)
+        self.prepareData(item,view,cubeTable,routeData)
+
+        self.manual = False
+
+    def prepareData(self,item,view,cubeTable,routeData):
+        self.item = item
+        self.routeData = routeData
+        self.view = view
+        self.cubeTable = cubeTable
+        self.all = False
+        # load destTable. TODO ¿todas las tablas o solo las que tienen conexion FK?
+        if self.all:  #todas las tablas (no esta definido asi que)
+            self.TablesFullList = srcTables(item,view)
+            x,y = zip(*self.TablesFullList)
+            self.tablesCurrentList = list(y)
+        else:
+            self.tablesCurrentList = list(routeData.keys())
+        self.destTable.addItems(self.tablesCurrentList)
+        self.destTable.setCurrentIndex(-1)
+        self.destTable.currentIndexChanged[int].connect(self.seleccionTabla)
+ 
+    def seleccionTabla(self,idx):
+        #FIXME y si no hay rutas .... ¿?
+        # preparamos la lista de campos
+        self.FieldsFullList = srcFields(self.item,self.view,file=self.tablesCurrentList[idx])
+        x,y = zip(*self.FieldsFullList)
+        self.fieldsCurrentList = list(y)
+        self.destField.clear()
+        self.destField.load([ entry[0] for entry in self.FieldsFullList],self.fieldsCurrentList)
+        
+        # preparamos la lista de rutas
+        rutasTabla = list(self.routeData.get(self.tablesCurrentList[idx],{}).keys())
+        #FIXME esto tiene que ser un map
+        for k in range(len(rutasTabla)):
+            entrada = rutasTabla[k][2:]
+            rutasTabla[k] = entrada.replace('->','\n\t')
+        self.destRoutes.clear()
+        self.destRoutes.addItems(rutasTabla)
+        self.destRoutes.setCurrentIndex(-1)
+        
+    def accept(self):
+        #TODO validaciones
+        name = self.titleText.text()
+        schema = self.cubeTable.split('.')[0] # se supone que viene cargado
+        if self.all:
+            table = self.TablesFullList[self.destTable.currentIndex()][0]
+            baseTable = table.split('.')[-1]
+        else:
+            baseTable = self.tablesCurrentList[self.destTable.currentIndex()]
+            table = '{}.{}'.format(schema, baseTable)
+        values = norm2List(self.destField.get())
+        print(name,table,baseTable,values)
+        # ahora el link link_via
+        electedPath = self.destRoutes.currentText() #que valiente
+        electedPath = '->' + electedPath.replace('\n\t','->')
+        electedPathDatos = self.routeData[baseTable][electedPath]
+        path = []
+        for arc in electedPathDatos:
+            arcInfo = arc['ref'].getRow()
+            arcDict = {'table':arcInfo[1],'filter':'','clause':[{'base_elem':arcInfo[2],'rel_elem':arcInfo[3]},]}
+            path.append(arcDict)
+            
+        self.result = {'name':name,
+                                            'class':'o',
+                                            'prod':[{'name':name,
+                                                            'elem':values,
+                                                            'table':table,
+                                                            'link via':path
+                                                          }
+                                                        ,]
+                                }
+        super().accept()
+
+
+        
+    def procBotones(self,button):
+        if button == self.manualBB:
+            self.manual = True
+            self().reject()
+            
 def addNetworkPath(*lparm):
     item = lparm[0]
     view = lparm[1]
+    # me fascina como obtener los datos
+    baseTableItm = getChildByType(getParentByType(item,'base'),'table')
+    baseTable = baseTableItm.parent().child(baseTableItm.row(),1).data()
     
+    confName,confData = getConnection(item,name=True,dict=view.dataDict)
+    schema = getSchema(item,baseTable)
+    fqtable = schema + '.' + baseTable.split('.')[-1]  #solo por ir seguro
+    
+    tableDdItem = _getDictTable(view.dataDict,confName,schema,baseTable)
+    
+    arbolNavegacion = getFKLinks(tableDdItem)
+    if not arbolNavegacion:
+        view.msgLine.setText('Tabla {} no tiene claves extranjeras. Debe definirlo a mano'.format(baseTable))
+        #TODO aqui una buena powertable haria maravillas
+        return        
+    selDlg = FKNetworkDialog(item,view,fqtable,arbolNavegacion)
+    selDlg.show()
+    if selDlg.exec_():
+        # no he encontrado otra manera que generara correctamente el arbol que borrando todas las guias
+        estructura = tree2dict(item,isDictFromDef)
+        estructura.append(selDlg.result)
+        item.parent().removeRow(item.row())
+        dict2tree(item.parent(),'guides',estructura)
+   
+def addDateGroups(*lparm):
+    """
+    TODO   traer de la generacion en danabrowse
+    """
+    item = lparm[0]
+    view = lparm[1]
+    n,i,t = getRow(item)
+ 
+def sampleData(*lparm):
+    """
+    FIXME el codigo no esta aparenciendo en el preview
+    """
+
+    
+    item = lparm[0]
+    view = lparm[1]
+    n,i,t = getRow(item)
+    pos = item.row()
+    cubo  = tree2dict(getParentByType(item,'base'),isDictFromDef)
+    form = guidePreview(cubo,pos)
+    form.setWindowTitle('Ejemplo de valores para {}'.format(n.data()))
+    form.show()
+    if form.exec_():
+        pass
 
 def discProd(*lparm):
     """
@@ -734,6 +953,8 @@ def setTable(*lparm):
         """
         #absolutamente a lo bruto ... busca cadena con el contenido de la tabla y luego lo convierte
         """
+        if oldValue is None:  #FIXME no tengo claro que sea universal
+            return
         n,i,t = getRow(item)
         view.expand(item.index())
         if not i or not i.data():
@@ -945,6 +1166,7 @@ EDIT_TREE = {
                        ('prod',True,False,True,'class'),                       
                        ],
                     'text':'Guia de agrupación',
+                    'menuActions':[[addNetworkMenuItem,'Añada una regla remota'],],
                    },
     'name':{'editor':QLineEdit },
     'class' :{'editor':QComboBox,'source':GUIDE_CLASS,'default':'o'},
@@ -953,7 +1175,6 @@ EDIT_TREE = {
             'discriminator':discProd,
             'setters':[setClass,],
             'diggers':[digClass,],
-            'menuActions':[[addNetworkPath,'Añada una regla remota'],],
             'elements':[
                     ('name',True,True),
                     ('class',False,True),         
@@ -1101,9 +1322,6 @@ EDIT_TREE = {
 }
     
 def editAsTree(file=None,rawCube=None):
-    from base.core import Cubo
-    from support.util.jsonmgr import load_cubo
-    
     if not file and not rawCube:
         raise NameError('Para editAsTree no se especificaron los parametros necesarios')
     
@@ -1251,6 +1469,7 @@ Funciones GUI principales
 """
 from support.gui.treeEditor import *
 from base.datadict import DataDict
+import argparse
 
 class cubeTree(TreeMgr):
     # señal para controlar el cambio de la conexion. Realmente solo la usa en el check. Overkill ¿?
@@ -1261,7 +1480,9 @@ class cubeTree(TreeMgr):
         if 'dataDict' in kwparms:
             self.dataDict = kwparms['dataDict']
         else:
-            self.dataDict  = file2datadict(file)
+            secure = kwparms.get('secure',True)
+            sysEx =   kwparms.get('sysExclude',True)
+            self.dataDict  = file2datadict(file,secure,sysEx)
             
         self.diccionario = datadict2dict(self.dataDict.hiddenRoot)
         
@@ -1269,7 +1490,7 @@ class cubeTree(TreeMgr):
             self.tree = editAsTree(rawCube = kwparms['rawCube'])
         else:
             self.tree = editAsTree(file=file)
-            
+        self.cubeFile = file
         super().__init__(self.tree,treeDef,firstLevelDef,ctxFactory,msgLine)
         
         self.connChanged.connect(self.checkConexion)
@@ -1343,13 +1564,75 @@ class cubeTree(TreeMgr):
             confData[n.data()] = i.data()
         confName = _toConfName(confData)
         return confName,confData
+
+    def saveDialog(self):
+        if (QMessageBox.question(self,
+                "Salvar",
+                "Desea salvar los cambios del fichero de configuracion {}?".format(self.cubeFile),
+                QMessageBox.Yes|QMessageBox.No) == QMessageBox.Yes):
+            return True
+        else:
+            return False
+
+
+    def saveCubeFile(self):
+        if self.saveDialog():
+            print('Voy a salvar el fichero')
+            newcubeStruct = tree2dict(self.model().invisibleRootItem(),isDictFromDef)
+            if isinstance(self.parentWindow,(cubeMgrWindow,cubeMgrDialog)):
+                total=True
+            else:
+                total = False
+            dump_structure(newcubeStruct,self.cubeFile,total=total)
             
+
+    #@waiting_effects
+    #@model_change_control()
+    def restoreCubeFile(self):
+        #self.baseModel.beginResetModel()
+        self.baseModel.clear()
+        if self.particular:
+            self.setupModel(*self.particularContext)
+        else:
+            self.setupModel()
+        self.setupView()
+        #self.baseModel.endResetModel()
+    
+    def test(self):
+        return
+
+
+def generaArgParser():
+    parser = argparse.ArgumentParser(description='Cubo de datos')
+    parser.add_argument('--cubeFile','--cubefile','-c',
+                        nargs='?',
+                        default='cubo.json',
+                        help='Nombre del fichero de configuración del cubo actual')    
+    security_parser = parser.add_mutually_exclusive_group(required=False)
+    security_parser.add_argument('--secure','-s',dest='secure', action='store_true',
+                                 help='Solicita la clave de las conexiones de B.D.')
+    security_parser.add_argument('--no-secure','-ns', dest='secure', action='store_false')
+    parser.set_defaults(secure=True)
+
+    schema_parser = parser.add_mutually_exclusive_group(required=False)
+    schema_parser.add_argument('--sys','-S',dest='sysExclude', action='store_false',
+                                 help='Incluye los esquemas internos del gestor de B.D.')
+    parser.set_defaults(sysExclude=True)
+
+    return parser
+
 class cubeMgrWindow(QMainWindow):
     """
     """
     def __init__(self,parent=None):
         super(cubeMgrWindow,self).__init__(parent)
-        self.cubeFile = 'testcubo.json'
+
+        parser = generaArgParser()
+        args = parser.parse_args()
+        self.cubeFile = args.cubeFile #'cubo.json'   #DEVELOP
+        self.secure = args.secure
+        self.sysExclude = args.sysExclude
+
         Context.EDIT_TREE = EDIT_TREE
         
         self.statusBar = QStatusBar()
@@ -1360,7 +1643,9 @@ class cubeMgrWindow(QMainWindow):
                                             TOP_LEVEL_ELEMS,
                                             Context,
                                             self.cubeFile,
-                                            msgLine = self.msgLine)
+                                            msgLine = self.msgLine,
+                                            secure = self.secure,
+                                            sysExclude = self.sysExclude)
         self.setCentralWidget(self.tree)
         self.setStatusBar(self.statusBar)
         
@@ -1369,23 +1654,9 @@ class cubeMgrWindow(QMainWindow):
         
     def close(self):
 
-        #self.saveFile()
+        self.tree.saveCubeFile()
         return True
  
-    def saveFile(self):
-        if self.saveDialog():
-            definiciones = load_cubo(self.cubeFile)
-            definiciones['user functions'] = tree2dict(self.tree.model().invisibleRootItem(),isDictFromDef)
-            dump_config(definiciones, self.cubeFile,total=True,secure=False)
-
-    def saveDialog(self):
-        if (QMessageBox.question(self,
-                "Salvar",
-                "Desea salvar los cambios del fichero de configuracion {}?".format(self.cubeFile),
-                QMessageBox.Yes|QMessageBox.No) == QMessageBox.Yes):
-            return True
-        else:
-            return False
 
 class cubeMgrDialog(QDialog):
     """
@@ -1410,25 +1681,13 @@ class cubeMgrDialog(QDialog):
     def closeEvent(self,event):
         self.close()
         
+    def closeEvent(self,event):
+        self.close()
+        
     def close(self):
 
-        self.saveFile()
+        self.tree.saveCubeFile()
         return True
- 
-    def saveFile(self):
-        if self.saveDialog():
-            definiciones = load_cubo(self.cubeFile)
-            definiciones['user functions'] = tree2dict(self.tree.model().invisibleRootItem(),isDictFromDef)
-            dump_json(definiciones,self.cubeFile)
-
-    def saveDialog(self):
-        if (QMessageBox.question(self,
-                "Salvar",
-                "Desea salvar los cambios del fichero de configuracion {}?".format(self.cubeFile),
-                QMessageBox.Yes|QMessageBox.No) == QMessageBox.Yes):
-            return True
-        else:
-            return False
  
 
 class CubeMgr(cubeTree):
@@ -1468,41 +1727,41 @@ class CubeMgr(cubeTree):
                                 table = table,
                                 )
         
-    def saveDialog(self):
-        if (QMessageBox.question(self,
-                "Salvar",
-                "Desea salvar los cambios del fichero de configuracion {}?".format(self.cubeFile),
-                QMessageBox.Yes|QMessageBox.No) == QMessageBox.Yes):
-            return True
-        else:
-            return False
+    #def saveDialog(self):
+        #if (QMessageBox.question(self,
+                #"Salvar",
+                #"Desea salvar los cambios del fichero de configuracion {}?".format(self.cubeFile),
+                #QMessageBox.Yes|QMessageBox.No) == QMessageBox.Yes):
+            #return True
+        #else:
+            #return False
 
 
-    def saveCubeFile(self):
-        if self.saveDialog():
-            print('Voy a salvar el fichero')
-            newcubeStruct = tree2dict(self.model().invisibleRootItem(),isDictFromDef)
-            if isinstance(self.parentWindow,(cubeMgrWindow,cubeMgrDialog)):
-                total=True
-            else:
-                total = False
-            dump_structure(newcubeStruct,self.cubeFile,total=total)
+    #def saveCubeFile(self):
+        #if self.saveDialog():
+            #print('Voy a salvar el fichero')
+            #newcubeStruct = tree2dict(self.model().invisibleRootItem(),isDictFromDef)
+            #if isinstance(self.parentWindow,(cubeMgrWindow,cubeMgrDialog)):
+                #total=True
+            #else:
+                #total = False
+            #dump_structure(newcubeStruct,self.cubeFile,total=total)
             
 
-    #@waiting_effects
-    #@model_change_control()
-    def restoreCubeFile(self):
-        #self.baseModel.beginResetModel()
-        self.baseModel.clear()
-        if self.particular:
-            self.setupModel(*self.particularContext)
-        else:
-            self.setupModel()
-        self.setupView()
-        #self.baseModel.endResetModel()
+    ##@waiting_effects
+    ##@model_change_control()
+    #def restoreCubeFile(self):
+        ##self.baseModel.beginResetModel()
+        #self.baseModel.clear()
+        #if self.particular:
+            #self.setupModel(*self.particularContext)
+        #else:
+            #self.setupModel()
+        #self.setupView()
+        ##self.baseModel.endResetModel()
     
-    def test(self):
-        return
+    #def test(self):
+        #return
 
 
 import sys
