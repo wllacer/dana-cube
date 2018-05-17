@@ -33,7 +33,8 @@ from base.datadict import *
 
 from admin.tablebrowse import *
 from admin.cubemgmt.cubeutil import info2cube
-from admin.cubebrowse import CubeMgr
+#from admin.cubebrowse import CubeMgr
+from research.cubebrowse import CubeMgr
 from support.util.decorators import *
 
 import base.config as config
@@ -46,7 +47,7 @@ class GenerationSheetDlg(QDialog):
         super(GenerationSheetDlg, self).__init__(parent)
         # cargando parametros de defecto
         self.context = (('Nombre del cubo',QLineEdit,None),
-                        ('Profundidad de enlaces',QSpinBox,{"setRange":(1,5)}),
+                        ('Profundidad de enlaces',QSpinBox,{"setRange":(0,5)}),
                        )
         self.data = [ tableName,maxLevel ]
         #
@@ -350,10 +351,9 @@ class DanaBrowseWindow(QMainWindow):
         self.queryView.hide()
         self.queryMenu.setEnabled(False)
         
-
-    def cubebrowse(self,confName,schema,table):
+    def prepareNewCube(self,confName,schema,table):
         # aqui tiene que venir un dialogo para seleccionar nombre del cubo
-        maxLevel = self.maxlevel
+        maxLevel = 0 #self.maxLevel
         parmDlg = GenerationSheetDlg('Parámetros de generación',table,maxLevel)   
         if parmDlg.exec_():
             kname = parmDlg.data[0]
@@ -361,7 +361,11 @@ class DanaBrowseWindow(QMainWindow):
         infox = info2cube(self.dictionary,confName,schema,table,maxLevel)
         if kname != table:
             infox[kname] = infox.pop(table)
-        #cubeMgr = CubeBrowserWin(confName,schema,table,self.dictionary,self)
+        return infox
+
+    def cubebrowse(self,confName,schema,table):
+
+        infox = self.prepareNewCube(confName,schema,table)
         if self.cubeMgr and not self.cubeMgr.isHidden():
             self.hideCube()
         self.cubeMgr = CubeMgr(self,confName,schema,table,self.dictionary,rawCube=infox,cubeFile=self.cubeFile)

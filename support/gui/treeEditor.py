@@ -267,10 +267,7 @@ class TreeMgr(QTreeView):
         self.baseModel  = model
         parent = self.hiddenRoot = self.baseModel.invisibleRootItem()
         self.view.setModel(self.baseModel)
-        
-        if not config.DEBUG:
-            self.view.hideColumn(2) # eso no interesa al usuario final        
-
+      
         self.view.expandAll() # es necesario para el resize
         for m in range(self.baseModel.columnCount()):
             self.view.resizeColumnToContents(m)

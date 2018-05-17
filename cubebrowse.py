@@ -6,7 +6,8 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 
-from admin.cubebrowse import CubeBrowserWin
+#from admin.cubebrowse import CubeBrowserWin
+from research.cubebrowse import cubeMgrWindow
 from PyQt5.QtWidgets import QApplication    
 
 if __name__ == '__main__':
@@ -17,7 +18,7 @@ if __name__ == '__main__':
         reload(sys)
         sys.setdefaultencoding('utf-8')
     app = QApplication(sys.argv)
-    window = CubeBrowserWin()#'MariaBD Local','sakila','film')
+    window = cubeMgrWindow() #CubeBrowserWin()#'MariaBD Local','sakila','film')
     window.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
     window.show()
     sys.exit(app.exec_())
