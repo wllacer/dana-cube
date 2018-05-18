@@ -194,7 +194,7 @@ class Context():
                         editType,edit_data = getRealEditDefinition(np,self.tree,hijosPadre)
                 else:
                     editPosition = dp
-                    editType,edit_data = getRealEditDefinition(np,self.tree,tpType)
+                    editType,edit_data = getRealEditDefinition(np,self.tree,edit_ctx_hijo)
                     dataType = 'list'
                     
             else: #es hijo de un atom

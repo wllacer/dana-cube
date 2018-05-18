@@ -115,7 +115,7 @@ class DanaBrowseWindow(QMainWindow):
         self.cubeFile = args.cubeFile
         self.sysExclude = args.sysExclude
         
-        self.maxlevel = 1  #para poder modificarlo luego
+        self.maxLevel = 1  #para poder modificarlo luego
         self.dictionary = DataDict(defFile=args.configFile,secure=args.secure,sysExclude=args.sysExclude)
         #TODO variables asociadas del diccionario. Reevaluar al limpiar
         

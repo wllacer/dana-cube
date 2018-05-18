@@ -147,7 +147,7 @@ EDIT_TREE = {
             'elements':[
                 ('elem',True,False),
                 ('table',False,False),
-                ('link via',False,False),
+                ('link via',False,False,True),
                 ],
             },
     'domain': { 'objtype':'dict',
@@ -190,10 +190,7 @@ EDIT_TREE = {
     'values' : { 'objtype':'list'},
 
     'fmt_out' :{'editor':QComboBox,'source': ENUM_FORMAT ,'default':'txt' },
-    'link via' : { 'objtype':'list',
-                'children': 'link path',
-                },
-    'link path': {'obtype':'dict',
+    'link via': {'objtype':'dict',
                 'elements':[
                     ('table',True,False),
                     ('clause',True,False,True), #FIXME presentacion
@@ -541,13 +538,15 @@ class cubeMgrWindow(QMainWindow):
     """
     """
     
-    def __init__(self,parent=None):
+    def __init__(self,file=None,parent=None):
         super(cubeMgrWindow,self).__init__(parent)
 
         #self.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())
         parser = generaArgParser()
         args = parser.parse_args()
         self.cubeFile = args.cubeFile #'cubo.json'   #DEVELOP
+        if file:
+            self.cubeFile = file
         self.secure = args.secure
         self.sysExclude = args.sysExclude
 

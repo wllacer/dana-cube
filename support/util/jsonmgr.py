@@ -15,7 +15,6 @@ import os
 import datetime
 
 def load_cubo(fichero="cubo.json"):
-
     my_dict = {}
     try:
         with open(fichero) as infile:
@@ -64,9 +63,13 @@ def dump_structure(new_data, fichero="cubo.json",**flags):
 
     if baseCubo == k_new_data:
         return
+    # para python 3 y pico que ordenan por defecto
+    o_new_data = {}
+    for clave in sorted(k_new_data):
+        o_new_data[clave] = k_new_data[clave]
     #no grabo si no hay cambios
     dump_json(baseCubo,'{}.{}'.format(fichero,datetime.datetime.now().strftime("%Y%m%d-%H%M%S")))
-    dump_json(k_new_data,fichero)
+    dump_json(o_new_data,fichero)
 
 def dump_config(new_data, fichero=".danabrowse.json",**flags):
     total = flags.get('total',True)

@@ -848,7 +848,7 @@ class Vista:
                     numColElems = len(colFields)
                 joins = row['linkvia'] + col['linkvia']
                 sqlDef['join'] = []
-                for entrada in joins:
+                for idx,entrada in enumerate(joins):
                     if len(entrada) == 0:
                         continue
                     join_entrada = dict()
@@ -857,20 +857,38 @@ class Vista:
                     join_entrada['join_filter'] = entrada.get('filter')
                     join_entrada['join_clause'] = []
                     for clausula in entrada['clause']:
-                        entrada = (clausula.get('rel_elem'),clausula.get('condition','='),clausula.get('base_elem'))
-                        join_entrada['join_clause'].append(entrada)
+                        """
+                        FIXME TODO
+                        esto es un parche de emergencia, queryConstructor pone mal los prefijos en los joins
+                        asi que me aseguro que los camos vienen prefijados
+                        """
+                        #TODO solo admite campos elementales en la clausula, 
+                        base_elem = clausula.get('base_elem')
+                        if '.' not in base_elem:
+                            if idx == 0:
+                                base_elem = '{}.{}'.format(sqlDef['tables'],base_elem)
+                            else:
+                                base_elem = '{}.{}'.format(joins[idx -1].get('table'),base_elem)
+                        rel_elem = clausula.get('rel_elem')
+                        if '.' not in rel_elem:
+                            rel_elem = '{}.{}'.format(entrada.get('table'),rel_elem)
+                        entradilla = (rel_elem,clausula.get('condition','='),base_elem)
+                        join_entrada['join_clause'].append(entradilla)
                     sqlDef['join'].append(join_entrada)
                 
                 sqlDef['order'] = [ str(x + 1) for x in range(len(sqlDef['group']))]
                 sqlDef['driver'] = self.cubo.dbdriver
+                #pprint(sqlDef)
                 sqlstring=queryConstructor(**sqlDef)
+                #print(sqlstring)
+                #if sqlDef['join']:
+                    #exit()
                 lista_compra={'row':{'nkeys':numRowElems,},
                               'rdir':self.row_hdr_idx,
                               'col':{'nkeys':numColElems,
                                      'init':numRowElems,},
                               'cdir':self.col_hdr_idx
                               }
-
                 cursor = getCursor(self.cubo.db,sqlstring,regTreeGuide,**lista_compra)
                 self.array +=cursor 
                 if config.DEBUG:

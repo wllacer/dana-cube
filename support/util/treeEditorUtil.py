@@ -105,16 +105,16 @@ def tree2dict(rootItem,esdiccionario=None,role=None):
     #FIXIT como manejar los numeros un poco raros
                          #Compactar el codigo
     elementos=childItems(rootItem)
-    #una de las variables es innecesaria de momento
     toList = False
     toDict = False
+
     if rootItem == rootItem.model().invisibleRootItem() :
             toDict = True #la raiz siempre genera directorio
     elif esdiccionario and esdiccionario(rootItem):   
         toDict = True
     else:
        toList = True
-       
+
     if toList:
         result_l = list()
         for item in elementos:

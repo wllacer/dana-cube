@@ -235,9 +235,14 @@ def isDictFromDef(item):
     
     FIXME depende de getItemContext()
     """
+
     if item.hasChildren():
         contexto = Context(item)
+        #datos = [ el.data() if el else None for el in getRow(item) ]
+        #datosC = contexto.content
         repeat = contexto.get('repeteable',False)
+        firstChild = item.child(0,0)
+        firstChildTipo = item.child(0,2)
         if repeat:
             return False
         objtype_context =  contexto.get('edit_tree',{}).get('objtype')
@@ -246,8 +251,6 @@ def isDictFromDef(item):
         elif objtype_context is not None:
             return False
         
-        firstChild = item.child(0,0)
-        firstChildTipo = item.child(0,2)
         if not firstChildTipo:                             #los elementos de una lista pura no tienen tipo y no deberian tener ese elemento
             return False
         elif firstChildTipo.data() is None:
@@ -733,7 +736,7 @@ def addNetworkPath(*lparm):
     selDlg = FKNetworkDialog(item,view,fqtable,arbolNavegacion)
     selDlg.show()
     if selDlg.exec_():
-        dict2tree(item,None,selDlg.result)
+        dict2tree(item,None,selDlg.result,'guides')
         uch = item.child(item.rowCount() -1)
         uch.setData(selDlg.result['name'],Qt.EditRole)
         uch.setData(selDlg.result['name'],Qt.UserRole +1)
@@ -882,6 +885,10 @@ def setClass(*lparm):
   
 def setTable(*lparm):
     def _cmpTableName(value1,value2):
+        if not value1 and not value2:
+            return None  #no tiene sentido comparar nulos
+        if not value1 or not value2:
+            return False #no son iguales si uno es nulo
         resultado = False
         val1 = value1.split('.')
         val2 = value2.split('.')

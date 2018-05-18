@@ -2,10 +2,10 @@
     "datos catalonia": {
         "base filter": "",
         "connect": {
-            "dbhost": "None",
+            "dbhost": null,
             "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
-            "dbpass": "None",
-            "dbuser": "None",
+            "dbpass": null,
+            "dbuser": null,
             "driver": "sqlite"
         },
         "fields": [
@@ -193,10 +193,10 @@
     "datos light": {
         "base filter": "",
         "connect": {
-            "dbhost": "None",
+            "dbhost": null,
             "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
-            "dbpass": "None",
-            "dbuser": "None",
+            "dbpass": null,
+            "dbuser": null,
             "driver": "sqlite"
         },
         "fields": [
@@ -330,10 +330,10 @@
     "datos locales": {
         "base filter": " ",
         "connect": {
-            "dbhost": "None",
+            "dbhost": null,
             "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
-            "dbpass": "None",
-            "dbuser": "None",
+            "dbpass": null,
+            "dbuser": null,
             "driver": "sqlite"
         },
         "fields": [
@@ -520,10 +520,10 @@
     "datos provincia": {
         "base filter": "",
         "connect": {
-            "dbhost": "None",
+            "dbhost": null,
             "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
-            "dbpass": "None",
-            "dbuser": "None",
+            "dbpass": null,
+            "dbuser": null,
             "driver": "sqlite"
         },
         "fields": [
@@ -641,10 +641,10 @@
     "experimento": {
         "base filter": "",
         "connect": {
-            "dbhost": "None",
+            "dbhost": null,
             "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
-            "dbpass": "None",
-            "dbuser": "None",
+            "dbpass": null,
+            "dbuser": null,
             "driver": "sqlite"
         },
         "fields": [
@@ -876,76 +876,6 @@
                 ]
             },
             {
-                "class": "h",
-                "fmt": "date",
-                "name": "rental_date_cuatrimestre",
-                "prod": [
-                    {
-                        "class": "o",
-                        "elem": "TO_CHAR(public.rental.rental_date,'YYYY')",
-                        "name": "año"
-                    },
-                    {
-                        "case_sql": [
-                            "CASE",
-                            "WHEN TO_CHAR($$1,'MM') BETWEEN '01' AND '04' THEN TO_CHAR($$1,'YYYY') ||'-'||'1' ",
-                            "WHEN TO_CHAR($$1,'MM') BETWEEN '05' AND '08' THEN TO_CHAR($$1,'YYYY') ||'-'||'2' ",
-                            "WHEN TO_CHAR($$1,'MM') BETWEEN '09' AND '12' THEN TO_CHAR($$1,'YYYY') ||'-'||'3' ",
-                            "END AS $$2"
-                        ],
-                        "class": "c",
-                        "elem": "public.rental.rental_date",
-                        "name": "cuatrimestre"
-                    }
-                ]
-            },
-            {
-                "class": "h",
-                "name": "rental_date_trimestre",
-                "prod": [
-                    {
-                        "class": "o",
-                        "elem": "TO_CHAR(public.rental.rental_date,'YYYY')",
-                        "name": "año"
-                    },
-                    {
-                        "case_sql": [
-                            "CASE",
-                            "WHEN TO_CHAR($$1,'MM') BETWEEN '01' AND '03' THEN TO_CHAR($$1,'YYYY') ||'-'||'1' ",
-                            "WHEN TO_CHAR($$1,'MM') BETWEEN '04' AND '06' THEN TO_CHAR($$1,'YYYY') ||'-'||'2' ",
-                            "WHEN TO_CHAR($$1,'MM') BETWEEN '07' AND '09' THEN TO_CHAR($$1,'YYYY') ||'-'||'3' ",
-                            "WHEN TO_CHAR($$1,'MM') BETWEEN '10' AND '12' THEN TO_CHAR($$1,'YYYY') ||'-'||'4' ",
-                            "END AS $$2"
-                        ],
-                        "class": "c",
-                        "elem": "public.rental.rental_date",
-                        "name": "trimestre"
-                    }
-                ]
-            },
-            {
-                "class": "h",
-                "name": "rental_date_quincena",
-                "prod": [
-                    {
-                        "class": "o",
-                        "elem": "TO_CHAR(public.rental.rental_date,'YYYY')",
-                        "name": "año"
-                    },
-                    {
-                        "case_sql": [
-                            "CASE",
-                            "WHEN TO_CHAR($$1,'DD') BETWEEN '01' AND '15' THEN TO_CHAR($$1,'YYYY-MM') ||'-'||'1' ",
-                            "WHEN TO_CHAR($$1,'DD') BETWEEN '16' AND '31' THEN TO_CHAR($$1,'YYYY-MM') ||'-'||'2' ",
-                            "END AS $$2"
-                        ],
-                        "class": "c",
-                        "elem": "public.rental.rental_date",
-                        "name": "quincena"
-                    }
-                ]
-            },
-            {
                 "class": "d",
                 "name": "return_date",
                 "prod": [
@@ -957,75 +887,6 @@
                 ]
             },
             {
-                "class": "h",
-                "name": "return_date_cuatrimestre",
-                "prod": [
-                    {
-                        "class": "o",
-                        "elem": "TO_CHAR(public.rental.return_date,'YYYY')",
-                        "name": "año"
-                    },
-                    {
-                        "case_sql": [
-                            "CASE",
-                            "WHEN TO_CHAR($$1,'MM') BETWEEN '01' AND '04' THEN TO_CHAR($$1,'YYYY') ||'-'||'1' ",
-                            "WHEN TO_CHAR($$1,'MM') BETWEEN '05' AND '08' THEN TO_CHAR($$1,'YYYY') ||'-'||'2' ",
-                            "WHEN TO_CHAR($$1,'MM') BETWEEN '09' AND '12' THEN TO_CHAR($$1,'YYYY') ||'-'||'3' ",
-                            "END AS $$2"
-                        ],
-                        "class": "c",
-                        "elem": "public.rental.return_date",
-                        "name": "cuatrimestre"
-                    }
-                ]
-            },
-            {
-                "class": "h",
-                "name": "return_date_trimestre",
-                "prod": [
-                    {
-                        "class": "o",
-                        "elem": "TO_CHAR(public.rental.return_date,'YYYY')",
-                        "name": "año"
-                    },
-                    {
-                        "case_sql": [
-                            "CASE",
-                            "WHEN TO_CHAR($$1,'MM') BETWEEN '01' AND '03' THEN TO_CHAR($$1,'YYYY') ||'-'||'1' ",
-                            "WHEN TO_CHAR($$1,'MM') BETWEEN '04' AND '06' THEN TO_CHAR($$1,'YYYY') ||'-'||'2' ",
-                            "WHEN TO_CHAR($$1,'MM') BETWEEN '07' AND '09' THEN TO_CHAR($$1,'YYYY') ||'-'||'3' ",
-                            "WHEN TO_CHAR($$1,'MM') BETWEEN '10' AND '12' THEN TO_CHAR($$1,'YYYY') ||'-'||'4' ",
-                            "END AS $$2"
-                        ],
-                        "class": "c",
-                        "elem": "public.rental.return_date",
-                        "name": "trimestre"
-                    }
-                ]
-            },
-            {
-                "class": "h",
-                "name": "return_date_quincena",
-                "prod": [
-                    {
-                        "class": "o",
-                        "elem": "TO_CHAR(public.rental.return_date,'YYYY')",
-                        "name": "año"
-                    },
-                    {
-                        "case_sql": [
-                            "CASE",
-                            "WHEN TO_CHAR($$1,'DD') BETWEEN '01' AND '15' THEN TO_CHAR($$1,'YYYY-MM') ||'-'||'1' ",
-                            "WHEN TO_CHAR($$1,'DD') BETWEEN '16' AND '31' THEN TO_CHAR($$1,'YYYY-MM') ||'-'||'2' ",
-                            "END AS $$2"
-                        ],
-                        "class": "c",
-                        "elem": "public.rental.return_date",
-                        "name": "quincena"
-                    }
-                ]
-            },
-            {
                 "class": "d",
                 "name": "last_update",
                 "prod": [
@@ -1033,75 +894,6 @@
                         "elem": "public.rental.last_update",
                         "fmt": "date",
                         "mask": "Ym"
-                    }
-                ]
-            },
-            {
-                "class": "h",
-                "name": "last_update_cuatrimestre",
-                "prod": [
-                    {
-                        "class": "o",
-                        "elem": "TO_CHAR(public.rental.last_update,'YYYY')",
-                        "name": "año"
-                    },
-                    {
-                        "case_sql": [
-                            "CASE",
-                            "WHEN TO_CHAR($$1,'MM') BETWEEN '01' AND '04' THEN TO_CHAR($$1,'YYYY') ||'-'||'1' ",
-                            "WHEN TO_CHAR($$1,'MM') BETWEEN '05' AND '08' THEN TO_CHAR($$1,'YYYY') ||'-'||'2' ",
-                            "WHEN TO_CHAR($$1,'MM') BETWEEN '09' AND '12' THEN TO_CHAR($$1,'YYYY') ||'-'||'3' ",
-                            "END AS $$2"
-                        ],
-                        "class": "c",
-                        "elem": "public.rental.last_update",
-                        "name": "cuatrimestre"
-                    }
-                ]
-            },
-            {
-                "class": "h",
-                "name": "last_update_trimestre",
-                "prod": [
-                    {
-                        "class": "o",
-                        "elem": "TO_CHAR(public.rental.last_update,'YYYY')",
-                        "name": "año"
-                    },
-                    {
-                        "case_sql": [
-                            "CASE",
-                            "WHEN TO_CHAR($$1,'MM') BETWEEN '01' AND '03' THEN TO_CHAR($$1,'YYYY') ||'-'||'1' ",
-                            "WHEN TO_CHAR($$1,'MM') BETWEEN '04' AND '06' THEN TO_CHAR($$1,'YYYY') ||'-'||'2' ",
-                            "WHEN TO_CHAR($$1,'MM') BETWEEN '07' AND '09' THEN TO_CHAR($$1,'YYYY') ||'-'||'3' ",
-                            "WHEN TO_CHAR($$1,'MM') BETWEEN '10' AND '12' THEN TO_CHAR($$1,'YYYY') ||'-'||'4' ",
-                            "END AS $$2"
-                        ],
-                        "class": "c",
-                        "elem": "public.rental.last_update",
-                        "name": "trimestre"
-                    }
-                ]
-            },
-            {
-                "class": "h",
-                "name": "last_update_quincena",
-                "prod": [
-                    {
-                        "class": "o",
-                        "elem": "TO_CHAR(public.rental.last_update,'YYYY')",
-                        "name": "año"
-                    },
-                    {
-                        "case_sql": [
-                            "CASE",
-                            "WHEN TO_CHAR($$1,'DD') BETWEEN '01' AND '15' THEN TO_CHAR($$1,'YYYY-MM') ||'-'||'1' ",
-                            "WHEN TO_CHAR($$1,'DD') BETWEEN '16' AND '31' THEN TO_CHAR($$1,'YYYY-MM') ||'-'||'2' ",
-                            "END AS $$2"
-                        ],
-                        "class": "c",
-                        "elem": "public.rental.last_update",
-                        "name": "quincena"
                     }
                 ]
             },
@@ -1164,12 +956,12 @@
                         "elem": "address_id",
                         "link via": [
                             {
-                                "clause": [
-                                    {
+                                "clause": {
+                                    "0": {
                                         "base_elem": "public.rental.customer_id",
                                         "rel_elem": "public.customer.customer_id"
                                     }
-                                ],
+                                },
                                 "filter": "",
                                 "table": "public.customer"
                             }
@@ -1191,12 +983,12 @@
                         "elem": "store_id",
                         "link via": [
                             {
-                                "clause": [
-                                    {
+                                "clause": {
+                                    "0": {
                                         "base_elem": "public.rental.customer_id",
                                         "rel_elem": "public.customer.customer_id"
                                     }
-                                ],
+                                },
                                 "filter": "",
                                 "table": "public.customer"
                             }
@@ -1218,12 +1010,12 @@
                         "elem": "film_id",
                         "link via": [
                             {
-                                "clause": [
-                                    {
+                                "clause": {
+                                    "0": {
                                         "base_elem": "public.rental.inventory_id",
                                         "rel_elem": "public.inventory.inventory_id"
                                     }
-                                ],
+                                },
                                 "filter": "",
                                 "table": "public.inventory"
                             }
@@ -1245,12 +1037,12 @@
                         "elem": "store_id",
                         "link via": [
                             {
-                                "clause": [
-                                    {
+                                "clause": {
+                                    "0": {
                                         "base_elem": "public.rental.inventory_id",
                                         "rel_elem": "public.inventory.inventory_id"
                                     }
-                                ],
+                                },
                                 "filter": "",
                                 "table": "public.inventory"
                             }
@@ -1272,12 +1064,12 @@
                         "elem": "address_id",
                         "link via": [
                             {
-                                "clause": [
-                                    {
+                                "clause": {
+                                    "0": {
                                         "base_elem": "public.rental.staff_id",
                                         "rel_elem": "public.staff.staff_id"
                                     }
-                                ],
+                                },
                                 "filter": "",
                                 "table": "public.staff"
                             }
@@ -1299,12 +1091,12 @@
                         "elem": "store_id",
                         "link via": [
                             {
-                                "clause": [
-                                    {
+                                "clause": {
+                                    "0": {
                                         "base_elem": "public.rental.staff_id",
                                         "rel_elem": "public.staff.staff_id"
                                     }
-                                ],
+                                },
                                 "filter": "",
                                 "table": "public.staff"
                             }
