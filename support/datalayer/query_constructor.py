@@ -604,9 +604,11 @@ def _joinConstructor(**kwargs):
     ind = 0
     texto = []
 
-    for elemento in entrada:
+    for idx,elemento in enumerate(entrada):
+        #ltable = elemento.get('table')
+        #rtable = entrada[idx -1].get('table') if idx > 0 else norm2List(kwargs.get('tables'))[0]
         join_clause = mergeStrings('AND',
-                                   searchConstructor('join_clause',**elemento,rtype='r'),
+                                   searchConstructor('join_clause',**elemento,rtype='r'), #,ltable=ltable,rtable=rtable),
                                    elemento.get('join_filter'),
                                    spaced=True)
         prefijo = elemento.get('join_modifier','')

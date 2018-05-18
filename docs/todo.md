@@ -24,6 +24,9 @@ Serious errors which are either upstream or we haven't still found a solution
     
 *   __STUDY PENDING__ __BYPASSED__ QStandardItem(*args) bombs system if args[0] is int and big (some millions, still not out)
 
+*  BUG 5  __OPEN__ 
+    query_constructor has torubles handling with file prefixes, esp with joins. and if both guides are "joined". An intersting solution might be found at research.grandBrowse
+
 ## rough corners
 
 Areas where the product __must__ be improved. They might not be errors but don't feel quite right

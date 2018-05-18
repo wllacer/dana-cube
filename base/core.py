@@ -856,6 +856,8 @@ class Vista:
                     join_entrada['table'] = entrada.get('table')
                     join_entrada['join_filter'] = entrada.get('filter')
                     join_entrada['join_clause'] = []
+                    #join_entrada['lfile']=join_entrada['table']
+                    #join_entrada['rfile']=joins[idx -1].get('file') if idx > 0 else sqlDef['tables']
                     for clausula in entrada['clause']:
                         """
                         FIXME TODO
