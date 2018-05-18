@@ -49,13 +49,13 @@ class previewTree(QTreeView):
 
     def setupModel(self,guia):
   
-        self.baseModel,dummy = self.cubo.fillGuia(guia) #,qtModel='yes')
+        self.baseModel,dummy = self.cubo.fillGuia(guia,display=True)
         self.hiddenRoot = self.baseModel.invisibleRootItem()       
         parent = self.hiddenRoot = self.baseModel.invisibleRootItem()
         
     def setupView(self):
         self.view.setModel(self.baseModel)
-        self.baseModel.setHorizontalHeaderLabels(('Descripcion','Código',))
+        self.baseModel.setHorizontalHeaderLabels(('Código','Descripcion'))
         self.view.setAlternatingRowColors(True)
         #self.view.sortByColumn(0, Qt.AscendingOrder)
 

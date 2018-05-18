@@ -456,7 +456,7 @@ class TreeMgr(QTreeView):
             print('action rename',newRow[0].data(),ftype,fedit_data)
             if 'elements' in fedit_data:
                 campos = [elem[0] for elem in fedit_data['elements'] ]
-                for nombre in ('name','result'):
+                for nombre in ('name','result','default'):
                     if nombre in campos:
                         self.actionRename(newRow[0],nombre)
                         break
@@ -519,7 +519,7 @@ class TreeMgr(QTreeView):
         if n.hasChildren():
             for k in range(n.rowCount()):
                 nh,ih,th = getRow(n.child(k))
-                if nh.data() in ('name','result'):
+                if nh.data() in ('name','result','default'):
                     ih.setData(text[0],Qt.EditRole)
                     ih.setData(text[0],Qt.UserRole +1)
                     break

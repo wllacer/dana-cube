@@ -356,9 +356,10 @@ class TableInfo():
                                         'class':'d',
                                         'prod':[{'fmt':'date','elem':fld['name'],'mask':'Ym'},]
                                         })  #no es completo
-                entrada['guides'].append( genCuatrimestreCode(fld['name'],self.driver.dialect.name))
-                entrada['guides'].append( genTrimestreCode(fld['name'],self.driver.dialect.name))
-                entrada['guides'].append( genQuincenaCode(fld['name'],self.driver.dialect.name))
+                # deshabilitado ahora con el nuevo sistema
+                #entrada['guides'].append( genCuatrimestreCode(fld['name'],self.driver.dialect.name))
+                #entrada['guides'].append( genTrimestreCode(fld['name'],self.driver.dialect.name))
+                #entrada['guides'].append( genQuincenaCode(fld['name'],self.driver.dialect.name))
 
             else:
                 entrada['guides'].append({'name':fld['basename'],

@@ -15,7 +15,7 @@ from pprint import pprint
 
 from PyQt5.QtCore import Qt,QModelIndex
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
-
+from support.util.record_functions import norm2List
 
 """
 Utildades
@@ -81,7 +81,7 @@ def dict2tree(parent,key,data,tipo=None):
                 newparent.appendRow(makeRow(None,elem))
 
             elif isinstance(elem,dict): #and elem.get('name'):
-                for texto in ('name','result'):
+                for texto in ('name','result','default'):
                     if elem.get(texto):
                         clave = elem.get(texto)
                         break
@@ -350,6 +350,18 @@ def getChildByType(parent,type):
         n,i,typeItem = getRow(entry)
         if typeItem and typeItem.data() == type:
             return entry
+    return None
+
+def getChildByTypeH(parent,typeList):
+    base = parent
+    for tipo in norm2List(typeList):
+        for entry in childItems(base):
+            n,i,typeItem = getRow(entry)
+            if typeItem and typeItem.data() == tipo:
+                base = n
+                break
+        else:
+            return None
     return None
 
 def getParentByType(item,type):

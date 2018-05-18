@@ -115,7 +115,7 @@ class DanaBrowseWindow(QMainWindow):
         self.cubeFile = args.cubeFile
         self.sysExclude = args.sysExclude
         
-        self.maxlevel = 2  #para poder modificarlo luego
+        self.maxlevel = 1  #para poder modificarlo luego
         self.dictionary = DataDict(defFile=args.configFile,secure=args.secure,sysExclude=args.sysExclude)
         #TODO variables asociadas del diccionario. Reevaluar al limpiar
         
@@ -353,7 +353,7 @@ class DanaBrowseWindow(QMainWindow):
         
     def prepareNewCube(self,confName,schema,table):
         # aqui tiene que venir un dialogo para seleccionar nombre del cubo
-        maxLevel = 0 #self.maxLevel
+        maxLevel = self.maxLevel
         parmDlg = GenerationSheetDlg('Parámetros de generación',table,maxLevel)   
         if parmDlg.exec_():
             kname = parmDlg.data[0]

@@ -733,20 +733,47 @@ def addNetworkPath(*lparm):
     selDlg = FKNetworkDialog(item,view,fqtable,arbolNavegacion)
     selDlg.show()
     if selDlg.exec_():
-        # no he encontrado otra manera que generara correctamente el arbol que borrando todas las guias
-        estructura = tree2dict(item,isDictFromDef)
-        estructura.append(selDlg.result)
-        item.parent().removeRow(item.row())
-        dict2tree(item.parent(),'guides',estructura)
+        dict2tree(item,None,selDlg.result)
+        uch = item.child(item.rowCount() -1)
+        uch.setData(selDlg.result['name'],Qt.EditRole)
+        uch.setData(selDlg.result['name'],Qt.UserRole +1)
+
    
 def addDateGroups(*lparm):
     """
     TODO   traer de la generacion en danabrowse
     """
+    from support.datalayer.datemgr import getIntervalCode
+    
     item = lparm[0]
     view = lparm[1]
     n,i,t = getRow(item)
- 
+    driverItm = getChildByType(getChildByType(getParentByType(item,'base'),'connect'),'driver')
+    driver = getRow(driverItm)[1].data()
+    nombre = getRow(getChildByType(item,'name'))[1].data()
+    fileItem = getChildByType(getChildByType(getChildByType(item,'prod'),'prod'),'elem')
+    ofileItem = getChildByTypeH(item,'prod,prod,elem')
+    if fileItem != ofileItem:
+        print ('ooohhh')
+    field = getRow(fileItem)[1].data()
+    print(driver,nombre,field)
+    lista = ('Cuatrimestre','Trimestre','Quincena')
+    text,ok = QInputDialog.getItem(None,'Seleccione el periodo de agrupacion de fechas a añadir',
+                                                        'periodo',lista,0,False)
+    estructura = {}
+    if ok and text:
+        if    text == 'Cuatrimestre':
+                estructura = getIntervalCode('Q',field,driver)
+        elif text == 'Trimestre':
+                estructura = getIntervalCode('T',field,driver)
+        elif text == 'Quincena':
+                estructura = getIntervalCode('q',field,driver)
+    dict2tree(item.parent(),None,estructura)           #hijo de guides no de la guia en concreto 
+    uch = item.parent().child(item.rowCount() -1)  
+    uch.setData(estructura['name'],Qt.EditRole)
+    uch.setData(estructura['name'],Qt.UserRole +1)
+
+    
 def sampleData(*lparm):
     """
     FIXME el codigo no esta aparenciendo en el preview
@@ -758,7 +785,7 @@ def sampleData(*lparm):
     n,i,t = getRow(item)
     pos = item.row()
     cubo  = tree2dict(getParentByType(item,'base'),isDictFromDef)
-    form = guidePreview(cubo,pos)
+    form = guidePreview(cubo,pos,view)
     form.setWindowTitle('Ejemplo de valores para {}'.format(n.data()))
     form.show()
     if form.exec_():

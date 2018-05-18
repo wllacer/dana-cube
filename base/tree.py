@@ -87,6 +87,34 @@ def searchStandardItem(item,value,role):
             raise
     return None
 
+def searchHierarchy(model,valueList,role=None):
+    """
+        Does a search thru all the hierarchy given the key/value data. 
+        As 1st level function to be able to use in QStandardItemModels
+    
+    * Input parameters
+        * __valueList__ an array with the hierachy data to be searched
+        * __role__ the Qt.Role the data is associated with
+        
+    * Returns
+        An Item of the tree which mastches the valueList
+        
+    * Programming notes
+        Which data is searched depends on the role. Qt.UserRole +1 searches for internal keys; Qt.DisplayRole for description 
+    """
+    if role is None:
+        prole = Qt.UserRole +1
+    else:
+        prole = role
+    elem = model.invisibleRootItem()
+    parent = model.invisibleRootItem()
+    for k,value in enumerate(valueList):
+        elem = searchStandardItem(parent,value,prole)
+        if not elem:
+            return None
+        parent = elem
+    return elem
+
 def _getHeadColumn(item):
     """
     __NEW API__

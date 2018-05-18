@@ -356,7 +356,7 @@ class Cubo:
 
         return cursor
 
-    def _createProdModel(self,raiz,cursor,contexto,prodId,total=None):
+    def _createProdModel(self,raiz,cursor,contexto,prodId,total=None,display=False):
         """
         De cursor al modelo que utilizamos para definir la guia
         Input
@@ -365,6 +365,7 @@ class Cubo:
             contexto contexto de la regla de produccion
             prodId identificación de la regla
             total (si la guia va a ser creada con totalizadores. En el caso de QStandardItemModel ha sido un fracaso de otra manera)
+            display en el formato que pide guidePreview
         Ahora mismo este codigo tiene el efecto secundario que en claves multicampo se crea implicitamente una jerarquia de valores
         TODO contemplar el caso contrario
         """
@@ -394,8 +395,7 @@ class Cubo:
             # ahora debo localizar donde en la jerarquia tiene que encontrarse. Eso varia por tipo
             # Notese que para GuideItemModel utilizo un sistema de cache para reducir el numero de busquedas
             #
-            if isinstance(raiz,QStandardItem):
-
+            if not display:  #la situacion ordinaria
                 papid = row[0:len(code)]
                 key = papid[-1]
                 del papid[-1]
@@ -404,39 +404,33 @@ class Cubo:
                     papid = ["//",]+papid
                 if len(papid) == 0:
                     item = GuideItem(key,value)
-                    #item.setData(value,Qt.DisplayRole)
-                    #item.setData(key,Qt.UserRole +1)
                     raiz.appendRow((item,))                    
                 else:
-                    #if total:  #no viene recogido previamente
-                        #papid = ["//",]+papid
                     parent = raiz.model().searchHierarchy(papid)
                     if not parent:
-                        #print('Ilocalizable',papid)
                         continue
                     else:
                         item = GuideItem(key,value)
-                        #item.setData(value,Qt.DisplayRole)
-                        #item.setData(key,Qt.UserRole +1)
                         parent.appendRow((item,))
-            # No aplica ya. Mantenido por si fuera necesario volver
-            #elif isinstance(raiz,TreeDict):
-                ## problemas inesperados con valores nulos
-                #for k in range(len(row)):
-                    #if row[k] is None:
-                        #row[k] = 'NULL'
-                ##descripcion
-                #if ndesc == 0:
-                    #value=', '.join(row)  
-                #else:
-                    #value=', '.join(row[-ndesc:])
-                ##clave separada jeraruqicamnet por config.DELIMITER
-                #key=config.DELIMITER.join(row[0:len(code)])   #asi creo una jerarquia automatica en claves multiples
-                #parentId = getParentKey(key)
-                #raiz.append(TreeItem(key,entryNum,value),parentId)
+            else:
+                papid = row[0:len(code)]
+                key = papid[-1]
+                del papid[-1]
+                #TODO cache sigue siendo necesario
+                if total:  #no viene recogido previamente
+                    papid = ["//",]+papid
+                if len(papid) == 0:
+                    raiz.appendRow((QStandardItem(str(key)),QStandardItem(str(value)),))                    
+                else:
+                    parent = searchHierarchy(raiz.model(),papid,Qt.DisplayRole)
+                    if not parent:
+                        continue
+                    else:
+                        parent.appendRow((QStandardItem(str(key)),QStandardItem(str(value)),))                    
+
     
     
-    def fillGuia(self,guidIdentifier,total=None,generateTree=True):
+    def fillGuia(self,guidIdentifier,total=None,generateTree=True,display=False):
         '''
         TODO ripple doc
         Es el metodo con el que creamos la guia; de paso generamos informacion complementaria, el contexto
@@ -445,6 +439,7 @@ class Cubo:
         total . Si debe crearse con totalizadores. En el caso de QStandardItemModel ha sido la unica manera de
                 hacerlo que no corrompiera el arbol
         generateTree  si genera el arbol o solo el contexto
+        display si el arbol generado es solo para ver la guia (en guidePrevuew)
         
         El contexto que genera para cada produccion es
             {'table':table,   -> tabla del dominio de la guia
@@ -474,10 +469,11 @@ class Cubo:
         contexto = []
 
         if generateTree:
-            #arbol = QStandardItemModel()
-            #raiz = arbol.invisibleRootItem()
-            arbol = GuideItemModel()
-            arbol.setItemPrototype(GuideItem())
+            if display:
+                arbol = QStandardItemModel()
+            else:
+                arbol = GuideItemModel()
+                arbol.setItemPrototype(GuideItem())
             arbol.name = self.lista_guias[guidId]['name']
             if total:  #el rebase no me ha traido mas que pesadillas
                 raiz = arbol.invisibleRootItem()
@@ -652,7 +648,7 @@ class Cubo:
                     cursor = self._getProdCursor(contexto[-1],basefilter,datefilter)
                 
     
-                self._createProdModel(tree,cursor,contexto[-1],prodId,total)
+                self._createProdModel(tree,cursor,contexto[-1],prodId,total,display)
 
             #for item in traverse(tree):
                 #print(item.parent().data(Qt.DisplayRole) if item.parent() is not None else '??',

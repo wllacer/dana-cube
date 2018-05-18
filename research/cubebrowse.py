@@ -385,6 +385,8 @@ class cubeTree(TreeMgr):
         self.cubeFile = file
         super().__init__(self.tree,treeDef,firstLevelDef,ctxFactory,msgLine)
         
+        #self.sortByColumn(0, Qt.AscendingOrder)
+        
         self.connChanged.connect(self.checkConexion)
         self.resized.connect(self.resizeTree)
     """
