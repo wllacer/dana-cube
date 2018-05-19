@@ -354,11 +354,67 @@ def _selConstructor(**kwargs):
 def _fromConstructor(**kwargs):
     """
     Crea la cadena para el FROM
-    
+    Retorna la cadena Y un diccionario con los sinomimos de las tablas involucradas
     kwargs utilizados
     *   'tables':[] 
     
+    ejemplos
+    ```
+     pepe = {}
+    for definicion in ( 'periquin',
+                                'periquin as torero',
+                                 ('periquin',),
+                                 (('periquin','manolin'),),
+                                 ('periquin','manolin'),
+                                (('periquin','uno'),('manolin','dos')),
+                                'select fugde,pudge from record as tupi',  <== la coma requiere estar rodeada de parentesis o cruje
+                                '(select fugde,pudge from record) as tupi',
+                                '(select fugde,pudge from (select fugde,pudge,rufi) from satki where tupsi = turvi)',
+                                (('(select fugde,pudge from (select fugde,pudge,rufi) from satki where tupsi = turvi)','tupi'),)
+                                ):
+        pepe['tables'] = definicion
+        print(queryConstructor(**pepe))  
+    ```
+    Resultado
+    ```
+     SELECT *  FROM periquin     
+    SELECT *  FROM periquin AS torero     
+    SELECT *  FROM periquin     
+    SELECT *  FROM periquin AS manolin     
+    SELECT *  FROM periquin AS tt0, manolin AS tt1     
+    SELECT *  FROM periquin AS uno, manolin AS dos     
+    SELECT *  FROM select fugde AS tt0, pudge from record AS tupi      <== error
+    SELECT *  FROM (select fugde,pudge from record) AS tupi     
+    SELECT *  FROM (select fugde AS tt0, pudge from (select fugde,pudge,rufi) from satki where tupsi = turvi) AS tt1     
+    SELECT *  FROM (select fugde,pudge from (select fugde,pudge,rufi) from satki where tupsi = turvi) AS tupi     
+    
+    y el dic de sinomimos queda
+    
+    
+    {'periquin': 'periquin'}
+    {'periquin': 'torero'}
+    {'periquin': 'periquin'}
+    {'periquin': 'manolin'}
+    {'periquin': 't0', 'manolin': 't1'}
+    {'periquin': 'uno', 'manolin': 'dos'}
+    {'select fugde': 't0', 'pudge from record': 'tupi'}
+    {'(select fugde,pudge from record)': 'tupi'}
+    {'(select fugde': 't0', 'pudge from (select fugde,pudge,rufi) from satki where tupsi = turvi)': 't1'}
+    {'(select fugde,pudge from (select fugde,pudge,rufi) from satki where tupsi = turvi)': 'tupi'}
+    ```
     """
+    def _locateLastAs(string):
+        #vamos a ver si lleva un as incorporado
+        pos = string.lower().find(' as ')
+        mcampo = string.lower()
+        while pos > 0:
+            mcampo = mcampo[pos+4:]
+            pos = mcampo.lower().find(' as ')
+        if mcampo != string:
+            return string.lower().replace(' as '+mcampo,'').strip(),mcampo.strip()
+        else:
+            return string.strip(),''
+        
     statement = 'FROM '
     definicion = 'tables'
     if definicion not in kwargs:
@@ -368,22 +424,32 @@ def _fromConstructor(**kwargs):
     if num_elem == 0:
         return ''
 
-    ind = 0
+   # ind = 0
     texto = []
-    
+    synonyms = {}
     for ind,kelem in enumerate(entrada):
+        # la entrada piede ser una dupla, 0 la tabla 1 la etiqueta
         elemento,adfijo=slicer(kelem)
-      
-        ktexto = elemento.strip()
+        # pero la entrada puede tener tambien la etiqueta incorporada en la definicion de la tabla.
+        # por cierto tiene prioridad sobre el valor en la tupla
+        ktexto,iadfijo = _locateLastAs(elemento)
+        label = iadfijo if iadfijo != '' else adfijo.strip()
+          
+        ftexto = ktexto
+        if label:
+            ftexto = '{} AS {}'.format(ktexto,label)
+        elif num_elem > 1 or  ' ' in ktexto:
+            label = 't{}'.format(ind)
+            ftexto = '{} AS {}'.format(ktexto,label)
+        
+        if label:
+            synonyms[ktexto] = label
+        else:
+            synonyms[ktexto] = ktexto
+        texto.append(ftexto)
 
-        if adfijo != '':
-            ktexto = '{} as {}'.format(texto,adfijo.strip())
-        elif num_elem > 1:
-            ktexto = '{} as t{}'.format(texto,ind)
-            
-        texto.append(ktexto)
     statement += ', '.join(texto)
-    return statement
+    return statement,synonyms
     
 def _whereConstructor(kwargs):
     """
@@ -631,10 +697,12 @@ def queryConstructor(**kwargs):
        order
        driver
     '''
-	 
+    from_statement,from_synonyms = _fromConstructor(**kwargs)
+    from_statement += ' '
+
     with_statement = _withConstructor(**kwargs)+' '
     select_statement = _selConstructor(**kwargs)+' '
-    from_statement = _fromConstructor(**kwargs)+' '
+
     join_statement = _joinConstructor(**kwargs)+' '
     where_statement = _whereConstructor(kwargs)+' '
     group_statement = _groupConstructor(**kwargs)+' '
