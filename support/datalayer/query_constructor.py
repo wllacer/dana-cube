@@ -136,7 +136,7 @@ def _sqlFmt(parametro,**kwargs):
                type = 'n'
            else: # cambio de politica de defecto si tiene comillas texto, si no parametro
                type = 'r'
-       table=kwargs.get('ltable',table)
+       table=kwargs.get('rtable',table)
     
     if not type and isinstance(parametro,(int,float)):
         type = 'n'
@@ -355,8 +355,11 @@ def _fromConstructor(**kwargs):
     """
     Crea la cadena para el FROM
     Retorna la cadena Y un diccionario con los sinomimos de las tablas involucradas
+    si el fichero es una subquery se exige que vaya entre parentesis
     kwargs utilizados
-    *   'tables':[] 
+    *   'tables':[ [table name or def,(label)]
+                    ]
+    
     
     ejemplos
     ```
@@ -397,7 +400,7 @@ def _fromConstructor(**kwargs):
     {'periquin': 'manolin'}
     {'periquin': 't0', 'manolin': 't1'}
     {'periquin': 'uno', 'manolin': 'dos'}
-    {'select fugde': 't0', 'pudge from record': 'tupi'}
+    {'select fugde': 't0', 'pudge from record': 'tupi'} <== errir
     {'(select fugde,pudge from record)': 'tupi'}
     {'(select fugde': 't0', 'pudge from (select fugde,pudge,rufi) from satki where tupsi = turvi)': 't1'}
     {'(select fugde,pudge from (select fugde,pudge,rufi) from satki where tupsi = turvi)': 'tupi'}
@@ -487,7 +490,10 @@ def _withConstructor(**kwargs):
     Crea la cadena para el WITH
     
     kwargs utilizados
-    *   'with':[] 
+    *   'with':[ {'query': definicion de cualquier otra query completa,
+                    'name':  nombre de la clausula
+                    }
+                  ]
     
     """
     statement = 'WITH '
@@ -502,8 +508,7 @@ def _withConstructor(**kwargs):
     texto = []
     for elemento in entrada:
         args=deepcopy(elemento['query'])
-        
-        texto.append('{} as {}'.format(elemento['name'],queryConstructor(**args)))
+        texto.append('{} AS {}'.format(elemento['name'],queryConstructor(**args)))
         
     statement += ', '.join(texto)
  
@@ -599,6 +604,7 @@ def searchConstructor(definicion,**kwargs):
         return ''
   
     texto = []
+    
     for ind,clausula in enumerate(entrada):
         ltype=None
         rtype=None
@@ -636,26 +642,46 @@ def _joinConstructor(**kwargs):
             * base_elem
         * join_modifier
         * join_filter
-        * table
-        
+        * (table o ltable) y rtable (opt)
+       
+    El uso de los parametros tabla necesita una explicación.
+    Por defecto deberia utilizarse el par 
+    __ltable__ y __rtable__, para identificar la tabla que corresponde a la parte izquierda y derecha de la clausula.
+    __ltable__ es obligatorio.
+    Si __rtable__ no se especifica, el sistema busca el __ltable__ de la sentencia join inmediatamente anterior; y si no existe
+    el de la tabla de la clausula FROM.  Si esta tuviera mas de una tabla, fallaría por no poder determinarlo
+    
+    __table__ debe entenderse como un sinónimo de __ltable__
+    
+    Que usar depende mucho del problema.
+    
     requiere para resolver la clause searchConstructor('join_clause',...)
     
     ## Sample Use(de core.py)
     ```
-            for entrada in joins:
-            if len(entrada) == 0:
-                continue
-                join_entrada = dict()
-                join_entrada['join_modifier']='LEFT'
-                join_entrada['table'] = entrada.get('table')
-                join_entrada['join_filter'] = entrada.get('filter')
-                join_entrada['join_clause'] = []
-                for clausula in entrada['clause']:
-                    entrada = (clausula.get('rel_elem'),clausula.get('condition','='),clausula.get('base_elem'))
-                    join_entrada['join_clause'].append(entrada)
-                sqlDef['join'].append(join_entrada)
+        pepe = {'tables':'rental'}
+    hugo = {'tables':'rental'}
+    pepe['join'] = [{'join_clause': [('inventory_id','=','inventory_id')],
+                             'table': 'inventory',
+                             'join_filter': '','join_modifier': 'LEFT',}]
+
+    hugo['join'] = [{'join_clause': [('inventory_id','=','inventory_id')],
+                                    'rtable':'avionics','ltable': 'inventory',
+                                    'join_filter': '','join_modifier': 'LEFT'},
+                            {'join_clause': [('film_id', '=', 'film_id')],
+                                    'ltable': 'film',
+                                    'join_filter': '','join_modifier': 'LEFT'}
     ```
-    """
+    que dan
+    ``` 
+        SELECT *FROM rental
+            LEFT JOIN inventory ON inventory.inventory_id = rental.inventory_id
+
+        SELECT * FROM rental
+            LEFT JOIN inventory ON inventory.inventory_id = avionics.inventory_id
+            LEFT JOIN film ON film.film_id = inventory.film_id
+    ```
+    """    
     definicion = 'join'
     if definicion not in kwargs:
         return ''
@@ -665,20 +691,33 @@ def _joinConstructor(**kwargs):
     num_elem = len(entrada)    
     if num_elem == 0:
         return ''
-    #config.DEBUG print(kwargs[definicion],entrada)
     statement = ''
     ind = 0
     texto = []
 
     for idx,elemento in enumerate(entrada):
-        #ltable = elemento.get('table')
-        #rtable = entrada[idx -1].get('table') if idx > 0 else norm2List(kwargs.get('tables'))[0]
+        """
+        tenemos que definir una serie de defectos para que solo falle en un numero limitado de veces
+        """
+        if not elemento.get('ltable'): 
+            elemento['ltable'] = elemento.get('table')
+        if not elemento.get('rtable'):
+            #voy a asumir un defecto minimo (ltable anterior o en su defecto tables general si solo hay una)
+            if idx > 0:
+                rtable = entrada[idx -1].get('ltable',entrada[idx -1].get('table',''))
+            else:
+                if len(kwargs['labels']) > 1:
+                    raise ValueError('Datos insuficientes para construir un join. utilice clausula rtable')
+                else:
+                    for clave in kwargs['labels'] :
+                        rtable = kwargs['labels'][clave]
+            elemento['rtable'] = rtable
         join_clause = mergeStrings('AND',
                                    searchConstructor('join_clause',**elemento,rtype='r'), #,ltable=ltable,rtable=rtable),
                                    elemento.get('join_filter'),
                                    spaced=True)
         prefijo = elemento.get('join_modifier','')
-        tabla = elemento.get('table','')
+        tabla = elemento.get('ltable')
         texto.append('{} JOIN {} ON {}'.format(prefijo, tabla, join_clause))
         
     statement += ' '.join(texto)
@@ -696,16 +735,24 @@ def queryConstructor(**kwargs):
        having
        order
        driver
+       
+    el devolver un parm adicional en el from y luego incluirlo en kwargs es porque parece que los parametros ** se pasan por "valor" (lo que se pasan son los individuales
     '''
-    from_statement,from_synonyms = _fromConstructor(**kwargs)
-    from_statement += ' '
-
+    kwargs['labels'] = None
     with_statement = _withConstructor(**kwargs)+' '
-    select_statement = _selConstructor(**kwargs)+' '
-
+    
+    from_statement,from_synonyms = _fromConstructor(**kwargs) 
+    from_statement += ' '
+    kwargs['labels']=from_synonyms #anyado los sinonimos que genere en el from
+    
     join_statement = _joinConstructor(**kwargs)+' '
+    
+    select_statement = _selConstructor(**kwargs)+' '
+    
     where_statement = _whereConstructor(kwargs)+' '
+    
     group_statement = _groupConstructor(**kwargs)+' '
+    
     order_statement = _orderConstructor(**kwargs)+' '
     
     '''

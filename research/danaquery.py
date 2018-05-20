@@ -156,9 +156,22 @@ class dictBand(QWidget):
         self.getTables()
     
     def changeTable(self,mdlIdx):
+        """
+        enrevesado por los problemas con el sqlite y los campos sin definir
+        """
         columnModel = QStandardItemModel()
         columnModel.setHorizontalHeaderLabels(('name', 'type', 'nullable', 'default', 'autoincrement'))
         for r,column in enumerate(self.inspector.get_columns(mdlIdx.data(),self.currentDictSchema)):
+            columnRow = []
+            #print(column)
+            #columnRow.append(QStandardItem(column.get('name')))
+            #try:
+                #columnRow.append(QStandardItem(str(column.get('type'))))
+            #except:
+                #columnRow.append(QStandardItem('text'))
+            #columnRow.append(QStandardItem(str(column.get('nullable'))))
+            #columnRow.append(QStandardItem(str(column.get('default'))))
+            #columnRow.append(QStandardItem(str(column.get('autoincrement'))))
             columnRow = [ QStandardItem(str(column[fld])) for fld in ('name', 'type', 'nullable', 'default', 'autoincrement')]
             columnModel.appendRow(columnRow)
         self.rowList.setModel(columnModel)

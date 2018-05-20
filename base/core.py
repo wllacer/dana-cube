@@ -877,7 +877,6 @@ class Vista:
                         entradilla = (rel_elem,clausula.get('condition','='),base_elem)
                         join_entrada['join_clause'].append(entradilla)
                     sqlDef['join'].append(join_entrada)
-                
                 sqlDef['order'] = [ str(x + 1) for x in range(len(sqlDef['group']))]
                 sqlDef['driver'] = self.cubo.dbdriver
                 #pprint(sqlDef)
