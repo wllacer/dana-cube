@@ -351,11 +351,38 @@ def _selConstructor(**kwargs):
       ind += 1
     return statement
 
+def tableNameSolver(tableName,prefix=None):
+    def _locateLastAs(string):
+        #vamos a ver si lleva un as incorporado
+        pos = string.lower().find(' as ')
+        mcampo = string.lower()
+        while pos > 0:
+            mcampo = mcampo[pos+4:]
+            pos = mcampo.lower().find(' as ')
+        if mcampo != string:
+            return string.lower().replace(' as '+mcampo,'').strip(),mcampo.strip()
+        else:
+            return string.strip(),''
+
+    elemento,adfijo=slicer(tableName)
+    # pero la entrada puede tener tambien la etiqueta incorporada en la definicion de la tabla.
+    # por cierto tiene prioridad sobre el valor en la tupla
+    ktexto,iadfijo = _locateLastAs(elemento)
+    label = iadfijo if iadfijo != '' else adfijo.strip()
+        
+    ftexto = ktexto
+    if not label and prefix:
+        label = prefix
+        
+    return ktexto,label
+    
+
+    
 def _fromConstructor(**kwargs):
     """
     Crea la cadena para el FROM
     Retorna la cadena Y un diccionario con los sinomimos de las tablas involucradas
-    si el fichero es una subquery se exige que vaya entre parentesis
+    si el fichero es una subquery se exige que vaya entre parentesis y tenga una clausula AS o equivalente programatico
     kwargs utilizados
     *   'tables':[ [table name or def,(label)]
                     ]
@@ -372,7 +399,7 @@ def _fromConstructor(**kwargs):
                                 (('periquin','uno'),('manolin','dos')),
                                 'select fugde,pudge from record as tupi',  <== la coma requiere estar rodeada de parentesis o cruje
                                 '(select fugde,pudge from record) as tupi',
-                                '(select fugde,pudge from (select fugde,pudge,rufi) from satki where tupsi = turvi)',
+                                '(select fugde,pudge from (select fugde,pudge,rufi) from satki where tupsi = turvi)', <== error
                                 (('(select fugde,pudge from (select fugde,pudge,rufi) from satki where tupsi = turvi)','tupi'),)
                                 ):
         pepe['tables'] = definicion
@@ -388,7 +415,7 @@ def _fromConstructor(**kwargs):
     SELECT *  FROM periquin AS uno, manolin AS dos     
     SELECT *  FROM select fugde AS tt0, pudge from record AS tupi      <== error
     SELECT *  FROM (select fugde,pudge from record) AS tupi     
-    SELECT *  FROM (select fugde AS tt0, pudge from (select fugde,pudge,rufi) from satki where tupsi = turvi) AS tt1     
+    SELECT *  FROM (select fugde AS tt0, pudge from (select fugde,pudge,rufi) from satki where tupsi = turvi) AS tt1  <== errir    
     SELECT *  FROM (select fugde,pudge from (select fugde,pudge,rufi) from satki where tupsi = turvi) AS tupi     
     
     y el dic de sinomimos queda
@@ -406,23 +433,23 @@ def _fromConstructor(**kwargs):
     {'(select fugde,pudge from (select fugde,pudge,rufi) from satki where tupsi = turvi)': 'tupi'}
     ```
     """
-    def _locateLastAs(string):
-        #vamos a ver si lleva un as incorporado
-        pos = string.lower().find(' as ')
-        mcampo = string.lower()
-        while pos > 0:
-            mcampo = mcampo[pos+4:]
-            pos = mcampo.lower().find(' as ')
-        if mcampo != string:
-            return string.lower().replace(' as '+mcampo,'').strip(),mcampo.strip()
-        else:
-            return string.strip(),''
+    #def _locateLastAs(string):
+        ##vamos a ver si lleva un as incorporado
+        #pos = string.lower().find(' as ')
+        #mcampo = string.lower()
+        #while pos > 0:
+            #mcampo = mcampo[pos+4:]
+            #pos = mcampo.lower().find(' as ')
+        #if mcampo != string:
+            #return string.lower().replace(' as '+mcampo,'').strip(),mcampo.strip()
+        #else:
+            #return string.strip(),''
         
     statement = 'FROM '
     definicion = 'tables'
     if definicion not in kwargs:
        return ''
-    entrada=norm2List(kwargs[definicion])
+    entrada= norm2List(kwargs[definicion])
     num_elem = len(entrada)    
     if num_elem == 0:
         return ''
@@ -431,24 +458,18 @@ def _fromConstructor(**kwargs):
     texto = []
     synonyms = {}
     for ind,kelem in enumerate(entrada):
-        # la entrada piede ser una dupla, 0 la tabla 1 la etiqueta
-        elemento,adfijo=slicer(kelem)
-        # pero la entrada puede tener tambien la etiqueta incorporada en la definicion de la tabla.
-        # por cierto tiene prioridad sobre el valor en la tupla
-        ktexto,iadfijo = _locateLastAs(elemento)
-        label = iadfijo if iadfijo != '' else adfijo.strip()
-          
-        ftexto = ktexto
-        if label:
-            ftexto = '{} AS {}'.format(ktexto,label)
-        elif num_elem > 1 or  ' ' in ktexto:
+        if num_elem > 1:
             label = 't{}'.format(ind)
-            ftexto = '{} AS {}'.format(ktexto,label)
-        
+        else:
+            label = None
+        ktexto,label = tableNameSolver(kelem,label)
         if label:
             synonyms[ktexto] = label
+            ftexto = '{} AS {}'.format(ktexto,label)
         else:
             synonyms[ktexto] = ktexto
+            ftexto = ktexto
+
         texto.append(ftexto)
 
     statement += ', '.join(texto)
@@ -694,7 +715,7 @@ def _joinConstructor(**kwargs):
     statement = ''
     ind = 0
     texto = []
-
+    optCache = [] #para optimizar
     for idx,elemento in enumerate(entrada):
         """
         tenemos que definir una serie de defectos para que solo falle en un numero limitado de veces
@@ -709,20 +730,62 @@ def _joinConstructor(**kwargs):
                 if len(kwargs['labels']) > 1:
                     raise ValueError('Datos insuficientes para construir un join. utilice clausula rtable')
                 else:
-                    for clave in kwargs['labels'] :
+                    for clave in kwargs['labels'] :  #un poco absiurdo el for, per la otra alternativa era keys() ... con for
                         rtable = kwargs['labels'][clave]
             elemento['rtable'] = rtable
+        left,llabel = tableNameSolver(elemento['ltable'],'l{}'.format(idx))
+        right,rlabel = tableNameSolver(elemento['rtable'])
+        elemento['ltable'] = left #kwargs['labels'][left]
+        elemento['rtable'] = right #kwargs['labels'][right]
         join_clause = mergeStrings('AND',
                                    searchConstructor('join_clause',**elemento,rtype='r'), #,ltable=ltable,rtable=rtable),
                                    elemento.get('join_filter'),
                                    spaced=True)
         prefijo = elemento.get('join_modifier','')
-        tabla = elemento.get('ltable')
-        texto.append('{} JOIN {} ON {}'.format(prefijo, tabla, join_clause))
-        
+        optCache.append([prefijo,left,llabel,join_clause,right,None])
+    #optimizacion
+    for j in range(len(optCache)):
+        if optCache[j][5] is not None:  #ya ha sido procesado y asimilado
+                continue
+        for k in range(j +1,len(optCache[j+1:])):
+            if optCache[k][5] is not None:
+                continue
+            iguales = True
+            for l in (0,1,3,4):
+                if optCache[j][l] != optCache[k][l]:
+                    iguales = False
+                    break
+            if iguales:
+                optCache[k][5] = j
+                optCache[k][2] = optCache[j][2]
+        ##aqui seria un buen sitio para cambiar los prefijos
+        clausula = optCache[j][3]
+        clausula = changeTable(clausula,optCache[j][1],optCache[j][2])
+        print('cambio ',clausula,optCache[j][4],optCache[j-1][1] if j > 0 else '')
+        if j > 0 and optCache[j][4] == optCache[j -1][1]:
+            if optCache[j -1][5] is not None:
+                pfix = optCache[optCache[j -1][5]][2]
+            else:
+                pfix = optCache[j -1][2]
+            clausula = changeTable(clausula,optCache[j][4],pfix)
+        optCache[j][3] = clausula
+    pprint(optCache)
+    for itm in optCache:
+        if itm[5] is not None:  #ya ha sido procesado y asimilado
+            continue
+        # y este es el momento de cambiar prefijos
+        texto.append('{0[0]} JOIN {0[1]} AS {0[2]} ON {0[3]}'.format(itm,clausula))
     statement += ' '.join(texto)
     return statement 
 
+def changeTable(string,oldName,newName):
+    import re
+    matchpattern=r'(\W*\w*\.)?('+oldName+')'
+    filematch = matchpattern+'\W'
+    fieldmatch=matchpattern+r'(\..*)'
+    fieldrepl = r'\1' + newName +r'\3'
+    string = re.sub(fieldmatch,fieldrepl,string)
+    return string
 
 def queryConstructor(**kwargs):
     '''
@@ -746,7 +809,7 @@ def queryConstructor(**kwargs):
     kwargs['labels']=from_synonyms #anyado los sinonimos que genere en el from
     
     join_statement = _joinConstructor(**kwargs)+' '
-    
+    pprint(kwargs['labels'])
     select_statement = _selConstructor(**kwargs)+' '
     
     where_statement = _whereConstructor(kwargs)+' '
