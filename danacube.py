@@ -20,7 +20,7 @@ if __name__ == '__main__':
     
     parser = generaArgParser()
     args = parser.parse_args()
-
+    #FOR DEBUGER args.cubeFile = 'testcubo.json'
     app = QApplication(sys.argv)
     window = DanaCubeWindow(args)
     window.resize(app.primaryScreen().availableSize().width(),app.primaryScreen().availableSize().height())

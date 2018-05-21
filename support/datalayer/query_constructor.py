@@ -368,11 +368,11 @@ def tableNameSolver(tableName,prefix=None):
     # pero la entrada puede tener tambien la etiqueta incorporada en la definicion de la tabla.
     # por cierto tiene prioridad sobre el valor en la tupla
     ktexto,iadfijo = _locateLastAs(elemento)
-    label = iadfijo if iadfijo != '' else adfijo.strip()
+    label = iadfijo #solo si tiene prefijo interno if iadfijo != '' else adfijo.strip()
         
-    ftexto = ktexto
-    if not label and prefix:
-        label = prefix
+    #ftexto = ktexto
+    #if not label and prefix:
+        #label = prefix
         
     return ktexto,label
     
@@ -720,6 +720,7 @@ def _joinConstructor(**kwargs):
         """
         tenemos que definir una serie de defectos para que solo falle en un numero limitado de veces
         """
+        print(elemento)
         if not elemento.get('ltable'): 
             elemento['ltable'] = elemento.get('table')
         if not elemento.get('rtable'):
@@ -743,42 +744,59 @@ def _joinConstructor(**kwargs):
                                    spaced=True)
         prefijo = elemento.get('join_modifier','')
         optCache.append([prefijo,left,llabel,join_clause,right,None])
-    #optimizacion
+        
+    #optimizacion. Veo que entradas son identicas y las acumulo
+    # corner case -> uno de los "cortados" tiene sufijo explicito. No lo elimino
     for j in range(len(optCache)):
         if optCache[j][5] is not None:  #ya ha sido procesado y asimilado
                 continue
-        for k in range(j +1,len(optCache[j+1:])):
+        for k in range(j +1,len(optCache)):
             if optCache[k][5] is not None:
                 continue
             iguales = True
-            for l in (0,1,3,4):
-                if optCache[j][l] != optCache[k][l]:
-                    iguales = False
-                    break
+            if optCache[k][2] != '': #excluyo los que tienen prefijo predefinido
+                iguales = False
+            else:
+                for l in (0,1,3,4):
+                    if optCache[j][l] != optCache[k][l]:
+                        iguales = False
+                        break
             if iguales:
                 optCache[k][5] = j
-                optCache[k][2] = optCache[j][2]
-        ##aqui seria un buen sitio para cambiar los prefijos
+                #optCache[k][2] = optCache[j][2]
+    # pongo etiquetas y modifico lo que haya que modificar. Tengo que procesarlas todas porque necesito
+    # etiquetas para los rfiles
+    for j in range(len(optCache)):
+        # Pongo las etiquetas en las lineas
+        if optCache[j][2]:
+            pass
+        elif optCache[j][5] is not None:
+            opfx = optCache[optCache[j][5]][2]
+            optCache[j][2] = opfx
+        elif optCache[j][2] == '':
+            optCache[j][2] = 'l{}'.format(j)
+            
+        #cambio los prefijos de los campos en la clausula generada
+        #. Primero referentes a ltable
         clausula = optCache[j][3]
-        clausula = changeTable(clausula,optCache[j][1],optCache[j][2])
-        print('cambio ',clausula,optCache[j][4],optCache[j-1][1] if j > 0 else '')
+        clausula = replTablePrefix(clausula,optCache[j][1],optCache[j][2])
+        # cambio los prefijos referentes a rtable
         if j > 0 and optCache[j][4] == optCache[j -1][1]:
             if optCache[j -1][5] is not None:
                 pfix = optCache[optCache[j -1][5]][2]
             else:
                 pfix = optCache[j -1][2]
-            clausula = changeTable(clausula,optCache[j][4],pfix)
+            clausula = replTablePrefix(clausula,optCache[j][4],pfix)
         optCache[j][3] = clausula
-    pprint(optCache)
+        
     for itm in optCache:
         if itm[5] is not None:  #ya ha sido procesado y asimilado
             continue
-        # y este es el momento de cambiar prefijos
         texto.append('{0[0]} JOIN {0[1]} AS {0[2]} ON {0[3]}'.format(itm,clausula))
     statement += ' '.join(texto)
     return statement 
 
-def changeTable(string,oldName,newName):
+def replTablePrefix(string,oldName,newName):
     import re
     matchpattern=r'(\W*\w*\.)?('+oldName+')'
     filematch = matchpattern+'\W'
@@ -809,7 +827,7 @@ def queryConstructor(**kwargs):
     kwargs['labels']=from_synonyms #anyado los sinonimos que genere en el from
     
     join_statement = _joinConstructor(**kwargs)+' '
-    pprint(kwargs['labels'])
+
     select_statement = _selConstructor(**kwargs)+' '
     
     where_statement = _whereConstructor(kwargs)+' '

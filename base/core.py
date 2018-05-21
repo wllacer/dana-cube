@@ -776,7 +776,32 @@ class Vista:
 
     def  __setDateFilter(self):
         return self.cubo.setDateFilter()
-        
+     
+    def __prepareJoin(self,joins,baseTable,name=None):
+        resultado = []
+        for idx,entrada in enumerate(joins):
+            if len(entrada) == 0:
+                continue
+            join_entrada = dict()
+            join_entrada['join_modifier']='LEFT'
+            if idx < len(joins) -1 or name is None:
+                join_entrada['table'] = entrada.get('table')
+            else:
+                join_entrada['table'] = '{} AS {}'.format(entrada.get('table'),name)
+            join_entrada['join_filter'] = entrada.get('filter')
+            join_entrada['join_clause'] = []
+            if idx == 0:
+                join_entrada['rtable'] =baseTable
+
+            for clausula in entrada['clause']:
+                #TODO solo admite campos elementales en la clausula, 
+                base_elem = clausula.get('base_elem')
+                rel_elem = clausula.get('rel_elem')
+                entradilla = (rel_elem,clausula.get('condition','='),base_elem)
+                join_entrada['join_clause'].append(entradilla)
+            resultado.append(join_entrada)
+        return resultado
+
     def  __setDataMatrix(self):
          #TODO clarificar el codigo
          #REFINE solo esperamos un campo de datos. Hay que generalizarlo
@@ -805,38 +830,39 @@ class Vista:
         
         for x,row in enumerate(contexto_row):
             for y,col in enumerate(contexto_col):
-                trow = row['elems'][:]
-                tcol = col['elems'][:]
+                """
+                #still wip. 
+                #¿Y si no tiene prefijo.
+                #Garantizar que la optimización no se lleva el prefijo por delante
+                """
+                
+                tmpLinks = []
+                if row['linkvia']:
+                    pfx = 'r{}_{}'.format(x,y)
+                    tmpLinks += self.__prepareJoin(row['linkvia'],sqlDef['tables'],'r{}_{}'.format(x,y))
+                    trow = list(map(lambda i:replTablePrefix(i,row['linkvia'][-1]['table'],pfx),row['elems']))
+                else:
+                    trow = row['elems'][:]
+                if col['linkvia']:
+                    pfx  ='c{}_{}'.format(x,y)
+                    tmpLinks += self.__prepareJoin(col['linkvia'],sqlDef['tables'],'c{}_{}'.format(x,y))
+                    tcol = list(map(lambda i:replTablePrefix(i,col['linkvia'][-1]['table'],pfx),col['elems']))
+                else:
+                    tcol = col['elems'][:]
+                sqlDef['join'] = tmpLinks
+                
+                #trow = row['elems'][:]
+                #tcol = col['elems'][:]
                 if self.totalizado: #and x != 0:
                     try:
                         pos = trow.index("'//'")
                         del trow[pos]
                     except ValueError:
                         pass
-                #TOT-Y START
-                #if self.totalizado and y != 0:
-                    #try:
-                        #pos = tcol.index("'//'")
-                        #del tcol[pos]
-                    #except ValueError:
-                        #pass
-                #TOT-Y end
                 sqlDef['group'] = trow + tcol
-                #numRowElems = len(row['elems'])
-                #numColElems = len(col['elems'])
-                #sqlDef['fields']=row['elems']+col['elems'] + [(self.campo,self.agregado)]
                 if self.totalizado:
                     rowFields =["'//'",] + trow 
-                    #if x > 0:
-                        #rowFields =["'//'",] + trow 
-                    #else:
-                        #rowFields = trow
                     numRowElems = len(rowFields)
-                    #TOT-Y start
-                    #if y > 0:
-                        #colFields =["'//'",] + tcol 
-                    #else:
-                    #TOT-
                     colFields = tcol
                     numColElems = len(colFields)
                     sqlDef['fields'] = rowFields + colFields + [(self.campo,self.agregado)]
@@ -846,44 +872,43 @@ class Vista:
                     numRowElems = len(rowFields)
                     colFields = tcol
                     numColElems = len(colFields)
-                joins = row['linkvia'] + col['linkvia']
-                sqlDef['join'] = []
-                for idx,entrada in enumerate(joins):
-                    if len(entrada) == 0:
-                        continue
-                    join_entrada = dict()
-                    join_entrada['join_modifier']='LEFT'
-                    join_entrada['table'] = entrada.get('table')
-                    join_entrada['join_filter'] = entrada.get('filter')
-                    join_entrada['join_clause'] = []
-                    #join_entrada['lfile']=join_entrada['table']
-                    #join_entrada['rfile']=joins[idx -1].get('file') if idx > 0 else sqlDef['tables']
-                    for clausula in entrada['clause']:
-                        """
-                        FIXME TODO
-                        esto es un parche de emergencia, queryConstructor pone mal los prefijos en los joins
-                        asi que me aseguro que los camos vienen prefijados
-                        """
-                        #TODO solo admite campos elementales en la clausula, 
-                        base_elem = clausula.get('base_elem')
-                        if '.' not in base_elem:
-                            if idx == 0:
-                                base_elem = '{}.{}'.format(sqlDef['tables'],base_elem)
-                            else:
-                                base_elem = '{}.{}'.format(joins[idx -1].get('table'),base_elem)
-                        rel_elem = clausula.get('rel_elem')
-                        if '.' not in rel_elem:
-                            rel_elem = '{}.{}'.format(entrada.get('table'),rel_elem)
-                        entradilla = (rel_elem,clausula.get('condition','='),base_elem)
-                        join_entrada['join_clause'].append(entradilla)
-                    sqlDef['join'].append(join_entrada)
+                    
+                #joins = row['linkvia'] + col['linkvia']
+                #sqlDef['join'] = []
+                #for idx,entrada in enumerate(joins):
+                    #if len(entrada) == 0:
+                        #continue
+                    #join_entrada = dict()
+                    #join_entrada['join_modifier']='LEFT'
+                    #join_entrada['table'] = entrada.get('table')
+                    #join_entrada['join_filter'] = entrada.get('filter')
+                    #join_entrada['join_clause'] = []
+                    ##join_entrada['lfile']=join_entrada['table']
+                    ##join_entrada['rfile']=joins[idx -1].get('file') if idx > 0 else sqlDef['tables']
+                    #for clausula in entrada['clause']:
+                        #"""
+                        #FIXME TODO
+                        #esto es un parche de emergencia, queryConstructor pone mal los prefijos en los joins
+                        #asi que me aseguro que los camos vienen prefijados
+                        #"""
+                        ##TODO solo admite campos elementales en la clausula, 
+                        #base_elem = clausula.get('base_elem')
+                        #if '.' not in base_elem:
+                            #if idx == 0:
+                                #base_elem = '{}.{}'.format(sqlDef['tables'],base_elem)
+                            #else:
+                                #base_elem = '{}.{}'.format(joins[idx -1].get('table'),base_elem)
+                        #rel_elem = clausula.get('rel_elem')
+                        #if '.' not in rel_elem:
+                            #rel_elem = '{}.{}'.format(entrada.get('table'),rel_elem)
+                        #entradilla = (rel_elem,clausula.get('condition','='),base_elem)
+                        #join_entrada['join_clause'].append(entradilla)
+                    #sqlDef['join'].append(join_entrada)
+                    
                 sqlDef['order'] = [ str(x + 1) for x in range(len(sqlDef['group']))]
                 sqlDef['driver'] = self.cubo.dbdriver
-                #pprint(sqlDef)
+
                 sqlstring=queryConstructor(**sqlDef)
-                #print(sqlstring)
-                #if sqlDef['join']:
-                    #exit()
                 lista_compra={'row':{'nkeys':numRowElems,},
                               'rdir':self.row_hdr_idx,
                               'col':{'nkeys':numColElems,
