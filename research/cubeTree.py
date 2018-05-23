@@ -567,6 +567,11 @@ def _getDictTable(dd,confName,schema,table):
 
     return schem.child(k)
 
+"""
+
+Ahora vienen funciones para gestionar la creacion semi automatica de guias con relaciones con otras tablas
+
+"""
 def addNetworkMenuItem(*lparms):
     """
     aqui incluyo las opciones de menu para las guias. ¿Deberia separarlo?
@@ -594,6 +599,11 @@ def addNetworkMenuItem(*lparms):
 from research.cubeTreeDlg import manualLinkDlg,FKNetworkDialog 
 
 def addNetworkPath(*lparm):
+    """
+    Accion de menu para la creacion de guias con relaciones.
+    Deriva a manual o FK internas
+    
+    """
     item = lparm[0]
     view = lparm[1]
     # me fascina como obtener los datos
@@ -604,18 +614,93 @@ def addNetworkPath(*lparm):
     schema = getSchema(item,baseTable)
     fqtable = schema + '.' + baseTable.split('.')[-1]  #solo por ir seguro
     
-    tableDdItem = _getDictTable(view.dataDict,confName,schema,baseTable)
+    relHandler = relCatcher(item,view,confName,schema)
+    arbolNavegacion  = relHandler.get(baseTable)
+    #tableDdItem = _getDictTable(view.dataDict,confName,schema,baseTable)
+    #arbolNavegacion = getFKLinks(tableDdItem)
     
-    arbolNavegacion = getFKLinks(tableDdItem)
     if not arbolNavegacion:
         #gparm = lparm[:]
-        manualNetwork(*lparm,confName=confName,schema=schema,fqtable=fqtable)
+        manualNetwork(*lparm,confName=confName,schema=schema,fqtable=fqtable,rel=relHandler)
     else:
-        FKNetwork(*lparm,confName=confName,schema=schema,fqtable=fqtable,tree=arbolNavegacion)
+        FKNetwork(*lparm,confName=confName,schema=schema,fqtable=fqtable,rel=relHandler)
       
 
+def manualNetwork(*lparm,**kwparm):
+    """
+    
+    Gestiona el dialogo para crear relaciones manualmente
+    
+    """
+    item = lparm[0]
+    view = lparm[1]
+    fqtable = kwparm.get('fqtable')
+    tables = srcTables(*lparm)
+    gparm = list(lparm)
+    if len(gparm) > 2:
+        gparm[3] = tables
+    else:
+        gparm.append(tables)
+    fieldGetter = fieldCatcher(*gparm)
+    
+    if 'rel' in kwparm:
+        relGetter = kwparm['rel']
+    else:
+        confName = kwparm.get('confName')
+        schema = kwparm.get('schema')
+        relGetter = relCatcher(item,view,confName,schema)
+        
+    selDlg = manualLinkDlg(file=fqtable.split('.')[-1],tablas=tables,fields=fieldGetter,rel=relGetter)
+    selDlg.show
+    if selDlg.exec_():
+        dict2tree(item,None,selDlg.result,'guides')
+        uch = item.child(item.rowCount() -1)
+        uch.setData(selDlg.result['name'],Qt.EditRole)
+        uch.setData(selDlg.result['name'],Qt.UserRole +1)
 
+def FKNetwork(*lparm,**kwparm):
+    """
+    
+    Gestiona el dialogo para crear relaciones exclusivamente con FKs existentes.
+    Opcionalmente permite derivar a la forma manual
+    
+    """
+    item = lparm[0]
+    view = lparm[1]
+    fqtable = kwparm.get('fqtable')
+    relHandler = kwparm.get('rel')
+
+    gparm = list(lparm)
+    tables = srcTables(*lparm)
+    if len(gparm) > 2:
+        gparm[3] = tables
+    else:
+        gparm.append(tables)
+    fieldGetter = fieldCatcher(*gparm)
+
+    selDlg = FKNetworkDialog(fqtable,fieldGetter,relHandler)
+    selDlg.show()
+    if selDlg.exec_():
+        if not selDlg.manual:
+            dict2tree(item,None,selDlg.result,'guides')
+            uch = item.child(item.rowCount() -1)
+            uch.setData(selDlg.result['name'],Qt.EditRole)
+            uch.setData(selDlg.result['name'],Qt.UserRole +1)
+        else:
+            confName = kwparm.get('confName')
+            schema = kwparm.get('schema')
+            manualNetwork(*lparm,confName=confName,schema=schema,fqtable=fqtable)
+    
+    
 class fieldCatcher():
+    """
+    
+    clase wrapper alrededor de srcFields. 
+    Usada cuando no se quiere pasar el contexto del arbol (p.e. en los dialogos para evitar referencias circulares en compilacion)
+    o cuando se quiere que ofrezcan algo mas de soporte programatico
+    Tiene un cache
+    
+    """
     def __init__(self,*context):
         self.item = context[0]
         self.view = context[1]
@@ -646,26 +731,35 @@ class fieldCatcher():
         return '{}.{}'.format(table,field) #FIXME y si field es de otro tipo
 
 class relCatcher():
+    """
+    
+    clase wrapper para obtener el arbol de de referencias FK 
+    A parte de simplificar programaticamente el acceso frente a getFKLinks a pelo
+    Usada cuando no se quiere pasar el contexto del arbol (p.e. en los dialogos para evitar referencias circulares en compilacion)
+    o cuando se quiere que ofrezcan algo mas de soporte programatico
+    Tiene un cache
+    
+    """
     def __init__(self,item,view,confName,schema):
         self.item = item
         self.view = view
         self.confName = confName
         self.schema = schema
         self.cache = {}
-        #self.confName,self.confData = getConnection(item,name=True,dict=view.dataDict)
-        #schema = getSchema(item,baseTable)
-        #fqtable = schema + '.' + baseTable.split('.')[-1]  #solo por ir seguro
     
-    def get(self,tableOrig,tableDest):
+    def get(self,tableOrig,tableDest=None):
         baseTable =  tableOrig.split('.')[-1]
-        destTable = tableDest.split('.')[-1]
         tableDdItem = _getDictTable(self.view.dataDict,self.confName,self.schema,baseTable) 
         if baseTable in self.cache:
             arbolNavegacion = self.cache[baseTable]
         else:
             arbolNavegacion = getFKLinks(tableDdItem)
             self.cache[baseTable] = arbolNavegacion
-        return arbolNavegacion.get(destTable)
+        if tableDest:
+            destTable = tableDest.split('.')[-1]
+            return arbolNavegacion.get(destTable)
+        else:
+            return arbolNavegacion
     
     def prettyList(self,tableOrig,tableDest):
         conexiones = self.get(tableOrig,tableDest)
@@ -685,56 +779,7 @@ class relCatcher():
         npath = '->'+npath
         return self.detail(tableOrig,tableDest,npath)
     
-def manualNetwork(*lparm,**kwparm):
 
-    item = lparm[0]
-    view = lparm[1]
-    confName = kwparm.get('confName')
-    schema = kwparm.get('schema')
-    fqtable = kwparm.get('fqtable')
-    tables = srcTables(*lparm)
-    gparm = list(lparm)
-    if len(gparm) > 2:
-        gparm[3] = tables
-    else:
-        gparm.append(tables)
-    fieldGetter = fieldCatcher(*gparm)
-    relGetter = relCatcher(item,view,confName,schema)
-    selDlg = manualLinkDlg(file=fqtable.split('.')[-1],tablas=tables,fields=fieldGetter,rel=relGetter)
-    selDlg.show
-    if selDlg.exec_():
-        dict2tree(item,None,selDlg.result,'guides')
-        uch = item.child(item.rowCount() -1)
-        uch.setData(selDlg.result['name'],Qt.EditRole)
-        uch.setData(selDlg.result['name'],Qt.UserRole +1)
-
-def FKNetwork(*lparm,**kwparm):
-    item = lparm[0]
-    view = lparm[1]
-    confName = kwparm.get('confName')
-    schema = kwparm.get('schema')
-    fqtable = kwparm.get('fqtable')
-    arbolNavegacion = kwparm.get('tree')
-
-    gparm = list(lparm)
-    tables = srcTables(*lparm)
-    if len(gparm) > 2:
-        gparm[3] = tables
-    else:
-        gparm.append(tables)
-    fieldGetter = fieldCatcher(*gparm)
-
-    selDlg = FKNetworkDialog(fqtable,fieldGetter,arbolNavegacion)
-    selDlg.show()
-    if selDlg.exec_():
-        if not selDlg.manual:
-            dict2tree(item,None,selDlg.result,'guides')
-            uch = item.child(item.rowCount() -1)
-            uch.setData(selDlg.result['name'],Qt.EditRole)
-            uch.setData(selDlg.result['name'],Qt.UserRole +1)
-        else:
-            manualNetwork(*lparm,confName=confName,schema=schema,fqtable=fqtable)
-    
 
     
 def addDateGroups(*lparm):

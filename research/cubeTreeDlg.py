@@ -11,8 +11,8 @@ auto link
 
 Comunes
     #FIXME me parece que aparecen mas relaciones de la cuenta
-    #FIXME falta el caso con varios campos en la foreign key
-    #TODO Unificar y convertir salida de link via a link via y domain
+    #FIXME falta el caso con varios campos en la foreign key. Preparado pero no sabemos el efecto
+    #unificar codigo
 
 """
 
@@ -507,23 +507,24 @@ class manualLinkDlg(QDialog):
         entrada = self.array[ind]
         tablaOrig = tablas[ind -1] if ind > 0 else self.baseTable
         tablaDest = tablas[ind]
-        resultados = []
-        clausulaAut = self.rel.detailPretty(tablaOrig,tablaDest,entrada['internalLink'])
-        for ind,arc in enumerate(clausulaAut):
-            #FIXME falta el caso con varios campos en la foreign key
-            arcInfo = arc['ref'].getRow()
-            bases = norm2List(arcInfo[2])
-            rels = norm2List(arcInfo[3])
-            clause = []
-            for k in range(min(len(bases),len(rels))):
-                    base =  self.fields.tr(arc['child'],bases[k])
-                    rel    =  self.fields.tr(arc['parent'],rels[k])
-                    clause.append({'base_elem':base,'rel_elem':rel})
-            arcDict = {'table':self.short2long(arcInfo[1]),
-                             'filter':'',
-                             'clause':clause}
-            resultados.append(arcDict)
-        return resultados
+        return dictLinkDef2dict(self.rel,entrada['internalLink'],tablaOrig,tablaDest,self.fields,self.short2long)
+        #resultados = []
+        #clausulaAut = self.rel.detailPretty(tablaOrig,tablaDest,entrada['internalLink'])
+        #for ind,arc in enumerate(clausulaAut):
+            ##FIXME falta el caso con varios campos en la foreign key
+            #arcInfo = arc['ref'].getRow()
+            #bases = norm2List(arcInfo[2])
+            #rels = norm2List(arcInfo[3])
+            #clause = []
+            #for k in range(min(len(bases),len(rels))):
+                    #base =  self.fields.tr(arc['child'],bases[k])
+                    #rel    =  self.fields.tr(arc['parent'],rels[k])
+                    #clause.append({'base_elem':base,'rel_elem':rel})
+            #arcDict = {'table':self.short2long(arcInfo[1]),
+                             #'filter':'',
+                             #'clause':clause}
+            #resultados.append(arcDict)
+        #return resultados
 
     def clauseTransform(self,ind,tablas):
         entrada = self.array[ind]
@@ -545,7 +546,7 @@ class manualLinkDlg(QDialog):
 #from research.cubeTree  import srcFields,srcTables
 
 class FKNetworkDialog(QDialog):
-    def __init__(self,cubeTable,fields,routeData,parent=None):
+    def __init__(self,cubeTable,fields,routeHandler,parent=None):
 
         super().__init__(parent)
         self.setMinimumSize(QSize(640,330))
@@ -590,17 +591,18 @@ class FKNetworkDialog(QDialog):
         meatlayout.addWidget(buttonBox,x,1)
         
         self.setLayout(meatlayout)
-        self.prepareData(cubeTable,fields,routeData)
+        self.prepareData(cubeTable,fields,routeHandler)
 
         self.manual = False
 
-    def prepareData(self,cubeTable,fields,routeData):
-
-        self.routeData = routeData
+    def prepareData(self,cubeTable,fields,routeHandler):
+        
+        self.rel = routeHandler
+        #self.routeData = self.rel.get(cubeTable)
         self.cubeTable = cubeTable
         self.fields = fields
         # load destTable. TODO ¿todas las tablas o solo las que tienen conexion FK?
-        self.tablesCurrentList = list(routeData.keys())
+        self.tablesCurrentList = list(self.rel.get(self.cubeTable).keys())
         self.destTable.addItems(self.tablesCurrentList)
         self.destTable.setCurrentIndex(-1)
         self.destTable.currentIndexChanged[int].connect(self.seleccionTabla)
@@ -616,15 +618,20 @@ class FKNetworkDialog(QDialog):
         self.destField.load([ entry[0] for entry in self.FieldsFullList],self.fieldsCurrentList)
         
         # preparamos la lista de rutas
-        rutasTabla = list(self.routeData.get(self.tablesCurrentList[idx],{}).keys())
-        #FIXME esto tiene que ser un map
-        for k in range(len(rutasTabla)):
-            entrada = rutasTabla[k][2:]
-            rutasTabla[k] = entrada.replace('->','\n\t')
+        rutasTabla = self.rel.prettyList(self.cubeTable,self.tablesCurrentList[idx])
+        ##FIXME esto tiene que ser un map
+        #for k in range(len(rutasTabla)):
+            #entrada = rutasTabla[k][2:]
+            #rutasTabla[k] = entrada.replace('->','\n\t')
         self.destRoutes.clear()
         self.destRoutes.addItems(rutasTabla)
         self.destRoutes.setCurrentIndex(-1)
-        
+       
+    def short2long(self,file):
+        if '.' in file:
+            return file
+        schema = self.cubeTable.split('.')[0] # se supone que viene cargado
+        return '{}.{}'.format(schema,file)
     def accept(self):
         #TODO validaciones
         name = self.titleText.text()
@@ -632,16 +639,18 @@ class FKNetworkDialog(QDialog):
         baseTable = self.tablesCurrentList[self.destTable.currentIndex()]
         table = '{}.{}'.format(schema, baseTable)
         values = norm2List(self.destField.get())
-        print(name,table,baseTable,values)
+
         # ahora el link link_via
         electedPath = self.destRoutes.currentText() #que valiente
-        electedPath = '->' + electedPath.replace('\n\t','->')
-        electedPathDatos = self.routeData[baseTable][electedPath]
-        path = []
-        for arc in electedPathDatos:
-            arcInfo = arc['ref'].getRow()
-            arcDict = {'table':arcInfo[1],'filter':'','clause':[{'base_elem':arcInfo[2],'rel_elem':arcInfo[3]},]}
-            path.append(arcDict)
+        path = dictLinkDef2dict(self.rel,electedPath,self.cubeTable,baseTable,self.fields,self.short2long)
+        
+        #electedPath = '->' + electedPath.replace('\n\t','->')
+        #electedPathDatos = self.routeData[baseTable][electedPath]
+        #path = []
+        #for arc in electedPathDatos:
+            #arcInfo = arc['ref'].getRow()
+            #arcDict = {'table':arcInfo[1],'filter':'','clause':[{'base_elem':arcInfo[2],'rel_elem':arcInfo[3]},]}
+            #path.append(arcDict)
             
         self.result = {'name':name,
                                             'class':'o',
@@ -660,4 +669,22 @@ class FKNetworkDialog(QDialog):
         if button == self.manualBB:
             self.manual = True
             super().accept()
-            
+      
+def dictLinkDef2dict(routeData,route,tablaOrig,tablaDest,fieldDef,fqnget):
+    resultados = []
+    clausulaAut = routeData.detailPretty(tablaOrig,tablaDest,route)
+    for ind,arc in enumerate(clausulaAut):
+        #FIXME falta el caso con varios campos en la foreign key
+        arcInfo = arc['ref'].getRow()
+        bases = norm2List(arcInfo[2])
+        rels = norm2List(arcInfo[3])
+        clause = []
+        for k in range(min(len(bases),len(rels))):
+                base =  fieldDef.tr(arc['child'],bases[k])
+                rel    =  fieldDef.tr(arc['parent'],rels[k])
+                clause.append({'base_elem':base,'rel_elem':rel})
+        arcDict = {'table':fqnget(arcInfo[1]),
+                            'filter':'',
+                            'clause':clause}
+        resultados.append(arcDict)
+    return resultados
