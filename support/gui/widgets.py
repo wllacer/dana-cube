@@ -22,31 +22,50 @@ class WMultiList(QWidget):
     WIP
     Widget para seleccionar elementos de una lista y enviarlos a otra.
     """
-    def __init__(self,lista=None,initial=None,parent=None):
+    def __init__(self,lista=None,initial=None,format=None,cabeceras=None,parent=None):
         super().__init__(parent)
         self.disponible = QListWidget()
         self.selecto = QListWidget()
         self.anyade = QPushButton('Añadir')
         self.elimina = QPushButton('Eliminar')
         
+        
         origenlayout=QVBoxLayout()
-        self.origenCabecera = QLabel('Elementos disponibles')
+        self.origenCabecera = QLabel(cabeceras[0] if cabeceras else 'Elementos disponibles')
         origenlayout.addWidget(self.origenCabecera)
         origenlayout.addWidget(self.disponible)
         
         destinolayout=QVBoxLayout()
-        self.destinoCabecera = QLabel('Elementos seleccionados')
+        self.destinoCabecera = QLabel(cabeceras[1] if cabeceras else 'Elemenos seleccionados')
         destinolayout.addWidget(self.destinoCabecera)
         destinolayout.addWidget(self.selecto)
 
-        boxlayout = QGridLayout()
-        boxlayout.addWidget(self.anyade,2,0)
-        boxlayout.addWidget(self.elimina,3,0)
-
-        meatlayout = QGridLayout()
-        meatlayout.addLayout(origenlayout,0,0)
-        meatlayout.addLayout(boxlayout,0,2)
-        meatlayout.addLayout(destinolayout,0,3)
+        if format == 'c':
+            origenlayout.addWidget(self.anyade)
+            destinolayout.addWidget(self.elimina)
+            meatlayout = QGridLayout()
+            meatlayout.addLayout(origenlayout,0,0)
+            meatlayout.addLayout(destinolayout,0,1)
+        elif format == 'x':
+            sp = self.disponible.sizePolicy();
+            sp.setHorizontalPolicy(QSizePolicy.Minimum);
+            self.disponible.setSizePolicy(sp);
+            meatlayout = QVBoxLayout()
+            meatlayout.addWidget(self.origenCabecera)
+            meatlayout.addWidget(self.disponible)
+            meatlayout.addWidget(self.anyade)
+            meatlayout.addWidget(self.destinoCabecera)
+            meatlayout.addWidget(self.selecto)
+            meatlayout.addWidget(self.elimina)
+        else:
+            boxlayout = QGridLayout()
+            boxlayout.addWidget(self.anyade,2,0)
+            boxlayout.addWidget(self.elimina,3,0)
+            
+            meatlayout = QGridLayout()
+            meatlayout.addLayout(origenlayout,0,0)
+            meatlayout.addLayout(boxlayout,0,2)
+            meatlayout.addLayout(destinolayout,0,3)
         
         self.setLayout(meatlayout)
 
@@ -58,6 +77,12 @@ class WMultiList(QWidget):
         self.seleList = []
         
         self.load(lista,initial)
+     
+    def clear(self):
+        self.disponible.clear()
+        self.selecto.clear()
+        self.freeList.clear()
+        self.seleList.clear()
         
     def load(self,lista,initial):
         self.disponible.clear()
@@ -86,7 +111,7 @@ class WMultiList(QWidget):
 
     def removeItem(self,checked):
         """
-        checked is not used
+        checked is not used, but demanded by signal
         #TODO devolver a la posicion original
         """
         lista = self.selecto.selectedItems()
@@ -98,6 +123,9 @@ class WMultiList(QWidget):
             mitem = self.selecto.takeItem(idx)
             self.disponible.addItem(mitem)
 
+    def removeSelection(self):
+        for item in self.seleList:
+            self.removeEntry(item.data(0))
 
     def selectEntry(self,entrada):
         if entrada not in self.seleList:

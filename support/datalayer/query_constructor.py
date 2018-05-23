@@ -720,7 +720,6 @@ def _joinConstructor(**kwargs):
         """
         tenemos que definir una serie de defectos para que solo falle en un numero limitado de veces
         """
-        print(elemento)
         if not elemento.get('ltable'): 
             elemento['ltable'] = elemento.get('table')
         if not elemento.get('rtable'):

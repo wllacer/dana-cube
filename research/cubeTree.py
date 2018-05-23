@@ -33,6 +33,7 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem, QColor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QTreeView, QSplitter, QMenu, \
      QDialog, QInputDialog, QLineEdit, QComboBox, QMessageBox,QGridLayout, \
      QAbstractItemView, QTableView, QStyledItemDelegate, QSpinBox, QListWidget, QPushButton, QVBoxLayout,QLabel, QWidget, QCheckBox,QStatusBar,QDialogButtonBox
+from PyQt5.QtWidgets import QTableWidget,QTableWidgetItem
 
 from support.util.treeEditorUtil import *
 
@@ -713,7 +714,7 @@ class FKNetworkDialog(QDialog):
     def procBotones(self,button):
         if button == self.manualBB:
             self.manual = True
-            self().reject()
+            super().accept()
             
 def addNetworkPath(*lparm):
     item = lparm[0]
@@ -736,12 +737,29 @@ def addNetworkPath(*lparm):
     selDlg = FKNetworkDialog(item,view,fqtable,arbolNavegacion)
     selDlg.show()
     if selDlg.exec_():
-        dict2tree(item,None,selDlg.result,'guides')
-        uch = item.child(item.rowCount() -1)
-        uch.setData(selDlg.result['name'],Qt.EditRole)
-        uch.setData(selDlg.result['name'],Qt.UserRole +1)
+        if not selDlg.manual:
+            dict2tree(item,None,selDlg.result,'guides')
+            uch = item.child(item.rowCount() -1)
+            uch.setData(selDlg.result['name'],Qt.EditRole)
+            uch.setData(selDlg.result['name'],Qt.UserRole +1)
+        else:
+            gparm = lparm[:]
+            manualNetwork(*gparm,confName=confName,schema=schema,fqtable=fqtable)
+            
+def manualNetwork(*lparm,**kwparm):
 
-   
+    item = lparm[0]
+    view = lparm[1]
+    confName = kwparm.get('confName')
+    schema = kwparm.get('schema')
+    fqtable = kwparm.get('fqtable')
+    form = manualLinkDlg(*lparm)
+    form.show
+    if form.exec_():
+        pass
+
+
+    
 def addDateGroups(*lparm):
     """
     TODO   traer de la generacion en danabrowse
