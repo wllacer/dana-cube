@@ -1,6 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+manual link
+    #TODO posibilidad de boton de vuelta atras
+    #TODO formato de cabecera mas chillon
+    #TODO cambio de WMultibox a TableWidget
+    #TODO falta nombre
+    #TODO recoger informacion cuando viene de un automatico fustrado
+auto link
+
+Comunes
+    #FIXME me parece que aparecen mas relaciones de la cuenta
+    #FIXME falta el caso con varios campos en la foreign key
+    #TODO Unificar y convertir salida de link via a link via y domain
+
 """
 
 from __future__ import division
@@ -52,14 +65,6 @@ class tablesDelegate(QStyledItemDelegate):
         model.setData(index,nuevo)
     
 class manualLinkDlg(QDialog):
-    #TODO posibilidad de boton de vuelta atras
-    #TODO formato de cabecera mas chillon
-    #TODO cambio de WMultibox a TableWidget
-    #TODO falta nombre
-    #TODO recoger informacion cuando viene de un automatico fustrado
-    #FIXME me parece que aparecen mas relaciones de la cuenta
-    #FIXME falta el caso con varios campos en la foreign key
-    #TODO convertir salida de link via a link via y domain
     tablas = ['rental','store','inferno','tokapi','eliseum','limbo']
     fields = {'rental':['id','product','store_id','date'],
                     'store': [ 'id','name','capacity','location','inferno_id' ] ,
@@ -526,7 +531,7 @@ class manualLinkDlg(QDialog):
         tablaDest = tablas[ind]
         resultado = {}
         resultado['table'] = tablaDest
-
+        clausulas = []
         #else:
         for clausula in entrada.get('clause'):
             clausulas.append({'base_elem':self.fields.tr(tablaOrig,entrada.get('base_elem'))
@@ -536,4 +541,123 @@ class manualLinkDlg(QDialog):
         resultado['clause']=clausulas
         resultado['filter'] = entrada.get('filter')
         return resultado
+            
+#from research.cubeTree  import srcFields,srcTables
+
+class FKNetworkDialog(QDialog):
+    def __init__(self,cubeTable,fields,routeData,parent=None):
+
+        super().__init__(parent)
+        self.setMinimumSize(QSize(640,330))
+        
+        self.manualBB = QPushButton('Ir a manual')
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok| QDialogButtonBox.Cancel)
+        buttonBox.addButton(self.manualBB, QDialogButtonBox.ActionRole)
+        buttonBox.accepted.connect(self.accept)
+        buttonBox.rejected.connect(self.reject)        
+        buttonBox.clicked.connect(self.procBotones)
+        
+        self.msgLine = QLabel()
+        titleLabel = QLabel('Nombre de la guia')
+        destLabel =QLabel('Tabla por la que queremos agrupar')
+        destFLabel    =QLabel('Campos por los que queremos agrupar')
+        routeLabel  = QLabel('Ruta para acceder a al tabla destino')
+        
+        self.titleText = QLineEdit()
+        self.titleText.setStyleSheet("background-color:yellow;")
+
+        
+        self.destTable = QComboBox()
+        self.destField = WMultiCombo()
+        self.destRoutes = QComboBox()
+        
+        meatlayout = QGridLayout()
+        x = 0
+        meatlayout.addWidget(titleLabel,x,0)
+        meatlayout.addWidget(self.titleText,x,1)
+        x +=1
+        meatlayout.addWidget(destLabel,x,0)
+        meatlayout.addWidget(self.destTable,x,1)
+        x +=1
+        meatlayout.addWidget(destFLabel,x,0)
+        meatlayout.addWidget(self.destField,x,1)
+        x += 1
+        meatlayout.addWidget(routeLabel,x,0)
+        meatlayout.addWidget(self.destRoutes,x,1,1,2)
+        x += 2
+        meatlayout.addWidget(self.msgLine,x,0)
+        x += 1
+        meatlayout.addWidget(buttonBox,x,1)
+        
+        self.setLayout(meatlayout)
+        self.prepareData(cubeTable,fields,routeData)
+
+        self.manual = False
+
+    def prepareData(self,cubeTable,fields,routeData):
+
+        self.routeData = routeData
+        self.cubeTable = cubeTable
+        self.fields = fields
+        # load destTable. TODO ¿todas las tablas o solo las que tienen conexion FK?
+        self.tablesCurrentList = list(routeData.keys())
+        self.destTable.addItems(self.tablesCurrentList)
+        self.destTable.setCurrentIndex(-1)
+        self.destTable.currentIndexChanged[int].connect(self.seleccionTabla)
+ 
+    def seleccionTabla(self,idx):
+        #FIXME y si no hay rutas .... ¿?
+        # preparamos la lista de campos
+        #self.FieldsFullList = srcFields(self.item,self.view,file=self.tablesCurrentList[idx])
+        self.FieldsFullList = self.fields.getFull(self.tablesCurrentList[idx])
+        x,y = zip(*self.FieldsFullList)
+        self.fieldsCurrentList = list(y)
+        self.destField.clear()
+        self.destField.load([ entry[0] for entry in self.FieldsFullList],self.fieldsCurrentList)
+        
+        # preparamos la lista de rutas
+        rutasTabla = list(self.routeData.get(self.tablesCurrentList[idx],{}).keys())
+        #FIXME esto tiene que ser un map
+        for k in range(len(rutasTabla)):
+            entrada = rutasTabla[k][2:]
+            rutasTabla[k] = entrada.replace('->','\n\t')
+        self.destRoutes.clear()
+        self.destRoutes.addItems(rutasTabla)
+        self.destRoutes.setCurrentIndex(-1)
+        
+    def accept(self):
+        #TODO validaciones
+        name = self.titleText.text()
+        schema = self.cubeTable.split('.')[0] # se supone que viene cargado
+        baseTable = self.tablesCurrentList[self.destTable.currentIndex()]
+        table = '{}.{}'.format(schema, baseTable)
+        values = norm2List(self.destField.get())
+        print(name,table,baseTable,values)
+        # ahora el link link_via
+        electedPath = self.destRoutes.currentText() #que valiente
+        electedPath = '->' + electedPath.replace('\n\t','->')
+        electedPathDatos = self.routeData[baseTable][electedPath]
+        path = []
+        for arc in electedPathDatos:
+            arcInfo = arc['ref'].getRow()
+            arcDict = {'table':arcInfo[1],'filter':'','clause':[{'base_elem':arcInfo[2],'rel_elem':arcInfo[3]},]}
+            path.append(arcDict)
+            
+        self.result = {'name':name,
+                                            'class':'o',
+                                            'prod':[{'name':name,
+                                                            'elem':values,
+                                                            'table':table,
+                                                            'link via':path
+                                                          }
+                                                        ,]
+                                }
+        super().accept()
+
+
+        
+    def procBotones(self,button):
+        if button == self.manualBB:
+            self.manual = True
+            super().accept()
             

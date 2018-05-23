@@ -590,132 +590,9 @@ def addNetworkMenuItem(*lparms):
         if clase == 'd':
             menuStruct.append(menu.addAction('Añadir agrupaciones especiales por fecha',lambda i=lparms:addDateGroups(*lparms)))
 
-class FKNetworkDialog(QDialog):
-    def __init__(self,item,view,cubeTable,routeData,parent=None):
 
-        super().__init__(parent)
-        self.setMinimumSize(QSize(640,330))
-        
-        self.manualBB = QPushButton('Ir a manual')
-        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok| QDialogButtonBox.Cancel)
-        buttonBox.addButton(self.manualBB, QDialogButtonBox.ActionRole)
-        buttonBox.accepted.connect(self.accept)
-        buttonBox.rejected.connect(self.reject)        
-        buttonBox.clicked.connect(self.procBotones)
-        
-        self.msgLine = QLabel()
-        titleLabel = QLabel('Nombre de la guia')
-        destLabel =QLabel('Tabla por la que queremos agrupar')
-        destFLabel    =QLabel('Campos por los que queremos agrupar')
-        routeLabel  = QLabel('Ruta para acceder a al tabla destino')
-        
-        self.titleText = QLineEdit()
-        self.titleText.setStyleSheet("background-color:yellow;")
+from research.cubeTreeDlg import manualLinkDlg,FKNetworkDialog 
 
-        
-        self.destTable = QComboBox()
-        self.destField = WMultiCombo()
-        self.destRoutes = QComboBox()
-        
-        meatlayout = QGridLayout()
-        x = 0
-        meatlayout.addWidget(titleLabel,x,0)
-        meatlayout.addWidget(self.titleText,x,1)
-        x +=1
-        meatlayout.addWidget(destLabel,x,0)
-        meatlayout.addWidget(self.destTable,x,1)
-        x +=1
-        meatlayout.addWidget(destFLabel,x,0)
-        meatlayout.addWidget(self.destField,x,1)
-        x += 1
-        meatlayout.addWidget(routeLabel,x,0)
-        meatlayout.addWidget(self.destRoutes,x,1,1,2)
-        x += 2
-        meatlayout.addWidget(self.msgLine,x,0)
-        x += 1
-        meatlayout.addWidget(buttonBox,x,1)
-        
-        self.setLayout(meatlayout)
-        self.prepareData(item,view,cubeTable,routeData)
-
-        self.manual = False
-
-    def prepareData(self,item,view,cubeTable,routeData):
-        self.item = item
-        self.routeData = routeData
-        self.view = view
-        self.cubeTable = cubeTable
-        self.all = False
-        # load destTable. TODO ¿todas las tablas o solo las que tienen conexion FK?
-        if self.all:  #todas las tablas (no esta definido asi que)
-            self.TablesFullList = srcTables(item,view)
-            x,y = zip(*self.TablesFullList)
-            self.tablesCurrentList = list(y)
-        else:
-            self.tablesCurrentList = list(routeData.keys())
-        self.destTable.addItems(self.tablesCurrentList)
-        self.destTable.setCurrentIndex(-1)
-        self.destTable.currentIndexChanged[int].connect(self.seleccionTabla)
- 
-    def seleccionTabla(self,idx):
-        #FIXME y si no hay rutas .... ¿?
-        # preparamos la lista de campos
-        self.FieldsFullList = srcFields(self.item,self.view,file=self.tablesCurrentList[idx])
-        x,y = zip(*self.FieldsFullList)
-        self.fieldsCurrentList = list(y)
-        self.destField.clear()
-        self.destField.load([ entry[0] for entry in self.FieldsFullList],self.fieldsCurrentList)
-        
-        # preparamos la lista de rutas
-        rutasTabla = list(self.routeData.get(self.tablesCurrentList[idx],{}).keys())
-        #FIXME esto tiene que ser un map
-        for k in range(len(rutasTabla)):
-            entrada = rutasTabla[k][2:]
-            rutasTabla[k] = entrada.replace('->','\n\t')
-        self.destRoutes.clear()
-        self.destRoutes.addItems(rutasTabla)
-        self.destRoutes.setCurrentIndex(-1)
-        
-    def accept(self):
-        #TODO validaciones
-        name = self.titleText.text()
-        schema = self.cubeTable.split('.')[0] # se supone que viene cargado
-        if self.all:
-            table = self.TablesFullList[self.destTable.currentIndex()][0]
-            baseTable = table.split('.')[-1]
-        else:
-            baseTable = self.tablesCurrentList[self.destTable.currentIndex()]
-            table = '{}.{}'.format(schema, baseTable)
-        values = norm2List(self.destField.get())
-        print(name,table,baseTable,values)
-        # ahora el link link_via
-        electedPath = self.destRoutes.currentText() #que valiente
-        electedPath = '->' + electedPath.replace('\n\t','->')
-        electedPathDatos = self.routeData[baseTable][electedPath]
-        path = []
-        for arc in electedPathDatos:
-            arcInfo = arc['ref'].getRow()
-            arcDict = {'table':arcInfo[1],'filter':'','clause':[{'base_elem':arcInfo[2],'rel_elem':arcInfo[3]},]}
-            path.append(arcDict)
-            
-        self.result = {'name':name,
-                                            'class':'o',
-                                            'prod':[{'name':name,
-                                                            'elem':values,
-                                                            'table':table,
-                                                            'link via':path
-                                                          }
-                                                        ,]
-                                }
-        super().accept()
-
-
-        
-    def procBotones(self,button):
-        if button == self.manualBB:
-            self.manual = True
-            super().accept()
-            
 def addNetworkPath(*lparm):
     item = lparm[0]
     view = lparm[1]
@@ -731,22 +608,12 @@ def addNetworkPath(*lparm):
     
     arbolNavegacion = getFKLinks(tableDdItem)
     if not arbolNavegacion:
-        gparm = lparm[:]
-        manualNetwork(*gparm,confName=confName,schema=schema,fqtable=fqtable)
-        return 
-    selDlg = FKNetworkDialog(item,view,fqtable,arbolNavegacion)
-    selDlg.show()
-    if selDlg.exec_():
-        if not selDlg.manual:
-            dict2tree(item,None,selDlg.result,'guides')
-            uch = item.child(item.rowCount() -1)
-            uch.setData(selDlg.result['name'],Qt.EditRole)
-            uch.setData(selDlg.result['name'],Qt.UserRole +1)
-        else:
-            gparm = lparm[:]
-            manualNetwork(*gparm,confName=confName,schema=schema,fqtable=fqtable)
+        #gparm = lparm[:]
+        manualNetwork(*lparm,confName=confName,schema=schema,fqtable=fqtable)
+    else:
+        FKNetwork(*lparm,confName=confName,schema=schema,fqtable=fqtable,tree=arbolNavegacion)
       
-from research.cubeTreeDlg import manualLinkDlg
+
 
 class fieldCatcher():
     def __init__(self,*context):
@@ -756,7 +623,7 @@ class fieldCatcher():
         self.function = srcFields
         self.cache = {}
         
-    def get(self,table,default=None):
+    def getFull(self,table,default=None):
         if table in self.cache:
             fieldList = self.cache.get(table)
         else:
@@ -764,6 +631,10 @@ class fieldCatcher():
             internalTable = self.tables[internalTableIdx][0]
             fieldList = self.function(self.item,self.view,file=internalTable)
             self.cache[table] = fieldList
+        return fieldList
+        
+    def get(self,table,default=None):
+        fieldList = self.getFull(table,default)
         return [ elem[1] for elem in fieldList]
     
     def tr(self,table,field):
@@ -837,7 +708,33 @@ def manualNetwork(*lparm,**kwparm):
         uch.setData(selDlg.result['name'],Qt.EditRole)
         uch.setData(selDlg.result['name'],Qt.UserRole +1)
 
+def FKNetwork(*lparm,**kwparm):
+    item = lparm[0]
+    view = lparm[1]
+    confName = kwparm.get('confName')
+    schema = kwparm.get('schema')
+    fqtable = kwparm.get('fqtable')
+    arbolNavegacion = kwparm.get('tree')
 
+    gparm = list(lparm)
+    tables = srcTables(*lparm)
+    if len(gparm) > 2:
+        gparm[3] = tables
+    else:
+        gparm.append(tables)
+    fieldGetter = fieldCatcher(*gparm)
+
+    selDlg = FKNetworkDialog(fqtable,fieldGetter,arbolNavegacion)
+    selDlg.show()
+    if selDlg.exec_():
+        if not selDlg.manual:
+            dict2tree(item,None,selDlg.result,'guides')
+            uch = item.child(item.rowCount() -1)
+            uch.setData(selDlg.result['name'],Qt.EditRole)
+            uch.setData(selDlg.result['name'],Qt.UserRole +1)
+        else:
+            manualNetwork(*lparm,confName=confName,schema=schema,fqtable=fqtable)
+    
 
     
 def addDateGroups(*lparm):
