@@ -454,7 +454,7 @@ def srcTables(*lparm):
     confName,confData = getConnection(item,name=True,dict=view.dataDict)
     schema = getSchema(item)
     resultado = [ ['{}.{}'.format(schema,entrada),entrada]
-                            for entrada in view.diccionario[confName][schema].keys() 
+                            for entrada in sorted(view.diccionario[confName][schema].keys()) 
                             if entrada[0] != '@']
     return resultado
 
@@ -731,9 +731,9 @@ def addNetworkPath(*lparm):
     
     arbolNavegacion = getFKLinks(tableDdItem)
     if not arbolNavegacion:
-        view.msgLine.setText('Tabla {} no tiene claves extranjeras. Debe definirlo a mano'.format(baseTable))
-        #TODO aqui una buena powertable haria maravillas
-        return        
+        gparm = lparm[:]
+        manualNetwork(*gparm,confName=confName,schema=schema,fqtable=fqtable)
+        return 
     selDlg = FKNetworkDialog(item,view,fqtable,arbolNavegacion)
     selDlg.show()
     if selDlg.exec_():
@@ -745,7 +745,75 @@ def addNetworkPath(*lparm):
         else:
             gparm = lparm[:]
             manualNetwork(*gparm,confName=confName,schema=schema,fqtable=fqtable)
-            
+      
+from research.cubeTreeDlg import manualLinkDlg
+
+class fieldCatcher():
+    def __init__(self,*context):
+        self.item = context[0]
+        self.view = context[1]
+        self.tables = context[2]
+        self.function = srcFields
+        self.cache = {}
+        
+    def get(self,table,default=None):
+        if table in self.cache:
+            fieldList = self.cache.get(table)
+        else:
+            internalTableIdx = [elem[1] for elem in self.tables].index(table)
+            internalTable = self.tables[internalTableIdx][0]
+            fieldList = self.function(self.item,self.view,file=internalTable)
+            self.cache[table] = fieldList
+        return [ elem[1] for elem in fieldList]
+    
+    def tr(self,table,field):
+        if '.' in table:
+            internalTableIdx = [elem[0] for elem in self.tables].index(table)
+        else:
+            internalTableIdx = [elem[1] for elem in self.tables].index(table)
+        internalTable = self.tables[internalTableIdx][0]
+        return '{}.{}'.format(table,field) #FIXME y si field es de otro tipo
+
+class relCatcher():
+    def __init__(self,item,view,confName,schema):
+        self.item = item
+        self.view = view
+        self.confName = confName
+        self.schema = schema
+        self.cache = {}
+        #self.confName,self.confData = getConnection(item,name=True,dict=view.dataDict)
+        #schema = getSchema(item,baseTable)
+        #fqtable = schema + '.' + baseTable.split('.')[-1]  #solo por ir seguro
+    
+    def get(self,tableOrig,tableDest):
+        baseTable =  tableOrig.split('.')[-1]
+        destTable = tableDest.split('.')[-1]
+        tableDdItem = _getDictTable(self.view.dataDict,self.confName,self.schema,baseTable) 
+        if baseTable in self.cache:
+            arbolNavegacion = self.cache[baseTable]
+        else:
+            arbolNavegacion = getFKLinks(tableDdItem)
+            self.cache[baseTable] = arbolNavegacion
+        return arbolNavegacion.get(destTable)
+    
+    def prettyList(self,tableOrig,tableDest):
+        conexiones = self.get(tableOrig,tableDest)
+        if not conexiones:
+            return []
+        lista = list(conexiones.keys())
+        for k in range(len(lista)):
+            entrada = lista[k][2:]
+            lista[k] = entrada.replace('->','\n\t')
+        return lista
+    
+    def detail(self,tableOrig,tableDest,path):
+        return self.get(tableOrig,tableDest).get(path)
+    
+    def detailPretty(self,tableOrig,tableDest,path):
+        npath = path.replace('\n\t','->')
+        npath = '->'+npath
+        return self.detail(tableOrig,tableDest,npath)
+    
 def manualNetwork(*lparm,**kwparm):
 
     item = lparm[0]
@@ -753,10 +821,22 @@ def manualNetwork(*lparm,**kwparm):
     confName = kwparm.get('confName')
     schema = kwparm.get('schema')
     fqtable = kwparm.get('fqtable')
-    form = manualLinkDlg(*lparm)
-    form.show
-    if form.exec_():
-        pass
+    tables = srcTables(*lparm)
+    gparm = list(lparm)
+    if len(gparm) > 2:
+        gparm[3] = tables
+    else:
+        gparm.append(tables)
+    fieldGetter = fieldCatcher(*gparm)
+    relGetter = relCatcher(item,view,confName,schema)
+    selDlg = manualLinkDlg(file=fqtable.split('.')[-1],tablas=tables,fields=fieldGetter,rel=relGetter)
+    selDlg.show
+    if selDlg.exec_():
+        dict2tree(item,None,selDlg.result,'guides')
+        uch = item.child(item.rowCount() -1)
+        uch.setData(selDlg.result['name'],Qt.EditRole)
+        uch.setData(selDlg.result['name'],Qt.UserRole +1)
+
 
 
     

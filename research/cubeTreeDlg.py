@@ -52,10 +52,14 @@ class tablesDelegate(QStyledItemDelegate):
         model.setData(index,nuevo)
     
 class manualLinkDlg(QDialog):
-    #TODO falta los campos del ultimo elemento
     #TODO posibilidad de boton de vuelta atras
     #TODO formato de cabecera mas chillon
     #TODO cambio de WMultibox a TableWidget
+    #TODO falta nombre
+    #TODO recoger informacion cuando viene de un automatico fustrado
+    #FIXME me parece que aparecen mas relaciones de la cuenta
+    #FIXME falta el caso con varios campos en la foreign key
+    #TODO convertir salida de link via a link via y domain
     tablas = ['rental','store','inferno','tokapi','eliseum','limbo']
     fields = {'rental':['id','product','store_id','date'],
                     'store': [ 'id','name','capacity','location','inferno_id' ] ,
@@ -84,12 +88,15 @@ class manualLinkDlg(QDialog):
                             }
                                 
                                                     
-    def __init__(self,file,structure=None,parent=None,):
+    def __init__(self,file,tablas,fields,rel,structure=None,parent=None,):
         super().__init__(parent)
         
-        self.tables = manualLinkDlg.tablas
-        self.fields = manualLinkDlg.fields
-        self.rel = manualLinkDlg.rel 
+        self.fullTables = tablas
+        self.tables = [ elem[1] for elem in tablas ]
+        iidx = self.tables.index(file)
+        self.baseTable = self.fullTables[iidx][0]
+        self.fields = fields
+        self.rel = rel
         if not structure:
             self.structure = {}
         else:
@@ -234,16 +241,14 @@ class manualLinkDlg(QDialog):
     def addRow(self,idx=None):
         if not idx:
             idx =self.actualSize() +1
-        if idx < self.sheet.rowCount():
-            pass
-        else:
-            self.sheet.insertRow(idx)
+        self.sheet.insertRow(idx)
         for j in range(self.sheet.columnCount()):
                 self.initializeCell(idx,j)
         ind = idx -1
-        item = self.sheet.item(idx,0)
         self.array.insert(ind,{'clause':[],'internalLink':None,'filter':""})
         self.resetVecinos(ind)
+        
+        item = self.sheet.item(idx,0)
         self.sheet.setCurrentItem(item)
         self.updateTarget(self.sheet.item(self.actualSize(),0))
         self.sheet.setFocus()
@@ -334,6 +339,8 @@ class manualLinkDlg(QDialog):
         tableFrom = self.sheet.item(ind,0).text()
         tableTo = self.sheet.item(idx,0).text()
         
+        if not tableFrom or not tableTo:
+            return
         #self.tableFrom.setText(tableFrom)
         #self.tableTo.setText(tableTo)
         ##TODO adecuar a la estructura de datos
@@ -350,7 +357,8 @@ class manualLinkDlg(QDialog):
         self.fieldsTo.origenCabecera.setText('A '+ tableTo)
 
         
-        relList = self.rel.get(tableFrom,{}).get(tableTo,[])        
+        relList = self.rel.prettyList(tableFrom,tableTo)
+
         if relList == []:
             self.internalLink.setEnabled(False)
         else:
@@ -425,6 +433,15 @@ class manualLinkDlg(QDialog):
                 self.loadDetail(ind +1)
                 self.fieldsFrom.setFocus()
                 return False
+            elif entrada.get('clause'):
+                if len(self.fieldsFrom.seleList) != len(self.fieldsTo.seleList):
+                    self.msgLine.setText('Desde y A deben tener el mismo número de campos)')
+                    self.fieldsFrom.setFocus()
+                    return False
+            elif len(self.fieldsTarget.seleList) == 0:
+                self.msgLine.setText('Debe especificar al menos un campo para agrupar')
+                self.fieldsTarget.setFocus()
+                return False
         return True
             
     def accept(self):
@@ -434,20 +451,89 @@ class manualLinkDlg(QDialog):
         #TODO verificar los datos
         if not self.validateArray():
             return
-        if len(self.fieldsTarget.seleList) == 0:
-            self.msgLine.setText('No hay elementos de agrupacion')
-            self.fieldsTarget.setFocus()
-            return 
-        tablas = [ self.sheet.item(k,0).text() for k in range(1,self.sheet.rowCount()) ]
+        #if len(self.fieldsTarget.seleList) == 0:
+            #self.msgLine.setText('No hay elementos de agrupacion')
+            #self.fieldsTarget.setFocus()
+            #return 
+        stablas = [ self.sheet.item(k,0).text() for k in range(1,self.sheet.rowCount()) ]
+        tablasFQ = []
+        for entrada in stablas:
+            if entrada == "":
+                break
+            tablasFQ.append(self.short2long(entrada))
 
         #TODO expandir los internalLinks
         links = []
-        for k in range(self.actualSize() +1): #ge(len(tablas)):
-            if tablas[k] == '':
+        pprint(tablasFQ)
+        pprint(self.array)
+        for k in range(len(tablasFQ)):
+            print('y ahora entrada',k)
+            if tablasFQ[k] == '':
                 continue
-            arco = self.array[k]
-            arco['table'] = tablas[k]
-            links.append(arco)
-        resultado = { 'link via':links,'elem':self.fieldsTarget.seleList,'name':self.targetTable,'table':self.targetTable}
-        pprint(resultado)
+            if  self.array[k].get('internalLink'):
+                arcos = self.linkTransform(k,tablasFQ)
+                for arco in arcos:
+                    links.append(arco)
+            elif self.array[k].get('clause'):
+                arco = self.clauseTransform(k,tablasFQ)
+                arco['table'] = tablasFQ[k]
+                links.append(arco)
+        name = self.targetTable #FIXME
+        #resultado = { 'link via':links,'elem':self.fieldsTarget.seleList,'name':self.targetTable,'table':self.targetTable}
+        self.result = {'name':name,
+                                    'class':'o',
+                                    'prod':[{'name':name,
+                                                    'elem':[ self.fields.tr(self.targetTable,value) for value in self.fieldsTarget.seleList ],
+                                                    'table':self.short2long(self.targetTable),
+                                                    'link via':links
+                                                    }
+                                                ,]
+                        }
+        pprint(self.result)
         super().accept()
+      
+    def short2long(self,tabla):
+        if '.' in tabla:
+            return tabla
+        intIdx = self.tables.index(tabla)
+        return self.fullTables[intIdx][0]
+    
+    def linkTransform(self,ind,tablas):
+        entrada = self.array[ind]
+        tablaOrig = tablas[ind -1] if ind > 0 else self.baseTable
+        tablaDest = tablas[ind]
+        resultados = []
+        clausulaAut = self.rel.detailPretty(tablaOrig,tablaDest,entrada['internalLink'])
+        for ind,arc in enumerate(clausulaAut):
+            #FIXME falta el caso con varios campos en la foreign key
+            arcInfo = arc['ref'].getRow()
+            bases = norm2List(arcInfo[2])
+            rels = norm2List(arcInfo[3])
+            clause = []
+            for k in range(min(len(bases),len(rels))):
+                    base =  self.fields.tr(arc['child'],bases[k])
+                    rel    =  self.fields.tr(arc['parent'],rels[k])
+                    clause.append({'base_elem':base,'rel_elem':rel})
+            arcDict = {'table':self.short2long(arcInfo[1]),
+                             'filter':'',
+                             'clause':clause}
+            resultados.append(arcDict)
+        return resultados
+
+    def clauseTransform(self,ind,tablas):
+        entrada = self.array[ind]
+        tablaOrig = tablas[ind -1] if ind > 0 else self.baseTable
+        tablaDest = tablas[ind]
+        resultado = {}
+        resultado['table'] = tablaDest
+
+        #else:
+        for clausula in entrada.get('clause'):
+            clausulas.append({'base_elem':self.fields.tr(tablaOrig,entrada.get('base_elem'))
+                                        ,'rel_elem':self.fields.tr(tablaDest,entrada.get('rel_elem'))
+                                        }
+                                        )
+        resultado['clause']=clausulas
+        resultado['filter'] = entrada.get('filter')
+        return resultado
+            
