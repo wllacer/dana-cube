@@ -650,7 +650,7 @@ def manualNetwork(*lparm,**kwparm):
         schema = kwparm.get('schema')
         relGetter = relCatcher(item,view,confName,schema)
         
-    selDlg = manualLinkDlg(file=fqtable.split('.')[-1],tablas=tables,fields=fieldGetter,rel=relGetter)
+    selDlg = manualLinkDlg(pfile=fqtable.split('.')[-1],tablas=tables,fields=fieldGetter,rel=relGetter)
     selDlg.show
     if selDlg.exec_():
         dict2tree(item,None,selDlg.result,'guides')
@@ -728,7 +728,7 @@ class fieldCatcher():
         else:
             internalTableIdx = [elem[1] for elem in self.tables].index(table)
         internalTable = self.tables[internalTableIdx][0]
-        return '{}.{}'.format(table,field) #FIXME y si field es de otro tipo
+        return '{}.{}'.format(internalTable,field) #FIXME y si field es de otro tipo
 
 class relCatcher():
     """

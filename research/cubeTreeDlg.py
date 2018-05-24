@@ -4,14 +4,14 @@
 manual link
     #TODO posibilidad de boton de vuelta atras
     #TODO formato de cabecera mas chillon
-    #TODO cambio de WMultibox a TableWidget
     #TODO falta nombre
     #TODO recoger informacion cuando viene de un automatico fustrado
+    #TODO ¿Convertir self.sheet a WDelegateSheet ¿?
 auto link
 
 Comunes
     #FIXME me parece que aparecen mas relaciones de la cuenta
-    #FIXME falta el caso con varios campos en la foreign key. Preparado pero no sabemos el efecto
+    #FIXME falta comprobar el caso con varios campos en la foreign key en automatico
     #unificar codigo
 
 """
@@ -26,13 +26,83 @@ from pprint import pprint
 from support.gui.widgets import WMultiCombo,WPowerTable,WMultiList
 from support.util.record_functions import norm2List,norm2String
 
-from PyQt5.QtCore import Qt,QSize
+from PyQt5.QtCore import Qt,QSize,pyqtSignal
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QGridLayout, \
       QCheckBox,QPushButton,QLineEdit
 
 from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QTableWidget,QTableWidgetItem, QMenu, QComboBox, QStyledItemDelegate, QLabel, QDialogButtonBox, QLineEdit
+from PyQt5.QtWidgets import QTableWidget,QTableWidgetItem, QMenu, QComboBox, QStyledItemDelegate, QLabel, QDialogButtonBox, QLineEdit,QSizePolicy
 
+def makeTableSize(widget):
+    widget.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+
+    #self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+    #self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+    #self.resizeColumnsToContents()
+    widget.setFixedSize(widget.horizontalHeader().length()+widget.verticalHeader().width(), 
+                                widget.verticalHeader().length()+widget.horizontalHeader().height())
+
+class fieldDelegate(QStyledItemDelegate):
+    def __init__(self,parent=None):
+        super().__init__(parent)
+        self.tableFrom = None
+        self.tableTo = None
+        self.tempTables = []
+        self.fields = None
+        self.sheet = self.parent()#.clauseSheet
+        
+        
+    def createEditor(self,parent,option,index):
+        """
+        A parte de crear las listas, realmente estoy creando un cache para poder ahorrarme construcciones de lista
+        
+        """
+        print('CE',self.sheet)
+        # al inicializarlo en el dialogo tengo este problema
+        
+        if not self.tempTables:
+            self.tempTables = [None,('=','>','<','>=','<=','!='),None]
+        if self.sheet.context.get('fieldCatcher') and self.fields != self.sheet.context.get('fieldCatcher'):
+            self.tempTables[0] = None
+            self.tempTables[2] = None
+            self.fields = self.sheet.context.get('fieldCatcher')
+       
+        if self.tableFrom != self.sheet.context.get('tableFrom') or not self.tempTables[0]:
+            self.tableFrom = self.sheet.context.get('tableFrom')
+            self.tempTables[0] = self.fields.get(self.tableFrom)
+        if self.tableTo != self.sheet.context.get('tableTo') or not self.tempTables[2]:
+            self.tableTo = self.sheet.context.get('tableTo')
+            self.tempTables[2] = self.fields.get(self.tableTo)
+
+        pprint(self.tempTables)
+        editor = QComboBox(parent)
+        if index.column() == 0:
+            editor.addItems(self.tempTables[0])
+        elif index.column() == 1:
+            editor.addItems(self.tempTables[1])
+        elif index.column() == 2:
+            editor.addItems(self.tempTables[2])
+       
+        return editor
+    
+    def setEditorData(self, editor, index):
+        if index.data():
+            pos = self.tempTables[index.column()].index(index.data())
+            editor.setCurrentIndex(pos)
+        else:
+            if index.column() == 1:
+                editor.setCurrentIndex(0)
+            else:
+                editor.setCurrentIndex(-1)
+        
+    def setModelData(self,editor,model,index):
+            idx = editor.currentIndex()
+            if idx < 0:
+                model.setData(index,None)
+            else:
+                model.setData(index,self.tempTables[index.column()][idx])
+    
 class tablesDelegate(QStyledItemDelegate):
     def __init__(self,parent=None):
         super().__init__(parent)
@@ -64,41 +134,121 @@ class tablesDelegate(QStyledItemDelegate):
             return 
         model.setData(index,nuevo)
     
-class manualLinkDlg(QDialog):
-    tablas = ['rental','store','inferno','tokapi','eliseum','limbo']
-    fields = {'rental':['id','product','store_id','date'],
-                    'store': [ 'id','name','capacity','location','inferno_id' ] ,
-                    'inferno': [ 'id','name','baranden','fiscal' ],
-                    'tokapi': [ 'id','name','location' ] ,
-                    'eliseum': ['id','name','description','gosha' ],
-                    'limbo': ['id','name','refus','vida'],
-                }
-    rel = { 'rental':{'store':['via directa'],
-                             'inferno':['directo','via indirecta']
-                             },
-                'store':{'inferno':['tercera via']},
-            }
+class WDelegateSheet(QTableWidget):
+    """
+    """
+    contextChange = pyqtSignal()
+    rowAdded = pyqtSignal(int)
+    rowRemoved =pyqtSignal(int)
+
+    def __init__(self,row,col,delegate=None,parent=None):
+        super().__init__(row,col,parent)
+        makeTableSize(self)
+        self.initialize()
+        if delegate:
+            sheetDelegate = delegate(self)
+            self.setItemDelegate(sheetDelegate)
+       
+        #FIXME no funciona
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.openContextMenu)
+
+        self.context = {}
+        # en esta posicion para que las señales se activen tras la inicializacion
+        #self.currentItemChanged.connect(self.moveSheetSel)
+        #self.itemChanged.connect(self.itemChanged)
+
+    def initialize(self):
+        for i in range(self.rowCount()):
+            for j in range(self.columnCount()):
+                self.initializeCell(i,j)
+        self.setItemPrototype(QTableWidgetItem(''))
     
-    structure =   {
-                                    'link via': [{'clause':[{'base_elem': 'inventory_id','rel_elem': 'inventory_id'}],
-                                                        'filter': '',
-                                                        'table': 'inventory'},
-                                                    {'clause': [{'base_elem': 'film_id','rel_elem': 'film_id'}],
-                                                        'filter': '',
-                                                        'table': 'film'},
-                                                    ],
-                                    'elem': ['rating'],    
-                                    'name': 'ratings',
-                                    'table': 'film'
-                            }
-                                
-                                                    
-    def __init__(self,file,tablas,fields,rel,structure=None,parent=None,):
+    def initializeCell(self,x,y):
+        self.setItem(x,y,QTableWidgetItem(None))
+
+    def openContextMenu(self,position):
+        print('voy a context menu',position)
+        item = self.itemAt(position)
+        row = item.row()
+        menu = QMenu()
+        menu.addAction("Insert row before",lambda i=row:self.addRow(i))
+        menu.addAction("Insert row after",lambda i=row:self.addRow(i +1))
+        menu.addAction("Append row",self.addRow)
+        menu.addSeparator()
+        menu.addAction("Remove",lambda i=row:self.removeRow(i))
+        
+        action = menu.exec_(self.viewport().mapToGlobal(position))
+                
+    def addRow(self,idx=None,emit=True):
+        if not idx:
+            idx = self.rowCount()
+        self.insertRow(idx)
+        for j in range(self.columnCount()):
+                self.initializeCell(idx,j)
+        if emit:
+            self.rowAdded.emit(idx)
+        item = self.item(idx,0)
+        self.setCurrentItem(item)
+        self.setFocus()
+        
+    def removeRow(self,idx=None,emit=True):
+        if not idx:
+            return
+        self.removeRow(idx)
+        if emit:
+            self.rowRemoved.emit(idx)
+        self.setCurrentItem(self.sheet.item(idx -1,0))
+        self.setFocus()
+
+    def setContext(self,data=None,**kwparm):
+        changed = False
+        for dato in kwparm:
+            if self.context.get(dato) != kwparm.get(dato):
+                changed = True
+                break
+        if changed:
+            self.contextChange.emit()
+            self.initialize()
+        for dato in kwparm:
+            self.context[dato] = kwparm[dato]
+            
+        if data:
+            self.loadData(data)
+        #self.resizeColumnsToContents()
+
+    def loadData(self,data):
+        """
+        before use it might be of interest to disconnect the rowAdded pyqtSignal
+        """
+        for ind,entry in enumerate(data):
+            if ind >= self.rowCount():
+                self.addRow(emit=False)
+            for col,dato in enumerate(entry):
+                if col >= self.columnCount():
+                    break
+                self.setData(ind,col,dato)
+    
+    def unloadData(self):
+        result = [ [ None for k in range(self.columnCount()) ] for j in range (self.rowCount()) ]
+        for row  in range(self.rowCount()):
+            for col in range(self.columnCount()):
+                if self.item(row,col):
+                    result[row][col] = self.item(row,col).text()
+                else:
+                    result[row][col] = None
+        return result
+    
+
+
+class manualLinkDlg(QDialog):
+    def __init__(self,pfile,tablas,fields,rel,structure=None,parent=None,):
         super().__init__(parent)
         
         self.fullTables = tablas
         self.tables = [ elem[1] for elem in tablas ]
-        iidx = self.tables.index(file)
+        
+        iidx = self.tables.index(pfile)
         self.baseTable = self.fullTables[iidx][0]
         self.fields = fields
         self.rel = rel
@@ -107,7 +257,7 @@ class manualLinkDlg(QDialog):
         else:
             self.structure = structure
         self.array = [ elem for elem in self.structure.get('link via',[])] 
-        file =  [file, ] + [ elem.get('table') for elem in self.array ]
+        file =  [pfile, ] + [ elem.get('table') for elem in self.array ]
         for k in range(len(self.array)):
             line = self.array[k]
             line['internalLink'] = None
@@ -124,24 +274,20 @@ class manualLinkDlg(QDialog):
         self.sheet = QTableWidget(5,1)
         self.sheet.horizontalHeader().hide()
         self.sheet.verticalHeader().hide()
+        makeTableSize(self.sheet)
 
         self.internalLink = QComboBox()
-        self.fieldsFrom = WMultiList(format='c',cabeceras=('De ' + file[0],'Elegidos'))
-        self.fieldsTo = WMultiList(format='c',cabeceras=('A ','Elegidos'))
+        self.clauseWgt = WDelegateSheet(5,3,fieldDelegate)
+        self.setClauseWgtSize()
         self.fieldsTarget = WMultiList(format='c',cabeceras=('De ','Campos de agrupacion'))
         
         self.filter = QLineEdit()
         
         detail = QGridLayout()
-        #k = 0
-        #detail.addWidget(self.tableFrom,k,0)
-        #detail.addWidget(self.tableTo,k,2)
-        k=1
-        detail.addWidget(self.fieldsFrom,k,0)
-        #detail.addWidget(self.sheet,k,1)
-        detail.addWidget(self.fieldsTo,k,2)
-        k = 2
-        internalLbl=QLabel('O eliga una relacion interna')
+        k=2
+        detail.addWidget(self.clauseWgt,k,0,1,2)
+        k = 1
+        internalLbl=QLabel('Eliga una relacion interna')
         internalLbl.setAlignment(Qt.AlignRight)
         detail.addWidget(internalLbl,k,0)
         detail.addWidget(self.internalLink,k,1,1,2)
@@ -278,43 +424,21 @@ class manualLinkDlg(QDialog):
         if posterior <= self.actualSize():
             self.resetArrayEntry(posterior)
         
-    """
-    load / unload detail sheet
-        self.tableFrom = QLabel()
-        self.tableTo = QLabel()
-        self.internalLink = QComboBox()
-        self.fieldsFrom = WMultiList(format='c')
-        self.fieldsTo = WMultiList(format='c')
-        self.filter = QLineEdit()
-
-    """
     def clearDetail(self):
-            #self.tableFrom.setText("")
-            #self.tableTo.setText("")
             self.internalLink.clear()
-            self.fieldsFrom.clear()
-            self.fieldsTo.clear()
+            self.clauseWgt.clear()
             self.filter.setText("")
 
     def disableDetail(self):
             self.internalLink.setEnabled(False)
-            self.fieldsFrom.setEnabled(False)
-            self.fieldsTo.setEnabled(False)
+            self.clauseWgt.setEnabled(False)
             self.filter.setEnabled(False)
             
     def enableDetail(self):
             self.internalLink.setEnabled(True)
-            self.fieldsFrom.setEnabled(True)
-            self.fieldsTo.setEnabled(True)
+            self.clauseWgt.setEnabled(True)
             self.filter.setEnabled(True)
-    """
-       self.array: [{'clause':[{'base_elem': 'inventory_id','rel_elem': 'inventory_id'}],
-                        'filter': '',
-                        'table': 'inventory'
-                        'internalLink':None},
-                                                    ...
-                            }
-    """
+
     def actualSize(self):
         maxpos = -1
         for  k in range(self.sheet.rowCount()):
@@ -346,22 +470,16 @@ class manualLinkDlg(QDialog):
         
         if not tableFrom or not tableTo:
             return
-        #self.tableFrom.setText(tableFrom)
-        #self.tableTo.setText(tableTo)
-        ##TODO adecuar a la estructura de datos
-
-        initialFrom = [ elem['base_elem']  for elem in self.array[ind].get('clause',[])]
-        initialTo = [ elem['rel_elem']  for elem in self.array[ind].get('clause',[])]
-        if initialFrom or initialTo:
+        initialData = []
+        for elem in self.array[ind].get('clause',[]):
+            initialData.append(elem['base_elem'],elem.get('condition','='),elem['rel_elem'])
+        if initialData:
             self.internalLink.setEnabled(False)
-        fieldsFrom = self.fields.get(tableFrom)
-        fieldsTo = self.fields.get(tableTo)
-        self.fieldsFrom.load(self.fields.get(tableFrom,[]),initialFrom)
-        self.fieldsFrom.origenCabecera.setText('De '+ tableFrom)
-        self.fieldsTo.load(self.fields.get(tableTo,[]),initialTo)
-        self.fieldsTo.origenCabecera.setText('A '+ tableTo)
-
-        
+        self.clauseWgt.setContext(initialData,tableFrom=tableFrom,tableTo=tableTo,fieldCatcher=self.fields)
+        self.clauseWgt.setHorizontalHeaderLabels(('Desde  {:25}'.format(tableFrom),
+                                                            'op',
+                                                           'Hacia   {:25}'.format(tableTo)
+                                                           ))
         relList = self.rel.prettyList(tableFrom,tableTo)
 
         if relList == []:
@@ -407,11 +525,15 @@ class manualLinkDlg(QDialog):
         iLink = self.internalLink.currentIndex()
         if iLink < 1: #no hay link
             self.array[ind]['internalLink'] = None
-            base=self.fieldsFrom.seleList
-            dest = self.fieldsTo.seleList
+            data = self.clauseWgt.unloadData()
             clause = []
-            for k in range(min(len(base),len(dest))):  #FIXME lo que deberia hacer en validar
-                    clause.append({'base_elem':base[k],'rel_elem':dest[k]})
+            for linea in data:
+                if not linea[0] or not linea[2]:
+                    continue
+                if not linea[1] or linea[1] == '=':
+                    clause.append({'base_elem':linea[0],'rel_elem':linea[2]})
+                else:
+                    clause.append({'base_elem':linea[0],'condition':linea[1],'rel_elem':linea[2]})
             self.array[ind]['clause'] = clause
         else:
             self.array[ind]['internalLink'] = self.internalLink.currentText()
@@ -421,11 +543,9 @@ class manualLinkDlg(QDialog):
     def linkUpdated(self,idx):
         print('Link cic',idx)
         if idx < 1:  #no elegí
-            self.fieldsFrom.setEnabled(True)
-            self.fieldsTo.setEnabled(True)
+            self.clauseWgt.setEnabled(True)
         else:
-            self.fieldsFrom.setEnabled(False)
-            self.fieldsTo.setEnabled(False)
+            self.clauseWgt.setEnabled(False)
      
     def validateArray(self):
         self.msgLine.setText("")
@@ -436,13 +556,15 @@ class manualLinkDlg(QDialog):
                 self.msgLine.setText('Esta entrada esta incompleta')
                 self.sheet.setCurrentItem(self.sheet.item(ind +1,0))
                 self.loadDetail(ind +1)
-                self.fieldsFrom.setFocus()
+                self.clauseWgt.setFocus()
                 return False
             elif entrada.get('clause'):
-                if len(self.fieldsFrom.seleList) != len(self.fieldsTo.seleList):
-                    self.msgLine.setText('Desde y A deben tener el mismo número de campos)')
-                    self.fieldsFrom.setFocus()
-                    return False
+                for clausula in entrada.get('clause'):
+                    if not clausula.get('base_elem') or not clausula.get('rel_elem'):
+                        self.msgLine.setText('Desde y A deben tener el mismo número de campos)')
+                        self.loadDetail(ind +1)
+                        self.clauseWgt.setFocus()
+                        return False
             elif len(self.fieldsTarget.seleList) == 0:
                 self.msgLine.setText('Debe especificar al menos un campo para agrupar')
                 self.fieldsTarget.setFocus()
@@ -456,10 +578,6 @@ class manualLinkDlg(QDialog):
         #TODO verificar los datos
         if not self.validateArray():
             return
-        #if len(self.fieldsTarget.seleList) == 0:
-            #self.msgLine.setText('No hay elementos de agrupacion')
-            #self.fieldsTarget.setFocus()
-            #return 
         stablas = [ self.sheet.item(k,0).text() for k in range(1,self.sheet.rowCount()) ]
         tablasFQ = []
         for entrada in stablas:
@@ -535,14 +653,27 @@ class manualLinkDlg(QDialog):
         clausulas = []
         #else:
         for clausula in entrada.get('clause'):
-            clausulas.append({'base_elem':self.fields.tr(tablaOrig,entrada.get('base_elem'))
-                                        ,'rel_elem':self.fields.tr(tablaDest,entrada.get('rel_elem'))
+            clausulas.append({'base_elem':self.fields.tr(tablaOrig,clausula.get('base_elem'))
+                                        ,'rel_elem':self.fields.tr(tablaDest,clausula.get('rel_elem'))
                                         }
                                         )
+            if clausula.get('condition'):
+                clausulas[-1]['condition'] = clausula.get('condition')
         resultado['clause']=clausulas
         resultado['filter'] = entrada.get('filter')
+        pprint(resultado)
         return resultado
             
+    def setClauseWgtSize(self):
+        self.clauseWgt.setHorizontalHeaderLabels((' Desde  {:25}'.format(self.baseTable),
+                                                    'op',
+                                                    ' Hacia   {:25}<'.format(self.targetTable if self.targetTable else "")
+                                                    ))
+        size = self.clauseWgt.size()
+        totalwidth = size.width()
+        self.clauseWgt.setColumnWidth(0,totalwidth * 38 // 100)
+        self.clauseWgt.setColumnWidth(1,totalwidth * 10 // 100)
+        self.clauseWgt.setColumnWidth(2,totalwidth * 38 // 100)
 #from research.cubeTree  import srcFields,srcTables
 
 class FKNetworkDialog(QDialog):
