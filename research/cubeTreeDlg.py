@@ -1,18 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-manual link
-    #TODO posibilidad de boton de vuelta atras
-    #TODO formato de cabecera mas chillon
-    #TODO falta nombre
-    #TODO recoger informacion cuando viene de un automatico fustrado
-    #TODO ¿Convertir self.sheet a WDelegateSheet ¿?
-auto link
-
-Comunes
-    #FIXME me parece que aparecen mas relaciones de la cuenta
-    #FIXME falta comprobar el caso con varios campos en la foreign key en automatico
-    #unificar codigo
+Acciones pendientes
+Necesarias
+    create group boxes for optical effect
+Mejoras
+    manual link
+        #TODO posibilidad de boton de vuelta atras (sencillamente revertir self.structure)    
+        #TODO cuando es un automatico fustrado reenviar la structure generada a manual
+        #Integrar como opcion de edicion
+    auto link
+    Comunes
+        #FIXME me parece que aparecen mas relaciones de la cuenta
+        #FIXME falta comprobar el caso con varios campos en la foreign key en automatico
+        #unificar codigo
+        #TODO simplificar de Link via a  domain + link_via ¿o no?
+        #TODO ¿Convertir self.sheet a WDelegateSheet? ON HOLD hasta que ataque los widgets
+        # filter de QLineEdit a QPlainTextEdit ¿?
 
 """
 
@@ -28,10 +32,10 @@ from support.util.record_functions import norm2List,norm2String
 
 from PyQt5.QtCore import Qt,QSize,pyqtSignal
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QGridLayout, \
-      QCheckBox,QPushButton,QLineEdit
+      QCheckBox,QPushButton,QLineEdit,QVBoxLayout,QHBoxLayout
 
 from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QTableWidget,QTableWidgetItem, QMenu, QComboBox, QStyledItemDelegate, QLabel, QDialogButtonBox, QLineEdit,QSizePolicy
+from PyQt5.QtWidgets import QTableWidget,QTableWidgetItem, QMenu, QComboBox, QStyledItemDelegate, QLabel, QDialogButtonBox, QLineEdit,QSizePolicy,QHeaderView,QPlainTextEdit
 
 def makeTableSize(widget):
     widget.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
@@ -40,8 +44,9 @@ def makeTableSize(widget):
     #self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
     #self.resizeColumnsToContents()
-    widget.setFixedSize(widget.horizontalHeader().length()+widget.verticalHeader().width(), 
-                                widget.verticalHeader().length()+widget.horizontalHeader().height())
+    widget.setFixedSize(widget.horizontalHeader().length()+widget.verticalHeader().width() +4, 
+                                widget.verticalHeader().length()+widget.horizontalHeader().height()+4)
+
 
 class fieldDelegate(QStyledItemDelegate):
     def __init__(self,parent=None):
@@ -58,7 +63,6 @@ class fieldDelegate(QStyledItemDelegate):
         A parte de crear las listas, realmente estoy creando un cache para poder ahorrarme construcciones de lista
         
         """
-        print('CE',self.sheet)
         # al inicializarlo en el dialogo tengo este problema
         
         if not self.tempTables:
@@ -75,8 +79,9 @@ class fieldDelegate(QStyledItemDelegate):
             self.tableTo = self.sheet.context.get('tableTo')
             self.tempTables[2] = self.fields.get(self.tableTo)
 
-        pprint(self.tempTables)
         editor = QComboBox(parent)
+        editor.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+        
         if index.column() == 0:
             editor.addItems(self.tempTables[0])
         elif index.column() == 1:
@@ -111,8 +116,9 @@ class tablesDelegate(QStyledItemDelegate):
     def createEditor(self,parent,option,index):
         if index.row() == 0:
             return super().createEditor(parent,option,index)
-        return QComboBox(parent)
-        
+        editor = QComboBox(parent)
+        editor.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+        return editor
     def setEditorData(self, editor, index):
         if index.row() == 0:
             return super().setEditorData(editor,index)
@@ -168,7 +174,6 @@ class WDelegateSheet(QTableWidget):
         self.setItem(x,y,QTableWidgetItem(None))
 
     def openContextMenu(self,position):
-        print('voy a context menu',position)
         item = self.itemAt(position)
         row = item.row()
         menu = QMenu()
@@ -244,20 +249,91 @@ class WDelegateSheet(QTableWidget):
 class manualLinkDlg(QDialog):
     def __init__(self,pfile,tablas,fields,rel,structure=None,parent=None,):
         super().__init__(parent)
+
+        self.name = QLineEdit()  #lo necesito antes de los valores iniciales :-(    
+        self.initialValues(pfile,tablas,fields,rel,structure)
         
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok| QDialogButtonBox.Cancel)
+        self.msgLine = QLabel()
+        nameLbl = QLabel('Nombre de la guia')
+
+        
+        sheetLbl = QLabel('Camino de enlace')
+        self.sheet = QTableWidget(5,1)
+        
+        #headerView = self.sheet.horizontalHeader()
+        #headerView.setSectionResizeMode(QHeaderView.Stretch);
+        #headerView.setSectionResizeMode(0, QHeaderView.Interactive);
+        #self.sheet.setColumnHidden(1,True)
+        #self.sheet.setHorizontalHeaderLabels(('Pasos',))
+        #self.sheet.verticalHeader().hide()
+        makeTableSize(self.sheet)
+        self.sheet.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.sheet.customContextMenuRequested.connect(self.openContextMenu)
+        delegate = tablesDelegate(self)
+        self.sheet.setItemDelegate(delegate)
+
+        internalLbl=QLabel('O Eliga una relacion interna')
+        self.internalLink = QComboBox()
+        clauseLbl = QLabel('Eliga la condicion de enlace entre las tablas')
+        self.clauseWgt = WDelegateSheet(5,3,fieldDelegate)
+        self.setClauseWgtSize()
+        fieldsTargetLbl = QLabel('Escoga los campos por los que desee agrupar')
+        self.fieldsTarget = WMultiList(format='c',cabeceras=('De ','Campos de agrupacion'))
+        
+        filterLbl = QLabel('Escriba un filtro SQL adicional')
+        self.filter = QLineEdit()
+        
+        detail = QVBoxLayout()
+
+        detail.addWidget(nameLbl)
+        detail.addWidget(self.name)
+        detail.addWidget(clauseLbl)
+        detail.addWidget(self.clauseWgt)
+        detail.addWidget(internalLbl)
+        detail.addWidget(self.internalLink)
+        detail.addWidget(filterLbl)
+        detail.addWidget(self.filter)
+        detail.addWidget(fieldsTargetLbl)
+        detail.addWidget(self.fieldsTarget)
+
+        
+        meatlayout =QGridLayout()
+
+        meatlayout.addWidget(self.sheet,1,0)
+        meatlayout.addLayout(detail,0,1,8,1)
+        meatlayout.addWidget(self.msgLine,9,0,1,2)
+        meatlayout.addWidget(buttonBox,10,1)
+        
+        self.setLayout(meatlayout)
+        
+        self.initializeSheet(self.fileStack)
+        self.disableDetail()
+        # en esta posicion para que las señales se activen tras la inicializacion
+        buttonBox.accepted.connect(self.accept)
+        buttonBox.rejected.connect(self.reject)        
+        self.internalLink.currentIndexChanged.connect(self.linkUpdated)
+        self.sheet.currentItemChanged.connect(self.moveSheetSel)
+        self.sheet.itemChanged.connect(self.itemChanged)
+        
+    def initialValues(self,file,tablas,fields,rel,structure):
         self.fullTables = tablas
         self.tables = [ elem[1] for elem in tablas ]
         
-        iidx = self.tables.index(pfile)
+        iidx = self.tables.index(file)
         self.baseTable = self.fullTables[iidx][0]
         self.fields = fields
         self.rel = rel
         if not structure:
             self.structure = {}
         else:
-            self.structure = structure
+            if 'prod' in structure:
+                self.structure = structure['prod'][0]
+            else:
+                self.structure = structure
+        self.name.setText(self.structure.get('name',""))
         self.array = [ elem for elem in self.structure.get('link via',[])] 
-        file =  [pfile, ] + [ elem.get('table') for elem in self.array ]
+        self.fileStack =  [file, ] + [ elem.get('table') for elem in self.array ]
         for k in range(len(self.array)):
             line = self.array[k]
             line['internalLink'] = None
@@ -268,65 +344,11 @@ class manualLinkDlg(QDialog):
         else:
             self.targetTable= None
             self.targetFields = []
-        
-        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok| QDialogButtonBox.Cancel)
-        self.msgLine = QLabel()
-        self.sheet = QTableWidget(5,1)
-        self.sheet.horizontalHeader().hide()
-        self.sheet.verticalHeader().hide()
-        makeTableSize(self.sheet)
-
-        self.internalLink = QComboBox()
-        self.clauseWgt = WDelegateSheet(5,3,fieldDelegate)
-        self.setClauseWgtSize()
-        self.fieldsTarget = WMultiList(format='c',cabeceras=('De ','Campos de agrupacion'))
-        
-        self.filter = QLineEdit()
-        
-        detail = QGridLayout()
-        k=2
-        detail.addWidget(self.clauseWgt,k,0,1,2)
-        k = 1
-        internalLbl=QLabel('Eliga una relacion interna')
-        internalLbl.setAlignment(Qt.AlignRight)
-        detail.addWidget(internalLbl,k,0)
-        detail.addWidget(self.internalLink,k,1,1,2)
-        k=3
-        filterLbl = QLabel('Escriba un filtro adicional')
-        filterLbl.setAlignment(Qt.AlignRight)
-        detail.addWidget(filterLbl,k,0)
-        detail.addWidget(self.filter,k,1,1,2)
-        
-        meatlayout = QGridLayout()
-        meatlayout.addWidget(self.sheet,1,0)
-        meatlayout.addLayout(detail,1,1)
-        
-        meatlayout.addWidget(self.fieldsTarget,2,1)
-        meatlayout.addWidget(self.msgLine)
-        meatlayout.addWidget(buttonBox)
-        
-        self.setLayout(meatlayout)
-        
-
-        buttonBox.accepted.connect(self.accept)
-        buttonBox.rejected.connect(self.reject)        
-        self.internalLink.currentIndexChanged.connect(self.linkUpdated)
-        self.sheet.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.sheet.customContextMenuRequested.connect(self.openContextMenu)
-        
-        delegate = tablesDelegate(self)
-        self.sheet.setItemDelegate(delegate)
-        
-        self.initialize(file)
-        self.disableDetail()
-        # en esta posicion para que las señales se activen tras la inicializacion
-        self.sheet.currentItemChanged.connect(self.moveSheetSel)
-        self.sheet.itemChanged.connect(self.itemChanged)
-        
+    
     def initializeCell(self,x,y):
         self.sheet.setItem(x,y,QTableWidgetItem(None))
  
-    def initialize(self,file):
+    def initializeSheet(self,file):
         for i in range(self.sheet.rowCount()):
             for j in range(self.sheet.columnCount()):
                 self.initializeCell(i,j)
@@ -340,17 +362,16 @@ class manualLinkDlg(QDialog):
                     self.sheet.item(idx,0).setBackground(QColor(Qt.gray))
         if self.actualSize() > 1:
             self.loadTarget()
-            self.fieldsTarget.show()
+            self.fieldsTarget.setEnabled(True)
             
         else:
-            self.fieldsTarget.hide()
+            self.fieldsTarget.setEnabled(False)
     """
         sheet status change
     """
     def moveSheetSel(self,current,previous):
         if not previous:
             return
-        print('Item de ({},{}) a ({},{})'.format(previous.row(),previous.column(),current.row(),current.column()))
         self.unloadDetail(previous.row())
         #esto es para que cuando en entra en linea nueva no haga cargas inutiles
         if self.sheet.item(current.row(),0).text() == "":
@@ -359,7 +380,6 @@ class manualLinkDlg(QDialog):
         
         
     def itemChanged(self,item):
-        print('item changed  ({}/{}) : {}'.format(item.row(),item.column(),item.text()))
         self.changeDetail(item)
         self.updateTarget(item)
         
@@ -368,7 +388,7 @@ class manualLinkDlg(QDialog):
             if item.text() != self.targetTable:
                 self.targetTable =  item.text()
                 self.loadTarget()
-                self.fieldsTarget.show()
+                self.fieldsTarget.setEnabled(True)
         
         #pass
     """
@@ -508,7 +528,6 @@ class manualLinkDlg(QDialog):
         
     def changeDetail(self,item):
         idx = item.row()
-        print('change detail',idx)
         if idx == 0:
             return
         ind = idx -1
@@ -541,7 +560,6 @@ class manualLinkDlg(QDialog):
         self.array[ind]['filter'] = self.filter.text()
             
     def linkUpdated(self,idx):
-        print('Link cic',idx)
         if idx < 1:  #no elegí
             self.clauseWgt.setEnabled(True)
         else:
@@ -549,6 +567,10 @@ class manualLinkDlg(QDialog):
      
     def validateArray(self):
         self.msgLine.setText("")
+        if not self.name.text():
+            self.msgLine.setText('El nombre es obligatorio')
+            self.name.setFocus()
+            return False
         numfiles = self.actualSize()
         for ind in range(numfiles):
             entrada = self.array[ind]
@@ -576,9 +598,14 @@ class manualLinkDlg(QDialog):
         cItem = self.sheet.currentItem().row()
         self.unloadDetail(cItem)
         #TODO verificar los datos
+        stablas = [ self.sheet.item(k,0).text()  for k in range(1,self.sheet.rowCount())  if self.sheet.item(k,0).text() ]
+        if len(stablas) == 0:
+            self.msgLine.setText('Debe definir al menos una tabla de enlace')
+            self.sheet.setFocus()
+            return
         if not self.validateArray():
             return
-        stablas = [ self.sheet.item(k,0).text() for k in range(1,self.sheet.rowCount()) ]
+        
         tablasFQ = []
         for entrada in stablas:
             if entrada == "":
@@ -587,10 +614,7 @@ class manualLinkDlg(QDialog):
 
         #TODO expandir los internalLinks
         links = []
-        pprint(tablasFQ)
-        pprint(self.array)
         for k in range(len(tablasFQ)):
-            print('y ahora entrada',k)
             if tablasFQ[k] == '':
                 continue
             if  self.array[k].get('internalLink'):
@@ -601,7 +625,7 @@ class manualLinkDlg(QDialog):
                 arco = self.clauseTransform(k,tablasFQ)
                 arco['table'] = tablasFQ[k]
                 links.append(arco)
-        name = self.targetTable #FIXME
+        name = self.name.text()
         #resultado = { 'link via':links,'elem':self.fieldsTarget.seleList,'name':self.targetTable,'table':self.targetTable}
         self.result = {'name':name,
                                     'class':'o',
@@ -661,7 +685,6 @@ class manualLinkDlg(QDialog):
                 clausulas[-1]['condition'] = clausula.get('condition')
         resultado['clause']=clausulas
         resultado['filter'] = entrada.get('filter')
-        pprint(resultado)
         return resultado
             
     def setClauseWgtSize(self):
@@ -674,7 +697,7 @@ class manualLinkDlg(QDialog):
         self.clauseWgt.setColumnWidth(0,totalwidth * 38 // 100)
         self.clauseWgt.setColumnWidth(1,totalwidth * 10 // 100)
         self.clauseWgt.setColumnWidth(2,totalwidth * 38 // 100)
-#from research.cubeTree  import srcFields,srcTables
+
 
 class FKNetworkDialog(QDialog):
     def __init__(self,cubeTable,fields,routeHandler,parent=None):

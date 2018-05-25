@@ -355,14 +355,11 @@ def getChildByType(parent,type):
 def getChildByTypeH(parent,typeList):
     base = parent
     for tipo in norm2List(typeList):
-        for entry in childItems(base):
-            n,i,typeItem = getRow(entry)
-            if typeItem and typeItem.data() == tipo:
-                base = n
-                break
-        else:
+        res = getChildByType(base,tipo)
+        if not res:
             return None
-    return None
+        base = res
+    return base
 
 def getParentByType(item,type):
     pai = item #por si acaso

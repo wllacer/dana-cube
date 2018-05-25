@@ -755,6 +755,8 @@ class relCatcher():
         else:
             arbolNavegacion = getFKLinks(tableDdItem)
             self.cache[baseTable] = arbolNavegacion
+        if not arbolNavegacion:
+            return arbolNavegacion
         if tableDest:
             destTable = tableDest.split('.')[-1]
             return arbolNavegacion.get(destTable)
@@ -794,27 +796,26 @@ def addDateGroups(*lparm):
     driverItm = getChildByType(getChildByType(getParentByType(item,'base'),'connect'),'driver')
     driver = getRow(driverItm)[1].data()
     nombre = getRow(getChildByType(item,'name'))[1].data()
-    fileItem = getChildByType(getChildByType(getChildByType(item,'prod'),'prod'),'elem')
-    ofileItem = getChildByTypeH(item,'prod,prod,elem')
-    if fileItem != ofileItem:
-        print ('ooohhh')
+    #fileItem = getChildByType(getChildByType(getChildByType(item,'prod'),'prod'),'elem')
+    fileItem = getChildByTypeH(item,'prod,prod,elem')
     field = getRow(fileItem)[1].data()
-    print(driver,nombre,field)
+    print('ADG',driver,nombre,field)
     lista = ('Cuatrimestre','Trimestre','Quincena')
     text,ok = QInputDialog.getItem(None,'Seleccione el periodo de agrupacion de fechas a añadir',
                                                         'periodo',lista,0,False)
     estructura = {}
     if ok and text:
         if    text == 'Cuatrimestre':
+                estructura = getIntervalCode('C',field,driver)
+        elif text == 'Trimestre':  # Q es de quartal
                 estructura = getIntervalCode('Q',field,driver)
-        elif text == 'Trimestre':
-                estructura = getIntervalCode('T',field,driver)
         elif text == 'Quincena':
                 estructura = getIntervalCode('q',field,driver)
-    dict2tree(item.parent(),None,estructura)           #hijo de guides no de la guia en concreto 
-    uch = item.parent().child(item.rowCount() -1)  
-    uch.setData(estructura['name'],Qt.EditRole)
-    uch.setData(estructura['name'],Qt.UserRole +1)
+
+        dict2tree(item,None,estructura,'guides')
+        uch = item.child(item.rowCount() -1)
+        uch.setData(estructura['name'],Qt.EditRole)
+        uch.setData(estructura['name'],Qt.UserRole +1)
 
     
 def sampleData(*lparm):
