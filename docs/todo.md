@@ -9,7 +9,7 @@ Serious errors which are either upstream or we haven't still found a solution
     QStandardItem.insertColumn does NOT work. QStandardITem.insertColumns behaves erratically.
     Example at _./bug_0.py_
     
-* BUG 1
+* BUG 1  __UPSTREAM__ __Not verified in current implementation__
     If any of the Items has a blank key (''), it is positioned in different places if it's row or column, and destroys the array
     Example.  at the _datos light_ cube, at the _geo_ or _region_ guide, thre is an entry _España_ which has this property . Just try to traspose it
     
@@ -20,12 +20,13 @@ Serious errors which are either upstream or we haven't still found a solution
     'Datos light's grandBrowse gets into inacceptable perfomance penalites with more than 6 joins (??) or two quite similar but distinct joins .  Further study needed
     
 *   BUG 4. 
-    setEditTrigger with various tabs seems not to work correctly. Nor can i change menu text directly ???)
+    setEditTrigger with various tabs seems not to work correctly. __SOLVED__Nor can i change menu text directly (see user function menu handling)
     
 *   __STUDY PENDING__ __BYPASSED__ QStandardItem(*args) bombs system if args[0] is int and big (some millions, still not out)
 
 *  BUG 5  __OPEN__ 
-    query_constructor has torubles handling with file prefixes, esp with joins. and if both guides are "joined". An intersting solution might be found at research.grandBrowse
+    query_constructor has torubles handling with file prefixes, esp with joins. and if both guides are "joined". 
+    Only work pending is to provide a way to establish prefixes BEFORE the sqlconstructor, but is a major undetaking
 
 ## rough corners
 
@@ -35,7 +36,7 @@ Areas where the product __must__ be improved. They might not be errors but don't
 
 * Menu internationalization
 
-* __NOPE__ Move user function list to a text file. Fist option is the config file. __REASON__ Not feasible with current implementation
+* __Solved__ Move user function list to a text file. Fist option is the config file. 
 
 * Move definition of DB Drivers to a text file. Fist option is the config file
 
@@ -53,7 +54,8 @@ Thing which shall belong to the app and aren't there now
 
 * Local filter at the view data (w/o round trip to the DB)
 * A different filter dialog in which the user selects which fields to append
-* Dynamic reloading of user functions
+* Dynamic reloading of user functions, and locating them OUTSIDE the python tree
+* Move default definition to the same place as the user function definition tree
 
 ## Wishlist
 
@@ -73,6 +75,12 @@ Things which would be a welcome addition to the application
 
 
 # Subsystems
+
+## Admin 
+Most of it is already in a new (and I hope better) implementation, but they still lack
+* Guide subtype change
+* a general editor for categories & case_sql
+* verify date filter 
 
 ## Database backends
 

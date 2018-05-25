@@ -92,11 +92,11 @@ def swapPrefix(string,prefix,tabla):
     fldArray = mcampo.split('.')
     return '{}.{}'.format(prefix,fldArray[-1])
 
-def catenate(db,array,delim=' '):
+def catenate(db,array,sep=' '):
     if db.dialect == 'mysql':
-        return 'CONCAT_WS({},{})'.format(delim,','.join(array))
+        return 'CONCAT_WS("{}",{})'.format(sep,','.join(array))
     else:
-        return "|| '{}' || ".format(delim).join(array)
+        return "|| '{}' || ".format(sep).join(array)
         
      
 def getPartialTitle(title,field,lastResource):

@@ -360,6 +360,17 @@ def fqn(db,fileName):
     schema = getDefaultSchema(db)
     return '{}.{}'.format(schema,fileName)
     
+def SQLConcat(db,array,sep=','):
+    if len(array) ==0:
+        return ""
+    elif len(array) == 1:
+        return array[0]
+    
+    if db.dialect == 'mysql':
+        return 'CONCAT_WS("{}",{})'.format(sep,','.join(array))
+    else:
+        return "|| '{}' || ".format(sep).join(array)
+
 if __name__ == '__main__':
     definition1={'driver':'sqlite','dbname': '/home/werner/projects/scifi/scifi.db',
                 'dbhost':None,'dbuser':None,'dbpass':None,'debug':False } 
