@@ -887,9 +887,7 @@ class Vista:
                                     
                 sqlDef['order'] = [ str(x + 1) for x in range(len(sqlDef['group']))]
                 sqlDef['driver'] = self.cubo.dbdriver
-
-                sqlDef = setPrefix(sqlDef,baseTable,basePfx,excludeDict=('tables','table','ltable','rtable'))
-                
+                sqlDef = setPrefix(sqlDef,baseTable,basePfx,excludeDict=('tables','table','ltable'))
                 sqlstring=queryConstructor(**sqlDef)
                 lista_compra={'row':{'nkeys':numRowElems,},
                                 'rdir':self.row_hdr_idx,
