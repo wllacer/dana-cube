@@ -29,9 +29,9 @@ Serious errors which are either upstream or we haven't still found a solution
     Actual implementation has troubles only with a few corner cases (pure link vias with more than one field to group, and only if not fully qualified), which can be bypassed with the use of domains.
     A correct general solution has been found, and was pretty simple
     
-* BUG6  __OPEN__ __WIP__
-    guides with more than one field as elems might not behave properly. A quick and dirty solution is planned, but probably will be solved in conjuntion with the previous one
-    Significative problem for those DB's which don't use surrogate keys but compound ones
+* BUG6  __CLOSED__ __WIP__
+    guides with more than one field as elems might not behave properly.
+    Significative problem for those DB's which don't use surrogate keys but compound ones. Don't know if my solution is to everybodies taste
 
 ## rough corners
 

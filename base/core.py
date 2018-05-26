@@ -446,7 +446,7 @@ class Cubo:
             'code':code,      -> lista de campos que contienen el code (valor interno) de la produccion
             'desc':desc,      -> id. de la descripcion (valor externo). SI no hay es igual que el code
             'groupby':groupby,_> campos que se requieren en una jerarquia para enlazar los niveles. Forma parte
-                                 de code
+                                    de code
             'columns':columns, _> Lista cmpleta de todos los campos que deben aparecer en la clausula select de la guia
             'elems':elems,    -> Lista de campos que se incluyen como criterios de agregacion al solicitar los datos de                             
                                     la vista con esa guia
@@ -457,6 +457,8 @@ class Cubo:
         __NOTAS__
         La funcion ahora mismo es algo "heterodoxa". Hace dos cosas al mismo tiempo, genera el arbol y/o el contexto.
         No estan separadas porque la logica es identica, pero dificil de separar. Además la creacion del arbol necesita del contexto
+        
+        WIP Para el caso de claves multicampo, en principio creo que case_sql puede quedar como hasta ahora
         '''
         cubo = self.definition
         if isinstance(guidIdentifier,int):
@@ -478,9 +480,6 @@ class Cubo:
             if total:  #el rebase no me ha traido mas que pesadillas
                 raiz = arbol.invisibleRootItem()
                 item = GuideItem('//','Grand Total')
-                #print('//','Grand Total')
-                #item.setData('Grand Total',Qt.DisplayRole)
-                #item.setData('//',Qt.UserRole +1)
                 raiz.insertRow(0,(item,))
                 tree = item
             else:
@@ -534,17 +533,17 @@ class Cubo:
             if clase == 'o':
                 if 'domain' in produccion:
                     groupby = norm2List(produccion['domain'].get('grouped by'))
-                    code = groupby + norm2List(produccion['domain'].get('code')) 
+                    code = groupby + normConcat(self.db,produccion['domain'].get('code')) 
                     desc = norm2List(produccion['domain'].get('desc'))
                     columns = code + desc
                     #filter = produccion['domain'].get('filter','')
                 else:
-                    columns = code = desc = norm2List(produccion.get('elem'))
-                   
+                    columns = code = desc = normConcat(self.db,produccion.get('elem'))
+                    
                 if prodId == 0:    
-                    elems = norm2List(produccion.get('elem'))
+                    elems = normConcat(self.db,produccion.get('elem'))
                 else:
-                    elems = contexto[prodId -1]['elems'] + norm2List(produccion.get('elem'))
+                    elems = contexto[prodId -1]['elems'] + normConcat(self.db,produccion.get('elem'))
                 
             elif clase == 'c' and 'categories' in produccion:
                 isSQL = False
@@ -632,26 +631,26 @@ class Cubo:
                         code = desc = columns = groupby + code
             #if prodId != 0:
                 #cumgroup.append(code)
-           
+            
             if prodId == 0:
                 linkvia = produccion.get('link via',[]) 
             else:
                 linkvia = contexto[prodId -1]['linkvia'] + produccion.get('link via',[])
             
             contexto.append({'table':table,'code':code,'desc':desc,'groupby':groupby,'columns':columns,
-                             #'acumgrp':cumgroup,'filter':basefilter,
+                                #'acumgrp':cumgroup,'filter':basefilter,
                             'name':nombre,'filter':basefilter,'class':clase,   #TODO DOC + ripple to fillGuia
                             'elems':elems,'linkvia':linkvia})
             if generateTree:
                 if isSQL:
                     cursor = self._getProdCursor(contexto[-1],basefilter,datefilter)
                 
-    
+
                 self._createProdModel(tree,cursor,contexto[-1],prodId,total,display)
 
             #for item in traverse(tree):
                 #print(item.parent().data(Qt.DisplayRole) if item.parent() is not None else '??',
-                      #item.data(Qt.DisplayRole))          
+                        #item.data(Qt.DisplayRole))          
                 
         if generateTree:
             return arbol,contexto

@@ -17,6 +17,7 @@ from pprint import *
 from copy import deepcopy
 import datetime
 import support.datalayer.datemgr as datemgr
+
 import re
 
 CLAUSE_PARMS = ('type','ltype','rtype','table','ltable','rtable','side','warn','driver')
@@ -121,6 +122,15 @@ def setPrefix(pbuffer,oldName,newName,excludeDict=[],excludeList=[]):
         print(buffer)
         exit()
         
+def normConcat(db,entry,sep=','):
+    """
+    Useful tric
+    """
+    from support.datalayer.access_layer import SQLConcat
+    
+    array = norm2List(entry)
+    return [ [SQLConcat(db,array,sep),]]
+
 def replTablePrefix(string,oldName,newName):
     return changeTable(string,oldName,newName)
     #import re
