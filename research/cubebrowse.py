@@ -101,7 +101,7 @@ EDIT_TREE = {
     'name':{'editor':QLineEdit },
     'class' :{'editor':QComboBox,'source':GUIDE_CLASS,'default':'o'},
     'fmt' :{'editor':QComboBox,'source': ENUM_FORMAT ,'default':'txt' },
-    'prod':{'objtype':'dict','subtypes':('prod_std','prod_cat','prod_case','prod_date'),
+    'prod':{'objtype':'dict','subtypes':('prod_std','prod_cat','prod_case','prod_date','prod_ref'),
             'discriminator':discProd,
             'setters':[setClass,],
             'diggers':[digClass,],
@@ -142,7 +142,12 @@ EDIT_TREE = {
                     ],
                 'text':'Guía por fecha',
                 },
-
+    'prod_ref': { 'objtype':'dict',
+               'elements':[
+                   ('reference',True,False)
+                   ],
+               'text':'referencia a otra guia',
+            },
     'elems':{'objtype':'group', 
             'elements':[
                 ('elem',True,False),
@@ -222,6 +227,7 @@ EDIT_TREE = {
     'date range':{'editor':QComboBox,'source':TIPOS_INTERVALO},
     'date period':{'editor':QSpinBox,'min':1},
     'date format':{'default':'fecha'},
+    'reference':{'editor':QComboBox,'source':srcGuides },
     'default base': { 'objtype':'dict',
                      'elements':[],
                      'getters':[],

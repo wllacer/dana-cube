@@ -284,6 +284,20 @@ class Cubo:
         return table_name,basefilter,datefilter
             
    
+    def _expandReference(self,guidID):
+        prodExpandida = []
+        guia = self.definition['guides'][guidID]
+        for prodId,produccion in enumerate(guia['prod']):
+            produccion['origID'] = prodId
+            if produccion.get('reference'):
+                refId = [ item['name'] for item in self.lista_guias].index(produccion['reference'])
+                prodInter = self._expandReference(refId)
+                for prod in prodInter:
+                    prodExpandida.append(prod)
+            else:
+                prodExpandida.append(produccion)
+        return prodExpandida
+            
     def _expandDateProductions(self,guidID):
         """
         las producciones tipo date son abreviaturas de jerarquias internas. Ahora es el momento de dedoblarlas
@@ -485,6 +499,10 @@ class Cubo:
             else:
                 tree = arbol.invisibleRootItem()  #para que __createProdModel solo necesite invocarse una vez
         
+        prodReference = self._expandReference(guidId)
+        #bypass ahora mismo FIXME
+        pprint(prodReference)
+        self.definition['guides'][guidId]['prod'] = prodReference
         # primero expandimos las entradas tipo fecha
         prodExpandida = self._expandDateProductions(guidId)
         

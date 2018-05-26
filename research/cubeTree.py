@@ -404,8 +404,22 @@ previsto
 parametros comunes
     item
     TreeView
-    
+
 """
+def srcGuides(*lparm):
+    item = lparm[0]
+    view = lparm[1]
+    yomismo = getParentByType(item,'guides')
+    minombre = yomismo.data()
+    base = getParentByType(item,'base')
+    guides = getChildByType(base,'guides')
+    resultado = []
+    for k in range(guides.rowCount()):
+        presunto = guides.child(k,0).data()
+        if presunto != minombre:
+            resultado.append(presunto)
+    return sorted(resultado)
+    
 def srcSchemas(*lparm):
     item = lparm[0]
     view = lparm[1]
@@ -851,6 +865,8 @@ def discProd(*lparm):
         elem_hijos.append(n.child(k).data())
     if 'mask' in elem_hijos :
         return 'prod_date'
+    elif 'reference' in elem_hijos:
+        return 'prod_ref'
     elif 'categories' in elem_hijos:
         return 'prod_cat'
     elif 'case_sql' in elem_hijos:
