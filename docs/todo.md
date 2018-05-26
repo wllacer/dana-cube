@@ -22,11 +22,16 @@ Serious errors which are either upstream or we haven't still found a solution
 *   BUG 4. 
     setEditTrigger with various tabs seems not to work correctly. __SOLVED__Nor can i change menu text directly (see user function menu handling)
     
-*   __STUDY PENDING__ __BYPASSED__ QStandardItem(*args) bombs system if args[0] is int and big (some millions, still not out)
+*   __UPSTREAM__ __STUDY PENDING__ __BYPASSED__ QStandardItem(*args) bombs system if args[0] is int and big (some millions, still not out)
 
-*  BUG 5  __OPEN__ 
+*  BUG 5  __CLOSED__
     query_constructor has torubles handling with file prefixes, esp with joins. and if both guides are "joined". 
-    Only work pending is to provide a way to establish prefixes BEFORE the sqlconstructor, but is a major undetaking
+    Actual implementation has troubles only with a few corner cases (pure link vias with more than one field to group, and only if not fully qualified), which can be bypassed with the use of domains.
+    A correct general solution has been found, and was pretty simple
+    
+* BUG6  __OPEN__ __WIP__
+    guides with more than one field as elems might not behave properly. A quick and dirty solution is planned, but probably will be solved in conjuntion with the previous one
+    Significative problem for those DB's which don't use surrogate keys but compound ones
 
 ## rough corners
 

@@ -17,6 +17,7 @@ from pprint import *
 from copy import deepcopy
 import datetime
 import support.datalayer.datemgr as datemgr
+import re
 
 CLAUSE_PARMS = ('type','ltype','rtype','table','ltable','rtable','side','warn','driver')
 
@@ -72,6 +73,56 @@ def queryTransStatus(sqlString):
         elif statement.get_type() in TC:
             status = 'Closed'
     return status    
+
+def changeTable(string,oldName,newName):
+    """
+    
+    from cubeTree. Parece que es el que funciona, para patterns      
+    Winner por aclamacion
+    
+    """
+    pattern = r'(^|[^A-Za-z0-9_\.])('+oldName.replace('.',r'\.') + ')(\W|\.|$)'
+    fileRepl   = r'\1'+ newName + r'\3'
+    result = re.sub(pattern,fileRepl,string)
+    return result    
+
+def setPrefix(buffer,oldName,newName,excludeDict=[],excludeList=[]):
+    try:
+        if isinstance(buffer,tuple):  
+            buffer = list(buffer)
+        if isinstance(buffer,str):
+            if '.' in oldName:
+                step = changeTable(buffer,oldName,newName)
+                pureFile = oldName.split(',')[-1]
+                return changeTable(step,oldName,newName)
+            else:
+                return changeTable(buffer,oldName,newName)
+        elif isinstance(buffer,(list,tuple,set)):  #es por completitud, como son inmutables los segundos ...
+            for k in range(len(buffer)):
+                if k in excludeList:
+                    continue
+                buffer[k] = setPrefix(buffer[k],oldName,newName,excludeDict,excludeList)
+            return buffer
+        elif isinstance(buffer,dict):
+            for k in buffer:
+                if k in excludeDict:
+                    continue
+                buffer[k] = setPrefix(buffer[k],oldName,newName,excludeDict,excludeList)
+            return buffer
+    except Exception as e:
+        print(e)
+        print(buffer)
+        exit()
+        
+def replTablePrefix(string,oldName,newName):
+    return changeTable(string,oldName,newName)
+    #import re
+    #matchpattern=r'(\W*\w*\.)?('+oldName+')'
+    #filematch = matchpattern+'\W'
+    #fieldmatch=matchpattern+r'(\..*)'
+    #fieldrepl = r'\1' + newName +r'\3'
+    #string = re.sub(fieldmatch,fieldrepl,string)
+    #return string
 
 def _sqlFmt(parametro,**kwargs):
     """Devuelve, de una entrada (parametro) la salida en un formato compatible con sqlClause
@@ -364,16 +415,12 @@ def tableNameSolver(tableName,prefix=None):
         else:
             return string.strip(),''
 
-    elemento,adfijo=slicer(tableName)
+    elemento,label =slicer(tableName)
     # pero la entrada puede tener tambien la etiqueta incorporada en la definicion de la tabla.
     # por cierto tiene prioridad sobre el valor en la tupla
     ktexto,iadfijo = _locateLastAs(elemento)
-    label = iadfijo #solo si tiene prefijo interno if iadfijo != '' else adfijo.strip()
-        
-    #ftexto = ktexto
-    #if not label and prefix:
-        #label = prefix
-        
+    if iadfijo != '':
+        label = iadfijo 
     return ktexto,label
     
 
@@ -794,15 +841,6 @@ def _joinConstructor(**kwargs):
         texto.append('{0[0]} JOIN {0[1]} AS {0[2]} ON {0[3]}'.format(itm,clausula))
     statement += ' '.join(texto)
     return statement 
-
-def replTablePrefix(string,oldName,newName):
-    import re
-    matchpattern=r'(\W*\w*\.)?('+oldName+')'
-    filematch = matchpattern+'\W'
-    fieldmatch=matchpattern+r'(\..*)'
-    fieldrepl = r'\1' + newName +r'\3'
-    string = re.sub(fieldmatch,fieldrepl,string)
-    return string
 
 def queryConstructor(**kwargs):
     '''
