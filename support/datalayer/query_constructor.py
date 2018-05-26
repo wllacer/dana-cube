@@ -86,24 +86,31 @@ def changeTable(string,oldName,newName):
     result = re.sub(pattern,fileRepl,string)
     return result    
 
-def setPrefix(buffer,oldName,newName,excludeDict=[],excludeList=[]):
+def setPrefix(pbuffer,oldName,newName,excludeDict=[],excludeList=[]):
+    """
+        siempre sobre copias 
+    """
     try:
-        if isinstance(buffer,tuple):  
-            buffer = list(buffer)
-        if isinstance(buffer,str):
+        if isinstance(pbuffer,str):
+            buffer = pbuffer
             if '.' in oldName:
                 step = changeTable(buffer,oldName,newName)
-                pureFile = oldName.split(',')[-1]
-                return changeTable(step,oldName,newName)
+                pureFile = oldName.split('.')[-1]
+                return changeTable(step,pureFile,newName)
             else:
                 return changeTable(buffer,oldName,newName)
-        elif isinstance(buffer,(list,tuple,set)):  #es por completitud, como son inmutables los segundos ...
+        elif isinstance(pbuffer,(list,tuple,set)):  #es por completitud, como son inmutables los segundos ...
+            if isinstance(pbuffer,tuple):  
+                buffer = list(pbuffer)
+            else:
+                buffer = pbuffer[:]
             for k in range(len(buffer)):
                 if k in excludeList:
                     continue
                 buffer[k] = setPrefix(buffer[k],oldName,newName,excludeDict,excludeList)
             return buffer
-        elif isinstance(buffer,dict):
+        elif isinstance(pbuffer,dict):
+            buffer = pbuffer.copy()  #FIXME valdra con esto ¿?
             for k in buffer:
                 if k in excludeDict:
                     continue

@@ -779,7 +779,7 @@ class Vista:
     def __prepareJoin(self,joins,baseRef,name=None):
         if isinstance(baseRef,(list,tuple)):
             if isinstance(baseRef[0],(list,tuple)):
-                baseTable = baseRef[0][1]
+                baseTable = baseRef[0][0]
             else:
                 baseTable = baseRef[0]
         else:
@@ -794,6 +794,7 @@ class Vista:
             if idx < len(joins) -1 or name is None:
                 join_entrada['table'] = entrada.get('table')
             else:
+                #What if it has prefix ¿?
                 join_entrada['table'] = '{} AS {}'.format(entrada.get('table'),name)
             join_entrada['join_filter'] = entrada.get('filter')
             join_entrada['join_clause'] = []
@@ -839,6 +840,7 @@ class Vista:
         maxRowElem = len(contexto_row[-1]['elems'])
         maxColElem = len(contexto_col[-1]['elems'])
 
+        
         for x,row in enumerate(contexto_row):
             for y,col in enumerate(contexto_col):
                 """
@@ -848,13 +850,15 @@ class Vista:
                 if row['linkvia']:
                     pfx = 'r{}_{}'.format(x,y)
                     tmpLinks += self.__prepareJoin(row['linkvia'],sqlDef['tables'],'r{}_{}'.format(x,y))
-                    trow = list(map(lambda i:setPrefix(i,row['linkvia'][-1]['table'],pfx),row['elems']))
+                    trow = setPrefix(row['elems'],row['linkvia'][-1]['table'],pfx)
+                    #trow = list(map(lambda i:setPrefix(i,row['linkvia'][-1]['table'],pfx),row['elems']))
                 else:
                     trow = row['elems'][:]
                 if col['linkvia']:
                     pfx  ='c{}_{}'.format(x,y)
                     tmpLinks += self.__prepareJoin(col['linkvia'],sqlDef['tables'],'c{}_{}'.format(x,y))
-                    tcol = list(map(lambda i:setPrefix(i,col['linkvia'][-1]['table'],pfx),col['elems']))
+                    tcol = setPrefix(col['elems'],col['linkvia'][-1]['table'],pfx)
+                    #tcol = list(map(lambda i:setPrefix(i,col['linkvia'][-1]['table'],pfx),col['elems']))
                 else:
                     tcol = col['elems'][:]
                 sqlDef['join'] = tmpLinks

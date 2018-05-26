@@ -34,10 +34,26 @@ def traverse(tree, key=None, mode=1):
     See base at util.treebasic.TreeModel
 
     """
+    if type(tree) == QStandardItemModel:
+        return traverseBasic(tree.invisibleRootItem())
+    else:
+        return tree.traverse(key,mode,output = _ITEM)
 
-    return tree.traverse(key,mode,output = _ITEM)
-
-
+def traverseBasic(root,base=None):
+    if base is not None:
+       yield base
+       queue = [ base.child(i) for i in range(0,base.rowCount()) ]
+    else:
+        queue = [ root.child(i) for i in range(0,root.rowCount()) ]
+        #print(queue)
+        #print('')
+    while queue :
+        yield queue[0]
+        expansion = [ queue[0].child(i) for i in range(0,queue[0].rowCount()) ]
+        if expansion is None:
+            del queue[0]
+        else:
+            queue = expansion  + queue[1:]  
 from PyQt5.QtCore import Qt 
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtGui import QColor
