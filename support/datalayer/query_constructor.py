@@ -565,7 +565,7 @@ def _whereConstructor(kwargs):
        else:
          kstatement = '({}) AND ({}) '.format(kwargs[complemento],kstatement)
          
-    if kstatement == '':
+    if kstatement.strip() == '':
       return ''
     else:
       return statement + ' ' + kstatement + ' '

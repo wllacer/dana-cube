@@ -255,7 +255,38 @@ class Cubo:
             lista.append(self.fillGuia(k,total=total,generateTree=generateTree))
         return lista
     
-    def _setTableName(self,guia,idx):
+    def _setTableName(self,guiaId,prodRule):
+        """
+        Para una regla de producción concreta en una guia obtiene la tabla base que corresponde para 
+        el dominio de definición que deseo
+        
+        input
+           guia  definicion de la guia correspondiente
+           idx   indice de la produccion en la tupla de contextos
+        output
+           table_name nombre de la tabla
+           filter filtro asociado
+        """
+        basefilter = None
+        datefilter = None
+        print('guias de las que hablamos ',guiaId,prodRule.get('origGuide'),' ind :',prodRule.get('origID'))
+        guia = self.definition['guides'][prodRule.get('origGuide')]
+        idx = prodRule.get('origID',0)
+        entrada = guia['prod'][idx]
+        if 'domain' in entrada:
+            table_name = entrada['domain'].get('table')  # se supone que tiene que existir
+            basefilter = entrada['domain'].get('filter')
+        elif 'link via' in entrada:
+            table_name = entrada['link via'][-1].get('table')
+        else:
+            table_name = self.definition.get('table')
+            if len(self.definition.get('base filter','')) > 0:
+                basefilter = self.definition['base filter']
+            if 'date filter' in self.definition:
+                datefilter = self.setDateFilter()
+        return table_name,basefilter,datefilter
+    
+    def _setTableNameOrig(self,guia,idx):
         """
         Para una regla de producción concreta en una guia obtiene la tabla base que corresponde para 
         el dominio de definición que deseo
@@ -284,11 +315,17 @@ class Cubo:
         return table_name,basefilter,datefilter
             
    
-    def _expandReference(self,guidID):
+    def _expandReference(self,guidID,prodRules=None):
         prodExpandida = []
-        guia = self.definition['guides'][guidID]
-        for prodId,produccion in enumerate(guia['prod']):
+        if not prodRules:
+            prodRules = self.definition['guides'][guidID]['prod']        
+        for prodId,produccion in enumerate(prodRules):
+            produccion['origGuide'] = guidID
             produccion['origID'] = prodId
+            if 'class' not in produccion:
+                produccion['class'] = self.definition['guides'][guidID]['class']        
+            if 'name' not in produccion:
+                produccion['name'] = self.definition['guides'][guidID]['name']    
             if produccion.get('reference'):
                 refId = [ item['name'] for item in self.lista_guias].index(produccion['reference'])
                 prodInter = self._expandReference(refId)
@@ -298,7 +335,7 @@ class Cubo:
                 prodExpandida.append(produccion)
         return prodExpandida
             
-    def _expandDateProductions(self,guidID):
+    def _expandDateProductions(self,guidID,prodRules=None):
         """
         las producciones tipo date son abreviaturas de jerarquias internas. Ahora es el momento de dedoblarlas
         Quedan como entradas simples en la tabla de contextos de la guia (bien marcadas como dates);
@@ -307,10 +344,9 @@ class Cubo:
         origID con el numero de la regla de producción original (para trazas)
         """
         prodExpandida = []
-        guia = self.definition['guides'][guidID]
-        
-        for prodId,produccion in enumerate(guia['prod']):
-            produccion['origID'] = prodId
+        if not prodRules:
+            prodRules = self.definition['guides'][guidID]['prod']        
+        for prodId,produccion in enumerate(prodRules):
             if produccion.get('class','o') == 'd' or produccion.get('fmt','txt') == 'date':
                 code = norm2List(produccion.get('elem'))
                 campo = code[0] #solo podemos trabajar con un campo
@@ -321,6 +357,7 @@ class Cubo:
                     # correctamente formateado  TODO faltan los atributos calculados (Cuatrimestres,trimestres y quincenas)
                     datosfecha= getDateEntry(campo,kmask,self.dbdriver)
                     datosfecha['class'] = 'd'
+                    datosfecha['origGuide'] = guidID
                     datosfecha['campo_base'] = campo  #estrictamente temporal
                     datosfecha['origID'] = prodId
                     prodExpandida.append(datosfecha)
@@ -383,16 +420,18 @@ class Cubo:
         Ahora mismo este codigo tiene el efecto secundario que en claves multicampo se crea implicitamente una jerarquia de valores
         TODO contemplar el caso contrario
         """
-        columns = contexto['columns']
-        code = contexto['code']
-        desc = contexto['desc']
+        columns = contexto['columns']   #columnas que van a obtenerse de la b.d.
+        code = contexto['code']               #código que conforma la guia
+        desc = contexto['desc']                #texto descriptivo de cada codigo
         groupby = contexto['groupby']
         
         ngroupby = len(groupby)
         ncols = len(columns)
         ndesc = len(columns) - len(code)
-        cache_parents = [ None for i in range(len(code))]
         ncode = len(code) -ngroupby
+        
+        #cache_parents = [ None for i in range(len(code))]
+        
         #ndesc = len(columns) - len(code)
         for entryNum,row in enumerate(cursor):
             # renormalizamos el contenido del cursor
@@ -474,17 +513,7 @@ class Cubo:
         
         WIP Para el caso de claves multicampo, en principio creo que case_sql puede quedar como hasta ahora
         '''
-        cubo = self.definition
-        if isinstance(guidIdentifier,int):
-            guidId = guidIdentifier
-        else:
-            guidId = [ item['name'] for item in self.lista_guias].index(guidIdentifier)
-        guia = self.definition['guides'][guidId]
-        
-        date_cache = {}
-        contexto = []
-
-        if generateTree:
+        def _createTree(total,display):
             if display:
                 arbol = QStandardItemModel()
             else:
@@ -498,22 +527,9 @@ class Cubo:
                 tree = item
             else:
                 tree = arbol.invisibleRootItem()  #para que __createProdModel solo necesite invocarse una vez
-        
-        prodReference = self._expandReference(guidId)
-        #bypass ahora mismo FIXME
-        pprint(prodReference)
-        self.definition['guides'][guidId]['prod'] = prodReference
-        # primero expandimos las entradas tipo fecha
-        prodExpandida = self._expandDateProductions(guidId)
-        
-        for prodId,produccion in enumerate(prodExpandida):
-            origId = produccion['origID']
-            clase = produccion.get('class',guia.get('class','o'))
-            # for backward compatibility
-            if clase == 'h':  
-                clase = 'o'
-                
-                        
+            return arbol,tree
+
+        def setName():
             if len(prodExpandida) == 1: 
                 nombre = produccion.get('name',guia.get('name')) 
             elif produccion.get('name'):
@@ -526,8 +542,88 @@ class Cubo:
                     nombre = guia.get('name') + '_' + l_prod
             else:
                 nombre = guia.get('name')+'_'+str(prodId).replace(' ','_').strip()
+                
+            return nombre
 
-            table,basefilter,datefilter  = self._setTableName(guia,origId)
+        def fieldInfoOrdinary():
+            if 'domain' in produccion:
+                groupby = norm2List(produccion['domain'].get('grouped by'))
+                code = groupby + normConcat(self.db,produccion['domain'].get('code')) 
+                desc = norm2List(produccion['domain'].get('desc'))
+                columns = code + desc
+                #filter = produccion['domain'].get('filter','')
+            else:
+                columns = code = desc = normConcat(self.db,produccion.get('elem'))
+                groupby = []
+            if prodId == 0:    
+                elems = normConcat(self.db,produccion.get('elem'))
+            else:
+                elems = contexto[prodId -1]['elems'] + normConcat(self.db,produccion.get('elem'))
+            return groupby,code,desc,columns,elems
+        
+        def fieldInfoCategory(nombre):
+            code = desc= columns = [caseConstructor(nombre,produccion),]
+            if prodId == 0:    
+                elems = code
+            else:
+                elems = contexto[prodId -1]['elems'] + code
+            groupby = []
+            return groupby,code,desc,columns,elems
+        
+        def fieldInfoCase(nombre):
+            campos = norm2List(produccion.get('elem')) + [nombre, ]
+            transformado = []
+            for linea in produccion['case_sql']:
+                for k,campo in enumerate(campos):
+                    linea = linea.replace('$${}'.format(str(k +1)),campo)
+                transformado.append(linea)
+            code = desc = columns = [' '.join(transformado),]
+
+            if prodId == 0:    
+                elems = code
+            else:
+                elems = contexto[prodId -1]['elems'] + code
+            groupby = []
+            return groupby,code,desc,columns,elems
+
+        def fieldInfoDate():
+            code = desc = columns = norm2List(produccion.get('elem'))
+                # la correcta asignacion de formatos fecha ha sido hecha al desdoblar
+            if prodId == 0:    
+                elems = norm2List(produccion.get('elem'))
+            else:
+                elems = contexto[prodId -1]['elems'] + norm2List(produccion.get('elem'))
+            groupby = []
+            return groupby,code,desc,columns,elems
+            
+        cubo = self.definition
+        if isinstance(guidIdentifier,int):
+            guidId = guidIdentifier
+        else:
+            guidId = [ item['name'] for item in self.lista_guias].index(guidIdentifier)
+        guia = self.definition['guides'][guidId]
+        
+        date_cache = {}
+        contexto = []
+
+        if generateTree:
+            arbol,tree = _createTree(total,display)
+        
+        prodReference = self._expandReference(guidId)
+        #self.definition['guides'][guidId]['prod'] = prodReference
+        # primero expandimos las entradas tipo fecha
+        prodExpandida = self._expandDateProductions(guidId,prodReference) #,prodReference)
+        
+        for prodId,produccion in enumerate(prodExpandida):
+            origId = produccion['origID']
+            clase = produccion.get('class',guia.get('class','o'))
+            # for backward compatibility only
+            if clase == 'h':  
+                clase = 'o'
+                
+            nombre = setName()
+
+            table,basefilter,datefilter  = self._setTableName(guidId,produccion) #self._setTableName(guia,origId)
             cumgroup = []
             groupby= []
             code = []
@@ -548,57 +644,47 @@ class Cubo:
             
             Luego determino que campos (elems) seran los que se necesitaran para el group by en la consulta real
             """
+            # create el contexto
             if clase == 'o':
-                if 'domain' in produccion:
-                    groupby = norm2List(produccion['domain'].get('grouped by'))
-                    code = groupby + normConcat(self.db,produccion['domain'].get('code')) 
-                    desc = norm2List(produccion['domain'].get('desc'))
-                    columns = code + desc
-                    #filter = produccion['domain'].get('filter','')
-                else:
-                    columns = code = desc = normConcat(self.db,produccion.get('elem'))
-                    
-                if prodId == 0:    
-                    elems = normConcat(self.db,produccion.get('elem'))
-                else:
-                    elems = contexto[prodId -1]['elems'] + normConcat(self.db,produccion.get('elem'))
-                
+                groupby,code,desc,columns,elems = fieldInfoOrdinary()
             elif clase == 'c' and 'categories' in produccion:
-                isSQL = False
-                # esto no es necesario en esta fase
-                code = desc= columns = [caseConstructor(nombre,produccion),]
-                if generateTree:
+                groupby,code,desc,columns,elems = fieldInfoCategory(nombre)
+            elif clase == 'c' and 'case_sql' in produccion:
+                groupby,code,desc,columns,elems = fieldInfoCase(nombre)
+            elif clase == 'd':
+                groupby,code,desc,columns,elems = fieldInfoDate()
+            # si tengo una jerarquia y no tengo group by cargo uno por defecto si es la misma tabla
+            if prodId != 0 and len(groupby) == 0:
+                if contexto[prodId -1]['table'] == table:  #por coherencia sin groop by es imposible sino
+                    groupby = contexto[prodId -1]['code']
+                    if code != desc:
+                        code = groupby + code
+                        columns = code + desc
+                    else:
+                        code = desc = columns = groupby + code
+            #if prodId != 0:
+                #cumgroup.append(code)
+            
+            if prodId == 0:
+                linkvia = produccion.get('link via',[]) 
+            else:
+                linkvia = contexto[prodId -1]['linkvia'] + produccion.get('link via',[])
+            
+            contexto.append({'table':table,'code':code,'desc':desc,'groupby':groupby,'columns':columns,
+                                #'acumgrp':cumgroup,'filter':basefilter,
+                            'name':nombre,'filter':basefilter,'class':clase,   #TODO DOC + ripple to fillGuia
+                            'elems':elems,'linkvia':linkvia})
+            # ahora a ejecutar
+            if generateTree:
+                if clase == 'c' and 'categories' in produccion:
                     cursor = []
                     for entrada in produccion['categories']:
                         if 'result' in entrada:
                             cursor.append([entrada.get('result'),])
                         else:
                             cursor.append([entrada.get('default'),])
-                
-                if prodId == 0:    
-                    elems = code
-                else:
-                    elems = contexto[prodId -1]['elems'] + code
-
-            elif clase == 'c' and 'case_sql' in produccion:
-                campos = norm2List(produccion.get('elem')) + [nombre, ]
-                transformado = []
-                for linea in produccion['case_sql']:
-                    for k,campo in enumerate(campos):
-                        linea = linea.replace('$${}'.format(str(k +1)),campo)
-                    transformado.append(linea)
-                code = desc = columns = [' '.join(transformado),]
-
-                if prodId == 0:    
-                    elems = code
-                else:
-                    elems = contexto[prodId -1]['elems'] + code
-
-            elif clase == 'd':
-                isSQL = False
-                code = desc = columns = norm2List(produccion.get('elem'))
-                # obtengo la fecha minima y maxima. Para ello tendre que consultar la base de datos
-                if generateTree:
+                elif clase == 'd':
+                    ## obtengo la fecha minima y maxima. Para ello tendre que consultar la base de datos
                     campo = produccion.get('campo_base') #solo podemos   trabajar con un campo
                     if campo in date_cache:
                         pass
@@ -631,45 +717,10 @@ class Cubo:
                     cursor = getDateIndexNew(date_cache[campo][0]  #max_date
                                                 , date_cache[campo][1]  #min_date
                                                 , kmask)
-                # la correcta asignacion de formatos fecha ha sido hecha al desdoblar
-                if prodId == 0:    
-                    elems = norm2List(produccion.get('elem'))
+
                 else:
-                    elems = contexto[prodId -1]['elems'] + norm2List(produccion.get('elem'))
-
-
-            # si tengo una jerarquia y no tengo group by cargo uno por defecto si es la misma tabla
-            if prodId != 0 and len(groupby) == 0:
-                if contexto[prodId -1]['table'] == table:  #por coherencia sin groop by es imposible sino
-                    groupby = contexto[prodId -1]['code']
-                    if code != desc:
-                        code = groupby + code
-                        columns = code + desc
-                    else:
-                        code = desc = columns = groupby + code
-            #if prodId != 0:
-                #cumgroup.append(code)
-            
-            if prodId == 0:
-                linkvia = produccion.get('link via',[]) 
-            else:
-                linkvia = contexto[prodId -1]['linkvia'] + produccion.get('link via',[])
-            
-            contexto.append({'table':table,'code':code,'desc':desc,'groupby':groupby,'columns':columns,
-                                #'acumgrp':cumgroup,'filter':basefilter,
-                            'name':nombre,'filter':basefilter,'class':clase,   #TODO DOC + ripple to fillGuia
-                            'elems':elems,'linkvia':linkvia})
-            if generateTree:
-                if isSQL:
                     cursor = self._getProdCursor(contexto[-1],basefilter,datefilter)
-                
-
                 self._createProdModel(tree,cursor,contexto[-1],prodId,total,display)
-
-            #for item in traverse(tree):
-                #print(item.parent().data(Qt.DisplayRole) if item.parent() is not None else '??',
-                        #item.data(Qt.DisplayRole))          
-                
         if generateTree:
             return arbol,contexto
         else:
