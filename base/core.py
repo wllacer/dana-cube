@@ -269,7 +269,7 @@ class Cubo:
         """
         basefilter = None
         datefilter = None
-        print('guias de las que hablamos ',guiaId,prodRule.get('origGuide'),' ind :',prodRule.get('origID'))
+
         guia = self.definition['guides'][prodRule.get('origGuide')]
         idx = prodRule.get('origID',0)
         entrada = guia['prod'][idx]
@@ -286,33 +286,33 @@ class Cubo:
                 datefilter = self.setDateFilter()
         return table_name,basefilter,datefilter
     
-    def _setTableNameOrig(self,guia,idx):
-        """
-        Para una regla de producción concreta en una guia obtiene la tabla base que corresponde para 
-        el dominio de definición que deseo
+    #def _setTableNameOrig(self,guia,idx):
+        #"""
+        #Para una regla de producción concreta en una guia obtiene la tabla base que corresponde para 
+        #el dominio de definición que deseo
         
-        input
-           guia  definicion de la guia correspondiente
-           idx   indice de la produccion en la tupla de contextos
-        output
-           table_name nombre de la tabla
-           filter filtro asociado
-        """
-        basefilter = None
-        datefilter = None
-        entrada = guia['prod'][idx]
-        if 'domain' in entrada:
-            table_name = entrada['domain'].get('table')  # se supone que tiene que existir
-            basefilter = entrada['domain'].get('filter')
-        elif 'link via' in entrada:
-            table_name = entrada['link via'][-1].get('table')
-        else:
-            table_name = self.definition.get('table')
-            if len(self.definition.get('base filter','')) > 0:
-                basefilter = self.definition['base filter']
-            if 'date filter' in self.definition:
-                datefilter = self.setDateFilter()
-        return table_name,basefilter,datefilter
+        #input
+           #guia  definicion de la guia correspondiente
+           #idx   indice de la produccion en la tupla de contextos
+        #output
+           #table_name nombre de la tabla
+           #filter filtro asociado
+        #"""
+        #basefilter = None
+        #datefilter = None
+        #entrada = guia['prod'][idx]
+        #if 'domain' in entrada:
+            #table_name = entrada['domain'].get('table')  # se supone que tiene que existir
+            #basefilter = entrada['domain'].get('filter')
+        #elif 'link via' in entrada:
+            #table_name = entrada['link via'][-1].get('table')
+        #else:
+            #table_name = self.definition.get('table')
+            #if len(self.definition.get('base filter','')) > 0:
+                #basefilter = self.definition['base filter']
+            #if 'date filter' in self.definition:
+                #datefilter = self.setDateFilter()
+        #return table_name,basefilter,datefilter
             
    
     def _expandReference(self,guidID,prodRules=None):
@@ -330,6 +330,8 @@ class Cubo:
                 refId = [ item['name'] for item in self.lista_guias].index(produccion['reference'])
                 prodInter = self._expandReference(refId)
                 for prod in prodInter:
+                    if produccion.get('link ref'):
+                        prod['link ref'] = produccion.get('link ref')
                     prodExpandida.append(prod)
             else:
                 prodExpandida.append(produccion)
@@ -366,46 +368,96 @@ class Cubo:
                 
         return prodExpandida
 
-    def _getProdCursor(self,contexto,basefilter,datefilter):
-        """
-        De una regla de produccion ampliada (de su contexto mas bien) y con los filtros generales de la tabla (o dominio)
-        creo la sentencia SQL y obtengo el cursor correspondiente
-        INput
-           contexto de una regla de produccion (cf. fillGuia)
-           basefilter
-           datefilter   los filtros de defecto y fecha de la tabla del cubo o dominio
-        Output
-            cursor   un cursor sql
-        """
-        table = contexto['table']
-        columns = contexto['columns']
-        code = contexto['code']
-        #filter = contexto.get('filter','')
-        sqlDef = {}
-        sqlDef['tables'] = table
-        sqlDef['fields'] = columns
-        if basefilter is not None:
-            sqlDef['base_filter'] = basefilter
-        if datefilter is not None:
-            sqlDef['where'] = datefilter
-        sqlDef['order'] = [ str(x + 1) for x in range(len(code))]
-        sqlDef['select_modifier']='DISTINCT'
-        sqlDef['driver'] = self.dbdriver
-        try:
-            sqlString = queryConstructor(**sqlDef)
-        except:
-            print('Zasss')
-            pprint(sqlDef)
-            pprint(table)
-            pprint(columns)
-            pprint(filter)
-            pprint
-            raise
-        cursor=getCursor(self.db,sqlString)
-        if config.DEBUG:
-            print(time.time(),'Datos ',queryFormat(sqlString))
+    def _getProdCursor(self,contexto,ind,basefilter,datefilter):
+            """
+            De una regla de produccion ampliada (de su contexto mas bien) y con los filtros generales de la tabla (o dominio)
+            creo la sentencia SQL y obtengo el cursor correspondiente
+            INput
+            contexto de una regla de produccion (cf. fillGuia)
+            basefilter
+            datefilter   los filtros de defecto y fecha de la tabla del cubo o dominio
+            Output
+                cursor   un cursor sql
+            """
+            elemCtx = contexto[ind]
+            
+            table = elemCtx['table']
+            columns = elemCtx['columns']
+            code = elemCtx['code']
+            link_ref = elemCtx.get('link ref')
+            #filter = contexto.get('filter','')
+            sqlDef = {}
+            sqlDef['tables'] = table
+            sqlDef['fields'] = columns
+            if basefilter is not None:
+                sqlDef['base_filter'] = basefilter
+            if datefilter is not None:
+                sqlDef['where'] = datefilter
+            sqlDef['order'] = [ str(x + 1) for x in range(len(code))]
+            sqlDef['select_modifier']='DISTINCT'
+            sqlDef['driver'] = self.db.dialect
+            if link_ref:
+                sqlDef['fields'] = setPrefix(sqlDef['fields'],contexto[ind -1]['table'],'s{}'.format(ind))
+                sqlDef['join']=[{'table':'{} AS {}'.format(contexto[ind -1]['table'],'s{}'.format(ind)),
+                                 'join_modifier':'LEFT',
+                                'opt_clause':link_ref}]
+            try:
+                pprint(sqlDef)
+                sqlString = queryConstructor(**sqlDef)
+                print(queryFormat(sqlString))
+            except:
+                print('Zasss')
+                pprint(sqlDef)
+                pprint(table)
+                pprint(columns)
+                pprint(filter)
+                pprint
+                raise
+            cursor=getCursor(self.db,sqlString)
+            if config.DEBUG:
+                print(time.time(),'Datos ',queryFormat(sqlString))
 
-        return cursor
+            return cursor
+    #def _getProdCursor(self,contexto,basefilter,datefilter):
+        #"""
+        #De una regla de produccion ampliada (de su contexto mas bien) y con los filtros generales de la tabla (o dominio)
+        #creo la sentencia SQL y obtengo el cursor correspondiente
+        #INput
+           #contexto de una regla de produccion (cf. fillGuia)
+           #basefilter
+           #datefilter   los filtros de defecto y fecha de la tabla del cubo o dominio
+        #Output
+            #cursor   un cursor sql
+        #"""
+        #table = contexto['table']
+        #columns = contexto['columns']
+        #code = contexto['code']
+        ##filter = contexto.get('filter','')
+        #sqlDef = {}
+        #sqlDef['tables'] = table
+        #sqlDef['fields'] = columns
+        #if basefilter is not None:
+            #sqlDef['base_filter'] = basefilter
+        #if datefilter is not None:
+            #sqlDef['where'] = datefilter
+        #sqlDef['order'] = [ str(x + 1) for x in range(len(code))]
+        #sqlDef['select_modifier']='DISTINCT'
+        #sqlDef['driver'] = self.dbdriver
+        #try:
+            #sqlString = queryConstructor(**sqlDef)
+        #except:
+            #print('Zasss')
+            #pprint(sqlDef)
+            #pprint(table)
+            #pprint(columns)
+            #pprint(filter)
+            #pprint
+            #raise
+        #cursor=getCursor(self.db,sqlString)
+        #if config.DEBUG:
+            #print(time.time(),'Datos ',queryFormat(sqlString))
+
+        #return cursor
 
     def _createProdModel(self,raiz,cursor,contexto,prodId,total=None,display=False):
         """
@@ -482,7 +534,24 @@ class Cubo:
                         parent.appendRow((QStandardItem(str(key)),QStandardItem(str(value)),))                    
 
     
-    
+    def setGroupBy(self,contexto,prodId,table,code,desc,columns,groupby):
+        groupby = contexto[prodId -1]['code']
+        if code != desc:
+            code = groupby + code
+            columns = code + desc
+        else:
+            code = desc = columns = groupby + code
+        
+        return groupby,code,desc,columns
+
+            #if contexto[prodId -1]['table'] == table:  #por coherencia sin groop by es imposible sino
+                #groupby = contexto[prodId -1]['code']
+                #if code != desc:
+                    #code = groupby + code
+                    #columns = code + desc
+                #else:
+                    #code = desc = columns = groupby + code
+            #return groupby,code,desc,columns
     def fillGuia(self,guidIdentifier,total=None,generateTree=True,display=False):
         '''
         TODO ripple doc
@@ -544,8 +613,16 @@ class Cubo:
                 nombre = guia.get('name')+'_'+str(prodId).replace(' ','_').strip()
                 
             return nombre
+        
+        def renormElems():
+            elems = norm2List(produccion['elem'])
+            for k in range(len(elems)):
+                if '.' not in elems[k]:
+                    elems[k] = '{}.{}'.format(table,elems[k])
+            produccion['elem'] = elems
 
         def fieldInfoOrdinary():
+            #TODO renormalizar nombres si es posible
             if 'domain' in produccion:
                 groupby = norm2List(produccion['domain'].get('grouped by'))
                 code = groupby + normConcat(self.db,produccion['domain'].get('code')) 
@@ -562,6 +639,7 @@ class Cubo:
             return groupby,code,desc,columns,elems
         
         def fieldInfoCategory(nombre):
+            renormElems()
             code = desc= columns = [caseConstructor(nombre,produccion),]
             if prodId == 0:    
                 elems = code
@@ -571,6 +649,7 @@ class Cubo:
             return groupby,code,desc,columns,elems
         
         def fieldInfoCase(nombre):
+            renormElems()
             campos = norm2List(produccion.get('elem')) + [nombre, ]
             transformado = []
             for linea in produccion['case_sql']:
@@ -587,6 +666,7 @@ class Cubo:
             return groupby,code,desc,columns,elems
 
         def fieldInfoDate():
+            renormElems()
             code = desc = columns = norm2List(produccion.get('elem'))
                 # la correcta asignacion de formatos fecha ha sido hecha al desdoblar
             if prodId == 0:    
@@ -653,15 +733,17 @@ class Cubo:
                 groupby,code,desc,columns,elems = fieldInfoCase(nombre)
             elif clase == 'd':
                 groupby,code,desc,columns,elems = fieldInfoDate()
+                
             # si tengo una jerarquia y no tengo group by cargo uno por defecto si es la misma tabla
             if prodId != 0 and len(groupby) == 0:
-                if contexto[prodId -1]['table'] == table:  #por coherencia sin groop by es imposible sino
-                    groupby = contexto[prodId -1]['code']
-                    if code != desc:
-                        code = groupby + code
-                        columns = code + desc
-                    else:
-                        code = desc = columns = groupby + code
+                groupby,code,desc,columns = self.setGroupBy(contexto,prodId,table,code,desc,columns,groupby)
+                #if contexto[prodId -1]['table'] == table:  #por coherencia sin groop by es imposible sino
+                    #groupby = contexto[prodId -1]['code']
+                    #if code != desc:
+                        #code = groupby + code
+                        #columns = code + desc
+                    #else:
+                        #code = desc = columns = groupby + code
             #if prodId != 0:
                 #cumgroup.append(code)
             
@@ -673,6 +755,7 @@ class Cubo:
             contexto.append({'table':table,'code':code,'desc':desc,'groupby':groupby,'columns':columns,
                                 #'acumgrp':cumgroup,'filter':basefilter,
                             'name':nombre,'filter':basefilter,'class':clase,   #TODO DOC + ripple to fillGuia
+                            'origGuide':produccion.get('origGuide'),'origID':produccion.get('origID'),'link ref':produccion.get('link ref'),
                             'elems':elems,'linkvia':linkvia})
             # ahora a ejecutar
             if generateTree:
@@ -719,7 +802,8 @@ class Cubo:
                                                 , kmask)
 
                 else:
-                    cursor = self._getProdCursor(contexto[-1],basefilter,datefilter)
+                    cursor  = self._getProdCursor(contexto,prodId,basefilter,datefilter)
+                    #cursor = self._getProdCursor(contexto[-1],basefilter,datefilter)
                 self._createProdModel(tree,cursor,contexto[-1],prodId,total,display)
         if generateTree:
             return arbol,contexto

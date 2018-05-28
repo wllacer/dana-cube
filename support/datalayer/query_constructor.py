@@ -801,12 +801,17 @@ def _joinConstructor(**kwargs):
         right,rlabel = tableNameSolver(elemento['rtable'])
         elemento['ltable'] = left #kwargs['labels'][left]
         elemento['rtable'] = right #kwargs['labels'][right]
-        join_clause = mergeStrings('AND',
-                                   searchConstructor('join_clause',**elemento,rtype='r'), #,ltable=ltable,rtable=rtable),
-                                   elemento.get('join_filter'),
-                                   spaced=True)
         prefijo = elemento.get('join_modifier','')
-        optCache.append([prefijo,left,llabel,join_clause,right,None])
+        if 'join_clause' in elemento:
+            join_clause = mergeStrings('AND',
+                                    searchConstructor('join_clause',**elemento,rtype='r'), #,ltable=ltable,rtable=rtable),
+                                    elemento.get('join_filter'),
+                                    spaced=True)
+
+            optCache.append([prefijo,left,llabel,join_clause,right,None])
+        if elemento.get('opt_clause'):
+            optCache.append([prefijo,left,llabel,elemento.get('opt_clause'),right,None])
+
         
     #optimizacion. Veo que entradas son identicas y las acumulo
     # corner case -> uno de los "cortados" tiene sufijo explicito. No lo elimino

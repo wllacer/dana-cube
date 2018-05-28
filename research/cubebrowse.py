@@ -144,7 +144,8 @@ EDIT_TREE = {
                 },
     'prod_ref': { 'objtype':'dict',
                'elements':[
-                   ('reference',True,False)
+                   ('reference',True,False),
+                   ('link ref',False,False)
                    ],
                'text':'referencia a otra guia',
             },
@@ -228,6 +229,7 @@ EDIT_TREE = {
     'date period':{'editor':QSpinBox,'min':1},
     'date format':{'default':'fecha'},
     'reference':{'editor':QComboBox,'source':srcGuides },
+    'link ref':{'editor':QLineEdit},
     'default base': { 'objtype':'dict',
                      'elements':[],
                      'getters':[],
