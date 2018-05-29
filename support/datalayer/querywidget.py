@@ -209,7 +209,8 @@ class QueryTab(QWidget):
             if cursor is not None:
                 cursor.close()
             self.msgLine.show()
-            self.msgLine.setText(norm2String(e.args))
+            #self.msgLine.setText(e)
+            self.msgLine.setText(norm2String(e.args)+' '+sqlString)
             return
 
         if not self.baseModel:

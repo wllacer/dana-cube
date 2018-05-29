@@ -54,6 +54,8 @@ Areas where the product __must__ be improved. They might not be errors but don't
 
 * __Solved__ Current export implementation is fast, but does not take into account changes via danacube
 
+* Restaurar valores originales no funciona ahora ¿?
+
 ## Needed Enhancements
 
 Thing which shall belong to the app and aren't there now
@@ -87,6 +89,11 @@ Most of it is already in a new (and I hope better) implementation, but they stil
 * Guide subtype change
 * a general editor for categories & case_sql
 * verify date filter 
+* For reference guides
+    * Document it
+    * case with more than 2 levels
+    * OK by now categories and dates not on first level (and not too cpu consuming)
+    * ref to complex links
 
 ## Database backends
 
@@ -95,7 +102,7 @@ Everything related to the database backends
 ### Open Issues
 * Database testing in other environmentes. First 3 are available to me
     * __DONE__ MySQL/ MariaDB
-    * __DONE__ PostGreSQL
+    * __DONE__ PostGreSQL   
     * DB2 (uninstalled)
     * __WIP__ Oracle. Issues detected
         * Extremely slow in my setup (with system)
@@ -103,6 +110,10 @@ Everything related to the database backends
         * synonim handling
     * SQLServer (not available locally)
 
+* PostGreSQL
+    * if a field is an enum they don't come orderer by text but internal and that destroys my algoritms. Seems hard to solve.
+        * alt 1 Sort the cursor for the guide ...> might be a disaster for big cursors
+        * alt 2 change the search algorithm. It's a servere performance penalty unless I find a way to catch the enums
 
 * Use of CUBE / ROLLUP sintax where available
 
@@ -115,7 +126,7 @@ Everything related to the application packaging. Is an area still in the plannin
 
 ## NoQT Core
 
-* Is not sinchronized anymore. Needs quiet time at the main branch
+* Is not sinchronized anymore. Needs quiet time at the main branch. Temporarily excluded
 
 
 # Info

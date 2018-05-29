@@ -427,7 +427,7 @@ def tableNameSolver(tableName,prefix=None):
         while pos > 0:
             mcampo = mcampo[pos+4:]
             pos = mcampo.lower().find(' as ')
-        if mcampo != string:
+        if mcampo != string.lower():
             return string.lower().replace(' as '+mcampo,'').strip(),mcampo.strip()
         else:
             return string.strip(),''

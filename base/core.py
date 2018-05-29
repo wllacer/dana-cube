@@ -617,6 +617,8 @@ class Cubo:
         def renormElems():
             elems = norm2List(produccion['elem'])
             for k in range(len(elems)):
+                if '(' in elems[k] or ' ' in elems[k]:
+                    continue # no puedo cualificar campos sin provocar un desastre en una funcion
                 if '.' not in elems[k]:
                     elems[k] = '{}.{}'.format(table,elems[k])
             produccion['elem'] = elems
@@ -695,6 +697,7 @@ class Cubo:
         prodExpandida = self._expandDateProductions(guidId,prodReference) #,prodReference)
         
         for prodId,produccion in enumerate(prodExpandida):
+            origGuide = produccion.get('origGuide',guidId)
             origId = produccion['origID']
             clase = produccion.get('class',guia.get('class','o'))
             # for backward compatibility only
@@ -760,12 +763,17 @@ class Cubo:
             # ahora a ejecutar
             if generateTree:
                 if clase == 'c' and 'categories' in produccion:
-                    cursor = []
+                    kcursor = []
                     for entrada in produccion['categories']:
                         if 'result' in entrada:
-                            cursor.append([entrada.get('result'),])
+                            kcursor.append([entrada.get('result'),])
                         else:
-                            cursor.append([entrada.get('default'),])
+                            kcursor.append([entrada.get('default'),])
+                    kcursor.sort()
+                    if prodId == 0:
+                        cursor = kcursor
+                    else:
+                        cursor  = self._getProdCursor(contexto,prodId,basefilter,datefilter)
                 elif clase == 'd':
                     ## obtengo la fecha minima y maxima. Para ello tendre que consultar la base de datos
                     campo = produccion.get('campo_base') #solo podemos   trabajar con un campo
@@ -797,10 +805,13 @@ class Cubo:
 
                     kmask = produccion.get('mask')     
                     #FIXME valido fechas pero todos los formatos no son compatibles con esa validacion
-                    cursor = getDateIndexNew(date_cache[campo][0]  #max_date
+                    kcursor = getDateIndexNew(date_cache[campo][0]  #max_date
                                                 , date_cache[campo][1]  #min_date
                                                 , kmask)
-
+                    if origId == 0 and guidId == origGuide:
+                        cursor = kcursor
+                    else:
+                        cursor  = self._getProdCursor(contexto,prodId,basefilter,datefilter)
                 else:
                     cursor  = self._getProdCursor(contexto,prodId,basefilter,datefilter)
                     #cursor = self._getProdCursor(contexto[-1],basefilter,datefilter)

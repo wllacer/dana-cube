@@ -3,10 +3,11 @@
 """
 Todo list tras completar validators y setters
 -> en repeatable add debe dividirse en (insert after, insert before, append). General de editTree
--> Incluir llamada a la consulta de guia
+-> DONE Incluir llamada a la consulta de guia
 -> Incluir llamada al grand total
--> Las fechas artificiales (trimestres, cuatrimestres, ...) como opciones de menu aqui y no en info2*
+-> DONE Las fechas artificiales (trimestres, cuatrimestres, ...) como opciones de menu aqui y no en info2*
 -> Para sqlite que el selector de base de datos sea el selector de ficheros del sistema
+-> Copy to other place
 
 """
 

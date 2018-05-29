@@ -281,7 +281,6 @@ class TableInfo():
             sqlContext['tables'] = '{} AS {}'.format(self.mainTable,alias)
         else:
             sqlContext['tables'] = self.mainTable
-            
         if len(tableDict) == 1:
             sqlContext['fields'] = [ item[1] for item in fieldList]
             sqlContext['formats'] = [item[2] for item in fieldList ]
@@ -316,7 +315,6 @@ class TableInfo():
             sqlContext['base_filter'] = pFilter #TODO necesita que se le introduzcan los alias
 
         sqlContext['sqls'] = queryConstructor(**sqlContext)
-        
         if config.DEBUG:
             print(queryFormat(sqlContext['sqls']))
         return sqlContext #
