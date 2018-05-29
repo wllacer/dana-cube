@@ -8,6 +8,7 @@ Todo list tras completar validators y setters
 -> DONE Las fechas artificiales (trimestres, cuatrimestres, ...) como opciones de menu aqui y no en info2*
 -> Para sqlite que el selector de base de datos sea el selector de ficheros del sistema
 -> Copy to other place
+-> Restore
 
 """
 
@@ -146,7 +147,8 @@ EDIT_TREE = {
     'prod_ref': { 'objtype':'dict',
                'elements':[
                    ('reference',True,False),
-                   ('link ref',False,False)
+                   ('link ref',False,False),
+                    ('grouped by',False,False),
                    ],
                'text':'referencia a otra guia',
             },
@@ -175,9 +177,10 @@ EDIT_TREE = {
     'desc' : { 'objtype':'list', 'editor' : WMultiList, 'source': srcFields,
                 'children': 'field',
                 },
-    'grouped by' : { 'objtype':'list', 'editor' : WMultiList, 'source': srcFields,   #source probably not
-                'children': 'field',
-                },
+    'grouped by': {'objtype':'list'}
+    #'grouped by' : { 'objtype':'list', 'editor' : WMultiList, 'source': srcFields,   #source probably not
+                #'children': 'field',
+                #},
     'filter': {'editor':QLineEdit,'default':''},   #aceptaria un validator
     #TODO como hacer que solo haya un default. ¿Necesito otro callback para los menus ?
     #'menuActions':[ [addConnection,'Comprueba la conexión'],],
@@ -492,10 +495,10 @@ class cubeTree(TreeMgr):
     def restoreCubeFile(self):
         #self.baseModel.beginResetModel()
         self.baseModel.clear()
-        if self.particular:
-            self.setupModel(*self.particularContext)
-        else:
-            self.setupModel()
+        #if self.particular:
+            #self.setupModel(*self.particularContext)
+        #else:
+        self.setupModel()
         self.setupView()
         #self.baseModel.endResetModel()
     
@@ -572,6 +575,12 @@ class cubeMgrWindow(QMainWindow):
                                             msgLine = self.msgLine,
                                             secure = self.secure,
                                             sysExclude = self.sysExclude)
+        
+        self.fileMenu = self.menuBar().addMenu("&General")
+        self.fileMenu.addAction("&Salvar", self.tree.saveCubeFile, "Ctrl+S")
+        self.fileMenu.addAction("&Restaurar", self.tree.restoreCubeFile, "Ctrl+M")
+        self.fileMenu.addAction("S&alir", self.close, "Ctrl+D")
+
         self.setCentralWidget(self.tree)
         self.setStatusBar(self.statusBar)
   

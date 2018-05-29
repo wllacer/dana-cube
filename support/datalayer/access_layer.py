@@ -22,6 +22,9 @@ Documentation, License etc.
 #from PyQt4.QtSql import *
 #transitional
 from support.datalayer.query_constructor import queryFormat
+from support.datalayer.conn_dialogs import showQueryError
+from support.util.record_functions import norm2String
+
 from  sqlalchemy import create_engine,types, inspect
 from  sqlalchemy.sql import text
 from PyQt5.QtSql import *    
@@ -259,8 +262,14 @@ def getCursorAlch(db, sql_string,funcion=None,**kwargs):
     sqlString=text(sql_string + setLimitString(sql_string,db,**kwargs) )
 
     cursor= []
+    try:
+        resultCursor = db.execute(sqlString)
+    except Exception as e:
+        print('!!!!! ERROR !!!!')
+        print(e)
+        showQueryError(repr(e), queryFormat(sql_string))
+        return []
 
-    resultCursor = db.execute(sqlString)
     for row in resultCursor:
         trow = list(row) #viene en tupla y no me conviene
         if callable(funcion):

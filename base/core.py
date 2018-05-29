@@ -166,7 +166,11 @@ def cursorTreeBased(tree,data,display=False):
         return record
         
     cursor = []
-    for item in traverse(tree):
+    if isinstance(tree,QStandardItemModel):
+        mtree = tree
+    else:
+        mtree  = tree.model()
+    for item in traverse(mtree):
         if item.hasChildren():
             continue
         else:
@@ -474,46 +478,6 @@ class Cubo:
                 print(time.time(),'Datos ',queryFormat(sqlString))
 
             return cursor
-    #def _getProdCursor(self,contexto,basefilter,datefilter):
-        #"""
-        #De una regla de produccion ampliada (de su contexto mas bien) y con los filtros generales de la tabla (o dominio)
-        #creo la sentencia SQL y obtengo el cursor correspondiente
-        #INput
-           #contexto de una regla de produccion (cf. fillGuia)
-           #basefilter
-           #datefilter   los filtros de defecto y fecha de la tabla del cubo o dominio
-        #Output
-            #cursor   un cursor sql
-        #"""
-        #table = contexto['table']
-        #columns = contexto['columns']
-        #code = contexto['code']
-        ##filter = contexto.get('filter','')
-        #sqlDef = {}
-        #sqlDef['tables'] = table
-        #sqlDef['fields'] = columns
-        #if basefilter is not None:
-            #sqlDef['base_filter'] = basefilter
-        #if datefilter is not None:
-            #sqlDef['where'] = datefilter
-        #sqlDef['order'] = [ str(x + 1) for x in range(len(code))]
-        #sqlDef['select_modifier']='DISTINCT'
-        #sqlDef['driver'] = self.dbdriver
-        #try:
-            #sqlString = queryConstructor(**sqlDef)
-        #except:
-            #print('Zasss')
-            #pprint(sqlDef)
-            #pprint(table)
-            #pprint(columns)
-            #pprint(filter)
-            #pprint
-            #raise
-        #cursor=getCursor(self.db,sqlString)
-        #if config.DEBUG:
-            #print(time.time(),'Datos ',queryFormat(sqlString))
-
-        #return cursor
 
     def _createProdModel(self,raiz,cursor,contexto,prodId,total=None,display=False):
         """
@@ -609,59 +573,6 @@ class Cubo:
                     #code = desc = columns = groupby + code
             #return groupby,code,desc,columns
             
-    def categoriesCursorGen(self,tree,produccion,prodId,contexto,basefilter,datefilter):
-        kcursor = []
-        for entrada in produccion['categories']:
-            if 'result' in entrada:
-                kcursor.append([entrada.get('result'),])
-            else:
-                kcursor.append([entrada.get('default'),])
-        kcursor.sort()
-        if prodId == 0:
-            cursor = kcursor
-        else:
-            cursor  = self._getProdCursor(contexto,prodId,basefilter,datefilter)
-        return cursor
-    
-    def dateCursorGen(self,tree,produccion,prodId,contexto,basefilter,datefilter,date_cache,origId,origGuide,guidId,table):
-        campo = produccion.get('campo_base') #solo podemos   trabajar con un campo
-        if campo in date_cache:
-            pass
-        else:
-            #TODO solo se requiere consulta a la base de datos si el formato incluye 'Y'
-            #REFINE creo que fields sobra
-            sqlDefDate=dict()
-            sqlDefDate['tables'] = table
-            if basefilter is not None:
-                sqlDefDate['base_filter'] = basefilter
-            if datefilter is not None:
-                sqlDefDate['where'] = datefilter
-            sqlDefDate['fields'] = [[campo,'max'],[campo,'min'],]
-            sqlDefDate['driver'] = self.dbdriver
-            try:
-                sqlStringDate = queryConstructor(**sqlDefDate) 
-            except:
-                raise()
-            row=getCursor(self.db,sqlStringDate)
-            if not row[0][0]:
-                # un bypass para que no se note 
-                date_cache[campo] = [datetime.date.today(),datetime.date.today()]
-            else:
-                date_cache[campo] = [row[0][0], row[0][1]] 
-            #
-        # TODO, desplegarlo todo
-
-        kmask = produccion.get('mask')     
-        #FIXME valido fechas pero todos los formatos no son compatibles con esa validacion
-        kcursor = getDateIndexNew(date_cache[campo][0]  #max_date
-                                    , date_cache[campo][1]  #min_date
-                                    , kmask)
-        if origId == 0 and guidId == origGuide:
-            cursor = kcursor
-        else:
-            cursor  = self._getProdCursor(contexto,prodId,basefilter,datefilter)
-        return cursor
-    
     def fillGuia(self,guidIdentifier,total=None,generateTree=True,display=False):
         '''
         TODO ripple doc
@@ -929,7 +840,7 @@ class Cubo:
             # ahora a ejecutar
             if generateTree:
                 if clase == 'c' and 'categories' in produccion:
-                    cursor = self.categoriesCursorGen(tree,produccion,prodId,contexto,basefilter,datefilter)
+                    cursor = categoriesCursorGen() #tree,produccion,prodId,contexto,basefilter,datefilter)
                     #kcursor = []
                     #for entrada in produccion['categories']:
                         #if 'result' in entrada:
@@ -943,7 +854,7 @@ class Cubo:
                         #cursor  = self._getProdCursor(contexto,prodId,basefilter,datefilter)
                 elif clase == 'd':
                     ## obtengo la fecha minima y maxima. Para ello tendre que consultar la base de datos
-                    cursor = self.dateCursorGen(tree,produccion,prodId,contexto,basefilter,datefilter,date_cache,origId,origGuide,guidId,table)
+                    cursor = dateCursorGen() #tree,produccion,prodId,contexto,basefilter,datefilter,date_cache,origId,origGuide,guidId,table)
                     #campo = produccion.get('campo_base') #solo podemos   trabajar con un campo
                     #if campo in date_cache:
                         #pass

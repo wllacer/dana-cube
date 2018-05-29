@@ -269,3 +269,16 @@ def showConnectionError(context,detailed_error):
     msg.setDetailedText(detailed_error)
     msg.setStandardButtons(QMessageBox.Ok)                
     retval = msg.exec_()
+    
+def showQueryError(error_text,query):
+    msg = QMessageBox()
+    msg.setMinimumSize(330,330)
+    msg.setIcon(QMessageBox.Warning)
+
+    msg.setText("Error en la ejecucion SQL")
+    #msg.setInformativeText(detailed_error)
+    msg.setWindowTitle("Error de SQL")
+    msg.setInformativeText(error_text)
+    msg.setDetailedText(query)
+    msg.setStandardButtons(QMessageBox.Ok)                
+    retval = msg.exec_()

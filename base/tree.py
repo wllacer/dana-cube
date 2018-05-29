@@ -34,13 +34,13 @@ def traverse(tree, key=None, mode=1):
     See base at util.treebasic.TreeModel
 
     """
-    if type(tree) == QStandardItemModel:
-        return traverseBasic(tree.invisibleRootItem())
-    elif type(tree) == GuideItemModel:
+    if type(tree) == GuideItemModel:
         if not key:
             return tree.traverse(tree.invisibleRootItem())
         else:
             return tree.traverse(key)
+    elif isinstance(tree,QStandardItemModel):
+        return traverseBasic(tree.invisibleRootItem())
     else:
         return tree.traverse(key,mode,output = _ITEM)
 
@@ -943,12 +943,14 @@ class GuideItem(NewGuideItem):
         
         """
         if self.column() != 0:
+            self.setData(None,Qt.DisplayRole)
             self.setData(self.originalValue,Qt.UserRole +1)
         else:
             for item in self.rowTraverse():
                 if type(item) == QStandardItem:
                     pass
                 else:
+                    item.setData(None,Qt.DisplayRole)
                     item.setData(item.originalValue,Qt.UserRole +1)
             
     def setBackup(self):
