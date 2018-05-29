@@ -64,6 +64,7 @@ Thing which shall belong to the app and aren't there now
 * A different filter dialog in which the user selects which fields to append
 * Dynamic reloading of user functions, and locating them OUTSIDE the python tree
 * Move default definition to the same place as the user function definition tree
+* __solved__ Performance enhacements when a guide includes categories and dates not in the first prod rule
 
 ## Wishlist
 
@@ -92,7 +93,7 @@ Most of it is already in a new (and I hope better) implementation, but they stil
 * For reference guides
     * Document it
     * case with more than 2 levels
-    * OK by now categories and dates not on first level (and not too cpu consuming)
+    * __solved__  categories and dates not on first level (and not too cpu consuming)
     * ref to complex links
 
 ## Database backends

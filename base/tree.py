@@ -36,6 +36,11 @@ def traverse(tree, key=None, mode=1):
     """
     if type(tree) == QStandardItemModel:
         return traverseBasic(tree.invisibleRootItem())
+    elif type(tree) == GuideItemModel:
+        if not key:
+            return tree.traverse(tree.invisibleRootItem())
+        else:
+            return tree.traverse(key)
     else:
         return tree.traverse(key,mode,output = _ITEM)
 
