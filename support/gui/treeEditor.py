@@ -18,7 +18,7 @@ import base.config as config
 from PyQt5.QtCore import Qt,QModelIndex
 from PyQt5.QtGui import QStandardItemModel,QColor
 from PyQt5.QtWidgets import QTreeView, QMenu, QStyledItemDelegate, QInputDialog, QMessageBox,\
-    QSpinBox, QListWidget, QPushButton,QLabel, QCheckBox , QLineEdit, QComboBox
+    QSpinBox, QListWidget, QPushButton,QLabel, QCheckBox , QLineEdit, QComboBox, QTextEdit
 
 from support.util.treeEditorUtil import *
 """
@@ -623,10 +623,9 @@ class TreeDelegate(QStyledItemDelegate):
         if self.context.get('readonly',False):
             return
         edit_format = self.context.get('edit_tree',{})
-
+       
         item = self.context.get('editPos')
         defeditor = edit_format.get('editor',QLineEdit)
-        
         if defeditor ==  QCheckBox:
             #TODO hay que ponerle un nombre
             editor = QCheckBox(self.context.get('name'),parent)
@@ -669,6 +668,10 @@ class TreeDelegate(QStyledItemDelegate):
             elif defeditor in (WMultiList, ):
                 editor.load(self.currentList,[])
                 
+        elif defeditor == QTextEdit:
+            editor = defeditor()
+            print('SE',editor)
+            
         elif defeditor == WPowerTable :
             editor = defeditor(self.context('rowHead').rowCount() +2,2)
             editor.setHorizontalHeaderLabels(('nombre','valor'))
@@ -806,6 +809,22 @@ class TreeDelegate(QStyledItemDelegate):
             else:
                 editor.setChecked(valor_defecto)
 
+        elif isinstance(editor,QTextEdit):
+            # FIXME esto tiene que mejorar. Solo me sirve para el caso de case_sql
+            
+            n,i,t = getRow(item)
+            if t:
+                head = n
+            else:
+                head = n.parent()
+            dato = None
+            for x in range(head.rowCount()):
+                nh,ih,th = getRow(n.child(x))
+                dato = '\n'.join([dato,ih.data()]) if dato else ih.data()
+            editor.setText(dato)
+            editor.setMinimumHeight(220)
+            #editor.resize(editor.document().size().width(), editor.document().size().height() + 10)
+            
         elif isinstance(editor,WPowerTable):
             for x in range(item.rowCount()):
                 childIdx = item.index().child(x,0)
@@ -878,6 +897,17 @@ class TreeDelegate(QStyledItemDelegate):
             
             item = _changeItem(model,index,ivalue,dvalue)
                 
+        elif isinstance(editor,QTextEdit):
+            item = self.context.get('editPos')
+            n,i,t = getRow(item)
+            if t :
+                head = n
+            else:
+                head = n.parent()
+            values = editor.document().toPlainText().split('\n')
+            if not self.generalValidation(index,editor,values):
+                return
+            _redoTree(head,values)
         else:
             if isinstance(editor, QComboBox):
                 if self.isDouble:
@@ -928,7 +958,7 @@ class TreeDelegate(QStyledItemDelegate):
 
     def validator(self,editor,*lparms,**kwparms):
         msg = ''
-        if isinstance(editor,(WMultiList,)):
+        if isinstance(editor,(WMultiList,QTextEdit)):
             values = lparms[0]
             if self.context.get('mandatory') and len(values) == 0:
                 msg = 'sin valor'

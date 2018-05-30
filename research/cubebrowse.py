@@ -132,7 +132,7 @@ EDIT_TREE = {
     'prod_case':{'objtype':'dict',                 # es o categories o case sql tengo que ver como lo asocio
                     'elements':[
                         ('elems',True,False),
-                        ('case_sql',True,True),
+                        ('case_sql',True,False),
                         ('fmt_out',False,False),
                     ],
                 'text':'Guía por sentencia directa',
@@ -177,8 +177,8 @@ EDIT_TREE = {
     'desc' : { 'objtype':'list', 'editor' : WMultiList, 'source': srcFields,
                 'children': 'field',
                 },
-    'grouped by': {'objtype':'list'}
-    #'grouped by' : { 'objtype':'list', 'editor' : WMultiList, 'source': srcFields,   #source probably not
+    #'grouped by': {'objtype':'list'},
+    'grouped by' : { 'objtype':'list', 'editor' : WMultiList }, #, 'source': srcFields,   #source probably not
                 #'children': 'field',
                 #},
     'filter': {'editor':QLineEdit,'default':''},   #aceptaria un validator
@@ -194,7 +194,11 @@ EDIT_TREE = {
                          ],
                          'menuActions':[ [addCategoryMenu,'Add default value'],],
                      },
-    'case_sql': { 'editor':QLineEdit }, #FIXME el editor es un area de edicion no un  campo
+    #~'case_sql': { 'editor':QTextEdit }, #FIXME el editor es un area de edicion no un  campo
+    'case_sql' : { 'objtype':'list', 'editor' :QTextEdit, #'source': srcNumFields,
+                'children': 'field',
+                },
+    'field' : { 'editor' : QLineEdit},   #experimento a ver si funciona
     'result':{'editor':QLineEdit }, #TODO necesita un setter
     'condition':{'editor':QComboBox,'source':LOGICAL_OPERATOR,'default':'='},
     'values' : { 'objtype':'list'},
