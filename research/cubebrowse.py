@@ -39,6 +39,7 @@ GETTERS
     executed at start of SetEditorData 
    parmlist 
     input
+            editor,
             item,
             view,
             dato  (Qt.UserRole + 1 value)
