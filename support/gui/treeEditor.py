@@ -684,6 +684,7 @@ class TreeDelegate(QStyledItemDelegate):
             editor.resizeRowsToContents()
             
         else:
+            #FIXME dialogs probably won't be needed
             if self.context.get('rowHead').hasChildren():
                 return
             editor = defeditor(parent)
@@ -697,9 +698,15 @@ class TreeDelegate(QStyledItemDelegate):
         model = index.model()
         edit_format = self.context.get('edit_tree',{})
         item = self.context.get('editPos')
-        
-        dato,display = self._getDataForWidget(editor,item)
+        display = item.data(Qt.DisplayRole)
+        dato = item.data(Qt.UserRole +1)
+
         getters = self.context.get('getters')
+        if not getters:
+            getters = [ self._getDataForWidget ,]
+        elif 'default' in getters:
+            idx = getters.index('default')
+            getters[idx] = self._getDataForWidget
         if getters:
             for funcion in getters:
                 dato,display = funcion(editor,item,self.parent(),dato,display)
@@ -794,6 +801,8 @@ class TreeDelegate(QStyledItemDelegate):
             elif isinstance(editor,QLineEdit) and self.context.get('edit_tree',{}).get('hidden',False):
                 dvalue = '****'
                 ivalue = editor.text()
+            elif isinstance(editor,QDialog):
+                dato = editor.getData()
             else:
                 dvalue = ivalue = editor.text()
     
@@ -801,11 +810,11 @@ class TreeDelegate(QStyledItemDelegate):
                 return
                     
         setters = list(self.context.get('edit_tree',{}).get('setters',[]))
+        if not setters:
+            setters = [ self._updateModel, ]
         if 'default' in setters:
             idx = setters.index('default')
             setters[idx] = self._updateModel
-        else:
-            setters.insert(0,self._updateModel)
         for funcion in setters:
             if not values:
                 item = funcion(item,self.parent(),self.context,ivalue,dvalue)
@@ -870,9 +879,10 @@ class TreeDelegate(QStyledItemDelegate):
             dato = self.currentList[pos]
         editor.selectEntry(dato)
 
-    def _getDataForWidget(self,editor,item):
-        display = item.data(Qt.DisplayRole)
-        dato = item.data(Qt.UserRole +1)
+    def _getDataForWidget(self,editor,item,view,dato,display):
+        """
+        view, dato, display not used
+        """
         if isinstance(editor,WMultiList):
             inicial = []
             n,i,t = getRow(item)
@@ -996,7 +1006,11 @@ class TreeDelegate(QStyledItemDelegate):
                 for y in range(2):
                     editor.cellWidget(x,y).setText(linea[y])
             editor.resizeRowsToContents()
-        
+        elif isinstance(editor,QDialog):
+            if dato:
+                editor.setData(dato)
+            elif valor_defecto is not None:
+                editor.setData(valor_defecto)
         else:
             if dato is not None:
                 editor.setText(dato)

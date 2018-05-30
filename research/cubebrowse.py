@@ -32,12 +32,19 @@ elements list is (element name,mandatory,readonly,repeatable, subtype_selector)
 still no process for repeatable 
 class & name are not to be edited (even shown) as derived DONE
 
-
+We have prepared treeEditor to be able to handle QDialogs with following exceptions
+    * Data should be collected via a getter
+    * must implement  setData / getData methods to be able to set/retrieve data to the dialog
+    * Data should be returned to model via a setter
+Still only basic testing
+    
 A note about callbacks: (getters,setters,....)
 In subtypes the one which has precedence is the child
 GETTERS
     executed at start of SetEditorData 
-   parmlist 
+    admits one "default" as text, to position where the basic model update will perform. 
+    If no "default" is specified ... ya know, by hand ...
+    parmlist 
     input
             editor,
             item,
@@ -50,7 +57,8 @@ GETTERS
 
 SETTERS
     executed at the end of SetModelData
-    admits one "default" as text, to position where the basic model update will perform. Default is before the first Setter
+    admits one "default" as text, to position where the basic model update will perform. 
+    If no "default" is specified ... ya know, by hand ...
     parmlist
         input  *lparm
             item = lparm[0]
@@ -111,7 +119,7 @@ EDIT_TREE = {
     'schema':{'editor':QComboBox,'source':srcSchemas,'default':defaultSchema,
               'text':'Esquema de la B.D. a utilizar por defecto',
               },
-    'table' : { 'editor':QComboBox, 'source':srcTables,'editable':True,'setters':[setTable,] },
+    'table' : { 'editor':QComboBox, 'source':srcTables,'editable':True,'setters':['default',setTable,] },
     'base filter': {'editor':QTextEdit }, #QLineEdit},   #aceptaria un validator
     'date filter': {'objtype':'list'},
     'fields' : { 'objtype':'list', 'editor' : WMultiList, 'source': srcNumFields,
