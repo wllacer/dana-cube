@@ -670,7 +670,6 @@ class TreeDelegate(QStyledItemDelegate):
                 
         elif defeditor == QTextEdit:
             editor = defeditor()
-            print('SE',editor)
             
         elif defeditor == WPowerTable :
             editor = defeditor(self.context('rowHead').rowCount() +2,2)
@@ -811,16 +810,18 @@ class TreeDelegate(QStyledItemDelegate):
 
         elif isinstance(editor,QTextEdit):
             # FIXME esto tiene que mejorar. Solo me sirve para el caso de case_sql
-            
             n,i,t = getRow(item)
-            if t:
-                head = n
+            if self.context.get('dtype','atom') == 'list':
+                if t:
+                    head = n
+                else:
+                    head = n.parent()
+                dato = None
+                for x in range(head.rowCount()):
+                    nh,ih,th = getRow(n.child(x))
+                    dato = '\n'.join([dato,ih.data()]) if dato else ih.data()
             else:
-                head = n.parent()
-            dato = None
-            for x in range(head.rowCount()):
-                nh,ih,th = getRow(n.child(x))
-                dato = '\n'.join([dato,ih.data()]) if dato else ih.data()
+                dato = i.data()
             editor.setText(dato)
             editor.setMinimumHeight(220)
             #editor.resize(editor.document().size().width(), editor.document().size().height() + 10)
@@ -899,15 +900,21 @@ class TreeDelegate(QStyledItemDelegate):
                 
         elif isinstance(editor,QTextEdit):
             item = self.context.get('editPos')
-            n,i,t = getRow(item)
-            if t :
-                head = n
+            if self.context.get('dtype','atom') == 'list':
+                n,i,t = getRow(item)
+                if t :
+                    head = n
+                else:
+                    head = n.parent()
+                values = editor.document().toPlainText().split('\n')
+                if not self.generalValidation(index,editor,values):
+                    return
+                _redoTree(head,values)
             else:
-                head = n.parent()
-            values = editor.document().toPlainText().split('\n')
-            if not self.generalValidation(index,editor,values):
-                return
-            _redoTree(head,values)
+                dvalue = ivalue = editor.document().toPlainText()
+                if not self.generalValidation(index,editor,dvalue,ivalue):
+                    return
+                item = _changeItem(model,index,ivalue,dvalue)
         else:
             if isinstance(editor, QComboBox):
                 if self.isDouble:
@@ -958,7 +965,7 @@ class TreeDelegate(QStyledItemDelegate):
 
     def validator(self,editor,*lparms,**kwparms):
         msg = ''
-        if isinstance(editor,(WMultiList,QTextEdit)):
+        if isinstance(editor,(WMultiList,)) or (isinstance(editor,QTextEdit) and self.context.get('dtype','atom') != 'atom'):
             values = lparms[0]
             if self.context.get('mandatory') and len(values) == 0:
                 msg = 'sin valor'

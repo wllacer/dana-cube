@@ -84,7 +84,7 @@ EDIT_TREE = {
               'text':'Esquema de la B.D. a utilizar por defecto',
               },
     'table' : { 'editor':QComboBox, 'source':srcTables,'editable':True,'setters':[setTable,] },
-    'base filter': {'editor':QLineEdit},   #aceptaria un validator
+    'base filter': {'editor':QTextEdit }, #QLineEdit},   #aceptaria un validator
     'date filter': {'objtype':'list'},
     'fields' : { 'objtype':'list', 'editor' : WMultiList, 'source': srcNumFields,
                 'children': 'field',
@@ -181,7 +181,7 @@ EDIT_TREE = {
     'grouped by' : { 'objtype':'list', 'editor' : WMultiList }, #, 'source': srcFields,   #source probably not
                 #'children': 'field',
                 #},
-    'filter': {'editor':QLineEdit,'default':''},   #aceptaria un validator
+    'filter': {'editor':QTextEdit,'default':"" }, #QLineEdit,'default':''},   #aceptaria un validator
     #TODO como hacer que solo haya un default. ¿Necesito otro callback para los menus ?
     #'menuActions':[ [addConnection,'Comprueba la conexión'],],
     #'categories': { 'objtype':'dict','subtypes':['default','category item'],'discriminator':discCat, },
@@ -194,11 +194,9 @@ EDIT_TREE = {
                          ],
                          'menuActions':[ [addCategoryMenu,'Add default value'],],
                      },
-    #~'case_sql': { 'editor':QTextEdit }, #FIXME el editor es un area de edicion no un  campo
     'case_sql' : { 'objtype':'list', 'editor' :QTextEdit, #'source': srcNumFields,
                 'children': 'field',
                 },
-    'field' : { 'editor' : QLineEdit},   #experimento a ver si funciona
     'result':{'editor':QLineEdit }, #TODO necesita un setter
     'condition':{'editor':QComboBox,'source':LOGICAL_OPERATOR,'default':'='},
     'values' : { 'objtype':'list'},
