@@ -48,6 +48,8 @@ from base.core import Cubo
 from support.gui.treeEditor import *
 from base.datadict import DataDict
 
+from research.cubeTreeDlg import manualLinkDlg,FKNetworkDialog 
+
 import os
 
 #from admin.cubemgmt.cubeTypes import 
@@ -610,7 +612,7 @@ def addNetworkMenuItem(*lparms):
             menuStruct.append(menu.addAction('Añadir agrupaciones especiales por fecha',lambda i=lparms:addDateGroups(*lparms)))
 
 
-from research.cubeTreeDlg import manualLinkDlg,FKNetworkDialog 
+
 
 def addNetworkPath(*lparm):
     """

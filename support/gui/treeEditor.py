@@ -618,6 +618,7 @@ class TreeDelegate(QStyledItemDelegate):
         if index.column() != 1:
             return 
         self.context = self.parent().ctxFactory(index)
+        #pprint(self.context.content)
         if self.context.get('topLevel',False):
             return 
         if self.context.get('readonly',False):
@@ -845,6 +846,19 @@ class TreeDelegate(QStyledItemDelegate):
         """
         TODO dobleSeleccion
         """
+        def _updateModel(*lparms):
+            item = lparms[0]
+            view  = lparms[1]
+            context = lparms[2]
+                
+            if len(lparms) == 4:
+                edit_item = _redoTree(item,lparms[3])
+            elif len(lparms) > 4:
+                model = item.model()
+                index = item.index()
+                edit_item = _changeItem(model,index,lparms[3],lparms[4])
+            return edit_item
+                
         def _redoTree(item,values):
             if item.column() != 0:
                 item = item.model().itemFromIndex(item.index().sibling(item.row(),0))
@@ -853,7 +867,8 @@ class TreeDelegate(QStyledItemDelegate):
                 model.removeRow(0,item.index())
             for entrada in values:
                 item.appendRow(makeRow(None,entrada))
-            
+            return item
+        
         def _changeItem(model,index,ivalue,dvalue):
             if not dvalue:
                 model.setData(index,str(index.data(Qt.UserRole +1)),Qt.EditRole)
@@ -863,7 +878,12 @@ class TreeDelegate(QStyledItemDelegate):
             item = model.itemFromIndex(index.sibling(index.row(),0))
             return item
         
+        
         model = index.model()
+        values = None
+        dvalue = ivalue = None
+        item = self.context.get('editPos')
+        
         if isinstance(editor, WMultiList):
             if not self.isDouble:
                 values = editor.seleList
@@ -876,30 +896,28 @@ class TreeDelegate(QStyledItemDelegate):
                         values.append(self.fullList[idx][0])
                     except IndexError:
                         values.append(entry)
-
- 
-            item = self.context.get('editPos')
             if not self.generalValidation(index,editor,values):
                 return
                 
-            _redoTree(item,values)
+            #_redoTree(item,values)
             
         elif isinstance(editor, WMultiCombo):
                 #TODO insercion
             if self.context.get('dtype','atom') == 'list':
                 values = norm2List(editor.get())
-                item = self.context.get('editPos')
-                _redoTree(item,values)
+                #item = self.context.get('editPos')
+                #updateIndex = item.index()
+                #_redoTree(item,values)
             else:
                 dvalue = ivalue = editor.get()
                 
             if not self.generalValidation(index,editor,dvalue,ivalue):
                 return
             
-            item = _changeItem(model,index,ivalue,dvalue)
+            #item = _changeItem(model,index,ivalue,dvalue)
                 
         elif isinstance(editor,QTextEdit):
-            item = self.context.get('editPos')
+            #item = self.context.get('editPos')
             if self.context.get('dtype','atom') == 'list':
                 n,i,t = getRow(item)
                 if t :
@@ -909,12 +927,13 @@ class TreeDelegate(QStyledItemDelegate):
                 values = editor.document().toPlainText().split('\n')
                 if not self.generalValidation(index,editor,values):
                     return
-                _redoTree(head,values)
+                item = head
+                #_redoTree(head,values)
             else:
                 dvalue = ivalue = editor.document().toPlainText()
                 if not self.generalValidation(index,editor,dvalue,ivalue):
                     return
-                item = _changeItem(model,index,ivalue,dvalue)
+                #item = _changeItem(model,index,ivalue,dvalue)
         else:
             if isinstance(editor, QComboBox):
                 if self.isDouble:
@@ -941,12 +960,20 @@ class TreeDelegate(QStyledItemDelegate):
             if not self.generalValidation(index,editor,dvalue,ivalue):
                 return
             
-            item = _changeItem(model,index,ivalue,dvalue)
+            #item = _changeItem(model,index,ivalue,dvalue)
         
-        setters = self.context.get('edit_tree',{}).get('setters',[])
+        setters = list(self.context.get('edit_tree',{}).get('setters',[]))
+        if 'default' in setters:
+            idx = setters.index('default')
+            setters[idx] = _updateModel
+        else:
+            setters.insert(0,_updateModel)
         for funcion in setters:
-            funcion(item,self.parent(),self.context)
-
+            if not values:
+                item = funcion(item,self.parent(),self.context,ivalue,dvalue)
+            else:
+                item = funcion(item,self.parent(),self.context,values)
+                
     def generalValidation(self,index,editor,*lparms,**kwparms):
         # de momento suprimo el color rojo de fondo, ya que los cambios se pierden
         index.model().setData(index,None,Qt.BackgroundRole)

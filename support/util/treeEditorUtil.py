@@ -377,10 +377,11 @@ def mergeEditData(parentData,childData):
     TODO hacerlo de modo que utilice ambos sin saber cuales son
     
     """
-    attr =('objtype','subtypes','discriminator','elements','getters','setters','diggers','validator','text','menuActions')
-    fromChild = ('objtype','text','subtypes','discriminator')
+    #attr =('objtype','subtypes','discriminator','elements','getters','setters','diggers','validator','text','menuActions')
+    fromChild = ('objtype','subtypes','discriminator')
     fromParent = ()
-    common =('elements','getters','setters','diggers','validator','menuActions')
+    priorityCommon = ('editor','getters','setters','diggers','validator','menuActions','text','hint')  #from both sources child has priority
+    mergeCommon =('elements') #accumulated
     new_edit = {}
     for entry in fromParent:
         if parentData.get(entry):
@@ -388,7 +389,12 @@ def mergeEditData(parentData,childData):
     for entry in fromChild:
         if childData.get(entry):
             new_edit[entry] = childData.get(entry)
-    for entry in common:
+    for entry in priorityCommon:
+        if parentData.get(entry):
+            new_edit[entry] = parentData.get(entry)
+        if childData.get(entry):
+            new_edit[entry] = childData.get(entry)
+    for entry in mergeCommon:
         lista = []
         if parentData.get(entry):
             lista += parentData.get(entry)

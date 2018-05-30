@@ -32,6 +32,33 @@ elements list is (element name,mandatory,readonly,repeatable, subtype_selector)
 still no process for repeatable 
 class & name are not to be edited (even shown) as derived DONE
 
+
+A note about callbacks: (getters,setters,....)
+In subtypes the one which has precedence is the child
+GETTERS
+    executed at start of SetEditorData 
+   parmlist 
+    input
+            item,
+            view,
+            dato  (Qt.UserRole + 1 value)
+            display (Qt.DisplayRole)
+    output
+            dato  (Qt.UserRole + 1 value)
+            display (Qt.DisplayRole)
+
+SETTERS
+    executed at the end of SetModelData
+    admits one "default" as text, to position where the basic model update will perform. Default is before the first Setter
+    parmlist
+        input  *lparm
+            item = lparm[0]
+            view = lparm[1]
+            context = lparm[2]   Fundamentalmente para obtener el valor original context['data']
+            ivalue / values = lparm[3]
+            dvalue = lparm[4]
+        output
+            item, the edited item
 """
 
 TOP_LEVEL_ELEMS = ['base','default_base']
