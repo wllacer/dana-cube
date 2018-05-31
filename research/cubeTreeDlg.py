@@ -166,12 +166,15 @@ class WDelegateSheet(QTableWidget):
 
     def initialize(self):
         for i in range(self.rowCount()):
-            for j in range(self.columnCount()):
-                self.initializeCell(i,j)
+            self.initializeRow(i)
         self.setItemPrototype(QTableWidgetItem(''))
     
+    def initializeRow(self,x):
+        for j in range(self.columnCount()):
+            self.initializeCell(x,j)
+
     def initializeCell(self,x,y):
-        self.setItem(x,y,QTableWidgetItem(None))
+        self.setItem(x,y,QTableWidgetItem(""))
 
     def openContextMenu(self,position):
         item = self.itemAt(position)
@@ -232,7 +235,8 @@ class WDelegateSheet(QTableWidget):
             for col,dato in enumerate(entry):
                 if col >= self.columnCount():
                     break
-                self.setData(ind,col,dato)
+                #self.setData(ind,col,dato)
+                self.item(ind,col).setText(dato)
     
     def unloadData(self):
         result = [ [ None for k in range(self.columnCount()) ] for j in range (self.rowCount()) ]
@@ -244,7 +248,14 @@ class WDelegateSheet(QTableWidget):
                     result[row][col] = None
         return result
     
+    def setData(self,row,col,dato):
+        item =  self.item(row,col)
+        if not item:
+            self.initializeCell(row,col)
+        self.item(row,col).setText(dato)
 
+
+            
 
 class manualLinkDlg(QDialog):
     def __init__(self,pfile,tablas,fields,rel,structure=None,parent=None,):

@@ -381,7 +381,7 @@ def mergeEditData(parentData,childData):
     fromChild = ('objtype','subtypes','discriminator')
     fromParent = ()
     priorityCommon = ('editor','getters','setters','diggers','validator','menuActions','text','hint')  #from both sources child has priority
-    mergeCommon =('elements') #accumulated
+    mergeCommon =('elements',) #accumulated
     new_edit = {}
     for entry in fromParent:
         if parentData.get(entry):

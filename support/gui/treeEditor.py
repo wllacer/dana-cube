@@ -18,7 +18,7 @@ import base.config as config
 from PyQt5.QtCore import Qt,QModelIndex
 from PyQt5.QtGui import QStandardItemModel,QColor
 from PyQt5.QtWidgets import QTreeView, QMenu, QStyledItemDelegate, QInputDialog, QMessageBox,\
-    QSpinBox, QListWidget, QPushButton,QLabel, QCheckBox , QLineEdit, QComboBox, QTextEdit
+    QSpinBox, QListWidget, QPushButton,QLabel, QCheckBox , QLineEdit, QComboBox, QTextEdit, QDialog
 
 from support.util.treeEditorUtil import *
 """
@@ -685,8 +685,8 @@ class TreeDelegate(QStyledItemDelegate):
             
         else:
             #FIXME dialogs probably won't be needed
-            if self.context.get('rowHead').hasChildren():
-                return
+            #if self.context.get('rowHead').hasChildren():
+                #return
             editor = defeditor(parent)
             if isinstance(editor,QLineEdit) and edit_format.get('hidden',False):
                 editor.setEchoMode(QLineEdit.Password)
@@ -701,7 +701,7 @@ class TreeDelegate(QStyledItemDelegate):
         display = item.data(Qt.DisplayRole)
         dato = item.data(Qt.UserRole +1)
 
-        getters = self.context.get('getters')
+        getters = edit_format.get('getters')
         if not getters:
             getters = [ self._getDataForWidget ,]
         elif 'default' in getters:
@@ -781,6 +781,12 @@ class TreeDelegate(QStyledItemDelegate):
                 if not self.generalValidation(index,editor,dvalue,ivalue):
                     return
 
+        elif isinstance(editor,QDialog):
+                values = editor.getData()
+                pprint(values)
+                if not self.generalValidation(index,editor,values):
+                    return
+
         else:
             if isinstance(editor, QComboBox):
                 if self.isDouble:
@@ -801,8 +807,6 @@ class TreeDelegate(QStyledItemDelegate):
             elif isinstance(editor,QLineEdit) and self.context.get('edit_tree',{}).get('hidden',False):
                 dvalue = '****'
                 ivalue = editor.text()
-            elif isinstance(editor,QDialog):
-                dato = editor.getData()
             else:
                 dvalue = ivalue = editor.text()
     
@@ -839,7 +843,7 @@ class TreeDelegate(QStyledItemDelegate):
 
     def validator(self,editor,*lparms,**kwparms):
         msg = ''
-        if isinstance(editor,(WMultiList,)) or (isinstance(editor,QTextEdit) and self.context.get('dtype','atom') != 'atom'):
+        if isinstance(editor,(WMultiList,QDialog)) or (isinstance(editor,QTextEdit) and self.context.get('dtype','atom') != 'atom'):
             values = lparms[0]
             if self.context.get('mandatory') and len(values) == 0:
                 msg = 'sin valor'

@@ -32,11 +32,13 @@ elements list is (element name,mandatory,readonly,repeatable, subtype_selector)
 still no process for repeatable 
 class & name are not to be edited (even shown) as derived DONE
 
-We have prepared treeEditor to be able to handle QDialogs with following exceptions
+We have prepared treeEditor to be able to handle QDialogs with following details
     * Data should be collected via a getter
-    * must implement  setData / getData methods to be able to set/retrieve data to the dialog
+    * Dialog must implement  setData / getData methods to be able to set/retrieve data to the dialog
     * Data should be returned to model via a setter
-Still only basic testing
+    * As accept/reject doesn't seem to be honored, implementator shall guarantee that a cancel maintains the original values
+    
+Still only basic testing done
     
 A note about callbacks: (getters,setters,....)
 In subtypes the one which has precedence is the child

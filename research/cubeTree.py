@@ -238,7 +238,6 @@ def isDictFromDef(item):
     
     FIXME depende de getItemContext()
     """
-
     if item.hasChildren():
         contexto = Context(item)
         #datos = [ el.data() if el else None for el in getRow(item) ]
