@@ -232,6 +232,10 @@ EDIT_TREE = {
                          ('values',True,False),  #FIXME a ver si
                          ],
                          'menuActions':[ [addCategoryMenu,'Add default value'],],
+                         'editor':catEditor,
+                         'getters':[getCategories, ],
+                         'setters':[setCategories, ],
+
                      },
     'case_sql' : { 'objtype':'list', 'editor' :QTextEdit, #'source': srcNumFields,
                 'children': 'field',

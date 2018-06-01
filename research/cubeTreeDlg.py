@@ -27,7 +27,7 @@ from __future__ import unicode_literals
 
 from pprint import pprint
 
-from support.gui.widgets import WMultiCombo,WPowerTable,WMultiList
+from support.gui.widgets import WMultiCombo,WPowerTable,WMultiList,WDelegateSheet,makeTableSize
 from support.util.record_functions import norm2List,norm2String
 
 from PyQt5.QtCore import Qt,QSize,pyqtSignal
@@ -37,15 +37,6 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QGridLayout, \
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QTableWidget,QTableWidgetItem, QMenu, QComboBox, QStyledItemDelegate, QLabel, QDialogButtonBox, QLineEdit,QSizePolicy,QHeaderView,QPlainTextEdit
 
-def makeTableSize(widget):
-    widget.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-
-    #self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-    #self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-
-    #self.resizeColumnsToContents()
-    widget.setMinimumSize(widget.horizontalHeader().length()+widget.verticalHeader().width() +4, 
-                                widget.verticalHeader().length()+widget.horizontalHeader().height()+4)
 
 
 class fieldDelegate(QStyledItemDelegate):
@@ -140,124 +131,6 @@ class tablesDelegate(QStyledItemDelegate):
             return 
         model.setData(index,nuevo)
     
-class WDelegateSheet(QTableWidget):
-    """
-    """
-    resized = pyqtSignal()
-    contextChange = pyqtSignal()
-    rowAdded = pyqtSignal(int)
-    rowRemoved =pyqtSignal(int)
-
-    def __init__(self,row,col,delegate=None,parent=None):
-        super().__init__(row,col,parent)
-        makeTableSize(self)
-        self.initialize()
-        if delegate:
-            sheetDelegate = delegate(self)
-            self.setItemDelegate(sheetDelegate)
-       
-        #FIXME no funciona
-        self.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.customContextMenuRequested.connect(self.openContextMenu)
-
-        self.context = {}
-        # en esta posicion para que las señales se activen tras la inicializacion
-        #self.currentItemChanged.connect(self.moveSheetSel)
-        #self.itemChanged.connect(self.itemChanged)
-
-    def initialize(self):
-        for i in range(self.rowCount()):
-            self.initializeRow(i)
-        self.setItemPrototype(QTableWidgetItem(''))
-    
-    def initializeRow(self,x):
-        for j in range(self.columnCount()):
-            self.initializeCell(x,j)
-
-    def initializeCell(self,x,y):
-        self.setItem(x,y,QTableWidgetItem(""))
-
-    def openContextMenu(self,position):
-        item = self.itemAt(position)
-        row = item.row()
-        menu = QMenu()
-        menu.addAction("Insert row before",lambda i=row:self.addRow(i))
-        menu.addAction("Insert row after",lambda i=row:self.addRow(i +1))
-        menu.addAction("Append row",self.addRow)
-        menu.addSeparator()
-        menu.addAction("Remove",lambda i=row:self.removeRow(i))
-        
-        action = menu.exec_(self.viewport().mapToGlobal(position))
-                
-    def addRow(self,idx=None,emit=True):
-        if not idx:
-            idx = self.rowCount()
-        self.insertRow(idx)
-        for j in range(self.columnCount()):
-                self.initializeCell(idx,j)
-        if emit:
-            self.rowAdded.emit(idx)
-        item = self.item(idx,0)
-        self.setCurrentItem(item)
-        self.setFocus()
-        
-    def removeRow(self,idx=None,emit=True):
-        if not idx:
-            return
-        self.removeRow(idx)
-        if emit:
-            self.rowRemoved.emit(idx)
-        self.setCurrentItem(self.sheet.item(idx -1,0))
-        self.setFocus()
-
-    def setContext(self,data=None,**kwparm):
-        changed = False
-        for dato in kwparm:
-            if self.context.get(dato) != kwparm.get(dato):
-                changed = True
-                break
-        if changed:
-            self.contextChange.emit()
-            self.initialize()
-        for dato in kwparm:
-            self.context[dato] = kwparm[dato]
-            
-        if data:
-            self.loadData(data)
-        #self.resizeColumnsToContents()
-
-    def loadData(self,data):
-        """
-        before use it might be of interest to disconnect the rowAdded pyqtSignal
-        """
-        for ind,entry in enumerate(data):
-            if ind >= self.rowCount():
-                self.addRow(emit=False)
-            for col,dato in enumerate(entry):
-                if col >= self.columnCount():
-                    break
-                #self.setData(ind,col,dato)
-                self.item(ind,col).setText(dato)
-    
-    def unloadData(self):
-        result = [ [ None for k in range(self.columnCount()) ] for j in range (self.rowCount()) ]
-        for row  in range(self.rowCount()):
-            for col in range(self.columnCount()):
-                if self.item(row,col):
-                    result[row][col] = self.item(row,col).text()
-                else:
-                    result[row][col] = None
-        return result
-    
-    def setData(self,row,col,dato):
-        item =  self.item(row,col)
-        if not item:
-            self.initializeCell(row,col)
-        self.item(row,col).setText(dato)
-
-    def resizeEvent(self, event):
-        self.resized.emit()
-        return super().resizeEvent(event)
             
 
 class manualLinkDlg(QDialog):

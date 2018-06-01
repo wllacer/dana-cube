@@ -49,6 +49,7 @@ from support.gui.treeEditor import *
 from base.datadict import DataDict
 
 from research.cubeTreeDlg import manualLinkDlg,FKNetworkDialog,makeTableSize
+from research.catEditDlg import catDelegate,catEditor,getCategories,setCategories
 
 import os
 
