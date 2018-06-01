@@ -22,7 +22,6 @@ Documentation, License etc.
 #from PyQt4.QtSql import *
 #transitional
 from support.datalayer.query_constructor import queryFormat
-from support.datalayer.conn_dialogs import showQueryError
 from support.util.record_functions import norm2String
 
 from  sqlalchemy import create_engine,types, inspect
@@ -380,7 +379,21 @@ def SQLConcat(db,array,sep=','):
     else:
         return "|| '{}' || ".format(sep).join(array)
 
+def showQueryError(error_text,query):
+    from PyQt5.QtWidgets import QMessageBox
+    
+    msg = QMessageBox()
+    msg.setMinimumSize(330,330)
+    msg.setIcon(QMessageBox.Warning)
 
+    msg.setText("Error en la ejecucion SQL")
+    #msg.setInformativeText(detailed_error)
+    msg.setWindowTitle("Error de SQL")
+    msg.setInformativeText(error_text)
+    msg.setDetailedText(query)
+    msg.setStandardButtons(QMessageBox.Ok)                
+    retval = msg.exec_()
+    
 if __name__ == '__main__':
     definition1={'driver':'sqlite','dbname': '/home/werner/projects/scifi/scifi.db',
                 'dbhost':None,'dbuser':None,'dbpass':None,'debug':False } 

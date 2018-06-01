@@ -31,6 +31,7 @@ no example of validators attribute
 elements list is (element name,mandatory,readonly,repeatable, subtype_selector)
 still no process for repeatable 
 class & name are not to be edited (even shown) as derived DONE
+Problem in values list. Edition of element duplicates them
 
 We have prepared treeEditor to be able to handle QDialogs with following details
     * Data should be collected via a getter
@@ -237,7 +238,8 @@ EDIT_TREE = {
                 },
     'result':{'editor':QLineEdit }, #TODO necesita un setter
     'condition':{'editor':QComboBox,'source':LOGICAL_OPERATOR,'default':'='},
-    'values' : { 'objtype':'list'},
+    'values' : { 'objtype':'list',
+                'children':'field'},
 
     'fmt_out' :{'editor':QComboBox,'source': ENUM_FORMAT ,'default':'txt' },
     'link via': {'objtype':'dict',

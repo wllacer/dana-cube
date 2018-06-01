@@ -48,7 +48,7 @@ from base.core import Cubo
 from support.gui.treeEditor import *
 from base.datadict import DataDict
 
-from research.cubeTreeDlg import manualLinkDlg,FKNetworkDialog 
+from research.cubeTreeDlg import manualLinkDlg,FKNetworkDialog,makeTableSize
 
 import os
 

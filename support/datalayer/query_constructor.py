@@ -847,14 +847,18 @@ def _joinConstructor(**kwargs):
         #cambio los prefijos de los campos en la clausula generada
         #. Primero referentes a ltable
         clausula = optCache[j][3]
-        clausula = replTablePrefix(clausula,optCache[j][1],optCache[j][2])
+        clausula = replTablePrefix(clausula.lower(),optCache[j][1].lower(),optCache[j][2])
         # cambio los prefijos referentes a rtable
         if j > 0 and optCache[j][4] == optCache[j -1][1]:
             if optCache[j -1][5] is not None:
                 pfix = optCache[optCache[j -1][5]][2]
             else:
+                print('en paso',j)
+                pprint(optCache)
                 pfix = optCache[j -1][2]
-            clausula = replTablePrefix(clausula,optCache[j][4],pfix)
+            print('antes',clausula,optCache[j][4],pfix)
+            clausula = replTablePrefix(clausula.lower(),optCache[j][4].lower(),pfix)
+            print('desp ',clausula)
         optCache[j][3] = clausula
         
     for itm in optCache:

@@ -44,7 +44,7 @@ def makeTableSize(widget):
     #self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
     #self.resizeColumnsToContents()
-    widget.setFixedSize(widget.horizontalHeader().length()+widget.verticalHeader().width() +4, 
+    widget.setMinimumSize(widget.horizontalHeader().length()+widget.verticalHeader().width() +4, 
                                 widget.verticalHeader().length()+widget.horizontalHeader().height()+4)
 
 
@@ -143,6 +143,7 @@ class tablesDelegate(QStyledItemDelegate):
 class WDelegateSheet(QTableWidget):
     """
     """
+    resized = pyqtSignal()
     contextChange = pyqtSignal()
     rowAdded = pyqtSignal(int)
     rowRemoved =pyqtSignal(int)
@@ -254,7 +255,9 @@ class WDelegateSheet(QTableWidget):
             self.initializeCell(row,col)
         self.item(row,col).setText(dato)
 
-
+    def resizeEvent(self, event):
+        self.resized.emit()
+        return super().resizeEvent(event)
             
 
 class manualLinkDlg(QDialog):

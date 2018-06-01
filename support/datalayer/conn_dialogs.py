@@ -26,6 +26,7 @@ from support.gui.widgets import WPropertySheet
 
 import base.config as config
 
+from support.datalayer.access_layer import dbConnectAlch
 class directConnectDlg(QDialog):
     def __init__(self,configDict,parent=None):
         super(directConnectDlg,self).__init__(parent)
@@ -117,7 +118,7 @@ class directConnectDlg(QDialog):
                     return
             conn = dbConnectAlch(conf)
         except Exception  as e:
-            showConnectionError(datos[0],norm2String(e.orig.args))
+            showConnectionError(datos[0],norm2String(repr(e)))
             self.msgLine.setText('Error en la conexión')
             return
     
@@ -270,15 +271,4 @@ def showConnectionError(context,detailed_error):
     msg.setStandardButtons(QMessageBox.Ok)                
     retval = msg.exec_()
     
-def showQueryError(error_text,query):
-    msg = QMessageBox()
-    msg.setMinimumSize(330,330)
-    msg.setIcon(QMessageBox.Warning)
 
-    msg.setText("Error en la ejecucion SQL")
-    #msg.setInformativeText(detailed_error)
-    msg.setWindowTitle("Error de SQL")
-    msg.setInformativeText(error_text)
-    msg.setDetailedText(query)
-    msg.setStandardButtons(QMessageBox.Ok)                
-    retval = msg.exec_()

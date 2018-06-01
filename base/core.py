@@ -1037,7 +1037,7 @@ class Vista:
                 join_entrada['table'] = entrada.get('table')
             else:
                 #What if it has prefix ¿?
-                join_entrada['table'] = '{} AS {}'.format(entrada.get('table'),name)
+                join_entrada['table'] ='{} AS {}'.format(entrada.get('table'),name)
             join_entrada['join_filter'] = entrada.get('filter')
             join_entrada['join_clause'] = []
             if idx == 0:
@@ -1050,6 +1050,7 @@ class Vista:
                 entradilla = (rel_elem,clausula.get('condition','='),base_elem)
                 join_entrada['join_clause'].append(entradilla)
             resultado.append(join_entrada)
+            pprint(resultado)
         return resultado
 
     def  __setDataMatrix(self):

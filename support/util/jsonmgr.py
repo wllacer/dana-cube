@@ -21,7 +21,7 @@ def load_cubo(fichero="cubo.json"):
             my_dict = json.load(infile)
     except IOError:
         print('Error de E/S en fichero. Probablemente fichero no exista %s'%fichero)
-        my_dict= None
+        my_dict= {}
     return my_dict
 
 def dump_json(data, fichero="cubo.json"):

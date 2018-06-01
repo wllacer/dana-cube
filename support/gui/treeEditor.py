@@ -685,8 +685,8 @@ class TreeDelegate(QStyledItemDelegate):
             
         else:
             #FIXME dialogs probably won't be needed
-            #if self.context.get('rowHead').hasChildren():
-                #return
+            if defeditor == QLineEdit and self.context.get('rowHead').hasChildren():
+                return
             editor = defeditor(parent)
             if isinstance(editor,QLineEdit) and edit_format.get('hidden',False):
                 editor.setEchoMode(QLineEdit.Password)
@@ -700,7 +700,7 @@ class TreeDelegate(QStyledItemDelegate):
         item = self.context.get('editPos')
         display = item.data(Qt.DisplayRole)
         dato = item.data(Qt.UserRole +1)
-
+        print('interno',dato,'externo',display,'<')
         getters = edit_format.get('getters')
         if not getters:
             getters = [ self._getDataForWidget ,]
@@ -709,8 +709,16 @@ class TreeDelegate(QStyledItemDelegate):
             getters[idx] = self._getDataForWidget
         if getters:
             for funcion in getters:
-                dato,display = funcion(editor,item,self.parent(),dato,display)
-        
+                try:
+                    dato,display = funcion(editor,item,self.parent(),dato,display)
+                except Exception as e:
+                    print('exception')
+                    print(e)
+                    print('funcion',funcion)
+                    print('item',item)
+                    print('parent',self.parent())
+                    print('datos',dato,display)
+                    raise
         valor_defecto = None    
         if not dato:
             if isinstance(editor,QSpinBox):
@@ -897,6 +905,8 @@ class TreeDelegate(QStyledItemDelegate):
                 return inicial,display
             elif i.data() is not None:  # hay varios casos en que la lista se ha colapsado en un solo campo
                 return osSplit(i.data()),display   #aqui si merece la pena
+            else:
+                return [],''
                 
         elif isinstance(editor,WMultiCombo): # WMC siemre antes que QCB porque es una especializacion
             #TODO doble seleccion 
