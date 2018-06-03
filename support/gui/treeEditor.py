@@ -624,7 +624,6 @@ class TreeDelegate(QStyledItemDelegate):
         if self.context.get('readonly',False):
             return
         edit_format = self.context.get('edit_tree',{})
-       
         item = self.context.get('editPos')
         defeditor = edit_format.get('editor',QLineEdit)
         if defeditor ==  QCheckBox:
@@ -715,6 +714,7 @@ class TreeDelegate(QStyledItemDelegate):
                     print('exception')
                     print(e)
                     print('funcion',funcion)
+                    print('editor',editor)
                     print('item',item)
                     print('parent',self.parent())
                     print('datos',dato,display)

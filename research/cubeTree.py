@@ -48,8 +48,6 @@ from base.core import Cubo
 from support.gui.treeEditor import *
 from base.datadict import DataDict
 
-from research.cubeTreeDlg import manualLinkDlg,FKNetworkDialog,makeTableSize
-from research.catEditDlg import catDelegate,catEditor,getCategories,setCategories
 
 import os
 
@@ -293,6 +291,7 @@ def getSchemaFromConnection(item):
             esquema = confData.get(esquema[1:])
         return esquema
 
+
 """
 principales
 """
@@ -408,6 +407,7 @@ parametros comunes
     TreeView
 
 """
+
 def srcGuides(*lparm):
     item = lparm[0]
     view = lparm[1]
@@ -1109,7 +1109,13 @@ def valConnect(context,editor,*lparms,**kwparms):
     return ok,Text
     
 
+"""
+callbacks externos
 
+"""
+from research.cubeUI.cubeTreeDlg import manualLinkDlg,FKNetworkDialog,makeTableSize
+from research.cubeUI.catEditDlg import catDelegate,catEditor,getCategories,setCategories
+from research.cubeUI.lnkEditDlg import LinksDlg,getLinks,setLinks
     
  
         

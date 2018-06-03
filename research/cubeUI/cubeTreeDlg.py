@@ -102,9 +102,10 @@ class fieldDelegate(QStyledItemDelegate):
 class tablesDelegate(QStyledItemDelegate):
     def __init__(self,parent=None):
         super().__init__(parent)
-        self.tables = self.parent().tables #TODO adecuar a la estructura de datos
+        self.tables = None
         
     def createEditor(self,parent,option,index):
+        self.tables = self.parent().tables #TODO adecuar a la estructura de datos
         if index.row() == 0:
             return super().createEditor(parent,option,index)
         editor = QComboBox(parent)
@@ -134,11 +135,10 @@ class tablesDelegate(QStyledItemDelegate):
             
 
 class manualLinkDlg(QDialog):
-    def __init__(self,pfile,tablas,fields,rel,structure=None,parent=None,):
+    def __init__(self,parent=None,**kwparm): #pfile,tablas,fields,rel,structure=None,parent=None,):
         super().__init__(parent)
-
+        self.defaultData = None
         self.name = QLineEdit()  #lo necesito antes de los valores iniciales :-(    
-        self.initialValues(pfile,tablas,fields,rel,structure)
         
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok| QDialogButtonBox.Cancel)
         self.msgLine = QLabel()
@@ -146,14 +146,7 @@ class manualLinkDlg(QDialog):
 
         
         sheetLbl = QLabel('Camino de enlace')
-        self.sheet = QTableWidget(5,1)
-        
-        #headerView = self.sheet.horizontalHeader()
-        #headerView.setSectionResizeMode(QHeaderView.Stretch);
-        #headerView.setSectionResizeMode(0, QHeaderView.Interactive);
-        #self.sheet.setColumnHidden(1,True)
-        #self.sheet.setHorizontalHeaderLabels(('Pasos',))
-        #self.sheet.verticalHeader().hide()
+        self.sheet = QTableWidget(5,1)        
         makeTableSize(self.sheet)
         self.sheet.setContextMenuPolicy(Qt.CustomContextMenu)
         self.sheet.customContextMenuRequested.connect(self.openContextMenu)
@@ -164,7 +157,7 @@ class manualLinkDlg(QDialog):
         self.internalLink = QComboBox()
         clauseLbl = QLabel('Eliga la condicion de enlace entre las tablas')
         self.clauseWgt = WDelegateSheet(5,3,fieldDelegate)
-        self.setClauseWgtSize()
+        #self.setClauseWgtSize()
         fieldsTargetLbl = QLabel('Escoga los campos por los que desee agrupar')
         self.fieldsTarget = WMultiList(format='c',cabeceras=('De ','Campos de agrupacion'))
         
@@ -194,46 +187,71 @@ class manualLinkDlg(QDialog):
         
         self.setLayout(meatlayout)
         
-        self.initializeSheet(self.fileStack)
-        self.disableDetail()
+        #self.initialValues(**kwparm)
+        #self.initializeSheet(self.fileStack)
+        #self.disableDetail()
         # en esta posicion para que las señales se activen tras la inicializacion
         buttonBox.accepted.connect(self.accept)
         buttonBox.rejected.connect(self.reject)        
         self.internalLink.currentIndexChanged.connect(self.linkUpdated)
         self.sheet.currentItemChanged.connect(self.moveSheetSel)
         self.sheet.itemChanged.connect(self.itemChanged)
+        self.initialValues(**kwparm)        
         
-    def initialValues(self,file,tablas,fields,rel,structure):
-        self.fullTables = tablas
-        self.tables = [ elem[1] for elem in tablas ]
-        
-        iidx = self.tables.index(file)
-        self.baseTable = self.fullTables[iidx][0]
-        self.fields = fields
-        self.rel = rel
-        if not structure:
-            self.structure = {}
+    def initialValues(self,**kwparm): #file,tablas,fields,rel,structure):pfile,tablas,fields,rel,structure=None,parent=None,):
+        if not kwparm:
+            return 
         else:
-            if 'prod' in structure:
-                self.structure = structure['prod'][0]
+            self.internalLink.currentIndexChanged.disconnect()
+            self.sheet.currentItemChanged.disconnect()
+            self.sheet.itemChanged.disconnect()
+            self.disableDetail()            
+            
+            file = kwparm.get('pfile')
+            tablas = kwparm.get('tablas',[])
+            fields = kwparm.get('fields')
+            rel = kwparm.get('rel')
+            structure = kwparm.get('structure',{})
+            self.fullTables = tablas
+            self.tables = [ elem[1] for elem in tablas ]
+            
+            iidx = self.tables.index(file)
+            self.baseTable = self.fullTables[iidx][0]
+            self.fields = fields
+            self.rel = rel
+            if not structure:
+                self.structure = {}
             else:
-                self.structure = structure
-        self.name.setText(self.structure.get('name',""))
-        self.array = [ elem for elem in self.structure.get('link via',[])] 
-        self.fileStack =  [file, ] + [ elem.get('table') for elem in self.array ]
-        for k in range(len(self.array)):
-            line = self.array[k]
-            line['internalLink'] = None
-            del line['table']
-        if self.array:
-            self.targetTable = self.structure.get('link via',[])[-1].get('table')
-            self.targetFields = norm2List(self.structure.get('link via',[])[-1].get('elem'))
-        else:
-            self.targetTable= None
-            self.targetFields = []
-    
+                if 'prod' in structure:
+                    self.structure = structure['prod'][0]
+                else:
+                    self.structure = structure
+            self.name.setText(self.structure.get('name',""))
+            self.array = [ elem for elem in self.structure.get('link via',[])] 
+            self.fileStack =  [file, ] + [ elem.get('table') for elem in self.array ]
+            for k in range(len(self.array)):
+                line = self.array[k]
+                line['internalLink'] = None
+                del line['table']
+            if self.array:
+                self.targetTable = self.structure.get('link via',[])[-1].get('table')
+                self.targetFields = norm2List(self.structure.get('link via',[])[-1].get('elem'))
+            else:
+                self.targetTable= None
+                self.targetFields = []
+
+
+        self.initializeSheet(self.fileStack)
+
+        self.setClauseWgtSize()
+        self.internalLink.currentIndexChanged.connect(self.linkUpdated)
+        self.sheet.currentItemChanged.connect(self.moveSheetSel)
+        self.sheet.itemChanged.connect(self.itemChanged)
+        if len(self.array) > 1:
+            self.sheet.setCurrentIndex(len(self.array) -1)
+            self.enableDetail()    
     def initializeCell(self,x,y):
-        self.sheet.setItem(x,y,QTableWidgetItem(None))
+        self.sheet.setItem(x,y,QTableWidgetItem(""))
  
     def initializeSheet(self,file):
         for i in range(self.sheet.rowCount()):
@@ -247,7 +265,7 @@ class manualLinkDlg(QDialog):
                 if idx == 0:
                     self.sheet.item(idx,0).setFlags( Qt.ItemIsEnabled )
                     self.sheet.item(idx,0).setBackground(QColor(Qt.gray))
-        if self.actualSize() > 1:
+        if self.actualSize() >= 1:
             self.loadTarget()
             self.fieldsTarget.setEnabled(True)
             
@@ -379,7 +397,7 @@ class manualLinkDlg(QDialog):
             return
         initialData = []
         for elem in self.array[ind].get('clause',[]):
-            initialData.append(elem['base_elem'],elem.get('condition','='),elem['rel_elem'])
+            initialData.append((elem['base_elem'],elem.get('condition','='),elem['rel_elem']))
         if initialData:
             self.internalLink.setEnabled(False)
         self.clauseWgt.setContext(initialData,tableFrom=tableFrom,tableTo=tableTo,fieldCatcher=self.fields)
@@ -484,46 +502,7 @@ class manualLinkDlg(QDialog):
         #descargo lo ultimo editado
         cItem = self.sheet.currentItem().row()
         self.unloadDetail(cItem)
-        #TODO verificar los datos
-        stablas = [ self.sheet.item(k,0).text()  for k in range(1,self.sheet.rowCount())  if self.sheet.item(k,0).text() ]
-        if len(stablas) == 0:
-            self.msgLine.setText('Debe definir al menos una tabla de enlace')
-            self.sheet.setFocus()
-            return
-        if not self.validateArray():
-            return
-        
-        tablasFQ = []
-        for entrada in stablas:
-            if entrada == "":
-                break
-            tablasFQ.append(self.short2long(entrada))
-
-        #TODO expandir los internalLinks
-        links = []
-        for k in range(len(tablasFQ)):
-            if tablasFQ[k] == '':
-                continue
-            if  self.array[k].get('internalLink'):
-                arcos = self.linkTransform(k,tablasFQ)
-                for arco in arcos:
-                    links.append(arco)
-            elif self.array[k].get('clause'):
-                arco = self.clauseTransform(k,tablasFQ)
-                arco['table'] = tablasFQ[k]
-                links.append(arco)
-        name = self.name.text()
-        #resultado = { 'link via':links,'elem':self.fieldsTarget.seleList,'name':self.targetTable,'table':self.targetTable}
-        self.result = {'name':name,
-                                    'class':'o',
-                                    'prod':[{'name':name,
-                                                    'elem':[ self.fields.tr(self.targetTable,value) for value in self.fieldsTarget.seleList ],
-                                                    'table':self.short2long(self.targetTable),
-                                                    'link via':links
-                                                    }
-                                                ,]
-                        }
-        pprint(self.result)
+        self.result = self.getData()
         super().accept()
       
     def short2long(self,tabla):
@@ -585,6 +564,64 @@ class manualLinkDlg(QDialog):
         self.clauseWgt.setColumnWidth(1,totalwidth * 10 // 100)
         self.clauseWgt.setColumnWidth(2,totalwidth * 38 // 100)
 
+    """
+    para convertirlo en aceptable para embeberlo
+    """
+    def setData(self,dato):
+        self.defaultData = dato
+        self.__setData(dato)
+    def __setData(self,dato):
+        pass
+    
+    def getData(self):
+        #TODO verificar los datos
+        stablas = [ self.sheet.item(k,0).text()  for k in range(1,self.sheet.rowCount())  if self.sheet.item(k,0).text() ]
+        if len(stablas) == 0:
+            self.msgLine.setText('Debe definir al menos una tabla de enlace')
+            self.sheet.setFocus()
+            return
+        if not self.validateArray():
+            return
+        
+        tablasFQ = []
+        for entrada in stablas:
+            if entrada == "":
+                break
+            tablasFQ.append(self.short2long(entrada))
+
+        #TODO expandir los internalLinks
+        links = []
+        for k in range(len(tablasFQ)):
+            if tablasFQ[k] == '':
+                continue
+            if  self.array[k].get('internalLink'):
+                arcos = self.linkTransform(k,tablasFQ)
+                for arco in arcos:
+                    links.append(arco)
+            elif self.array[k].get('clause'):
+                arco = self.clauseTransform(k,tablasFQ)
+                arco['table'] = tablasFQ[k]
+                links.append(arco)
+        name = self.name.text()
+        #resultado = { 'link via':links,'elem':self.fieldsTarget.seleList,'name':self.targetTable,'table':self.targetTable}
+        dato = {'name':name,
+                                    'class':'o',
+                                    'prod':[{'name':name,
+                                                    'elem':[ self.fields.tr(self.targetTable,value) for value in self.fieldsTarget.seleList ],
+                                                    'table':self.short2long(self.targetTable),
+                                                    'link via':links
+                                                    }
+                                                ,]
+                        }
+        pprint(dato)
+        return dato
+
+    
+    def reject(self):
+        #FIXME esto creo que no es tan simple en este caso
+        if self.defaultData:
+            self.__setData(self.defaultData)
+        super().reject()
 
 class FKNetworkDialog(QDialog):
     def __init__(self,cubeTable,fields,routeHandler,parent=None):

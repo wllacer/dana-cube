@@ -23,6 +23,7 @@ import argparse
 from support.gui.treeEditor import *
 from research.cubeTree import *
 from base.datadict import DataDict
+
 """
 
 Nuevo mojo del arbol
@@ -252,6 +253,10 @@ EDIT_TREE = {
                     ('clause',True,False,True), #FIXME presentacion
                     ('filter',False,False),
                     ],
+                'getters':[ getLinks, ],
+                'setters':[ setLinks, ],                
+                'editor': LinksDlg,
+
                 },
     'clause':{'objtype':'dict',
               'elements':[
@@ -564,6 +569,16 @@ class cubeTree(TreeMgr):
             self.setColumnWidth(0,totalwidth * 2 // 10)
             self.setColumnWidth(1,totalwidth * 7 //10)
             self.setColumnWidth(2,totalwidth * 1 //10)
+
+    def dumpStructure(self):
+        import re
+        match = r'([}\]]+)'
+        repl = r'\1\n'
+        result = tree2dict(self.tree.invisibleRootItem(),isDictFromDef)
+        pprint(result)
+        resultado = repr(result)
+        res = re.sub(match,repl,resultado)
+        QMessageBox.information(self,"Estructura",res)
  
     def test(self):
         return
