@@ -506,6 +506,26 @@ def fullKey(item):
         pai = pai.parent()
     return result
 
+def getNorm(diccionario,parametro,default=''):
+    """
+    normaliza el valor nulo a '' para un determinado elemento de un diccionario
+    recordar que is not es verdadero para nulos y estructuras vacias, p.e. '' o numericos 0
+    c.f
+    prins = ( None,"None","none",'','uno','dos',[],{},0,-1,+1)
+    for cosa in prins:
+        if not cosa:
+            print(cosa,' is not')
+        else:
+            print(cosa,'is')
+
+    """
+    result = diccionario.get(parametro,default)
+    
+    if not result or str(result).lower() == "none":
+        result = default
+    return result
+
+
 if __name__ == '__main__':
     #readConfig()
     #testSelector()

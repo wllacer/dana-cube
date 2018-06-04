@@ -37,6 +37,135 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QGridLayout, \
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QTableWidget,QTableWidgetItem, QMenu, QComboBox, QStyledItemDelegate, QLabel, QDialogButtonBox, QLineEdit,QSizePolicy,QHeaderView,QPlainTextEdit
 
+from support.gui.treeEditor import *
+from research.cubeTreeUtil import *
+
+
+"""
+
+Ahora vienen funciones para gestionar la creacion semi automatica de guias con relaciones con otras tablas
+
+"""
+def addNetworkMenuItem(*lparms):
+    """
+    aqui incluyo las opciones de menu para las guias. ¿Deberia separarlo?
+    """
+    item = lparms[0]
+    view = lparms[1]
+    menuStruct = lparms[2]
+    menu = lparms[3]
+    text = lparms[4]
+    n,i,t=getRow(item)
+    print('ANMI',n.data())
+    if n.data() == 'guides':
+        menuStruct.append(menu.addAction(text,lambda i=item,j=view:addNetworkPath(i,j)))
+    else:
+        menuStruct.append(menu.addAction('Ver conjunto de prueba',lambda i=lparms:sampleData(*lparms)))
+        classItem = getChildByType(item,'class')
+        if classItem:
+            clase = getRow(classItem)[1].data()
+        else:
+            clase = 'o'
+        if clase == 'd':
+            menuStruct.append(menu.addAction('Añadir agrupaciones especiales por fecha',lambda i=lparms:addDateGroups(*lparms)))
+
+
+
+
+def addNetworkPath(*lparm):
+    """
+    Accion de menu para la creacion de guias con relaciones.
+    Deriva a manual o FK internas
+    
+    """
+    item = lparm[0]
+    view = lparm[1]
+    # me fascina como obtener los datos
+    baseTableItm = getChildByType(getParentByType(item,'base'),'table')
+    baseTable = baseTableItm.parent().child(baseTableItm.row(),1).data()
+    
+    confName,confData = getConnection(item,name=True,dict=view.dataDict)
+    schema = getSchema(item,baseTable)
+    fqtable = schema + '.' + baseTable.split('.')[-1]  #solo por ir seguro
+    
+    relHandler = relCatcher(item,view,confName,schema)
+    arbolNavegacion  = relHandler.get(baseTable)
+    #tableDdItem = _getDictTable(view.dataDict,confName,schema,baseTable)
+    #arbolNavegacion = getFKLinks(tableDdItem)
+    
+    if not arbolNavegacion:
+        #gparm = lparm[:]
+        manualNetwork(*lparm,confName=confName,schema=schema,fqtable=fqtable,rel=relHandler)
+    else:
+        FKNetwork(*lparm,confName=confName,schema=schema,fqtable=fqtable,rel=relHandler)
+      
+
+def manualNetwork(*lparm,**kwparm):
+    """
+    
+    Gestiona el dialogo para crear relaciones manualmente
+    
+    """
+    item = lparm[0]
+    view = lparm[1]
+    fqtable = kwparm.get('fqtable')
+    tables = srcTables(*lparm)
+    gparm = list(lparm)
+    if len(gparm) > 2:
+        gparm[3] = tables
+    else:
+        gparm.append(tables)
+    fieldGetter = fieldCatcher(*gparm)
+    
+    if 'rel' in kwparm:
+        relGetter = kwparm['rel']
+    else:
+        confName = kwparm.get('confName')
+        schema = kwparm.get('schema')
+        relGetter = relCatcher(item,view,confName,schema)
+        
+    selDlg = manualLinkDlg(pfile=fqtable.split('.')[-1],tablas=tables,fields=fieldGetter,rel=relGetter)
+    selDlg.show
+    if selDlg.exec_():
+        dict2tree(item,None,selDlg.result,'guides')
+        uch = item.child(item.rowCount() -1)
+        uch.setData(selDlg.result['name'],Qt.EditRole)
+        uch.setData(selDlg.result['name'],Qt.UserRole +1)
+
+def FKNetwork(*lparm,**kwparm):
+    """
+    
+    Gestiona el dialogo para crear relaciones exclusivamente con FKs existentes.
+    Opcionalmente permite derivar a la forma manual
+    
+    """
+    item = lparm[0]
+    view = lparm[1]
+    fqtable = kwparm.get('fqtable')
+    relHandler = kwparm.get('rel')
+
+    gparm = list(lparm)
+    tables = srcTables(*lparm)
+    if len(gparm) > 2:
+        gparm[3] = tables
+    else:
+        gparm.append(tables)
+    fieldGetter = fieldCatcher(*gparm)
+
+    selDlg = FKNetworkDialog(fqtable,fieldGetter,relHandler)
+    selDlg.show()
+    if selDlg.exec_():
+        if not selDlg.manual:
+            dict2tree(item,None,selDlg.result,'guides')
+            uch = item.child(item.rowCount() -1)
+            uch.setData(selDlg.result['name'],Qt.EditRole)
+            uch.setData(selDlg.result['name'],Qt.UserRole +1)
+        else:
+            confName = kwparm.get('confName')
+            schema = kwparm.get('schema')
+            manualNetwork(*lparm,confName=confName,schema=schema,fqtable=fqtable)
+    
+    
 
 
 class fieldDelegate(QStyledItemDelegate):

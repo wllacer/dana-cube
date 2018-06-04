@@ -22,12 +22,13 @@ import argparse
 
 
 from support.gui.treeEditor import *
-from research.cubebrowse import *
-from research.cubeTree import *
+#from research.cubebrowse import *
+from research.cubeTreeUtil import *
 from base.datadict import DataDict
 
 from PyQt5.QtWidgets import QFrame
 
+from research.cubeUI.cubeTreeDlg import manualLinkDlg
 """
 GETTERS
     executed at start of SetEditorData 

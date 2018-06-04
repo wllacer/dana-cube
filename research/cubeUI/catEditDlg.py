@@ -21,7 +21,7 @@ from pprint import pprint
 import argparse
 
 from support.gui.treeEditor import *
-from research.cubeTree import *
+from research.cubeTreeUtil import *
 from support.gui.widgets import WMultiCombo,WPowerTable,WMultiList,WDelegateSheet,makeTableSize
 
 from base.datadict import DataDict

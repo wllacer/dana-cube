@@ -15,10 +15,11 @@ from support.gui.dialogs import WNameValue
 from support.util.record_functions import norm2List,osSplit
 import base.config as config
 
-from PyQt5.QtCore import Qt,QModelIndex
+from PyQt5.QtCore import Qt,QModelIndex,  QPersistentModelIndex
 from PyQt5.QtGui import QStandardItemModel,QColor
 from PyQt5.QtWidgets import QTreeView, QMenu, QStyledItemDelegate, QInputDialog, QMessageBox,\
-    QSpinBox, QListWidget, QPushButton,QLabel, QCheckBox , QLineEdit, QComboBox, QTextEdit, QDialog
+    QSpinBox, QListWidget, QPushButton,QLabel, QCheckBox , QLineEdit, QComboBox, QTextEdit, QDialog,QListWidget,QDialog,\
+    QVBoxLayout
 
 from support.util.treeEditorUtil import *
 """
@@ -602,7 +603,57 @@ class TreeMgr(QTreeView):
         i.setData(None,Qt.EditRole)
         i.setData(None,Qt.UserRole +1)
  
+    def prune(self,exec=False):
+        def localiza(model,head,to_remove,to_check):
+            for k in range(head.rowCount()):
+                item = head.child(k)
+                ctx = Context(item)
+                nombre = item.data() if item.data() else '<>'
+                dato = getNorm(ctx,'data')
+                tipo = ctx['type'] 
+                mand = ctx['mandatory']
+                nchild = item.rowCount()
+                if tipo in EXCLUDE_LIST:
+                    continue
+                msg = self.domainPrune(item,ctx)
+                if msg:
+                    to_check.append(msg +'/'.join(fullKey(item)))
+                if mand and not dato and nchild == 0:
+                    to_check.append('Obligatorio sin valor : '+'/'.join(fullKey(item)))
+                elif not mand and not dato and nchild == 0:
+                    if exec:
+                        pmi =QPersistentModelIndex(item.index())
+                        print(fullKey(item),'Opcional y vacio',pmi)
+                        to_remove.append(pmi)
+                    else:
+                        to_check.append('Opcional sin valor : ' + '/'.join(fullKey(item)))
+                else:
+                    localiza(model,item,to_remove,to_check)
+        model = self.model()
+        EXCLUDE_LIST = self.pruneExcludeList() #['connect',]
+        to_remove = []
+        to_check = []
+        localiza(model,model.invisibleRootItem(),to_remove,to_check)
+        if exec:
+            for  index in to_remove:
+                model.removeRow(index.row(),index.parent())
+        if to_check:
+            self.showTroubledEntries('Existen entradas con anomalias',to_check)
 
+    def showTroubledEntries(self,title,data):
+        dlg = TroubledEntriesDlg(title,data)
+        dlg.show()
+        dlg.exec_()
+"""
+    ¿virtual? methods
+"""
+    def pruneExcludeList(self):
+        return []
+    
+    def domainPrune(self,item,ctx):
+        msg = None
+        return msg
+    
 class TreeDelegate(QStyledItemDelegate):
     def __init__(self,parent=None):
         super().__init__(parent)
@@ -1064,6 +1115,22 @@ class TreeDelegate(QStyledItemDelegate):
         item = model.itemFromIndex(index.sibling(index.row(),0))
         return item
           
+
+
+class TroubledEntriesDlg(QDialog):
+    def __init__(self,title,data,parent=None):
+        super().__init__(parent)
+        self.setWindowTitle('Anomalias en el arbol')
+        Lista = QListWidget()
+        Lista.addItems(sorted(data))
+        titulo = QLabel(title)
+        meatlayout = QVBoxLayout()
+        meatlayout.addWidget(titulo)
+        meatlayout.addWidget(Lista)
+        
+        self.setLayout(meatlayout)
+        self.setMinimumSize(640,220)
+        
 if __name__ == '__main__':
     exit()
 

@@ -21,8 +21,12 @@ from pprint import pprint
 import argparse
 
 from support.gui.treeEditor import *
-from research.cubeTree import *
+from research.cubeTreeUtil import *
 from base.datadict import DataDict
+
+from research.cubeUI.cubeTreeDlg import manualLinkDlg,FKNetworkDialog,makeTableSize,addNetworkMenuItem
+from research.cubeUI.catEditDlg import catDelegate,catEditor,getCategories,setCategories
+from research.cubeUI.lnkEditDlg import LinksDlg,getLinks,setLinks
 
 """
 
@@ -542,45 +546,14 @@ class cubeTree(TreeMgr):
             dump_structure(newcubeStruct,self.cubeFile,total=total)
             
 
-    def prune(self,exec=False):
-        from PyQt5.QtCore import QPersistentModelIndex
-        def localiza(model,head,to_remove,to_check):
-            for k in range(head.rowCount()):
-                item = head.child(k)
-                ctx = Context(item)
-                nombre = item.data() if item.data() else '<>'
-                dato = getNorm(ctx,'data')
-                tipo = ctx['type'] 
-                mand = ctx['mandatory']
-                nchild = item.rowCount()
-                if tipo in EXCLUDE_LIST:
-                    continue
-                if mand and not dato and nchild == 0:
-                    to_check.append('Obligatorio sin valor : '+'/'.join(fullKey(item)))
-                elif not mand and not dato and nchild == 0:
-                    if exec:
-                        pmi =QPersistentModelIndex(item.index())
-                        print(fullKey(item),'Opcional y vacio',pmi)
-                        to_remove.append(pmi)
-                    else:
-                        to_check.append('Opcional sin valor : ' + '/'.join(fullKey(item)))
-                else:
-                    localiza(model,item,to_remove,to_check)
-        print('iniciando el pruneo')        
-        model = self.model()
-        EXCLUDE_LIST = ['connect',]
-        to_remove = []
-        to_check = []
-        localiza(model,model.invisibleRootItem(),to_remove,to_check)
-        if exec:
-            for  index in to_remove:
-                model.removeRow(index.row(),index.parent())
-        if to_check:
-            showTroubledEntries('Existen entradas con anomalias',to_check)
     
 
     #
-    
+    def pruneExcludeList(self):
+        return ['connect',]
+
+    def domainPrune(self,item,ctx):
+        super().domainPrune(item,ctx)
             
     #@waiting_effects
     #@model_change_control()
@@ -629,24 +602,7 @@ class cubeTree(TreeMgr):
 Interfaz de usuario
 
 """
-def showTroubledEntries(title,data):
-    dlg = TroubledEntriesDlg(title,data)
-    dlg.show()
-    dlg.exec_()
 
-class TroubledEntriesDlg(QDialog):
-    def __init__(self,title,data,parent=None):
-        super().__init__(parent)
-        self.setWindowTitle('Anomalias en el arbol')
-        Lista = QListWidget()
-        Lista.addItems(sorted(data))
-        titulo = QLabel(title)
-        meatlayout = QVBoxLayout()
-        meatlayout.addWidget(titulo)
-        meatlayout.addWidget(Lista)
-        
-        self.setLayout(meatlayout)
-        self.setMinimumSize(640,220)
 
 def generaArgParser():
     parser = argparse.ArgumentParser(description='Cubo de datos')
