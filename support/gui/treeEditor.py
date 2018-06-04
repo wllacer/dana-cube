@@ -560,7 +560,7 @@ class TreeMgr(QTreeView):
         n,i,t = getRow(item)
         if t.data() != otype:
                 self.msgLine.setText("Destino inadecuado para el objeto copiado, cancelando")
-                return
+                return None
         sub = cloneSubTree(oitem)
         if ocontext.get('repeteable'):
             nitem = getChildByType(item,ocontext.get('type'))

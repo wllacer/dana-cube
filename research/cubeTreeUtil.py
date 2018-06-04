@@ -799,56 +799,56 @@ def setClass(*lparm):
     else:
        newRow = makeRow('class',tipo,'class')
        claseGuide.appendRow(newRow)
-  
-def setTable(*lparm):
-    def _cmpTableName(value1,value2):
-        if not value1 and not value2:
-            return None  #no tiene sentido comparar nulos
-        if not value1 or not value2:
-            return False #no son iguales si uno es nulo
-        resultado = False
-        val1 = value1.split('.')
-        val2 = value2.split('.')
-        if len(val1) == len(val2):   # ambos con los mismos componentes
-            if value1 != value2:
-                return False
-            else:
-                return True
-        if val1[-1] == val2[-1]:
-            return True
-        else:
+
+def cmpTableName(value1,value2):
+    if not value1 and not value2:
+        return None  #no tiene sentido comparar nulos
+    if not value1 or not value2:
+        return False #no son iguales si uno es nulo
+    resultado = False
+    val1 = value1.split('.')
+    val2 = value2.split('.')
+    if len(val1) == len(val2):   # ambos con los mismos componentes
+        if value1 != value2:
             return False
-            
-    def _propagateTableName(item,view,oldValue,newValue):
-        """
-        #absolutamente a lo bruto ... busca cadena con el contenido de la tabla y luego lo convierte
-        """
-        if oldValue is None:  #FIXME no tengo claro que sea universal
-            return
-        n,i,t = getRow(item)
-        if not i or not i.data():
-            return
-        if not isinstance(i.data(),str):
-            return
-        
-        oval = i.data()
-        schema,ofName = padd(oldValue.split('.'),2,pos='before') #FIXME y si no es un fichero ¿?
-        #if ofName not in i.data():
-            #continue
-        nValue = oval
-        if oldValue in oval:  #fqn
-            nValue = changeTable(oval,oldValue,newValue)
-        elif ofName in oval:
-            nValue = changeTable(oval,ofName,newValue)   
-            
-        if oval == nValue:
-            pass
         else:
-            i.setData(nValue,Qt.UserRole +1)
-            i.setData(nValue,Qt.DisplayRole)
-            i.setData(QColor(Qt.darkYellow),Qt.BackgroundRole)
-            view.expand(item.parent().index())
-            
+            return True
+    if val1[-1] == val2[-1]:
+        return True
+    else:
+        return False
+
+def propagateTableName(item,view,oldValue,newValue):
+    """
+    #absolutamente a lo bruto ... busca cadena con el contenido de la tabla y luego lo convierte
+    """
+    if oldValue is None:  #FIXME no tengo claro que sea universal
+        return
+    n,i,t = getRow(item)
+    if not i or not i.data():
+        return
+    if not isinstance(i.data(),str):
+        return
+    
+    oval = i.data()
+    schema,ofName = padd(oldValue.split('.'),2,pos='before') #FIXME y si no es un fichero ¿?
+    #if ofName not in i.data():
+        #continue
+    nValue = oval
+    if oldValue in oval:  #fqn
+        nValue = changeTable(oval,oldValue,newValue)
+    elif ofName in oval:
+        nValue = changeTable(oval,ofName,newValue)   
+        
+    if oval == nValue:
+        pass
+    else:
+        i.setData(nValue,Qt.UserRole +1)
+        i.setData(nValue,Qt.DisplayRole)
+        i.setData(QColor(Qt.darkYellow),Qt.BackgroundRole)
+        view.expand(item.parent().index())  
+
+def setTable(*lparm):
     print('set table',lparm)
     item = lparm[0]
     view = lparm[1]
@@ -859,7 +859,7 @@ def setTable(*lparm):
     #WARNING realmente solo funciona bien si se pasa el contexto
     oldValue = context.get('data')
     newValue =  item.parent().child(item.row(),1).data()
-    if _cmpTableName(oldValue,newValue):
+    if cmpTableName(oldValue,newValue):
         return
     #ahora buscamos el subarbol para el que es válida
     # a continuacion rectifico los datos
@@ -889,15 +889,15 @@ def setTable(*lparm):
             last_link = getChildByType(lv.child(lv.rowCount() -1,0),'table') #asi abrevio
             # tres casos last_link = oldValue -> nfa; last_link = newValue -> nfa, otro caso --> ir al de arriba
             rh,ih,th = getRow(last_link)
-            if _cmpTableName(oldValue,ih.data()):
+            if cmpTableName(oldValue,ih.data()):
                 pass # atropella luego la propagacion
-            elif _cmpTableName(newValue,ih.data()):
+            elif cmpTableName(newValue,ih.data()):
                 pass #estamos hablando de la misma tabla, FIXME propagar FQN 
             else:
                 pass #aqui si requiero trabajo de marqueteria fina
             
     for item in traverse(head):
-        _propagateTableName(item,view,oldValue,newValue)
+        propagateTableName(item,view,oldValue,newValue)
     view.setCurrentIndex(head.index())
     
     

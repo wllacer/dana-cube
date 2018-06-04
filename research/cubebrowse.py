@@ -596,7 +596,16 @@ class cubeTree(TreeMgr):
  
     def actionPaste(self,item):
         #TODO cambiar los ficheros principales
-        nitem = super().actionPaste(item)
+        otableItm = getChildByType(getParentByType(self.copyContext[0],'base'),'table')
+        otable = getRow(otableItm)[1].data()
+        nitem = super().actionPaste(item)[0]
+        if not nitem:
+            return
+        ntableItm =getChildByType(getParentByType(nitem,'base'),'table')
+        ntable = getRow(ntableItm)[1].data()
+        for elem in traverse(nitem):
+            propagateTableName(elem,self,otable,ntable)
+        self.setCurrentIndex(nitem.index())
 
             
     def test(self):
