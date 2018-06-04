@@ -199,6 +199,7 @@ def cloneSubTree(entryPoint): #,filter=None,payload=False):
                 mihier.insert(0,pai)
                 pai = pai.parent()
         return mihier
+    
     isFirst = True
     hierarchy = []
     model = entryPoint.model()
@@ -525,6 +526,29 @@ def getNorm(diccionario,parametro,default=''):
         result = default
     return result
 
+def moveInList(item,newpos):
+    """
+    mover un item dentro de la lista de hijos
+    """
+    pai = item.parent()
+    if not pai:
+        pai = item.model().invisibleRootItem()
+        
+    actpos = item.row()
+    if newpos == 'first':
+        pos = 0
+    elif newpos == '-1':
+        pos = actpos -1
+    elif newpos == '+1':
+        pos = actpos
+    elif newpos == 'last':
+        pos = pai.rowCount() -1
+    else:
+        return item
+    row = pai.takeRow(item.row())
+    pai.insertRow(pos,row)
+    return pai.child(pos)
+    
 
 if __name__ == '__main__':
     #readConfig()

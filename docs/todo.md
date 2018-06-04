@@ -98,13 +98,13 @@ Most of it is already in a new (and I hope better) implementation, but they stil
     * case with more than 2 levels. __solved__ but grouped by, can be a PITA
     * __solved__  categories and dates not on first level (and not too cpu consuming)
     * ref to complex links
-* en repeatable add debe dividirse en (insert after, insert before, append). General de editTree
+* __solved__ No el add, sino el desplazamiento. en repeatable add debe dividirse en (insert after, insert before, append). General de editTree
 * __solved__ Incluir llamada a la consulta de guia
 * Incluir llamada al grand total
 * __solved__ Las fechas artificiales (trimestres, cuatrimestres, ...) como opciones de menu aqui y no en info2*
 * Para sqlite que el selector de base de datos sea el selector de ficheros del sistema
 * Copy to other place
-* Restore
+* __solved__ Restore
 
 ## Database backends
 

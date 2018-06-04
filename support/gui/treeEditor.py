@@ -300,7 +300,7 @@ class TreeMgr(QTreeView):
                 texto = context.get('edit_tree',{}).get('text',entrada)
                 self.ctxMenu.append(menu.addAction("Add new {}".format(texto),
                                     lambda i=self.model().invisibleRootItem(),j=entrada:self.actionAddTop(i,j))) 
-            self.ctxMenu.append(menu.addAction("Copy",lambda i=n:self.actionCopy(i)))
+            self.ctxMenu.append(menu.addAction("Duplicate",lambda i=n:self.actionDuplicate(i)))
             self.ctxMenu.append(menu.addAction("Rename",lambda i=n:self.actionRename(i))) 
             menu.addSeparator()
         
@@ -346,10 +346,15 @@ class TreeMgr(QTreeView):
                                                    lambda i=rowHead,j=tipoAEditar:self.actionAdd(i,j)))
         
         else:
+            if context.get('repeatInstance',False) or context.get('listMember',False):
+                self.ctxMenu.append(menu.addAction("Move first",lambda i=rowHead:moveInList(i,'first')))
+                self.ctxMenu.append(menu.addAction("Up",lambda i=rowHead:moveInList(i,'-1')))
+                self.ctxMenu.append(menu.addAction("Down",lambda i=rowHead:moveInList(i,'+1')))
+                self.ctxMenu.append(menu.addAction("Move last",lambda i=rowHead:moveInList(i,'last')))
             if context.get('repeatInstance',False):
-                self.ctxMenu.append(menu.addAction("Copy",lambda i=rowHead:self.actionCopy(i)))
+                self.ctxMenu.append(menu.addAction("Duplicate",lambda i=rowHead:self.actionDuplicate(i)))
                 self.ctxMenu.append(menu.addAction("Rename",lambda i=rowHead:self.actionRename(i))) 
-                menu.addSeparator()
+            menu.addSeparator()
             if 'subtypes' in edit_data:
                 subtipo = subTypeDiscover(rowHead,edit_data)
                 if subtipo :
@@ -526,7 +531,7 @@ class TreeMgr(QTreeView):
                     ih.setData(text[0],Qt.UserRole +1)
                     break
        
-    def actionCopy(self,item):
+    def actionDuplicate(self,item):
         newHead = cloneSubTree(item)
         self.actionRename(newHead)
         
