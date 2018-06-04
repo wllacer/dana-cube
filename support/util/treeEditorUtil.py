@@ -223,46 +223,14 @@ def cloneSubTree(entryPoint=None,filter=None):
     
     """
     model = QStandardItemModel()
-
-
-    
-    def hierTree(entry):
-        mihier = []
-        pai = entry.parent()
-        while pai is not None:
-                mihier.insert(0,pai)
-                pai = pai.parent()
-        return mihier
-    
-    isFirst = True
-    hierarchy = []
-
-    for item in traverse(model,entryPoint):
-        n,i,t = getRow(item)
-        newRow = makeRow(n.data() if n else None,
-                                            i.data()  if i else None,
-                                            t.data() if t else None)
-        if isFirst:
-            model.appendRow(newRow)
-            hierarchy.append([item,newRow[0]])
-            newHead = newRow[0]
-            isFirst = False
-
-            isFirst = False
-        else:
-            newRow = makeRow(n.data() if n else None,
-                                                i.data()  if i else None,
-                                                t.data() if t else None)
-            ohier = hierTree(item)
-            if len(ohier) == len(hierarchy):
-                pass
-            elif len(ohier) < len(hierarchy):
-               del hierarchy[len(ohier):]
-            else: #mas
-                hierarchy.append(last)
-            hierarchy[-1][1].appendRow(newRow)
-        last = [n,newRow[0]]            
+    newHead = duplicateSubTree(entryPoint)
+    pai = newHead.parent()
+    if pai:
+        model.appendRow(pai.takeRow(newHead.row()))
+    else:
+        model.appendRow(model.takeRow(newHead.row()))
     return model
+    
   
 def traverse(*lparms):
     if len(lparms) >=2:

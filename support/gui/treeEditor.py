@@ -541,6 +541,7 @@ class TreeMgr(QTreeView):
         self.actionRename(newHead)
         
     def actionCopy(self,item):
+        tipoPadre = 'root'
         if item.parent():
             np,ip,tp = getRow(item.parent())
             tipoPadre = tp.data()
@@ -555,13 +556,32 @@ class TreeMgr(QTreeView):
         """
         oitem = self.copyContext[0]
         otype = self.copyContext[1]
+        ocontext = self.ctxFactory(oitem)
         n,i,t = getRow(item)
         if t.data() != otype:
                 self.msgLine.setText("Destino inadecuado para el objeto copiado, cancelando")
                 return
         sub = cloneSubTree(oitem)
-        row = sub.takeRow(0)
-        item.appendRow(row)
+        if ocontext.get('repeteable'):
+            nitem = getChildByType(item,ocontext.get('type'))
+            if nitem:
+                head = sub.item(0)
+                for k in range(head.rowCount()):
+                    row = head.takeRow(k)
+                    nitem.appendRow(row)
+            else:
+                row = sub.takeRow(0)
+                item.appendRow(row)
+        elif ocontext.get('repeatInstance',False):
+            row = sub.takeRow(0)
+            item.appendRow(row)
+        else:
+            # substituyo 
+            nitem = getChildByType(item,ocontext.get('type'))
+            if nitem:
+                item.removeRow(nitem.row())
+            row = sub.takeRow(0)
+            item.appendRow(row)
         self.copyContext = None
         
         return row
