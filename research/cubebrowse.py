@@ -594,6 +594,11 @@ class cubeTree(TreeMgr):
         res = re.sub(match,repl,resultado)
         QMessageBox.information(self,"Estructura",res)
  
+    def actionPaste(self,item):
+        #TODO cambiar los ficheros principales
+        nitem = super().actionPaste(item)
+
+            
     def test(self):
         return
 

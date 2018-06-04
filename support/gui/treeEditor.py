@@ -280,7 +280,8 @@ class TreeMgr(QTreeView):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.openContextMenu)
 
-
+        self.copyContext = None
+        
         print('inicializacion completa')
         #self.setEditTriggers(QAbstractItemView.NoEditTriggers)
     
@@ -303,10 +304,14 @@ class TreeMgr(QTreeView):
             self.ctxMenu.append(menu.addAction("Duplicate",lambda i=n:self.actionDuplicate(i)))
             self.ctxMenu.append(menu.addAction("Rename",lambda i=n:self.actionRename(i))) 
             menu.addSeparator()
-        
+            
         for linea in edit_data.get('menuActions',[]):
             linea[0](n,self,self.ctxMenu,menu,linea[1])
             #self.ctxMenu.append(menu.addAction(linea[1],lambda i=n:linea[0](i,self)))
+        self.ctxMenu.append(menu.addAction("Copy",lambda i=n:self.actionCopy(i),"Ctrl+C"))
+        if self.copyContext and context.get('type') == self.copyContext[1]:
+
+            self.ctxMenu.append(menu.addAction("Paste",lambda i=n:self.actionPaste(i),"Ctrl+V"))
             
         if context.get('topLevel',False) or ( not context.get('mandatory',False)):
             self.ctxMenu.append(menu.addAction("Remove",lambda i=n:self.actionRemove(i)))
@@ -532,8 +537,34 @@ class TreeMgr(QTreeView):
                     break
        
     def actionDuplicate(self,item):
-        newHead = cloneSubTree(item)
+        newHead = duplicateSubTree(item)
         self.actionRename(newHead)
+        
+    def actionCopy(self,item):
+        if item.parent():
+            np,ip,tp = getRow(item.parent())
+            tipoPadre = tp.data()
+            if not tipoPadre:
+                self.msgLine.setText("Problemas en la especificacion del tipo a copiar, cancelando")
+                return
+        self.copyContext=(item,tipoPadre)
+    
+    def actionPaste(self,item):
+        """
+        TODO comprobar que sean iguales
+        """
+        oitem = self.copyContext[0]
+        otype = self.copyContext[1]
+        n,i,t = getRow(item)
+        if t.data() != otype:
+                self.msgLine.setText("Destino inadecuado para el objeto copiado, cancelando")
+                return
+        sub = cloneSubTree(oitem)
+        row = sub.takeRow(0)
+        item.appendRow(row)
+        self.copyContext = None
+        
+        return row
         
     def actionNameValue(self,item):
         """

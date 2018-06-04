@@ -103,7 +103,7 @@ Most of it is already in a new (and I hope better) implementation, but they stil
 * Incluir llamada al grand total
 * __solved__ Las fechas artificiales (trimestres, cuatrimestres, ...) como opciones de menu aqui y no en info2*
 * Para sqlite que el selector de base de datos sea el selector de ficheros del sistema
-* Copy to other place
+* __solved__ Copy to other place. Falta el proceso de adaptacion de tablas
 * __solved__ Restore
 
 ## Database backends

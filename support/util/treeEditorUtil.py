@@ -156,42 +156,18 @@ def tree2dict(rootItem,esdiccionario=None,role=None):
 
         return result_d
     
-def cloneSubTree(entryPoint): #,filter=None,payload=False):
+def duplicateSubTree(entryPoint): #,filter=None,payload=False):
     """
     TODO add to doc
-    Generate a new tree from entryPoint and its children
+    Generate a new subtree as a sibling  entryPoint with a copy of all its children 
     
     * Input parms
         *
         * __entryPoint__ a GuideItem as hierachical head of what to export
-        * __filter__ a function which does some filtering at the tree (default is no filter)
-        * __payload__ boolean. If True copies the payload
-        
     * returns
-        a tree
+        a treeItem  the cloned instance of the subTree
     
     """
-    #for k in range(modelo.rowCount()):
-        #item = modelo.item(k)
-        #first = True
-        #print(item.data())
-        #for chip in traverse(modelo,item):
-            #if first:
-                #hier = hierTree(chip)
-                #last = chip.data()
-                #first = False
-                #continue
-            #ohier = hierTree(chip)
-            #if len(ohier) == len(hier):
-                #pass
-            #elif len(ohier) > len(hier):
-                #hier.append(last)
-            #elif len(ohier) < len(hier):
-                #del hier[len(ohier):]
-            #if ohier != hier:
-                #print('scheisse',ohier,hier)
-            #last = chip.data()
-
     def hierTree(entry):
         mihier = []
         pai = entry.parent()
@@ -232,6 +208,62 @@ def cloneSubTree(entryPoint): #,filter=None,payload=False):
         last = [n,newRow[0]]            
     return newHead
 
+def cloneSubTree(entryPoint=None,filter=None):
+    """
+    TODO Unify both implentations
+    Generate a new tree from entryPoint and its children
+    
+    * Input parms
+        *
+        * __entryPoint__ a GuideItem as hierachical head of what to export
+        * __filter__ a function which does some filtering at the tree (default is no filter)
+        
+    * returns
+        a tree
+    
+    """
+    model = QStandardItemModel()
+
+
+    
+    def hierTree(entry):
+        mihier = []
+        pai = entry.parent()
+        while pai is not None:
+                mihier.insert(0,pai)
+                pai = pai.parent()
+        return mihier
+    
+    isFirst = True
+    hierarchy = []
+
+    for item in traverse(model,entryPoint):
+        n,i,t = getRow(item)
+        newRow = makeRow(n.data() if n else None,
+                                            i.data()  if i else None,
+                                            t.data() if t else None)
+        if isFirst:
+            model.appendRow(newRow)
+            hierarchy.append([item,newRow[0]])
+            newHead = newRow[0]
+            isFirst = False
+
+            isFirst = False
+        else:
+            newRow = makeRow(n.data() if n else None,
+                                                i.data()  if i else None,
+                                                t.data() if t else None)
+            ohier = hierTree(item)
+            if len(ohier) == len(hierarchy):
+                pass
+            elif len(ohier) < len(hierarchy):
+               del hierarchy[len(ohier):]
+            else: #mas
+                hierarchy.append(last)
+            hierarchy[-1][1].appendRow(newRow)
+        last = [n,newRow[0]]            
+    return model
+  
 def traverse(*lparms):
     if len(lparms) >=2:
         model = lparms[0]
@@ -472,7 +504,6 @@ def getRealEditDefinition(item,treeDef,original):
 
 
 def numEntries(tree):
-    k = 0
     k = 0
     for item in traverse(tree):
         k +=1
