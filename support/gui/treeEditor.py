@@ -644,9 +644,9 @@ class TreeMgr(QTreeView):
         dlg = TroubledEntriesDlg(title,data)
         dlg.show()
         dlg.exec_()
-"""
-    ¿virtual? methods
-"""
+    """
+        ¿virtual? methods
+    """
     def pruneExcludeList(self):
         return []
     

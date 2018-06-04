@@ -442,6 +442,7 @@ class cubeTree(TreeMgr):
             
         self.diccionario = datadict2dict(self.dataDict.hiddenRoot)
         
+        self.defaultEntry = {'file':file,'rawCube':kwparms.get('rawCube',{})}
         if 'rawCube' in kwparms:
             self.tree = editAsTree(rawCube = kwparms['rawCube'])
         else:
@@ -559,12 +560,19 @@ class cubeTree(TreeMgr):
     #@model_change_control()
     def restoreCubeFile(self):
         #self.baseModel.beginResetModel()
-        self.baseModel.clear()
+        if 'rawCube' in self.defaultEntry and self.defaultEntry['rawCube']:
+            self.tree = editAsTree(rawCube=self.defaultEntry['rawCube'])
+        else:
+            self.tree = editAsTree(file=self.defaultEntry['file'])
+        self.baseModel = self.tree
+        self.hiddenRoot = self.baseModel.invisibleRootItem()
+        self.view.setModel(self.baseModel)
+
         #if self.particular:
             #self.setupModel(*self.particularContext)
         #else:
-        self.setupModel()
-        self.setupView()
+        #self.setupModel()
+        #self.setupView()
         #self.baseModel.endResetModel()
     
            #self.resized.connect(self.resizeTree)
