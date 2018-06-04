@@ -24,9 +24,9 @@ from support.gui.treeEditor import *
 from research.cubeTreeUtil import *
 from base.datadict import DataDict
 
-from research.cubeUI.cubeTreeDlg import manualLinkDlg,FKNetworkDialog,makeTableSize,addNetworkMenuItem
+from research.cubeUI.lnkEditDlg import FKNetworkDialog,makeTableSize,addNetworkMenuItem, LinksDlg,getLinks,setLinks
 from research.cubeUI.catEditDlg import catDelegate,catEditor,getCategories,setCategories
-from research.cubeUI.lnkEditDlg import LinksDlg,getLinks,setLinks
+
 
 """
 
@@ -559,7 +559,7 @@ class cubeTree(TreeMgr):
     #@waiting_effects
     #@model_change_control()
     def restoreCubeFile(self):
-        #self.baseModel.beginResetModel()
+
         if 'rawCube' in self.defaultEntry and self.defaultEntry['rawCube']:
             self.tree = editAsTree(rawCube=self.defaultEntry['rawCube'])
         else:
@@ -567,15 +567,7 @@ class cubeTree(TreeMgr):
         self.baseModel = self.tree
         self.hiddenRoot = self.baseModel.invisibleRootItem()
         self.view.setModel(self.baseModel)
-
-        #if self.particular:
-            #self.setupModel(*self.particularContext)
-        #else:
-        #self.setupModel()
-        #self.setupView()
-        #self.baseModel.endResetModel()
     
-           #self.resized.connect(self.resizeTree)
 
     def resizeEvent(self, event):
         self.resized.emit()

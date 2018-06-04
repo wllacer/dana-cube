@@ -466,7 +466,7 @@ class TreeMgr(QTreeView):
                         newRow[0].setData(newRow[0].row(),Qt.UserRole +1)
                         newRow[0].setData(str(newRow[0].row()),Qt.EditRole)
                 for funcion in edit_data.get('setters',[]):
-                    funcion(newRow[0],self)
+                    funcion(newRow[0],self,self.ctxFactory(newRow[0]),None)
         
             return newRow[0]
         else:
@@ -571,7 +571,7 @@ class TreeMgr(QTreeView):
         dict2tree(pai,nombre,resultado,tipo=tipo)
 
         for funcion in context.get('edit_tree',{}).get('setters',[]):
-            funcion(item,resultado)
+            funcion(item,self,context,resultado)
 
         #form = WNameValue(datos)
         #form.show()

@@ -502,7 +502,7 @@ def fullKey(item):
     result.append(n.data())
     pai = n.parent()
     while pai:
-        result.insert(0,pai.data())
+        result.insert(0,str(pai.data()))
         pai = pai.parent()
     return result
 
