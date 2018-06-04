@@ -72,7 +72,8 @@ def getNorm(diccionario,parametro,default=''):
 
     """
     result = diccionario.get(parametro,default)
-    if not result or result.lower() == "none":
+    
+    if not result or str(result).lower() == "none":
         result = default
     return result
 

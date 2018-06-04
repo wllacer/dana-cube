@@ -533,6 +533,7 @@ class cubeTree(TreeMgr):
     def saveCubeFile(self):
         if self.saveDialog():
             print('Voy a salvar el fichero')
+            self.prune(exec=True)
             newcubeStruct = tree2dict(self.model().invisibleRootItem(),isDictFromDef)
             if isinstance(self.parentWindow,(cubeMgrWindow,cubeMgrDialog)):
                 total=True
@@ -541,6 +542,46 @@ class cubeTree(TreeMgr):
             dump_structure(newcubeStruct,self.cubeFile,total=total)
             
 
+    def prune(self,exec=False):
+        from PyQt5.QtCore import QPersistentModelIndex
+        def localiza(model,head,to_remove,to_check):
+            for k in range(head.rowCount()):
+                item = head.child(k)
+                ctx = Context(item)
+                nombre = item.data() if item.data() else '<>'
+                dato = getNorm(ctx,'data')
+                tipo = ctx['type'] 
+                mand = ctx['mandatory']
+                nchild = item.rowCount()
+                if tipo in EXCLUDE_LIST:
+                    continue
+                if mand and not dato and nchild == 0:
+                    to_check.append('Obligatorio sin valor : '+'/'.join(fullKey(item)))
+                elif not mand and not dato and nchild == 0:
+                    if exec:
+                        pmi =QPersistentModelIndex(item.index())
+                        print(fullKey(item),'Opcional y vacio',pmi)
+                        to_remove.append(pmi)
+                    else:
+                        to_check.append('Opcional sin valor : ' + '/'.join(fullKey(item)))
+                else:
+                    localiza(model,item,to_remove,to_check)
+        print('iniciando el pruneo')        
+        model = self.model()
+        EXCLUDE_LIST = ['connect',]
+        to_remove = []
+        to_check = []
+        localiza(model,model.invisibleRootItem(),to_remove,to_check)
+        if exec:
+            for  index in to_remove:
+                model.removeRow(index.row(),index.parent())
+        if to_check:
+            showTroubledEntries('Existen entradas con anomalias',to_check)
+    
+
+    #
+    
+            
     #@waiting_effects
     #@model_change_control()
     def restoreCubeFile(self):
@@ -588,6 +629,25 @@ class cubeTree(TreeMgr):
 Interfaz de usuario
 
 """
+def showTroubledEntries(title,data):
+    dlg = TroubledEntriesDlg(title,data)
+    dlg.show()
+    dlg.exec_()
+
+class TroubledEntriesDlg(QDialog):
+    def __init__(self,title,data,parent=None):
+        super().__init__(parent)
+        self.setWindowTitle('Anomalias en el arbol')
+        Lista = QListWidget()
+        Lista.addItems(sorted(data))
+        titulo = QLabel(title)
+        meatlayout = QVBoxLayout()
+        meatlayout.addWidget(titulo)
+        meatlayout.addWidget(Lista)
+        
+        self.setLayout(meatlayout)
+        self.setMinimumSize(640,220)
+
 def generaArgParser():
     parser = argparse.ArgumentParser(description='Cubo de datos')
     parser.add_argument('--cubeFile','--cubefile','-c',
@@ -638,6 +698,7 @@ class cubeMgrWindow(QMainWindow):
                                             sysExclude = self.sysExclude)
         
         self.fileMenu = self.menuBar().addMenu("&General")
+        self.fileMenu.addAction("Verificar",lambda k=False:self.tree.prune(exec=k))
         self.fileMenu.addAction("&Salvar", self.tree.saveCubeFile, "Ctrl+S")
         self.fileMenu.addAction("&Restaurar", self.tree.restoreCubeFile, "Ctrl+M")
         self.fileMenu.addAction("S&alir", self.close, "Ctrl+D")

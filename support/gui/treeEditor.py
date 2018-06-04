@@ -500,7 +500,8 @@ class TreeMgr(QTreeView):
                     #FIXME solo los obligatorios:
                     if len(entrada) > 3 and entrada[3]: # es solo un repeat
                         newHead.appendRow(makeRow(entrada[0],None,entrada[0]))
-                    elif entrada[1]:
+                    #elif entrada[1]:
+                    else:
                         self.actionAdd(newHead,entrada[0])
         #TODO falta colocar el foco y validar obligatorios
     
