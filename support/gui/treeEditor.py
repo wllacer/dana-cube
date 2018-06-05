@@ -1057,7 +1057,7 @@ class TreeDelegate(QStyledItemDelegate):
             return dato,display
 
     def _setWidgetData(self,editor,dato,valor_defecto):
-        edit_format = self.context.get('edit_tree',{})
+        #edit_format = self.context.get('edit_tree',{})
         
         if isinstance(editor,WMultiList):
             for entrada  in dato:
@@ -1074,7 +1074,7 @@ class TreeDelegate(QStyledItemDelegate):
                 
         elif isinstance(editor,QComboBox):
             
-            isEditable = edit_format.get('editable',False)
+            isEditable = editor.isEditable()
             
             if dato is not None:
                 try:

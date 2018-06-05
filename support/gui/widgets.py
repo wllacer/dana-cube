@@ -46,7 +46,7 @@ class WDelegateSheet(QTableWidget):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.openContextMenu)
 
-        self.context = {}
+        self.editContext = {}
         # en esta posicion para que las señales se activen tras la inicializacion
         #self.currentItemChanged.connect(self.moveSheetSel)
         #self.itemChanged.connect(self.itemChanged)
@@ -99,14 +99,14 @@ class WDelegateSheet(QTableWidget):
     def setContext(self,data=None,**kwparm):
         changed = False
         for dato in kwparm:
-            if self.context.get(dato) != kwparm.get(dato):
+            if self.editContext.get(dato) != kwparm.get(dato):
                 changed = True
                 break
         if changed:
             self.contextChange.emit()
             self.initialize()
         for dato in kwparm:
-            self.context[dato] = kwparm[dato]
+            self.editContext[dato] = kwparm[dato]
             
         if data:
             self.loadData(data)
@@ -115,22 +115,26 @@ class WDelegateSheet(QTableWidget):
     def loadData(self,data):
         """
         before use it might be of interest to disconnect the rowAdded pyqtSignal
+        FIXME setText o setData
         """
         for ind,entry in enumerate(data):
             if ind >= self.rowCount():
                 self.addRow(emit=False)
-            for col,dato in enumerate(entry):
-                if col >= self.columnCount():
-                    break
-                #self.setData(ind,col,dato)
-                self.item(ind,col).setText(dato)
+            if isinstance(entry,(list,tuple)):
+                for col,dato in enumerate(entry):
+                    if col >= self.columnCount():
+                        break
+                    #self.setData(ind,col,dato)
+                    self.item(ind,col).setData(Qt.EditRole,dato)
+            else:
+                self.item(ind,0).setData(Qt.EditRole,entry)
     
     def unloadData(self):
         result = [ [ None for k in range(self.columnCount()) ] for j in range (self.rowCount()) ]
         for row  in range(self.rowCount()):
             for col in range(self.columnCount()):
                 if self.item(row,col):
-                    result[row][col] = self.item(row,col).text()
+                    result[row][col] = self.item(row,col).data(Qt.EditRole)
                 else:
                     result[row][col] = None
         return result
@@ -139,12 +143,28 @@ class WDelegateSheet(QTableWidget):
         item =  self.item(row,col)
         if not item:
             self.initializeCell(row,col)
-        self.item(row,col).setText(dato)
+        self.item(row,col).setData(Qt.EditRole,dato)
 
     def resizeEvent(self, event):
         self.resized.emit()
         return super().resizeEvent(event)
 
+    def set(self,x,y,value):
+        item = self.item(x,y)
+        if isinstance(value,(list,tuple)) and len(value) == 2:
+            item.setData(value[0])
+        else:
+            item.setData(value)
+
+    def get(self,x,y):
+        item = self.item(x,y)
+        return item.data(Qt.EditRole)
+
+    def values(self):
+        return self.unloadData()
+    
+    def fill(self,data):
+        return self.loadData(data)
 
 class WMultiList(QWidget):
     """
@@ -612,19 +632,6 @@ class WPowerTable(QTableWidget):
 
        
 class WDataSheet(WPowerTable):
-    """
-        Version del TableWidget para simular hojas de entrada de datos
-        se inicializa con el context
-           context[0] titulos de las filas
-           context[1 -n] columnas
-                (??)context[k][0] valores iniciales (si es comun)
-                context[k][1] widget a utilizar (defecto QLineEdit)
-                context[k][2] parametrizacion del widget (metodo:valor)
-                context[k][3] lista adicinal de valores (para QComboBox y similares)
-           ...
-           m numero de filas a generar
-          
-    """        
     def __init__(self,context,rows,parent=None): 
         
         cols=len(context) -1
@@ -740,5 +747,339 @@ class WPropertySheet(WPowerTable):
             valores.append(self.get(k,0))
         return valores
 
+"""
+delegados estandar
+
+"""        
+class columnSheetDelegate(QStyledItemDelegate):
+    def __init__(self,context,parent=None):
+        super().__init__(parent)
+        self.context = context
+        
+    def createEditor(self,parent,option,index):
+        col = index.column()
+        specs = self.context[col +1]
+        return self._setupEditorFromContext(specs)
+    
+    def _setupEditorFromContext(self,specs,parent):
+        editorObj = specs[1] if specs[1] else super().createEditor(parent,option,index)
+        editor = editorObj(parent)
+        typeSpec = specs[2]
+        if typeSpec is not None:
+            #TODO ejecuto los metodos dinamicamente. por ahora solo admite parametros en lista  
+            #TODO vale como funcion utilitaria
+            for func in typeSpec:
+                try:
+                    shoot = getattr(editor,func)
+                except AttributeError:
+                    print(typeSpec,item)
+                    exit()
+                if isinstance(typeSpec[func],(list,tuple)):
+                    parms = typeSpec[func]
+                else:
+                    parms = (typeSpec[func],)
+                shoot(*parms)
+        self.fullList = specs[3]
+        if self.fullList is not None:
+            if isinstance(self.fullList[0],(list,tuple)):
+                self.isDouble = True
+                self.currentList = [ elem[1] for elem in self.fullList]
+            else:
+                self.isDouble = False
+                self.currentList = self.fullList
+            if editorObj in  (WMultiCombo,QComboBox):
+                editor.addItems(self.currentList)
+        return editor
+        
+    def setEditorData(self, editor, index):
+        col = index.column()
+        dato = index.data()
+        def_value = self.context[col +1][0]
+
+        self._setWidgetData(editor,dato,def_value)
+        
+    def setModelData(self,editor,model,index):
+        dato = self._getWidgetData(editor)
+        if type(editor) == QComboBox and self.isDouble:
+            dato = dato[0]
+            model.setData(index,dato[0])
+            model.setData(dato[1],Qt.DisplayRole)
+            return 
+        elif isinstance(dato,(list,tuple)):
+            dato = norm2String(dato)
+        model.setData(index,dato)
         
         
+    def _setWidgetData(self,editor,dato,valor_defecto):
+        
+        if isinstance(editor,WMultiList):
+            for entrada  in dato:
+                self.__multiListLoad(editor,entrada)           
+            if not dato and valor_defecto is not None:
+                editor.selectEntry(valor_defecto)
+
+        if isinstance(editor,WMultiCombo): # WMC siemre antes que QCB porque es una especializacion
+            for entrada in dato:
+                editor.set(entrada)
+            if len(dato) == 0 and valor_defecto is not None:
+                editor.set(valor_defecto)
+                
+        elif isinstance(editor,QComboBox):
+            if dato:
+                self.__comboLoad(editor,dato)
+            elif valor_defecto is not None:
+                editor.setCurrentIndex(self.currentList.index(valor_defecto))
+            else:
+                editor.setCurrentIndex(-1)
+
+        elif isinstance(editor, QSpinBox):
+            if dato is not None:
+                editor.setValue(dato)
+            else:
+                editor.setValue(valor_defecto)
+
+        elif isinstance(editor, QCheckBox):
+            if dato is not None:
+                editor.setCheckState(dato)
+            else:
+                editor.setChecked(valor_defecto)
+
+        elif isinstance(editor,QTextEdit):
+            # FIXME esto tiene que mejorar. Solo me sirve para el caso de case_sql
+            if dato is not None:
+                editor.setText(dato)
+            else:
+                editor.setText(valor_defecto)
+            editor.setMinimumHeight(220)
+            #editor.resize(editor.document().size().width(), editor.document().size().height() + 10)
+            
+        elif isinstance(editor,WPowerTable):
+            for x,linea in enumerate(dato):
+                for y in range(2):
+                    editor.cellWidget(x,y).setText(linea[y])
+            editor.resizeRowsToContents()
+        elif isinstance(editor,QDialog):
+            if dato:
+                editor.setData(dato)
+            elif valor_defecto is not None:
+                editor.setData(valor_defecto)
+        else:
+            if dato is not None:
+                editor.setText(dato)
+            elif valor_defecto is not None:
+                editor.setText(valor_defecto)
+
+    def _getWidgetData(self,editor):
+        
+        if isinstance(editor, WMultiList):
+            return self.__multiListUnload(self,editor)
+        elif isinstance(editor, WMultiCombo):
+            return editor.get()                
+        elif isinstance(editor,QTextEdit):
+            return editor.document().toPlainText()
+        elif isinstance(editor,QDialog):
+            return editor.getData()
+        elif isinstance(editor, QComboBox):
+            if self.isDouble:
+                return [self.fullList[editor.currentIndex()][0] , self.currentList[editor.currentIndex()]]
+            else:
+                return self.currentList[editor.currentIndex()]
+        elif isinstance(editor, QSpinBox):
+            return editor.value()
+        elif isinstance(editor, QCheckBox):
+            return editor.isChecked()
+        elif isinstance(editor,WPowerTable):
+            return editor.values()
+        else:
+            return editor.text()
+
+    def __multiListLoad(self,editor,dato):
+        """
+        convenience for just this
+        """
+        if self.isDouble:                            #para presentar correctamente
+            try:
+                pos = self.currentList.index(dato)
+            except ValueError:
+                try:
+                    pos  = [ entry[0] for entry in self.fullList ].index(dato)
+                except ValueError:
+                    self.currentList.append(dato)
+                    self.fullList.append([dato,dato])
+                    pos = len(self.currentList) -1
+            dato = self.currentList[pos]
+        editor.selectEntry(dato)
+ 
+    def __comboLoad(self,editor,dato):
+        """
+        convenience for just this
+        """
+        isEditable = editor.isEditable()
+        try:
+            pos = self.currentList.index(dato)
+        except ValueError:
+            print('falla ',dato,'para ',self.currentList)
+            if self.isDouble:
+                try:
+                    pos =  [ entry[0] for entry in self.fullList].index(dato)
+                except ValueError:
+                    if isEditable:
+                        self.currentList.append(dato)
+                        self.fullList.append([dato,dato])
+                        editor.addItem(dato)
+                        pos = len(self.currentList) -1
+                    else:
+                        raise
+            else:
+                if isEditable:
+                    self.currentList.append(dato)
+                    editor.addItem(dato)
+                    pos = len(self.currentList) -1
+                else:
+                    raise
+        editor.setCurrentIndex(pos)
+                
+    def __multiListUnload(self,editor):
+        if not self.isDouble:
+            values = editor.seleList
+        else:
+            values = []
+            tmpval = editor.seleList
+            for entry in tmpval:
+                idx = self.currentList.index(entry)
+                try:
+                    values.append(self.fullList[idx][0])
+                except IndexError:
+                    values.append(entry)
+        return values
+
+class rowSheetDelegate(columnSheetDelegate):
+    """
+            Version del TableWidget para simular hojas de propiedades
+        se inicializa con el array context
+           context[0] titulos de las filas
+           context[1] widget a utilizar (defecto QLineEdit)
+           context[2] parametrizacion del widget (metodo:valor)
+           ...
+    """
+    def createEditor(self,parent,option,index):
+
+        row = index.row()
+        specs = (None,self.context[row][1],self.context[row][2],self.context[row][3])
+        return self._setupEditorFromContext(specs,parent)
+        
+class WDataSheet2(WDelegateSheet):
+    """
+        No real example now
+        Version del TableWidget para simular hojas de entrada de datos
+        se inicializa con el context
+           context[0] titulos de las filas
+           context[1 -n] columnas
+                (??)context[k][0] valores iniciales (si es comun)
+                context[k][1] widget a utilizar (defecto QLineEdit)
+                context[k][2] parametrizacion del widget (metodo:valor)
+                context[k][3] lista adicinal de valores (para QComboBox y similares)
+           ...
+           m numero de filas a generar
+           
+    """
+    def __init__(self,context,rows,parent=None):
+        cols = len(context) -1
+        super().__init__(rows,cols,parent=parent)
+        self.editContext = context
+        self.setContextMenuPolicy(Qt.NoContextMenu)
+        self.setVerticalHeaderLabels(context[0])
+        self.setHorizontalHeaderLabels(('Operador','>                Valores                       <'))
+        delegate = columnSheetDelegate
+        sheetDelegate = delegate(self.editContext)
+        self.setItemDelegate(sheetDelegate)
+
+    def initializeTable(self,rows):
+        if rows <= self.rowCount():
+            self.initialize(self)
+        else:
+            self.initialize(self)
+            original = self.rowCount()
+            for k in range(original,rows):
+                self.addRow()
+            
+    def changeContext(self,context):
+        """
+        hay que probarlo, pero deberia bastar con eso
+        """
+        self.editContext = context
+        self.contextChange.emit()
+        
+    def changeContextColumn(self,context,column):
+        self.editContext = context
+        self.contextChange.emit()
+        
+    def addRow(self,line=None):
+        super().addRow(line)
+    def valueCol(self,col=0):
+        pass
+    #** from powertable **
+    #def __init__(self,rows=0,cols=0,parent=None):
+    #def openContextMenu(self,position):
+    #def execAction(self,row,action):
+    #def setRowModelDef(self,contexto):
+    #def addCell(self,x,y,colDef=None,defVal=None):
+    #def values(self):
+    #def appendRow(self,row):
+    #** from WDelegateSheet
+    #def __init__(self,row,col,delegate=None,parent=None):
+    #def initialize(self):
+    #def initializeRow(self,x):
+    #def initializeCell(self,x,y):
+    #def openContextMenu(self,position):
+    #def addRow(self,idx=None,emit=True):
+    #def removeRow(self,idx=None,emit=True):
+    #def setContext(self,data=None,**kwparm):
+    #def loadData(self,data):
+    #def unloadData(self):
+    #def setData(self,row,col,dato):
+    #def resizeEvent(self, event):
+
+class WPropertySheet2(WDelegateSheet):
+    """
+            Version del TableWidget para simular hojas de propiedades
+        se inicializa con el array context
+           context[0] titulos de las filas
+           context[1] widget a utilizar (defecto QLineEdit)
+           context[2] parametrizacion del widget (metodo:valor)
+           ...
+    """
+    def __init__(self,context,data,parent=None): 
+        cols = 1
+        rows = len(context) 
+        super().__init__(rows,cols,parent=parent)  # super().__init__ ANTES de los self.
+        self.editContext = context
+        self.setContextMenuPolicy(Qt.NoContextMenu)
+        self.setVerticalHeaderLabels([ elem[0] for elem in context])
+        self.horizontalHeader().hide()
+        delegate = rowSheetDelegate
+        sheetDelegate = delegate(self.editContext)
+        self.setItemDelegate(sheetDelegate)
+        if data:
+            self.loadData(data)
+#** from powertable **
+    #def __init__(self,rows=0,cols=0,parent=None):
+    #def openContextMenu(self,position):
+    #def execAction(self,row,action):
+    #def setRowModelDef(self,contexto):
+    #def addCell(self,x,y,colDef=None,defVal=None):
+    #def values(self):
+    #def appendRow(self,row):
+#** from WDelegateSheet
+    #def __init__(self,row,col,delegate=None,parent=None):
+    #def initialize(self):
+    #def initializeRow(self,x):
+    #def initializeCell(self,x,y):
+    #def openContextMenu(self,position):
+    #def addRow(self,idx=None,emit=True):
+    #def removeRow(self,idx=None,emit=True):
+    #def setContext(self,data=None,**kwparm):
+    #def loadData(self,data):
+    #def unloadData(self):
+    #def setData(self,row,col,dato):
+    #def resizeEvent(self, event):
