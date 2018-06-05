@@ -38,7 +38,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QGridLayout, QSize
 from base.datadict import DataDict
 from admin.dictmgmt.tableInfo import TableInfo
 
-from research.cubeTreeUtil import *
+from admin.cubemgmt.cubeTreeUtil import *
 
 (_ROOT, _DEPTH, _BREADTH) = range(3)
 

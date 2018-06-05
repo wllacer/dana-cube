@@ -42,7 +42,7 @@ from support.util.fechas import CLASES_INTERVALO, TIPOS_INTERVALO
 from admin.cubemgmt.cubeTypes import GUIDE_CLASS, ENUM_FORMAT,LOGICAL_OPERATOR
 
 from support.util.jsonmgr import load_cubo
-from admin.wizardmgmt.pages.guidePreview import guidePreview
+from base.guidePreview import guidePreview
 from base.core import Cubo    
 
 from support.gui.treeEditor import *
@@ -279,7 +279,7 @@ def getSchemaFromConnection(item):
 principales
 """
 def getConnection(item,**kwparm):
-    #from research.cubeTreeUtil import _toConfName
+    #from admin.cubemgmt.cubeTreeUtil import _toConfName
     conItem = getChildByType(getParentByType(item,'base'),'connect')
     n,i,t = getRow(conItem)
     datos = {}

@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 
 
 #from admin.cubebrowse import CubeBrowserWin
-from research.cubebrowse import cubeMgrWindow
+from admin.cubebrowse import cubeMgrWindow
 from PyQt5.QtWidgets import QApplication    
 
 if __name__ == '__main__':

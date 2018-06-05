@@ -13,6 +13,29 @@ Documentacion funcioanl de los atributos del cubo en docs/tree_docs.md
     Definimos los tipos y si son hojas o nodos intermedios. Ojo todos los elementosde TYPE_LIST actuan, segun 
     la circunsancia de una u otra forma (son arrays de valores).
     
+Practicamente todas las definiciones son obsoletas, pero las mantenemos por razones de compatiblidad (no se donde me pueden aparecer de repente)
+    
+"""
+"""
+
+Definiciones activas
+
+"""
+GUIDE_CLASS = ( 
+    ('o','normal',),
+    ('c','categorias',),
+    ('h','jerarquia',),
+    ('d','fecha',),
+    );
+LOGICAL_OPERATOR = ('in','between','like','=','!=','<','>','>=','<=','not in','not between','not like','is null','is not null')
+ENUM_FORMAT = ( ('txt','texto'),('num','numerico'),('date','fecha'))
+TIPO_FECHA = ('Ymd', 'Ym','Ymw','YWw') 
+#FECHADOR = (('Y','Año'),('C','Cuatrimestre'),('Q','Trimestre'),('m','Mes'),('q','Quincena'),('W','Semana del Año'),('w','semana'),('d','Día'))
+FECHADOR = (('Y','Año'),('m','Mes'),('W','Semana del Año'),('w','semana'),('d','Día'))
+"""
+
+definiciones probablemente obsoletas
+
 """
 ITEM_TYPE = set([
      u'agregado',
@@ -129,18 +152,6 @@ TYPE_LIST_DICT = set([
      'date filter'])
 
 COMPLEX_TYPES = TYPE_DICT | TYPE_LIST | TYPE_LIST_DICT 
-
-GUIDE_CLASS = ( 
-    ('o','normal',),
-    ('c','categorias',),
-    ('h','jerarquia',),
-    ('d','fecha',),
-    );
-LOGICAL_OPERATOR = ('in','between','like','=','!=','<','>','>=','<=','not in','not between','not like','is null','is not null')
-ENUM_FORMAT = ( ('txt','texto'),('num','numerico'),('date','fecha'))
-TIPO_FECHA = ('Ymd', 'Ym','Ymw','YWw') 
-#FECHADOR = (('Y','Año'),('C','Cuatrimestre'),('Q','Trimestre'),('m','Mes'),('q','Quincena'),('W','Semana del Año'),('w','semana'),('d','Día'))
-FECHADOR = (('Y','Año'),('m','Mes'),('W','Semana del Año'),('w','semana'),('d','Día'))
 
 
 """

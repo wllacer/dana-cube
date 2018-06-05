@@ -32,12 +32,19 @@ from admin.dictmgmt.dictTree import *
 from base.datadict import *
 
 from admin.tablebrowse import *
-from admin.cubemgmt.cubeutil import info2cube
-#from admin.cubebrowse import CubeMgr
-from research.cubebrowse import CubeMgr
+from admin.cubebrowse import CubeMgr
 from support.util.decorators import *
 
 import base.config as config
+
+def info2cube(dataDict,confName,schema,table,maxlevel=1):
+    """
+       de la informacion de la tabla en DANACUBE crea un cubo por defecto
+
+    """
+    tableInfo = TableInfo(dataDict,confName=confName,schemaName=schema,tableName=table,maxlevel=maxlevel)
+    
+    return tableInfo.info2cube()
 
 class GenerationSheetDlg(QDialog):
     """
