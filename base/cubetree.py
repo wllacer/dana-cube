@@ -9,6 +9,11 @@ from __future__ import unicode_literals
 '''
 Documentation, License etc.
 
+__OBSOLETO__
+
+Unicamente traverseTree parece ser usado actualmente
+
+
 @package estimaciones
 # 0.3
 '''

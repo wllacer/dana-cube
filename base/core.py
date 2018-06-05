@@ -1834,7 +1834,6 @@ def testTraspose():
         print(item.getPayload())
 
 def experimental():
-    from base.cubetree import recTreeLoader,dict2tree,navigateTree,CubeItem,traverseTree
     from support.util.jsonmgr import load_cubo
     def presenta(vista):
         guia=vista.row_hdr_idx
