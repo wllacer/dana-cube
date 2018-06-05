@@ -117,6 +117,7 @@ class WDelegateSheet(QTableWidget):
         before use it might be of interest to disconnect the rowAdded pyqtSignal
         FIXME setText o setData
         """
+        print('load data')
         for ind,entry in enumerate(data):
             if ind >= self.rowCount():
                 self.addRow(emit=False)
@@ -125,36 +126,41 @@ class WDelegateSheet(QTableWidget):
                     if col >= self.columnCount():
                         break
                     #self.setData(ind,col,dato)
-                    self.item(ind,col).setData(Qt.EditRole,dato)
+                    self.setData(ind,col,dato)
             else:
-                self.item(ind,0).setData(Qt.EditRole,entry)
+                self.setData(ind,0,entry)
     
     def unloadData(self):
         result = [ [ None for k in range(self.columnCount()) ] for j in range (self.rowCount()) ]
         for row  in range(self.rowCount()):
-            for col in range(self.columnCount()):
-                if self.item(row,col):
-                    result[row][col] = self.item(row,col).data(Qt.EditRole)
-                else:
-                    result[row][col] = None
-        return result
+                for col in range(self.columnCount()):
+                    if self.item(row,col):
+                        result[row][col] = self.item(row,col).data(Qt.EditRole)
+                    else:
+                        result[row][col] = None
+        if self.columnCount() == 1:
+            return [ elem[0] for elem in result]
+        else:
+            return result
     
     def setData(self,row,col,dato):
+        print('set data')
         item =  self.item(row,col)
         if not item:
             self.initializeCell(row,col)
-        self.item(row,col).setData(Qt.EditRole,dato)
+        if self.hasSplitData(row,col,dato):
+            cdato = self.getSplitData(row,col,dato)
+            item.setData(Qt.EditRole,cdato[0])
+            item.setData(Qt.DisplayRole,cdato[1])
+        else:
+            item.setData(Qt.EditRole,dato)
 
     def resizeEvent(self, event):
         self.resized.emit()
         return super().resizeEvent(event)
 
     def set(self,x,y,value):
-        item = self.item(x,y)
-        if isinstance(value,(list,tuple)) and len(value) == 2:
-            item.setData(value[0])
-        else:
-            item.setData(value)
+        return self.setData(x,y,value)
 
     def get(self,x,y):
         item = self.item(x,y)
@@ -166,6 +172,18 @@ class WDelegateSheet(QTableWidget):
     def fill(self,data):
         return self.loadData(data)
 
+    def getItem(self,x,y):
+        return self.item(x,y)
+    
+    def hasSplitData(self,x,y,dato):
+        """
+        specialize as you need in your cases
+        """
+        return False
+    
+    def getSplitData(self,x,y,dato):
+        return [dato,dato]
+    
 class WMultiList(QWidget):
     """
     WIP
@@ -759,9 +777,12 @@ class columnSheetDelegate(QStyledItemDelegate):
     def createEditor(self,parent,option,index):
         col = index.column()
         specs = self.context[col +1]
-        return self._setupEditorFromContext(specs)
+        if len(specs) < 4:
+            for k in range(len(specs),4):
+                specs.append(None)
+        return self._setupEditorFromContext(specs,parent,option,index)
     
-    def _setupEditorFromContext(self,specs,parent):
+    def _setupEditorFromContext(self,specs,parent,option,index):
         editorObj = specs[1] if specs[1] else super().createEditor(parent,option,index)
         editor = editorObj(parent)
         typeSpec = specs[2]
@@ -772,7 +793,7 @@ class columnSheetDelegate(QStyledItemDelegate):
                 try:
                     shoot = getattr(editor,func)
                 except AttributeError:
-                    print(typeSpec,item)
+                    print('Error de atributos',typeSpec)
                     exit()
                 if isinstance(typeSpec[func],(list,tuple)):
                     parms = typeSpec[func]
@@ -794,15 +815,14 @@ class columnSheetDelegate(QStyledItemDelegate):
     def setEditorData(self, editor, index):
         col = index.column()
         dato = index.data()
-        def_value = self.context[col +1][0]
+        def_value = None
 
         self._setWidgetData(editor,dato,def_value)
         
     def setModelData(self,editor,model,index):
         dato = self._getWidgetData(editor)
         if type(editor) == QComboBox and self.isDouble:
-            dato = dato[0]
-            model.setData(index,dato[0])
+            model.setData(index,dato[0],Qt.EditRole)
             model.setData(dato[1],Qt.DisplayRole)
             return 
         elif isinstance(dato,(list,tuple)):
@@ -827,7 +847,7 @@ class columnSheetDelegate(QStyledItemDelegate):
         elif isinstance(editor,QComboBox):
             if dato:
                 self.__comboLoad(editor,dato)
-            elif valor_defecto is not None:
+            elif valor_defecto:
                 editor.setCurrentIndex(self.currentList.index(valor_defecto))
             else:
                 editor.setCurrentIndex(-1)
@@ -842,7 +862,10 @@ class columnSheetDelegate(QStyledItemDelegate):
             if dato is not None:
                 editor.setCheckState(dato)
             else:
-                editor.setChecked(valor_defecto)
+                if valor_defecto:
+                    editor.setChecked(valor_defecto)
+                else:
+                    editor.setChecked(False)
 
         elif isinstance(editor,QTextEdit):
             # FIXME esto tiene que mejorar. Solo me sirve para el caso de case_sql
@@ -965,8 +988,12 @@ class rowSheetDelegate(columnSheetDelegate):
     def createEditor(self,parent,option,index):
 
         row = index.row()
-        specs = (None,self.context[row][1],self.context[row][2],self.context[row][3])
-        return self._setupEditorFromContext(specs,parent)
+        specs = [None,] + list(self.context[row][1:])
+        if len(specs) < 4:
+            for k in range(len(specs),4):
+                specs.append(None)
+        #specs = (None,self.context[row][1],self.context[row][2],self.context[row][3])
+        return self._setupEditorFromContext(specs,parent,option,index)
         
 class WDataSheet2(WDelegateSheet):
     """
@@ -1056,12 +1083,49 @@ class WPropertySheet2(WDelegateSheet):
         self.editContext = context
         self.setContextMenuPolicy(Qt.NoContextMenu)
         self.setVerticalHeaderLabels([ elem[0] for elem in context])
+        self.horizontalHeader().setStretchLastSection(True)
         self.horizontalHeader().hide()
         delegate = rowSheetDelegate
         sheetDelegate = delegate(self.editContext)
         self.setItemDelegate(sheetDelegate)
         if data:
             self.loadData(data)
+            
+    def hasSplitData(self,x,y,dato):
+        """
+        specialize as you need in your cases
+        """
+        specs = self.editContext[x]
+        if  specs[1] in (QComboBox,WMultiCombo) :
+            if specs[3] and isinstance(specs[3][0],(list,tuple,set)):
+                  return True
+            elif specs[3] and isinstance(dato,int):
+                return True
+            else:
+                return False
+        else:
+            return False
+    
+    def getSplitData(self,x,y,dato):
+        fullList = self.editContext[x][3]
+        if isinstance(fullList[0],(list,tuple)):
+            internalList = [ elem[1] for elem in fullList]
+            try:
+                pos = internalList.index(dato)
+            except ValueError:
+                try:
+                    pos  = [ entry[1] for entry in fullList ].index(dato)
+                except ValueError:
+                    pos = -1
+            if pos >= 0:
+                print('extraigo',fullList[pos][0:1])
+                return fullList[pos][0:1]
+            else:
+                return [dato,dato]
+        elif isinstance(dato,int):
+            return [dato,fullList[dato]]
+      
+        return [dato,dato]
 #** from powertable **
     #def __init__(self,rows=0,cols=0,parent=None):
     #def openContextMenu(self,position):

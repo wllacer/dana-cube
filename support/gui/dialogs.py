@@ -38,7 +38,7 @@ class propertySheetDlg(QDialog):
         #
         InicioLabel = QLabel(title)
         #
-        self.sheet=WPropertySheet(context,data)
+        self.sheet=WPropertySheet2(context,data)
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel,
                                      Qt.Horizontal)
 
@@ -340,15 +340,17 @@ class VistaDlg(propertySheetDlg):
     def accept(self):
         self.resetError()
         datos = self.sheet.values()
-        if any(k < 0 for k in datos[0:4]):
-            pos = datos[0:4].index(-1)
-            self.inlineError('{} debe tener valor'.format(self.context[pos][0]),self.sheet.cellWidget(pos,0))
+        if any (k is None for k in datos[0:4]):
+        #if any(k < 0 for k in datos[0:4]):
+            pos = datos[0:4].index(None)
+            self.sheet.setCurrentCell(pos,0)
+            self.inlineError('{} debe tener valor'.format(self.context[pos][0]),self.sheet)
             return
         for k,valor in enumerate(datos):
             if valor == '' and self.context[k][1] is None:
                continue
             self.data[k] = valor
-        self.sheet.cellWidget(0,0).setFocus
+        self.sheet.setCurrentCell(0,0)
         QDialog.accept(self)
 
         
@@ -410,39 +412,38 @@ class NumberFormatDlg(QDialog):
 
         
         grid = QGridLayout()
-        self.sheet = WPropertySheet(self.context,self.data)
+        self.sheet = WPropertySheet2(self.context,self.data)
         grid.addWidget(self.sheet, 0, 0)
         self.setLayout(grid)
         self.setMinimumSize(QSize(300,220))
-
-        self.sheet.cellWidget(0,0).textEdited['QString'].connect(self.checkAndFix)
-        self.sheet.cellWidget(1,0).textEdited['QString'].connect(self.checkAndFix)
-        self.sheet.cellWidget(2,0).valueChanged[int].connect(self.apply)
-        self.sheet.cellWidget(3,0).toggled[bool].connect(self.apply)
-        self.sheet.cellWidget(4,0).toggled[bool].connect(self.apply)
+        self.sheet.cellChanged.connect(self.valida)
         
         self.setWindowTitle("Set Number Format (`Live')")
 
 
+    def valida(self,row,col):
+        if row > 1:
+            self.apply()
+        else:
+            self.checkAndFix()
+            
     def checkAndFix(self):
-        #thousands = unicode(self.thousandsEdit.text())
-        #decimal = unicode(self.decimalMarkerEdit.text())
         thousands = self.sheet.get(0,0)
         decimal = self.sheet.get(1,0)
         if thousands == '':
-            self.sheet.cellWidget(0,0).setFocus()
+            self.sheet.setCurrentCell(0,0)
             return
         if decimal == '':
-            self.sheet.cellWidget(1,0).setFocus()
+            self.sheet.setCurrentCell(1,0)
             return
 
         if thousands == decimal:
-            self.sheet.cellWidget(0,0).clear()
-            self.sheet.cellWidget(0,0).setFocus()
+            self.sheet.getItem(0,0).setText("")
+            self.sheet.setCurrentCell(0,0)
         if len(decimal) == 0:
             self.sheet.set(1,0,".")
-            self.sheet.cellWidget(1,0).selectAll()
-            self.sheet.cellWidget(1,0).setFocus()
+            self.sheet.getItem(1,0).selectAll()
+            self.sheet.setCurrentCell(1,0)
     
         self.apply()
 
@@ -551,114 +552,6 @@ class WNameValue(QDialog):
             k += 1
         super().accept()
 
-class NumberFormatDlgOrig(QDialog):
-    def __init__(self, format, callback, parent=None):
-        super(NumberFormatDlg, self).__init__(parent)
-
-        punctuationRe = QRegExp(r"[ ,;:.']")
-        
-        self.context=[]
-        """
-           context[0] titulos de las filas
-           context[1] widget a utilizar (defecto QLineEdit)
-           context[2] llamadas de configuracion del widget
-           context[3] signal,slots (me temo que a mano)
-        """
-        self.context = (
-                        ("Thousands separator",
-                            QLineEdit,
-                            {'setMaxLength':1,'setValidator':QRegExpValidator(punctuationRe, self)},
-                            None,
-                        ),
-                        ("Decimal marker",
-                            QLineEdit,
-                            {'setMaxLength':1,
-                                'setValidator':QRegExpValidator(punctuationRe, self),
-                                'setInputMask':"X"
-                         },
-                         None,
-                        ),
-                        ("Decimal places",
-                            QSpinBox,
-                            {"setRange":(0,6)},
-                            None,
-                        ),
-                        ("Red negative numeros",
-                            QCheckBox,
-                            None,
-                            None,
-                        ),
-                        ("&Yellow outliers",
-                            QCheckBox,
-                            None,
-                            None,
-                        )
-                      )
-        self.data = [format["thousandsseparator"],
-                        format["decimalmarker"],
-                        format["decimalplaces"],
-                        format["rednegatives"],
-                        format["yellowoutliers"],
-                    ]
-        
-        self.format = format
-        self.callback = callback
-
-        
-        grid = QGridLayout()
-        self.sheet = WPropertySheet(self.context,self.data)
-        grid.addWidget(self.sheet, 0, 0)
-        self.setLayout(grid)
-        self.setMinimumSize(QSize(300,220))
-
-        self.sheet.cellWidget(0,0).textEdited['QString'].connect(self.checkAndFix)
-        self.sheet.cellWidget(1,0).textEdited['QString'].connect(self.checkAndFix)
-        self.sheet.cellWidget(2,0).valueChanged[int].connect(self.apply)
-        self.sheet.cellWidget(3,0).toggled[bool].connect(self.apply)
-        self.sheet.cellWidget(4,0).toggled[bool].connect(self.apply)
-        
-        self.setWindowTitle("Set Number Format (`Live')")
-
-
-    def checkAndFix(self):
-        #thousands = unicode(self.thousandsEdit.text())
-        #decimal = unicode(self.decimalMarkerEdit.text())
-        thousands = self.sheet.get(0,0)
-        decimal = self.sheet.get(1,0)
-        if thousands == '':
-            self.sheet.cellWidget(0,0).setFocus()
-            return
-        if decimal == '':
-            self.sheet.cellWidget(1,0).setFocus()
-            return
-
-        if thousands == decimal:
-            self.sheet.cellWidget(0,0).clear()
-            self.sheet.cellWidget(0,0).setFocus()
-        if len(decimal) == 0:
-            self.sheet.set(1,0,".")
-            self.sheet.cellWidget(1,0).selectAll()
-            self.sheet.cellWidget(1,0).setFocus()
-    
-        self.apply()
-
-
-    def apply(self):
-        self.format["thousandsseparator"] = (
-                #unicode(self.thousandsEdit.text()))
-                self.sheet.get(0,0))
-        self.format["decimalmarker"] = (
-                #unicode(self.decimalMarkerEdit.text()))
-                self.sheet.get(1,0))
-        self.format["decimalplaces"] = (
-                self.sheet.get(2,0))
-        self.format["rednegatives"] = (
-                self.sheet.get(3,0))
-        self.format["yellowoutilers"] = (
-                self.sheet.get(3,0))
-
-        self.callback()
-  
 
 def mainNF():
     app = QApplication(sys.argv)

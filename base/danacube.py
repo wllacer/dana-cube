@@ -431,9 +431,11 @@ class DanaCubeWindow(QMainWindow):
         if vistaDlg.exec_():
             viewData['row'] = parametros[0]
             viewData['col'] = parametros[1]
-            viewData['agregado'] = self.cubo.getFunctions()[parametros[2]]
-            #campo = self.cubo.getFunctions()[parametros[1]]
-            viewData['campo'] = vistaDlg.sheet.cellWidget(3,0).currentText() #otra manera de localizar
+            viewData['agregado'] = parametros[2]
+            viewData['campo'] = parametros[3]
+            #viewData['agregado'] = self.cubo.getFunctions()[parametros[2]]
+            ##campo = self.cubo.getFunctions()[parametros[1]]
+            #viewData['campo'] = vistaDlg.sheet.cellWidget(3,0).currentText() #otra manera de localizar
             viewData['totalizado'] = parametros[4]
             viewData['stats'] = parametros[5]
         
