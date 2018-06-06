@@ -648,123 +648,6 @@ class WPowerTable(QTableWidget):
             for k in range(min(len(self.rowModelDef),self.columnCount())):
                 self.addCell(row,k,self.rowModelDef[k])
 
-       
-class WDataSheet(WPowerTable):
-    def __init__(self,context,rows,parent=None): 
-        
-        cols=len(context) -1
-
-        super(WDataSheet, self).__init__(rows,cols,parent)
-        # cargando parametros de defecto
-        self.context = context
-        self.initializeTable(rows)
-        
-        #FIXME es un desastre
-    def initializeTable(self,rows):
-        cabeceras = [ item  for item in self.context[0] ]
-        for k in range(rows):
-            self.addRow(k)
-
-        self.setHorizontalHeaderLabels(cabeceras)
-        
-
-        #self.resizeColumnsToContents()
-
-    def changeContext(self,context):
-        #FIXME y que pasa con el contenido actual
-        self.context = context
-        self.clearContents()
-        self.initializeTable(self.rowCount())
-
-    def changeContextColumn(self,context,column):
-        #FIXME y que pasa con el contenido actual
-        self.context[column] = context
-        for k in range(self.rowCount()):
-            if self.context[column][0] == QComboBox:
-                self.cellWidget(k,column -1).clear()
-                self.cellWidget(k,column -1).addItems(self.context[column][2])
-            else:
-                self.set(k,column - 1,None)
-
-         
-    def addRow(self,line):
-        for y,colDef in enumerate(self.context[1:]):
-            self.addCell(line,y,colDef)
-            
-    def fill(self,data):
-        if len(data) == 0:
-            return
-        rows=min(self.rowCount(),len(data))
-        cols=min(self.columnCount(),len(data[0]))
-        for x in range(rows):
-            for y in range(cols):
-                self.set(x,y,data[x][y])
-            
-    def values(self):
-        valores=[]
-        for x in range(self.rowCount()):
-            linea=[]
-            for y in range(self.columnCount()):
-                linea.append(self.get(x,y))
-            valores.append(linea)
-        return valores
-     
-    def valueCol(self,col=0):
-        """
-           devuelve los valores actuales para la columna
-        """
-        valores =[]
-        for k in range(self.rowCount()):     
-            #if self.sheet.cellWidget(k,0) is None:
-                #print('elemento {} vacio'.format(k))
-                #continue
-            valores.append(self.get(k,col))
-        return valores
- 
- 
-class WPropertySheet(WPowerTable):
-    """
-        Version del TableWidget para simular hojas de propiedades
-        se inicializa con el array context
-           context[0] titulos de las filas
-           context[1] widget a utilizar (defecto QLineEdit)
-           context[2] parametrizacion del widget (metodo:valor)
-           ...
-       FIXME que pasa cuando context != data
-       
-    """
-    def __init__(self,context,data,parent=None): 
-        
-        rows=len(context)
-        cols=1
-        super(WPropertySheet, self).__init__(rows,cols,parent)
-        # cargando parametros de defecto
-        self.context = context
-        cabeceras = [ k[0] for k in self.context ]
-        for k in range(len(self.context)):
-                self.addCell(k,0,context[k][1:],None)
-                if data:
-                    self.set(k,0,data[k])
-                else:
-                    self.set(k,0,None)
-        self.setVerticalHeaderLabels(cabeceras)
-        #no necesito cabeceras horizontales en este caso
-        self.horizontalHeader().hide()
-
-
-        self.resizeRowsToContents()
-        self.horizontalHeader().setStretchLastSection(True)
-
-        
-    def values(self,col=0):
-        """
-           devuelve los valores actuales para la columna
-        """
-        valores =[]
-        for k in range(self.rowCount()):     
-            valores.append(self.get(k,0))
-        return valores
-
 """
 delegados estandar
 
@@ -995,9 +878,8 @@ class rowSheetDelegate(columnSheetDelegate):
         #specs = (None,self.context[row][1],self.context[row][2],self.context[row][3])
         return self._setupEditorFromContext(specs,parent,option,index)
         
-class WDataSheet2(WDelegateSheet):
+class WDataSheet(WDelegateSheet):
     """
-        No real example now
         Version del TableWidget para simular hojas de entrada de datos
         se inicializa con el context
            context[0] titulos de las filas
@@ -1016,7 +898,6 @@ class WDataSheet2(WDelegateSheet):
         self.editContext = context
         self.setContextMenuPolicy(Qt.NoContextMenu)
         self.setVerticalHeaderLabels(context[0])
-        self.setHorizontalHeaderLabels(('Operador','>                Valores                       <'))
         delegate = columnSheetDelegate
         sheetDelegate = delegate(self.editContext)
         self.setItemDelegate(sheetDelegate)
@@ -1067,7 +948,7 @@ class WDataSheet2(WDelegateSheet):
     #def setData(self,row,col,dato):
     #def resizeEvent(self, event):
 
-class WPropertySheet2(WDelegateSheet):
+class WPropertySheet(WDelegateSheet):
     """
             Version del TableWidget para simular hojas de propiedades
         se inicializa con el array context

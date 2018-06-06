@@ -38,7 +38,7 @@ class propertySheetDlg(QDialog):
         #
         InicioLabel = QLabel(title)
         #
-        self.sheet=WPropertySheet2(context,data)
+        self.sheet=WPropertySheet(context,data)
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel,
                                      Qt.Horizontal)
 
@@ -203,6 +203,7 @@ class dateFilterDlg(QDialog):
     
 class dataEntrySheetDlg(QDialog):
     """
+        NO consta que se use
        Genera (mas o menos) una hoja de entrada de datos
        TODO faltan datos adicionales para cada item, otro widget, cfg del widget, formato de salida
        FIXME los botones estan fatal colocados
@@ -412,7 +413,7 @@ class NumberFormatDlg(QDialog):
 
         
         grid = QGridLayout()
-        self.sheet = WPropertySheet2(self.context,self.data)
+        self.sheet = WPropertySheet(self.context,self.data)
         grid.addWidget(self.sheet, 0, 0)
         self.setLayout(grid)
         self.setMinimumSize(QSize(300,220))

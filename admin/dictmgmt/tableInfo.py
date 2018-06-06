@@ -155,6 +155,7 @@ class TableInfo():
             level = []
             for entry in result[-1]:
                 tabla_referenciada = entry[-1]['parent table']
+                print(self.lista.keys())
                 if not 'FK' in self.lista[tabla_referenciada]:
                     continue
                 for clave in self.lista[tabla_referenciada]['FK']:
