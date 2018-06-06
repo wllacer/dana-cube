@@ -108,6 +108,7 @@ class dateFilterDlg(QDialog):
         super(dateFilterDlg, self).__init__(parent)
         # cargando parametros de defecto
         self.context = []
+    
 
         for k in self.descriptores:
             self.context.append(('\t {}'.format(k),
@@ -120,7 +121,8 @@ class dateFilterDlg(QDialog):
                         )
         rows = len(self.context)
         cols = max( [len(item) -1 for item in self.context ])  #FIXME
-        self.sheet1=WPowerTable(rows,cols)
+        #self.sheet1=WPowerTable(rows,cols)
+        self.sheet1 = WDataSheet(self.context,rows)
 
         for i,linea in enumerate(self.context):
             for j in range(1,len(linea)):

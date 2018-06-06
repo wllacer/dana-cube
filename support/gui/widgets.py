@@ -118,7 +118,6 @@ class WDelegateSheet(QTableWidget):
         before use it might be of interest to disconnect the rowAdded pyqtSignal
         FIXME setText o setData
         """
-        print('load data')
         for ind,entry in enumerate(data):
             if ind >= self.rowCount():
                 self.addRow(emit=False)
@@ -145,7 +144,6 @@ class WDelegateSheet(QTableWidget):
             return result
     
     def setData(self,row,col,dato):
-        print('set data')
         item =  self.item(row,col)
         if not item:
             self.initializeCell(row,col)
@@ -480,7 +478,6 @@ class WPowerTable(QTableWidget):
         self.rowModelDef = None
         
     def openContextMenu(self,position):
-        print('abro menu')
         row = self.currentRow()
         menuActions = []
         menu = QMenu()
@@ -488,7 +485,6 @@ class WPowerTable(QTableWidget):
         action = menu.exec_(self.viewport().mapToGlobal(position))
         
     def execAction(self,row,action):
-        print('exec menu')
         if action == 'append':
             self.appendRow(self.rowCount())
 
@@ -825,7 +821,6 @@ class columnSheetDelegate(QStyledItemDelegate):
         try:
             pos = self.currentList.index(dato)
         except ValueError:
-            print('falla ',dato,'para ',self.currentList)
             if self.isDouble:
                 try:
                     pos =  [ entry[0] for entry in self.fullList].index(dato)
@@ -1000,7 +995,6 @@ class WPropertySheet(WDelegateSheet):
                 except ValueError:
                     pos = -1
             if pos >= 0:
-                print('extraigo',fullList[pos][0:1])
                 return fullList[pos][0:1]
             else:
                 return [dato,dato]
