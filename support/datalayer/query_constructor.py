@@ -117,6 +117,8 @@ def setPrefix(pbuffer,oldName,newName,excludeDict=[],excludeList=[]):
                     continue
                 buffer[k] = setPrefix(buffer[k],oldName,newName,excludeDict,excludeList)
             return buffer
+        else:
+            return pbuffer
     except Exception as e:
         print(e)
         print(buffer)
