@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import *
 from pprint import pprint
 
 from support.gui.widgets import * 
+from support.util.numeros import is_number
  
 """
   config.DEBUG DATA start
@@ -107,36 +108,36 @@ class dateFilterDlg(QDialog):
             
         super(dateFilterDlg, self).__init__(parent)
         # cargando parametros de defecto
-        self.context = []
-    
-
-        for k in self.descriptores:
-            self.context.append(('\t {}'.format(k),
-                                  (QComboBox,None,CLASES_INTERVALO),
-                                  (QComboBox,None,TIPOS_INTERVALO),
-                                  (QSpinBox,{"setRange":(1,366)},None,1),
-                                  (QLineEdit,{"setEnabled":False},None),
-                                  (QLineEdit,{"setEnabled":False},None),
-                                  )
-                        )
-        rows = len(self.context)
-        cols = max( [len(item) -1 for item in self.context ])  #FIXME
+        self.context = [ ['\t {}'.format(k) for k in descriptores ],
+                                ('todo',QComboBox,None,CLASES_INTERVALO),
+                                (None,QComboBox,None,TIPOS_INTERVALO),
+                                (1,QSpinBox,{"setRange":(1,366)},None),
+                                (None,QLineEdit,{"setEnabled":False},None),
+                                (None,QLineEdit,{"setEnabled":False},None),
+                                ]
+        rows = len(self.context[0])
+        cols = len(self.context) -1
         #self.sheet1=WPowerTable(rows,cols)
         self.sheet1 = WDataSheet(self.context,rows)
 
-        for i,linea in enumerate(self.context):
-            for j in range(1,len(linea)):
-                self.sheet1.addCell(i,j -1,linea[j])
-                self.sheet1.set(i,j -1,self.data[i][j-1])
-            self.sheet1.cellWidget(i,0).currentIndexChanged[int].connect(lambda j,idx=i:self.seleccionCriterio(j,idx))
-            self.sheet1.cellWidget(i,1).currentIndexChanged[int].connect(lambda j,idx=i:self.seleccionIntervalo(j,idx))
-            self.sheet1.cellWidget(i,2).valueChanged[int].connect(lambda j,idx=i:self.seleccionIntervalo(j,idx))
-            self.flipFlop(i,self.sheet1.get(i,0))
+        for i in range(self.sheet1.rowCount()):
+            for j in range(3,5):
+                self.sheet1.item(i,j).setBackground(QColor(Qt.gray))
+                
+        self.sheet1.cellChanged.connect(self.validate)
+        #for i,linea in enumerate(self.context):
+            #for j in range(1,len(linea)):
+                #self.sheet1.addCell(i,j -1,linea[j])
+                #self.sheet1.set(i,j -1,self.data[i][j-1])
+            #self.sheet1.cellWidget(i,0).currentIndexChanged[int].connect(lambda j,idx=i:self.seleccionCriterio(j,idx))
+            #self.sheet1.cellWidget(i,1).currentIndexChanged[int].connect(lambda j,idx=i:self.seleccionIntervalo(j,idx))
+            #self.sheet1.cellWidget(i,2).valueChanged[int].connect(lambda j,idx=i:self.seleccionIntervalo(j,idx))
+            #self.flipFlop(i,self.sheet1.get(i,0))
 
        #FIXME valor inicial        
-        campos = [ k[0] for k in self.context ]
-        self.sheet1.setVerticalHeaderLabels(campos)
-        self.sheet1.resizeColumnsToContents()
+        #campos = [ k[0] for k in self.context ]
+        #self.sheet1.setVerticalHeaderLabels(campos)
+        #self.sheet1.resizeColumnsToContents()
         cabeceras = ('Tipo','Periodo','Rango','desde','hasta')
         self.sheet1.setHorizontalHeaderLabels(cabeceras)
         #
@@ -164,43 +165,76 @@ class dateFilterDlg(QDialog):
 
         self.setWindowTitle("Item editor")
         
+    def validate(self,row,col):
+        #for i,linea in enumerate(self.context):
+            #for j in range(1,len(linea)):
+                #self.sheet1.addCell(i,j -1,linea[j])
+                #self.sheet1.set(i,j -1,self.data[i][j-1])
+            #self.sheet1.cellWidget(i,0).currentIndexChanged[int].connect(lambda j,idx=i:self.seleccionCriterio(j,idx))
+            #self.sheet1.cellWidget(i,1).currentIndexChanged[int].connect(lambda j,idx=i:self.seleccionIntervalo(j,idx))
+            #self.sheet1.cellWidget(i,2).valueChanged[int].connect(lambda j,idx=i:self.seleccionIntervalo(j,idx))
+            #self.flipFlop(i,self.sheet1.get(i,0))
+            self.sheet1.cellChanged.disconnect()
+            dato = self.sheet1.get(row,col)
+            if col in (0,):
+                dato = CLASES_INTERVALO.index(dato)
+                self.flipFlop(row,dato)
+                self.seleccionCriterio(dato,row)
+            elif col in (1,):
+                dato = TIPOS_INTERVALO.index(dato)
+                self.seleccionIntervalo(dato,row)
+            elif col in (2,):
+                self.seleccionIntervalo(dato,row)
+            self.sheet1.cellChanged.connect(self.validate)
+            
     def flipFlop(self,line,value):
         # puede ser un poco repetitivo, pero no se si es mas costoso el enable/disable que comprobar cada
         # vez si lo esta. Por lo menos el codigo es menos complejo y todavia no veo una razon para modificarlo
+        if not is_number(value):
+            return
         if value == 0:
-            self.sheet1.cellWidget(line,1).setEnabled(False)
-            self.sheet1.cellWidget(line,2).setEnabled(False)
+            self.sheet1.setEnabled(line,1,False)
+            self.sheet1.setEnabled(line,2,False)
         elif value == 1: 
-            self.sheet1.cellWidget(line,1).setEnabled(True)
-            self.sheet1.cellWidget(line,2).setEnabled(False)
+            self.sheet1.setEnabled(line,1,True)
+            self.sheet1.setEnabled(line,2,False)
         else:
-            self.sheet1.cellWidget(line,1).setEnabled(True)
-            self.sheet1.cellWidget(line,2).setEnabled(True)
+            self.sheet1.setEnabled(line,1,True)
+            self.sheet1.setEnabled(line,2,True)
         # ponemos los valores ejemplo
 
     def seleccionCriterio(self,value,idx):
-        self.flipFlop(idx,value)
+        #self.flipFlop(idx,value)
         self.seleccionIntervalo(value,idx)
             
     def seleccionIntervalo(self,value,idx):
-        if self.sheet1.get(idx,0)  == 0:
+        clase = CLASES_INTERVALO.index(self.sheet1.get(idx,0))
+        if clase  == 0:
             self.sheet1.set(idx,3,None)
             self.sheet1.set(idx,4,None)
         else:
-            desde,hasta = dateRange(self.sheet1.get(idx,0),self.sheet1.get(idx,1),periodo=self.sheet1.get(idx,2))
-            self.sheet1.set(idx,3,str(desde))
-            self.sheet1.set(idx,4,str(hasta))
+            if self.sheet1.get(idx,1):
+                if self.sheet1.get(idx,2):
+                    numper = self.sheet1.get(idx,2)
+                else:
+                    numper = 1
+                tipo = TIPOS_INTERVALO.index(self.sheet1.get(idx,1))
+                desde,hasta = dateRange(clase,tipo,periodo=numper)
+                self.sheet1.set(idx,3,str(desde))
+                self.sheet1.set(idx,4,str(hasta))
 
    
     def accept(self):
         self.data = self.sheet1.values()
         self.result = []
-        self.result = []
         for k,valor in enumerate(self.data):
-            if valor[0] == 0:
+            if not valor[0] or valor[0] == CLASES_INTERVALO[0]:
                 continue
             else:
+                valor[0] = CLASES_INTERVALO.index(valor[0])
+                valor[1] = TIPOS_INTERVALO.index(valor[1])
                 self.result.append((self.descriptores[k],valor[0],valor[1],valor[2]))
+                
         QDialog.accept(self)
     
 class dataEntrySheetDlg(QDialog):

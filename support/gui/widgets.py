@@ -135,7 +135,7 @@ class WDelegateSheet(QTableWidget):
         for row  in range(self.rowCount()):
                 for col in range(self.columnCount()):
                     if self.item(row,col):
-                        result[row][col] = self.item(row,col).data(Qt.EditRole)
+                        result[row][col] = self.get(row,col) #.data(Qt.UserRole +1)
                     else:
                         result[row][col] = None
         if self.columnCount() == 1:
@@ -144,15 +144,16 @@ class WDelegateSheet(QTableWidget):
             return result
     
     def setData(self,row,col,dato):
+
         item =  self.item(row,col)
         if not item:
             self.initializeCell(row,col)
         if self.hasSplitData(row,col,dato):
             cdato = self.getSplitData(row,col,dato)
-            item.setData(Qt.EditRole,cdato[0])
+            item.setData(Qt.UserRole +1,cdato[0])
             item.setData(Qt.DisplayRole,cdato[1])
         else:
-            item.setData(Qt.EditRole,dato)
+            item.setData(Qt.DisplayRole,dato)
 
     def resizeEvent(self, event):
         self.resized.emit()
@@ -163,7 +164,10 @@ class WDelegateSheet(QTableWidget):
 
     def get(self,x,y):
         item = self.item(x,y)
-        return item.data(Qt.EditRole)
+        dato = item.data(Qt.UserRole +1)
+        if not dato:
+            dato = item.data(Qt.DisplayRole)
+        return dato
 
     def values(self):
         return self.unloadData()
@@ -183,6 +187,14 @@ class WDelegateSheet(QTableWidget):
     def getSplitData(self,x,y,dato):
         return [dato,dato]
     
+    def setEnabled(self,x,y,state):
+        if state:
+            self.item(x,y).setFlags( Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled )
+            self.item(x,y).setBackground(QColor(Qt.white))
+        else:
+            self.item(x,y).setFlags(Qt.ItemIsSelectable )
+            self.item(x,y).setBackground(QColor(Qt.gray))
+            
 class WMultiList(QWidget):
     """
     WIP
@@ -695,15 +707,19 @@ class columnSheetDelegate(QStyledItemDelegate):
     def setEditorData(self, editor, index):
         col = index.column()
         dato = index.data()
-        def_value = None
+        try:
+            def_value = self.context[index.column() +1][4] 
+        except IndexError:
+            def_value = None
 
         self._setWidgetData(editor,dato,def_value)
         
     def setModelData(self,editor,model,index):
         dato = self._getWidgetData(editor)
+        print(dato)
         if type(editor) == QComboBox and self.isDouble:
-            model.setData(index,dato[0],Qt.EditRole)
-            model.setData(dato[1],Qt.DisplayRole)
+            model.setData(index,dato[0],Qt.UserRole +1)
+            model.setData(index,dato[1],Qt.DisplayRole)
             return 
         elif isinstance(dato,(list,tuple)):
             dato = norm2String(dato)
@@ -733,10 +749,12 @@ class columnSheetDelegate(QStyledItemDelegate):
                 editor.setCurrentIndex(-1)
 
         elif isinstance(editor, QSpinBox):
-            if dato is not None:
-                editor.setValue(dato)
+            if dato:
+                editor.setValue(int(dato))
+            elif valor_defecto:
+                editor.setValue(int(valor_defecto))
             else:
-                editor.setValue(valor_defecto)
+                editor.setValue(1)
 
         elif isinstance(editor, QCheckBox):
             if dato is not None:
@@ -788,7 +806,7 @@ class columnSheetDelegate(QStyledItemDelegate):
             else:
                 return self.currentList[editor.currentIndex()]
         elif isinstance(editor, QSpinBox):
-            return editor.value()
+            return int(editor.value())
         elif isinstance(editor, QCheckBox):
             return editor.isChecked()
         elif isinstance(editor,WPowerTable):

@@ -76,7 +76,7 @@ def fmtNumber(number, optDict=None):
     
 
 def is_number(s):
-    if not s:
+    if s is None:
         return False
     try:
         n=str(float(s))

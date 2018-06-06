@@ -972,7 +972,7 @@ class DanaCube(QTreeView):
                     intervalo = dateRange(entry[1],entry[2],periodo=entry[3],fmt=formato)
                     sqlGrp.append((entry[0],'BETWEEN',intervalo,'f'))
             if len(sqlGrp) > 0:
-                #self.filtroFechas = searchConstructor('where',{'where':sqlGrp,'driver':self.cubo.dbdriver})
+                #self.filtroFechas = searchConstructor('where',where=sqlGrp,driver=self.cubo.dbdriver)
                 #self.filtro = mergeString(self.filtroCampos,self.filtroFechas,'AND')
                 self.cargaVista(self.vista.row_id,self.vista.col_id,
                             self.vista.agregado,self.vista.campo,

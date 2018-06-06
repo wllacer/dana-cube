@@ -44,9 +44,9 @@ def ldm(anyo,mes):
    
         
 def dateRange(clase_idx,range_idx,fecha=None,periodo=None,fmt=None):
-    if fecha is None:
+    if not fecha:
         fecha = date.today()+relativedelta(days=-1)
-    if periodo is None:
+    if not periodo:
         periodo = 0
     intervalo = [None,None]
     try:
