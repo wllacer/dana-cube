@@ -30,10 +30,10 @@
         "ordinal": {
             "class": "function",
             "entry": "ordinal",
+            "hidden": true,
             "seqnr": 2,
             "text": "Número de orden descendente en la fila",
-            "type": "item",
-            "hidden": true
+            "type": "item"
         },
         "agrupa": {
             "aux_parm": {
@@ -131,22 +131,23 @@
             "type": "colkey"
         },
         "unPodemos": {
-            "aux_parm": {
-                "desde": [
-                    "5008",
-                    "5041",
-                    "5033"
-                ],
-                "hacia": [
-                    "3736"
-                ]
-            },
             "class": "function",
             "db": "datos locales,datos catalonia,datos light",
             "entry": "consolida",
             "seqnr": 20,
             "text": "Agrupa en uno las candidaturas de Podemos",
-            "type": "colkey"
+            "type": "colkey",
+            "aux_parm": {
+                "desde": [
+                    "5008",
+                    "5041",
+                    "5033",
+                    "3317"
+                ],
+                "hacia": [
+                    "3736"
+                ]
+            }
         },
         "Podemos": {
             "class": "sequence",

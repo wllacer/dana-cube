@@ -477,10 +477,22 @@ class WMultiCombo(QComboBox):
         return result
             
 
-class WPowerTable(QTableWidget):
-    # TODO mas tipos
-    # TODO un defecto razonable
-
+class WPowerTable(WDelegateSheet):
+    def __init__(self,row,cols,parent=None):
+        super().__init__(self,row,cols,parent=parent)
+    def setRowModelDef(self,contexto):
+        self.edtiContext = contexto
+    def addCell(self,x,y,colDef,defVal):
+        print(" Clase obsoleta y funcion no compatible ")
+        return
+    def appendRow(self,row):
+        self.addRow(row)
+        
+class WPowerTableOrig(QTableWidget):
+    """
+    #DEPRECATED
+    
+    """
     def __init__(self,rows=0,cols=0,parent=None):
         super(WPowerTable,self).__init__(rows,cols,parent)
         #self.horizontalHeader().setStretchLastSection(True)
@@ -777,7 +789,7 @@ class columnSheetDelegate(QStyledItemDelegate):
         elif isinstance(editor,WPowerTable):
             for x,linea in enumerate(dato):
                 for y in range(2):
-                    editor.cellWidget(x,y).setText(linea[y])
+                    editor.set(x,y,linea[y])
             editor.resizeRowsToContents()
         elif isinstance(editor,QDialog):
             if dato:
@@ -912,6 +924,7 @@ class WDataSheet(WDelegateSheet):
         self.editContext = context
         self.setContextMenuPolicy(Qt.NoContextMenu)
         self.setVerticalHeaderLabels(context[0])
+        self.horizontalHeader().setStretchLastSection(True)
         delegate = columnSheetDelegate
         sheetDelegate = delegate(self.editContext)
         self.setItemDelegate(sheetDelegate)
