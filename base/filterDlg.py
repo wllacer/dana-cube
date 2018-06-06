@@ -49,21 +49,28 @@ class filterDialog(QDialog):
         self.driver = driver
         self.context = []
         self.context.append(('campo','formato','condicion','valores'))
-        self.context.append((QLineEdit,{'setEnabled':False},None))
-        self.context.append((QLineEdit,{'setEnabled':False},None))
-        self.context.append((QComboBox,None,tuple(LOGICAL_OPERATOR)))
-        self.context.append((QLineEdit,None,None))
+        self.context.append((None,QLineEdit,{'setEnabled':False},None))
+        self.context.append((None,QLineEdit,{'setEnabled':False},None))
+        self.context.append(('=',QComboBox,None,tuple(LOGICAL_OPERATOR)))
+        self.context.append((None,QLineEdit,None,None))
         self.data = []
         
-        self.sheet=WPowerTable(len(recordStructure),4)
-
+        #self.sheet=WPowerTable(len(recordStructure),4)
+        self.sheet = WDataSheet(self.context,len(recordStructure))
         cabeceras = [ item  for item in self.context[0] ]
+        self.sheet.verticalHeader().hide()
         self.sheet.setHorizontalHeaderLabels(cabeceras)
-        
-        for k in range(len(self.record)):
-            self.addRow(k)
+                
+        self.sheet.initialize()
+        self.load(recordStructure)
+        for i in range(self.sheet.rowCount()):
+            for j in range(2):
+                self.sheet.item(i,j).setBackground(QColor(Qt.gray))
+        #for k in range(len(self.record)):
+            #self.addRow(k)
         self.sheet.resizeRowsToContents()
-
+        self.sheet.horizontalHeader().setStretchLastSection(True)
+        
         self.origMsg = 'Recuerde: en SQL el separador decimal es el punto "."'
         # super(filterDialog,self).__init__('Defina el filtro',self.context,len(self.data),self.data,parent=parent) 
 
@@ -81,15 +88,15 @@ class filterDialog(QDialog):
 
         #formLayout = QHBoxLayout()
         #self.meatLayout = QVBoxLayout()
-        self.meatLayout = QGridLayout()
+        self.meatLayout = QVBoxLayout() #QGridLayout()
         buttonLayout = QHBoxLayout()
         formLayout = QVBoxLayout()
        
-        self.meatLayout.addWidget(InicioLabel,0,0)
-        self.meatLayout.addWidget(self.sheet,1,0,6,5)
-        self.meatLayout.addWidget(freeSqlLbl,8,0)
-        self.meatLayout.addWidget(self.freeSql,8,1,1,4)
-        self.meatLayout.addWidget(self.mensaje,10,0,1,4)
+        self.meatLayout.addWidget(InicioLabel) #,0,0)
+        self.meatLayout.addWidget(self.sheet) #,1,0,6,5)
+        self.meatLayout.addWidget(freeSqlLbl) #,8,0)
+        self.meatLayout.addWidget(self.freeSql) #,8,1,1,4)
+        self.meatLayout.addWidget(self.mensaje) #,10,0,1,4)
         
         buttonLayout.addWidget(buttonBox)
         
@@ -116,57 +123,34 @@ class filterDialog(QDialog):
         for k in range(4):
             self.sheet.resizeColumnToContents(k)
         
-        #for k in range(self.sheet.rowCount()):
-            #self.sheet.cellWidget(k,2).textChanged['QString'].connect(lambda b,a=k:self.checkData(b,a))
-            
-    #def checkData(self,content,pos):
-    def addRow(self,line):
-        data = dict2row(self.record[line],('name','format'))
-        data.append(3)
-        data.append(None)
-        definicion = self.context[1:]
-        if 'values' in self.record[line]:
-            definicion[3] = (QComboBox,None,tuple([''] + [entry[1] for entry in self.record[line]['values']]))
-        for y,colDef in enumerate(definicion):
-            self.sheet.addCell(line,y,colDef,defVal=data[y])
-        #FIXME esto deberia ir fuera del dialogo
-        if self.record[line].get('class','o') == 'h':
-            for k in range(len(LOGICAL_OPERATOR)):
-                if k in (3,4):
-                    continue
-                else:
-                    self.sheet.cellWidget(line,2).model().item(k).setEnabled(False)
-        if 'values' in self.record[line]:
-            self.sheet.cellWidget(line,2).model().item(0).setEnabled(False)
-            self.sheet.cellWidget(line,2).model().item(1).setEnabled(False)
-            self.sheet.cellWidget(line,2).model().item(9).setEnabled(False)
-            self.sheet.cellWidget(line,2).model().item(10).setEnabled(False)
-
-                    
+    def load(self,recordStructure):
+        data = []
+        for item in recordStructure:
+            linea = [ None for k in range(self.sheet.columnCount())]
+            linea[0] = item['name']
+            linea[1] = item['format']
+            linea[2] = '='
+            linea[3] = item.get('values')
+            data.append(linea)
+        self.sheet.loadData(data)
+        
     def accept(self):
         self.mensaje.setText(self.origMsg)
         fallo = False
         errorTxt = ''
         self.queryArray = []
-        for pos in range(self.sheet.rowCount()):
-            item = [self.sheet.get(pos,k) for k in range(4) ]
-            item[0]= norm2List(self.record[pos].get('source',item[0]))
-            opcode = LOGICAL_OPERATOR[item[2]].lower()
+        values = self.sheet.unloadData()
+        for pos,item in enumerate(values):
+            opcode = item[2]
+            values = item[3]
             if opcode in ('is null','is not null'): #TODO, esto no es así
                 self.queryArray.append((item[0],
                                     opcode.upper(),
                                     None,None))
                 continue
-            if not item[3] or item[3] == '':  #Se nota que vengo de Oracle. Aparte del null no se que casos no necesitan parametro de datos
+            if not values: # or item[3] == '':  #Existe  de datos
                 continue
-            if 'values' in self.record[pos]:  # viene de un combobox
-                if item[3] == 0: # sin valor
-                    continue
-                else:
-                    aslist = self.record[pos]['values'][item[3] -1][0]
-            else:
-                aslist = item[3].split(',')
-            aslist = norm2List(aslist)
+            aslist = norm2List(values)
             #primero comprobamos la cardinalidad. Ojo en sentencias separadas o el elif no funciona bien
             if opcode in ('between','not between'): 
                 if len(aslist) != 2:
@@ -176,7 +160,7 @@ class filterDialog(QDialog):
                 if len(aslist) != 1:
                     errorTxt = ' La operacion elegida exige un único valor'
                     fallo = True
-            # chequeamos los formatos. Por comodidad solo el primer elemento de la lista. Los no reconocidos no chequeados
+            
             if not fallo:
                 testElem = aslist[0].lower().strip()
                 formato = item[1]
@@ -194,14 +178,13 @@ class filterDialog(QDialog):
                     fallo = True
                 else:
                     pass
-                
-                
+
             if fallo:
                 self.mensaje.setText('ERROR @{}: {}'.format(item[0],errorTxt))
                 #self.sheet.cellWidget(pos,3).selectAll()  FIXME ¿que hay para combos ?
-                self.sheet.cellWidget(pos,3).setFocus()
+                self.sheet.setCurrentCell(pos,3)
+                self.sheet.setFocus()
                 return
-
             qfmt = 't'     
             if formato in ('entero','numerico'):
                 qfmt = 'n'
@@ -210,20 +193,10 @@ class filterDialog(QDialog):
             elif formato in ('booleano'):
                 qfmt = 'n' #me parece 
                 
-            if len(item[0]) > 1:
-                datos = aslist[0].split(':')
-                for k,campo in enumerate(item[0]):
-                    if k >= len(datos):
-                        break 
-                    self.queryArray.append((campo,
-                                        opcode.upper(),
-                                        datos[k],
-                                        qfmt))
-            else:
-                self.queryArray.append((norm2String(item[0]),
-                                    opcode.upper(),
-                                    aslist[0] if len(aslist) == 1 else aslist,
-                                    qfmt))
+            self.queryArray.append((item[0],
+                                opcode.upper(),
+                                aslist[0] if len(aslist) == 1 else aslist,
+                                qfmt))
 
         self.result = mergeStrings('AND',
                                     searchConstructor('where',where=self.queryArray,driver=self.driver),
@@ -231,8 +204,8 @@ class filterDialog(QDialog):
                                     spaced=True)
         print(self.result)
         self.data = self.sheet.values()
-                
         QDialog.accept(self)
+        
         
 def main():
     app = QApplication(sys.argv)

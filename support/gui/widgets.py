@@ -36,7 +36,6 @@ class WDelegateSheet(QTableWidget):
 
     def __init__(self,row,col,delegate=None,parent=None):
         super().__init__(row,col,parent)
-        makeTableSize(self)
         self.initialize()
         if delegate:
             sheetDelegate = delegate(self)
@@ -46,6 +45,8 @@ class WDelegateSheet(QTableWidget):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.openContextMenu)
 
+        if row < 10:
+            makeTableSize(self)
         self.editContext = {}
         # en esta posicion para que las señales se activen tras la inicializacion
         #self.currentItemChanged.connect(self.moveSheetSel)
