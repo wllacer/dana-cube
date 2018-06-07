@@ -8,7 +8,7 @@
             "class": "function",
             "entry": "factoriza",
             "hidden": true,
-            "type": "colparm"
+            "type": "colparm, rowparm"
         },
         "factorizaAgregado": {
             "api": 1,
@@ -131,12 +131,6 @@
             "type": "colkey"
         },
         "unPodemos": {
-            "class": "function",
-            "db": "datos locales,datos catalonia,datos light",
-            "entry": "consolida",
-            "seqnr": 20,
-            "text": "Agrupa en uno las candidaturas de Podemos",
-            "type": "colkey",
             "aux_parm": {
                 "desde": [
                     "5008",
@@ -147,7 +141,13 @@
                 "hacia": [
                     "3736"
                 ]
-            }
+            },
+            "class": "function",
+            "db": "datos locales,datos catalonia,datos light",
+            "entry": "consolida",
+            "seqnr": 20,
+            "text": "Agrupa en uno las candidaturas de Podemos",
+            "type": "colkey"
         },
         "Podemos": {
             "class": "sequence",

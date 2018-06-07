@@ -15,6 +15,7 @@ from PyQt5.QtWidgets import *
 
 from pprint import pprint
 from support.util.record_functions import norm2List,norm2String
+from support.util.numeros import is_number
 
 def makeTableSize(widget):
     widget.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
@@ -25,6 +26,168 @@ def makeTableSize(widget):
     #self.resizeColumnsToContents()
     widget.setMinimumSize(widget.horizontalHeader().length()+widget.verticalHeader().width() +4, 
                                 widget.verticalHeader().length()+widget.horizontalHeader().height()+4)
+
+def setWidgetData(parent,editor,dato,valor_defecto):
+    if isinstance(editor,WMultiList):
+        for entrada  in dato:
+            __multiListLoad(parent,editor,entrada)           
+        if not dato and valor_defecto is not None:
+            editor.selectEntry(valor_defecto)
+
+    elif isinstance(editor,WMultiCombo): # WMC siemre antes que QCB porque es una especializacion
+        for entrada in dato:
+            editor.set(entrada)
+        if len(dato) == 0 and valor_defecto is not None:
+            editor.set(valor_defecto)
+        
+    elif isinstance(editor,QComboBoxIdx):
+        # Si no existe lo dejo abendar. No deberia pasar con este tipo de combos
+        if dato:
+            if is_number(dato):
+                editor.setCurrentIndex(dato)
+            else:
+                editor.setCurrentIndex(parent.currentList.index(dato))
+        elif valor_defecto:
+            editor.setCurrentIndex(valor_defecto)
+        else:
+            editor.setCurrentIndex(-1)
+            
+    elif isinstance(editor,QComboBox):
+        if dato:
+            __comboLoad(parent,editor,dato)
+        elif valor_defecto:
+            editor.setCurrentIndex(parent.currentList.index(valor_defecto))
+        else:
+            editor.setCurrentIndex(-1)
+
+    elif isinstance(editor, QSpinBox):
+        if dato:
+            editor.setValue(int(dato))
+        elif valor_defecto:
+            editor.setValue(int(valor_defecto))
+        else:
+            editor.setValue(1)
+
+    elif isinstance(editor, QCheckBox):
+        if dato is not None:
+            editor.setCheckState(dato)
+        else:
+            if valor_defecto:
+                editor.setChecked(valor_defecto)
+            else:
+                editor.setChecked(False)
+
+    elif isinstance(editor,QTextEdit):
+        # FIXME esto tiene que mejorar. Solo me sirve para el caso de case_sql
+        if dato is not None:
+            editor.setText(dato)
+        else:
+            editor.setText(valor_defecto)
+        editor.setMinimumHeight(220)
+        #editor.resize(editor.document().size().width(), editor.document().size().height() + 10)
+        
+    elif isinstance(editor,WPowerTable):
+        for x,linea in enumerate(dato):
+            for y in range(len(linea)):
+                editor.set(x,y,linea[y])
+        editor.resizeRowsToContents()
+    elif isinstance(editor,QDialog):
+        if dato:
+            editor.setData(dato)
+        elif valor_defecto is not None:
+            editor.setData(valor_defecto)
+    else:
+        if dato is not None:
+            editor.setText(dato)
+        elif valor_defecto is not None:
+            editor.setText(valor_defecto)
+
+def getWidgetData(parent,editor):
+    if isinstance(editor, WMultiList):
+        return __multiListUnload(parent,editor)
+    elif isinstance(editor, WMultiCombo):
+        return editor.get()                
+    elif isinstance(editor,QTextEdit):
+        return editor.document().toPlainText()
+    elif isinstance(editor,QDialog):
+        return editor.getData()
+    elif isinstance(editor,QComboBoxIdx):
+        return editor.currentIndex()
+    elif isinstance(editor, QComboBox):
+        if parent.isDouble:
+            return [parent.fullList[editor.currentIndex()][0] , parent.currentList[editor.currentIndex()]]
+        else:
+            return parent.currentList[editor.currentIndex()]
+    elif isinstance(editor, QSpinBox):
+        return int(editor.value())
+    elif isinstance(editor, QCheckBox):
+        return editor.isChecked()
+    elif isinstance(editor,WPowerTable):
+        return editor.values()
+    elif isinstance(editor,QDialog):
+        return editor.getData()
+    else:
+        return editor.text()
+
+def __multiListLoad(parent,editor,dato):
+    """
+    convenience for just this
+    """
+    if parent.isDouble:                            #para presentar correctamente
+        try:
+            pos = parent.currentList.index(dato)
+        except ValueError:
+            try:
+                pos  = [ entry[0] for entry in parent.fullList ].index(dato)
+            except ValueError:
+                parent.currentList.append(dato)
+                parent.fullList.append([dato,dato])
+                pos = len(parent.currentList) -1
+        dato = parent.currentList[pos]
+    editor.selectEntry(dato)
+ 
+def __comboLoad(parent,editor,dato):
+    """
+    convenience for just this
+    """
+    isEditable = editor.isEditable()
+    try:
+        pos = parent.currentList.index(dato)
+    except ValueError:
+        if parent.isDouble:
+            try:
+                pos =  [ entry[0] for entry in parent.fullList].index(dato)
+            except ValueError:
+                if isEditable:
+                    parent.currentList.append(dato)
+                    parent.fullList.append([dato,dato])
+                    editor.addItem(dato)
+                    pos = len(parent.currentList) -1
+                else:
+                    raise
+        else:
+            if isEditable:
+                parent.currentList.append(dato)
+                editor.addItem(dato)
+                pos = len(parent.currentList) -1
+            else:
+                raise
+    editor.setCurrentIndex(pos)
+            
+def __multiListUnload(parent,editor):
+    if not parent.isDouble:
+        values = editor.seleList
+    else:
+        values = []
+        tmpval = editor.seleList
+        for entry in tmpval:
+            idx = parent.currentList.index(entry)
+            try:
+                values.append(parent.fullList[idx][0])
+            except IndexError:
+                values.append(entry)
+    return values
+
 
 class WDelegateSheet(QTableWidget):
     """
@@ -358,7 +521,13 @@ class WMultiList(QWidget):
     #def removeSelectedItem(self):
         #pass
 
-        
+class QComboBoxIdx(QComboBox):
+    """
+    Un nombre distinto para el combobox que usa como dato el indice, no el valor.
+    En lo demás absolutamente identico al combo
+    """
+    pass
+
 class WMultiCombo(QComboBox):
     """ Una variante de combo con seleccion multiple
     """
@@ -478,6 +647,9 @@ class WMultiCombo(QComboBox):
             
 
 class WPowerTable(WDelegateSheet):
+    """
+    DEPRECATED
+    """
     def __init__(self,row,cols,parent=None):
         super().__init__(self,row,cols,parent=parent)
     def setRowModelDef(self,contexto):
@@ -531,7 +703,7 @@ class columnSheetDelegate(QStyledItemDelegate):
             else:
                 self.isDouble = False
                 self.currentList = self.fullList
-            if editorObj in  (WMultiCombo,QComboBox):
+            if editorObj in  (WMultiCombo,QComboBoxIdx,QComboBox):
                 editor.addItems(self.currentList)
         return editor
         
@@ -543,10 +715,10 @@ class columnSheetDelegate(QStyledItemDelegate):
         except IndexError:
             def_value = None
 
-        self._setWidgetData(editor,dato,def_value)
+        setWidgetData(self,editor,dato,def_value)
         
     def setModelData(self,editor,model,index):
-        dato = self._getWidgetData(editor)
+        dato = getWidgetData(self,editor)
         print(dato)
         if type(editor) == QComboBox and self.isDouble:
             model.setData(index,dato[0],Qt.UserRole +1)
@@ -557,152 +729,7 @@ class columnSheetDelegate(QStyledItemDelegate):
         model.setData(index,dato)
         
         
-    def _setWidgetData(self,editor,dato,valor_defecto):
-        
-        if isinstance(editor,WMultiList):
-            for entrada  in dato:
-                self.__multiListLoad(editor,entrada)           
-            if not dato and valor_defecto is not None:
-                editor.selectEntry(valor_defecto)
 
-        if isinstance(editor,WMultiCombo): # WMC siemre antes que QCB porque es una especializacion
-            for entrada in dato:
-                editor.set(entrada)
-            if len(dato) == 0 and valor_defecto is not None:
-                editor.set(valor_defecto)
-                
-        elif isinstance(editor,QComboBox):
-            if dato:
-                self.__comboLoad(editor,dato)
-            elif valor_defecto:
-                editor.setCurrentIndex(self.currentList.index(valor_defecto))
-            else:
-                editor.setCurrentIndex(-1)
-
-        elif isinstance(editor, QSpinBox):
-            if dato:
-                editor.setValue(int(dato))
-            elif valor_defecto:
-                editor.setValue(int(valor_defecto))
-            else:
-                editor.setValue(1)
-
-        elif isinstance(editor, QCheckBox):
-            if dato is not None:
-                editor.setCheckState(dato)
-            else:
-                if valor_defecto:
-                    editor.setChecked(valor_defecto)
-                else:
-                    editor.setChecked(False)
-
-        elif isinstance(editor,QTextEdit):
-            # FIXME esto tiene que mejorar. Solo me sirve para el caso de case_sql
-            if dato is not None:
-                editor.setText(dato)
-            else:
-                editor.setText(valor_defecto)
-            editor.setMinimumHeight(220)
-            #editor.resize(editor.document().size().width(), editor.document().size().height() + 10)
-            
-        elif isinstance(editor,WPowerTable):
-            for x,linea in enumerate(dato):
-                for y in range(2):
-                    editor.set(x,y,linea[y])
-            editor.resizeRowsToContents()
-        elif isinstance(editor,QDialog):
-            if dato:
-                editor.setData(dato)
-            elif valor_defecto is not None:
-                editor.setData(valor_defecto)
-        else:
-            if dato is not None:
-                editor.setText(dato)
-            elif valor_defecto is not None:
-                editor.setText(valor_defecto)
-
-    def _getWidgetData(self,editor):
-        
-        if isinstance(editor, WMultiList):
-            return self.__multiListUnload(self,editor)
-        elif isinstance(editor, WMultiCombo):
-            return editor.get()                
-        elif isinstance(editor,QTextEdit):
-            return editor.document().toPlainText()
-        elif isinstance(editor,QDialog):
-            return editor.getData()
-        elif isinstance(editor, QComboBox):
-            if self.isDouble:
-                return [self.fullList[editor.currentIndex()][0] , self.currentList[editor.currentIndex()]]
-            else:
-                return self.currentList[editor.currentIndex()]
-        elif isinstance(editor, QSpinBox):
-            return int(editor.value())
-        elif isinstance(editor, QCheckBox):
-            return editor.isChecked()
-        elif isinstance(editor,WPowerTable):
-            return editor.values()
-        else:
-            return editor.text()
-
-    def __multiListLoad(self,editor,dato):
-        """
-        convenience for just this
-        """
-        if self.isDouble:                            #para presentar correctamente
-            try:
-                pos = self.currentList.index(dato)
-            except ValueError:
-                try:
-                    pos  = [ entry[0] for entry in self.fullList ].index(dato)
-                except ValueError:
-                    self.currentList.append(dato)
-                    self.fullList.append([dato,dato])
-                    pos = len(self.currentList) -1
-            dato = self.currentList[pos]
-        editor.selectEntry(dato)
- 
-    def __comboLoad(self,editor,dato):
-        """
-        convenience for just this
-        """
-        isEditable = editor.isEditable()
-        try:
-            pos = self.currentList.index(dato)
-        except ValueError:
-            if self.isDouble:
-                try:
-                    pos =  [ entry[0] for entry in self.fullList].index(dato)
-                except ValueError:
-                    if isEditable:
-                        self.currentList.append(dato)
-                        self.fullList.append([dato,dato])
-                        editor.addItem(dato)
-                        pos = len(self.currentList) -1
-                    else:
-                        raise
-            else:
-                if isEditable:
-                    self.currentList.append(dato)
-                    editor.addItem(dato)
-                    pos = len(self.currentList) -1
-                else:
-                    raise
-        editor.setCurrentIndex(pos)
-                
-    def __multiListUnload(self,editor):
-        if not self.isDouble:
-            values = editor.seleList
-        else:
-            values = []
-            tmpval = editor.seleList
-            for entry in tmpval:
-                idx = self.currentList.index(entry)
-                try:
-                    values.append(self.fullList[idx][0])
-                except IndexError:
-                    values.append(entry)
-        return values
 
 class rowSheetDelegate(columnSheetDelegate):
     """
