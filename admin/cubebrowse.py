@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 """
 Todo list tras completar validators y setters
--> en repeatable add debe dividirse en (insert after, insert before, append). General de editTree
+-> DONE no en add, pero pueden moverse los elementos
 -> DONE Incluir llamada a la consulta de guia
 -> Incluir llamada al grand total
 -> DONE Las fechas artificiales (trimestres, cuatrimestres, ...) como opciones de menu aqui y no en info2*
 -> Para sqlite que el selector de base de datos sea el selector de ficheros del sistema
--> Copy to other place
--> Restore
+-> DONE Copy to other place
+-> DONE Restore
 
 """
 
@@ -283,8 +283,8 @@ EDIT_TREE = {
                        ('date format',False,True),
                     ],
                    },
-    'date class':{'editor':QComboBox,'source':CLASES_INTERVALO},
-    'date range':{'editor':QComboBox,'source':TIPOS_INTERVALO},
+    'date class':{'editor':QComboBoxIdx,'source':CLASES_INTERVALO},
+    'date range':{'editor':QComboBoxIdx,'source':TIPOS_INTERVALO},
     'date period':{'editor':QSpinBox,'min':1},
     'date format':{'default':'fecha'},
     'reference':{'editor':QComboBox,'source':srcGuides },

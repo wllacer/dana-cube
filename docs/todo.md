@@ -54,7 +54,7 @@ Areas where the product __must__ be improved. They might not be errors but don't
 
 * __Solved__ Current export implementation is fast, but does not take into account changes via danacube
 
-* Restaurar valores originales no funciona ahora ¿?
+* __Solved__ Restaurar valores originales no funciona ahora ¿?
 
 ## Needed Enhancements
 
@@ -91,7 +91,7 @@ Most of it is already in a new (and I hope better) implementation, but they stil
 ### cubebrowse
 
 * Guide subtype change
-* a general editor for categories & __solved__ case_sql
+* __solved__ a general editor for categories & __solved__ case_sql
 * verify date filter 
 * For reference guides
     * Document it
