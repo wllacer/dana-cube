@@ -17,11 +17,13 @@ from pprint import pprint
 from support.util.record_functions import norm2List,norm2String
 from support.util.numeros import is_number
 
+USER,DISP,EDIT = (Qt.UserRole +1,Qt.DisplayRole,Qt.EditRole)
+
 def makeTableSize(widget):
     widget.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
 
     #self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-    #self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+    ##self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
     #self.resizeColumnsToContents()
     widget.setMinimumSize(widget.horizontalHeader().length()+widget.verticalHeader().width() +4, 
@@ -42,11 +44,9 @@ def setWidgetData(parent,editor,dato,valor_defecto):
         
     elif isinstance(editor,QComboBoxIdx):
         # Si no existe lo dejo abendar. No deberia pasar con este tipo de combos
+        # el dato es una dupla
         if dato:
-            if is_number(dato):
-                editor.setCurrentIndex(dato)
-            else:
-                editor.setCurrentIndex(parent.currentList.index(dato))
+            editor.setCurrentIndex(parent.currentList.index(dato))
         elif valor_defecto:
             editor.setCurrentIndex(valor_defecto)
         else:
@@ -112,7 +112,7 @@ def getWidgetData(parent,editor):
     elif isinstance(editor,QDialog):
         return editor.getData()
     elif isinstance(editor,QComboBoxIdx):
-        return editor.currentIndex()
+        return [editor.currentIndex(),editor.currentText()]
     elif isinstance(editor, QComboBox):
         if parent.isDouble:
             return [parent.fullList[editor.currentIndex()][0] , parent.currentList[editor.currentIndex()]]
@@ -261,6 +261,9 @@ class WDelegateSheet(QTableWidget):
         self.setFocus()
 
     def setContext(self,data=None,**kwparm):
+        """
+        probably obsolete
+        """
         changed = False
         for dato in kwparm:
             if self.editContext.get(dato) != kwparm.get(dato):
@@ -298,7 +301,7 @@ class WDelegateSheet(QTableWidget):
         for row  in range(self.rowCount()):
                 for col in range(self.columnCount()):
                     if self.item(row,col):
-                        result[row][col] = self.get(row,col) #.data(Qt.UserRole +1)
+                        result[row][col] = self.get(row,col) #.data(USER)
                     else:
                         result[row][col] = None
         if self.columnCount() == 1:
@@ -306,18 +309,22 @@ class WDelegateSheet(QTableWidget):
         else:
             return result
     
-    def setData(self,row,col,dato):
+    def setData(self,row,col,dato,role=None,split=False):
 
         item =  self.item(row,col)
         if not item:
             self.initializeCell(row,col)
-        if self.hasSplitData(row,col,dato):
-            cdato = self.getSplitData(row,col,dato)
-            item.setData(Qt.UserRole +1,cdato[0])
-            item.setData(Qt.DisplayRole,cdato[1])
+        if not role:
+            if split or self.hasSplitData(row,col,dato):
+                cdato = self.getSplitData(row,col,dato)
+                item.setData(USER,cdato[0])
+                item.setData(DISP,cdato[1])
+            else:
+                item.setData(DISP,dato)
+                item.setData(USER,dato)
         else:
-            item.setData(Qt.DisplayRole,dato)
-
+            item.setData(role,dato)
+            
     def resizeEvent(self, event):
         self.resized.emit()
         return super().resizeEvent(event)
@@ -325,11 +332,19 @@ class WDelegateSheet(QTableWidget):
     def set(self,x,y,value):
         return self.setData(x,y,value)
 
+    def getData(self,x,y,role=None):
+        if not role:
+            return self.get(x,y)
+        else:
+            item = self.item(x,y)
+            return item.data(role)
+
+    
     def get(self,x,y):
         item = self.item(x,y)
-        dato = item.data(Qt.UserRole +1)
-        if not dato:
-            dato = item.data(Qt.DisplayRole)
+        dato = item.data(USER)
+        if dato is None:
+            dato = item.data(DISP)
         return dato
 
     def values(self):
@@ -348,7 +363,10 @@ class WDelegateSheet(QTableWidget):
         return False
     
     def getSplitData(self,x,y,dato):
-        return [dato,dato]
+        if isinstance(dato,(list,tuple)):
+            return dato[0:2]
+        else:
+            return [dato,dato]
     
     def setEnabled(self,x,y,state):
         if state:
@@ -547,7 +565,7 @@ class WMultiCombo(QComboBox):
             item = QStandardItem(entrada)
             item.setData(Qt.Unchecked,Qt.CheckStateRole)
             item.setFlags(Qt.ItemIsEnabled)
-            item.setData(data[i],Qt.UserRole+1)
+            item.setData(data[i],USER)
             model.setItem(i+1,0,item)
         self.setModel(model)
 
@@ -557,18 +575,18 @@ class WMultiCombo(QComboBox):
         hdr = self.model().itemFromIndex(self.Head)
         extra = set(norm2List(hdr.data()))
         if status == 'add':
-            extra.add(item.data(Qt.DisplayRole))
+            extra.add(item.data(DISP))
         elif status == 'remove':
             try:
-                extra.remove(item.data(Qt.DisplayRole))
+                extra.remove(item.data(DISP))
             except KeyError:
                 pass
         if len(extra) > 0:
             hdr.setData(norm2String(list(extra)))
-            hdr.setData(norm2String(list(extra)),Qt.DisplayRole)
+            hdr.setData(norm2String(list(extra)),DISP)
         else:
             hdr.setData(norm2String(None))
-            hdr.setData(norm2String(None),Qt.DisplayRole)
+            hdr.setData(norm2String(None),DISP)
 
     def handleItemPressed(self, index):
         item = self.model().itemFromIndex(index)
@@ -585,7 +603,7 @@ class WMultiCombo(QComboBox):
     def checkElemText(self,text):
         # find data choca con el elemento 0
         for k in range(1,self.count()):
-            if text in (self.itemData(k,Qt.DisplayRole),self.itemData(k,Qt.UserRole +1)):
+            if text in (self.itemData(k,DISP),self.itemData(k,USER)):
                 return k
         return -1
       
@@ -608,7 +626,7 @@ class WMultiCombo(QComboBox):
                 item = QStandardItem(entry)
                 item.setData(Qt.Checked,Qt.CheckStateRole)
                 item.setFlags(Qt.ItemIsEnabled)
-                item.setData(entry,Qt.UserRole+1)
+                item.setData(entry,USER)
                 self.model().appendRow(item)
                 idx = self.model().rowCount() -1
                 
@@ -635,7 +653,7 @@ class WMultiCombo(QComboBox):
         result = []
         for k in range(1,self.count()):
             if self.itemData(k,Qt.CheckStateRole) == Qt.Checked :
-                result.append(self.itemData(k,Qt.UserRole +1))
+                result.append(self.itemData(k,USER))
         return norm2String(result)
             
     def selectedItems(self):
@@ -649,6 +667,21 @@ class WMultiCombo(QComboBox):
 class WPowerTable(WDelegateSheet):
     """
     DEPRECATED
+    
+    might be renewed (UI is sometimes better on the base of the WDelegateSheet
+    
+    #def initialize(self):
+    #def initializeRow(self,x):
+    #def initializeCell(self,x,y):
+    #def openContextMenu(self,position):
+    #def addRow(self,idx=None,emit=True):
+    #def removeRow(self,idx=None,emit=True):
+    #def setContext(self,data=None,**kwparm):
+    #def loadData(self,data):
+    #def unloadData(self):
+    #def setData(self,row,col,dato):
+    #def resizeEvent(self, event):
+
     """
     def __init__(self,row,cols,parent=None):
         super().__init__(self,row,cols,parent=parent)
@@ -709,25 +742,29 @@ class columnSheetDelegate(QStyledItemDelegate):
         
     def setEditorData(self, editor, index):
         col = index.column()
-        dato = index.data()
+        dato = index.data()  #Qt.DisplayRole
         try:
             def_value = self.context[index.column() +1][4] 
         except IndexError:
             def_value = None
-
         setWidgetData(self,editor,dato,def_value)
         
     def setModelData(self,editor,model,index):
         dato = getWidgetData(self,editor)
-        print(dato)
-        if type(editor) == QComboBox and self.isDouble:
-            model.setData(index,dato[0],Qt.UserRole +1)
-            model.setData(index,dato[1],Qt.DisplayRole)
-            return 
+
+        if type(editor) in (QComboBox,) and self.isDouble:
+            model.setData(index,dato[0],USER)
+            model.setData(index,dato[1],DISP)
+        elif type(editor) == QComboBoxIdx:
+            model.setData(index,dato[0],USER)
+            model.setData(index,dato[1],DISP)
+            item = model.itemFromIndex(index)
+            print('SMD',item.data(USER),item.data(DISP))
         elif isinstance(dato,(list,tuple)):
             dato = norm2String(dato)
-        model.setData(index,dato)
-        
+            model.setData(index,dato)
+        else:
+            model.setData(index,dato)
         
 
 

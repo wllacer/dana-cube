@@ -91,8 +91,168 @@ class propertySheetDlg(QDialog):
 
 
 from support.util.fechas import *
-
 class dateFilterDlg(QDialog):
+    def __init__(self,descriptores=None,datos=None,parent=None):   
+        """
+        """
+        if descriptores is None:
+            return 
+        else:
+            self.descriptores = descriptores
+            
+        super(dateFilterDlg, self).__init__(parent)
+        # cargando parametros de defecto
+        self.context = [ ['\t {}'.format(k) for k in descriptores ],
+                                ('todo',QComboBoxIdx,None,CLASES_INTERVALO),
+                                (None,QComboBoxIdx,None,TIPOS_INTERVALO),
+                                (1,QSpinBox,{"setRange":(1,366)},None),
+                                (None,QLineEdit,{"setEnabled":False},None),
+                                (None,QLineEdit,{"setEnabled":False},None),
+                                ]
+        rows = len(self.context[0])
+        cols = len(self.context) -1
+        self.sheet = WDataSheet(self.context,rows)
+
+        for i in range(self.sheet.rowCount()):
+            for j in range(3,5):
+                self.sheet.item(i,j).setBackground(QColor(Qt.gray))
+
+        self.data = datos
+        for row,entry in enumerate(self.data):
+            for col,dato in enumerate(entry):
+                if col == 0 and dato is not None:
+                    self.sheet.setData(row,col,[dato,CLASES_INTERVALO[dato]],split=True)
+                    if dato == 0:
+                        break
+                elif col == 1 and dato is not None:
+                    self.sheet.setData(row,col,[dato,TIPOS_INTERVALO[dato]],split=True)
+                elif dato is not None:
+                    self.sheet.setData(row,col,dato)
+                elif col == 2 and not dato:
+                    self.sheet.setData(row,col,1)
+            self._validateEntry(row,0)
+            
+        self.sheet.cellChanged.connect(self.validateEntry)
+
+        cabeceras = ('Tipo','Periodo','Rango','desde','hasta')
+        self.sheet.setHorizontalHeaderLabels(cabeceras)
+        #
+        InicioLabel1 = QLabel('Filtre el rango temporal que desea')
+
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel,
+                                     Qt.Horizontal)
+
+
+        self.msgLine = QLabel("")
+        meatLayout = QVBoxLayout()
+        buttonLayout = QHBoxLayout()
+        
+
+        meatLayout.addWidget(InicioLabel1)
+        meatLayout.addWidget(self.sheet)
+        meatLayout.addWidget(self.msgLine)
+       
+        buttonLayout.addWidget(buttonBox)
+        meatLayout.addLayout(buttonLayout)
+        
+        self.setLayout(meatLayout)
+        self.setMinimumSize(QSize(800,200))
+        buttonBox.accepted.connect(self.accept)
+        buttonBox.rejected.connect(self.reject)
+
+        self.setWindowTitle("Item editor")
+
+    def _validateEntry(self,row,col):
+            dato = self.sheet.get(row,col)
+            if col in (0,):
+                self.flipFlop(row,dato)
+                self.seleccionIntervalo(dato,row)
+            elif col in (1,):
+                self.seleccionIntervalo(dato,row)
+            elif col in (2,):
+                self.seleccionIntervalo(dato,row)
+        
+    def validateEntry(self,row,col):
+        self.sheet.cellChanged.disconnect()
+        self._validateEntry(row,col)
+        self.sheet.cellChanged.connect(self.validateEntry)
+        
+            
+    def flipFlop(self,line,value):
+        # puede ser un poco repetitivo, pero no se si es mas costoso el enable/disable que comprobar cada
+        # vez si lo esta. Por lo menos el codigo es menos complejo y todavia no veo una razon para modificarlo
+        if not is_number(value):
+            return
+        if value == 0:
+            self.sheet.setEnabled(line,1,False)
+            self.sheet.setEnabled(line,2,False)
+            self.sheet.setData(line,1,None)
+            self.sheet.setData(line,2,1)
+        elif value == 1: 
+            self.sheet.setEnabled(line,1,True)
+            self.sheet.setEnabled(line,2,False)
+        else:
+            self.sheet.setEnabled(line,1,True)
+            self.sheet.setEnabled(line,2,True)
+        # ponemos los valores ejemplo
+
+
+    def seleccionIntervalo(self,value,idx):
+        self.msgLine.setText("")
+        self.sheet.set(idx,3,None)
+        self.sheet.set(idx,4,None)
+        clase = self.sheet.getData(idx,0,USER)
+        tipo = self.sheet.getData(idx,1,USER)
+        numper = self.sheet.get(idx,2) 
+        if clase: 
+            if tipo is not None:
+                print(numper,self.sheet.get(idx,2),self.sheet.getData(idx,2,DISP))
+                if not numper:
+                    self.sheet.set(idx,2,1)
+                    if clase > 1:
+                        self.sheet.setCurrentCell(idx,2)
+                        self.msgLine.setText("Especifique el numero de intervalos que desea para {}".format(self.sheet.getData(idx,0,DISP)))
+                        self.sheet.setFocus()
+                    numper = 1
+                
+                desde,hasta = dateRange(clase,tipo,periodo=1)
+                self.sheet.set(idx,3,str(desde))
+                self.sheet.set(idx,4,str(hasta))
+            else:
+                self.sheet.setCurrentCell(idx,1)
+                self.msgLine.setText("Debe especificar un tipo de intervalo para {}".format(self.sheet.getData(idx,0,DISP)))
+                self.sheet.setFocus()
+   
+    def accept(self):
+        self.data = self.sheet.values()
+        pprint(self.data)
+        if not self.validate():
+            return
+        self.result = self.data
+        QDialog.accept(self)
+    
+    def validate(self):
+        self.msgLine.setText("")
+        for row,entrada in enumerate(self.data):
+            clase = entrada[0]
+            tipo = entrada[1]
+            numper = entrada[2]
+            if clase: 
+                if tipo is not None:
+                    if not numper:
+                        if clase > 1:
+                            self.sheet.setCurrentCell(row,2)
+                            self.msgLine.setText("Especifique el numero de intervalos que desea para {}".format(self.sheet.getData(row,0,DISP)))
+                            self.sheet.setFocus()
+                            return False
+                else:
+                    self.sheet.setCurrentCell(row,1)
+                    self.msgLine.setText("Debe especificar un tipo de intervalo para {}".format(self.sheet.getData(row,0,DISP)))
+                    self.sheet.setFocus()
+                    return False
+        return True
+
+class dateFilterDlgCombo(QDialog):
     def __init__(self,descriptores=None,datos=None,parent=None):   
         """
         """
