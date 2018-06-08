@@ -48,7 +48,7 @@ Areas where the product __must__ be improved. They might not be errors but don't
 
 * __Solved__ Display of date fields. Delimiter is now a global setting; works as specified
 
-* How to make a date filter in sqlite (whre the type does not exist)
+* __Solved__  How to make a date filter in sqlite (whre the type does not exist) A bypass, you can edit the element in cubebrowse and will stick afterwards
 
 * __Solved__ Don't allow in vista dialog to enter without selection of measures
 
@@ -92,7 +92,7 @@ Most of it is already in a new (and I hope better) implementation, but they stil
 
 * Guide subtype change
 * __solved__ a general editor for categories & __solved__ case_sql
-* verify date filter 
+* __solved__ verify date filter 
 * For reference guides
     * Document it
     * case with more than 2 levels. __solved__ but grouped by, can be a PITA

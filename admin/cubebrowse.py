@@ -35,9 +35,7 @@ Nuevo mojo del arbol
 
 no example of validators attribute 
 elements list is (element name,mandatory,readonly,repeatable, subtype_selector)
-still no process for repeatable 
 class & name are not to be edited (even shown) as derived DONE
-Problem in values list. Edition of element duplicates them
 
 We have prepared treeEditor to be able to handle QDialogs with following details
     * Data should be collected via a getter

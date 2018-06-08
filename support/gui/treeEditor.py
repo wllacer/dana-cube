@@ -770,11 +770,7 @@ class TreeDelegate(QStyledItemDelegate):
                     editor.load(self.currentList)
                 #TODO  WMultiCombo as editable ... no lo veo
                 #editor.setEditable(edit_format.get('editable',False))
-<<<<<<< HEAD
-            if defeditor in  (QComboBoxIdx,QComboBox):
-=======
             if defeditor in (QComboBoxIdx, QComboBox) :
->>>>>>> newGuiElements
                 editor.addItems(self.currentList)
                 editor.setEditable(edit_format.get('editable',False))
             elif defeditor in (WMultiList, ):
@@ -903,13 +899,8 @@ class TreeDelegate(QStyledItemDelegate):
         else:
             if isinstance(editor,QComboBoxIdx):
                 values = None
-<<<<<<< HEAD
-                ivalue = datoWidget
-                dvalue = editor.currentText()
-=======
                 ivalue = datoWidget[0]
                 dvalue = datoWidget[1]
->>>>>>> newGuiElements
             if isinstance(editor, QComboBox) and self.isDouble:
                 values = None
                 ivalue,dvalue = datoWidget
