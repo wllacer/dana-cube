@@ -6,7 +6,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 
-from reseach.grandBrowse import *
+from research.grandBrowse import *
 from PyQt5.QtWidgets import QApplication 
 
 def test(cuboId,mostrar=True,ejecutar=False,salida=False):

@@ -284,7 +284,7 @@ class TreeMgr(QTreeView):
         
         #print('inicializacion completa')
         #self.setEditTriggers(QAbstractItemView.NoEditTriggers)
-    
+
     def openContextMenu(self,position):
         menu = QMenu()
         self.ctxMenu = []
@@ -303,6 +303,7 @@ class TreeMgr(QTreeView):
                                     lambda i=self.model().invisibleRootItem(),j=entrada:self.actionAddTop(i,j))) 
             self.ctxMenu.append(menu.addAction("Duplicate",lambda i=n:self.actionDuplicate(i)))
             self.ctxMenu.append(menu.addAction("Rename",lambda i=n:self.actionRename(i))) 
+            self.topLevelOptions(menu,self.ctxMenu,context,n)
             menu.addSeparator()
             
         for linea in edit_data.get('menuActions',[]):
@@ -332,7 +333,12 @@ class TreeMgr(QTreeView):
         self.getMenuOptionsDetail(menu,n,context)
         
         action = menu.exec_(self.viewport().mapToGlobal(position))
-        
+
+    def topLevelOptions(self,menu,ctxMenu,context,item):
+        """
+        virtual slot
+        """
+        return
     def getMenuOptionsDetail(self,menu,rowHead,context):
         """
         parameters:

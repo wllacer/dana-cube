@@ -72,12 +72,17 @@ def fieldFqN(field,table):
     """
     table is suposed to be fqn
     """
-    if  '(' in field or ' ' in field:
-        # aqui se entiende que el campo tiene que estar al menos cualificado por el nombre de la tabla
-        # con menos no puedo hacerlo sin provocar un desastre
-        return fullQualifyInString(field,table)
+    fields = norm2List(field)
+    result = []
+    for field in fields:
+        if  '(' in field or ' ' in field:
+            # aqui se entiende que el campo tiene que estar al menos cualificado por el nombre de la tabla
+            # con menos no puedo hacerlo sin provocar un desastre
+            result.append(fullQualifyInString(field,table))
+        else:
     #forma absolutamente barbara
-    return '{}.{}'.format(table,field.split('.')[-1])
+            result.append('{}.{}'.format(table,field.split('.')[-1]))
+    return norm2String(result)
 
 
 def swapPrefix(string,prefix,tabla):
@@ -141,7 +146,6 @@ def generateFullQuery(cubo, autoDates=True):
                 # solo tomamos el ultimo elemento,los demas son redundantes
                 campos.append([fieldFqN(level['desc'][-1],lvlTable),prefix,lvlTable,titulo])
             else:
-
                 tmpDesc = list(map(lambda item:fieldFqN(item,lvlTable),level['desc']))
                 #campos.append([catenate(cubo.db,tmpDesc),prefix,lvlTable,titulo])
                 for k,item in enumerate(tmpDesc):
@@ -176,7 +180,7 @@ def generateFullQuery(cubo, autoDates=True):
                     
                     for clausula in arco['clause']:
                         entrada = '{} {} {}'.format(
-                            fieldFqN(clausula['base_elem'],baseTbl),
+                                fieldFqN(clausula['base_elem'],baseTbl),
                             clausula.get('condition','='),
                             fieldFqN(clausula['rel_elem'],tgtTbl)
                             )

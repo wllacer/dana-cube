@@ -849,7 +849,6 @@
         "table": "main.voto_provincia"
     },
     "rental": {
-        "base filter": "",
         "connect": {
             "dbhost": "localhost",
             "dbname": "pagila",
@@ -905,7 +904,6 @@
                         "domain": {
                             "code": "customer_id",
                             "desc": "customer_id",
-                            "filter": "",
                             "table": "public.customer"
                         },
                         "elem": "customer_id"
@@ -920,7 +918,6 @@
                         "domain": {
                             "code": "inventory_id",
                             "desc": "inventory_id",
-                            "filter": "",
                             "table": "public.inventory"
                         },
                         "elem": "inventory_id"
@@ -935,172 +932,9 @@
                         "domain": {
                             "code": "staff_id",
                             "desc": "staff_id",
-                            "filter": "",
                             "table": "public.staff"
                         },
                         "elem": "staff_id"
-                    }
-                ]
-            },
-            {
-                "class": "o",
-                "name": "rental_customer_id_fkey_customer_address_id_fkey",
-                "prod": [
-                    {
-                        "domain": {
-                            "code": "address_id",
-                            "desc": "address_id",
-                            "filter": "",
-                            "table": "public.address"
-                        },
-                        "elem": "address_id",
-                        "link via": [
-                            {
-                                "clause": {
-                                    "0": {
-                                        "base_elem": "public.rental.customer_id",
-                                        "rel_elem": "public.customer.customer_id"
-                                    }
-                                },
-                                "filter": "",
-                                "table": "public.customer"
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
-                "class": "o",
-                "name": "rental_customer_id_fkey_customer_store_id_fkey",
-                "prod": [
-                    {
-                        "domain": {
-                            "code": "store_id",
-                            "desc": "store_id",
-                            "filter": "",
-                            "table": "public.store"
-                        },
-                        "elem": "store_id",
-                        "link via": [
-                            {
-                                "clause": {
-                                    "0": {
-                                        "base_elem": "public.rental.customer_id",
-                                        "rel_elem": "public.customer.customer_id"
-                                    }
-                                },
-                                "filter": "",
-                                "table": "public.customer"
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
-                "class": "o",
-                "name": "rental_inventory_id_fkey_inventory_film_id_fkey",
-                "prod": [
-                    {
-                        "domain": {
-                            "code": "film_id",
-                            "desc": "film_id",
-                            "filter": "",
-                            "table": "public.film"
-                        },
-                        "elem": "film_id",
-                        "link via": [
-                            {
-                                "clause": {
-                                    "0": {
-                                        "base_elem": "public.rental.inventory_id",
-                                        "rel_elem": "public.inventory.inventory_id"
-                                    }
-                                },
-                                "filter": "",
-                                "table": "public.inventory"
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
-                "class": "o",
-                "name": "rental_inventory_id_fkey_inventory_store_id_fkey",
-                "prod": [
-                    {
-                        "domain": {
-                            "code": "store_id",
-                            "desc": "store_id",
-                            "filter": "",
-                            "table": "public.store"
-                        },
-                        "elem": "store_id",
-                        "link via": [
-                            {
-                                "clause": {
-                                    "0": {
-                                        "base_elem": "public.rental.inventory_id",
-                                        "rel_elem": "public.inventory.inventory_id"
-                                    }
-                                },
-                                "filter": "",
-                                "table": "public.inventory"
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
-                "class": "o",
-                "name": "rental_staff_id_fkey_staff_address_id_fkey",
-                "prod": [
-                    {
-                        "domain": {
-                            "code": "address_id",
-                            "desc": "address_id",
-                            "filter": "",
-                            "table": "public.address"
-                        },
-                        "elem": "address_id",
-                        "link via": [
-                            {
-                                "clause": {
-                                    "0": {
-                                        "base_elem": "public.rental.staff_id",
-                                        "rel_elem": "public.staff.staff_id"
-                                    }
-                                },
-                                "filter": "",
-                                "table": "public.staff"
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
-                "class": "o",
-                "name": "rental_staff_id_fkey_staff_store_id_fkey",
-                "prod": [
-                    {
-                        "domain": {
-                            "code": "store_id",
-                            "desc": "store_id",
-                            "filter": "",
-                            "table": "public.store"
-                        },
-                        "elem": "store_id",
-                        "link via": [
-                            {
-                                "clause": {
-                                    "0": {
-                                        "base_elem": "public.rental.staff_id",
-                                        "rel_elem": "public.staff.staff_id"
-                                    }
-                                },
-                                "filter": "",
-                                "table": "public.staff"
-                            }
-                        ]
                     }
                 ]
             }

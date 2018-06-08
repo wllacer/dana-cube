@@ -4,7 +4,8 @@
 Todo list tras completar validators y setters
 -> DONE no en add, pero pueden moverse los elementos
 -> DONE Incluir llamada a la consulta de guia
--> Incluir llamada al grand total
+-> DONE Incluir llamada al grand total. 
+->        da fallo en votos locales, votos_prov_ref
 -> DONE Las fechas artificiales (trimestres, cuatrimestres, ...) como opciones de menu aqui y no en info2*
 -> Para sqlite que el selector de base de datos sea el selector de ficheros del sistema
 -> DONE Copy to other place
@@ -459,6 +460,9 @@ class cubeTree(TreeMgr):
     """
     slots
     """
+    def topLevelOptions(self,menu,ctxMenu,context,item):
+        ctxMenu.append(menu.addAction('Grand browse',lambda i=item:self.browsePreview(i)))
+                                      
     def checkConexion(self,cubeName,itemName):
         """
         slot para procesar el añade conexion. Quizas se ejecute demasiadas veces
@@ -608,7 +612,14 @@ class cubeTree(TreeMgr):
             propagateTableName(elem,self,otable,ntable)
         self.setCurrentIndex(nitem.index())
 
-            
+    def browsePreview(self,item):
+        cubo = tree2dict(item,isDictFromDef)
+        form = browsePreview(cubo)
+        form.setWindowTitle('Ejemplo de datos de ' + item.data())
+        form.setMinimumSize(640,480)
+        form.show()
+        form.exec_()
+        
     def test(self):
         return
 
@@ -617,6 +628,20 @@ class cubeTree(TreeMgr):
 Interfaz de usuario
 
 """
+from support.datalayer.querywidget import *
+from research.grandBrowse import generaQuery,QueryTab
+
+class browsePreview(QDialog):
+    def __init__(self,cubo,parent=None):
+        super().__init__(parent)
+        activeCube = Cubo(cubo)
+        query = generaQuery(activeCube,ejecutar=False)
+        
+        self.tree = QueryTab(activeCube.db,script=query)
+        meatLayout=QGridLayout()
+        meatLayout.addWidget(self.tree)
+        self.setLayout(meatLayout)    
+        self.tree.execute()
 
 
 def generaArgParser():
