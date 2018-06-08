@@ -93,48 +93,56 @@ class propertySheetDlg(QDialog):
 from support.util.fechas import *
 
 class dateFilterDlg(QDialog):
-    def __init__(self,descriptores=None,datos=None,parent=None):   
+    def __init__(self,parent=None,**kwparm):
+    #def __init__(self,descriptores=None,datos=None,parent=None):   
         """
         """
-        if descriptores is None:
+        
+        if kwparm and not kwparm.get('descriptores'):
             return 
-        else:
-            self.descriptores = descriptores
-            
+        #else:
+            #self.descriptores = descriptores
+        self.descriptores = []
+        self.data = []
+        self.result = None
+        
         super(dateFilterDlg, self).__init__(parent)
         # cargando parametros de defecto
-        self.context = [ ['\t {}'.format(k) for k in descriptores ],
+        self.context = [ ( None ,), #['\t {}'.format(k) for k in descriptores ],
                                 ('todo',QComboBoxIdx,None,CLASES_INTERVALO),
                                 (None,QComboBoxIdx,None,TIPOS_INTERVALO),
                                 (1,QSpinBox,{"setRange":(1,366)},None),
                                 (None,QLineEdit,{"setEnabled":False},None),
                                 (None,QLineEdit,{"setEnabled":False},None),
                                 ]
-        rows = len(self.context[0])
-        cols = len(self.context) -1
+        rows = 5 #len(self.context[0])
+        cols = 5 #len(self.context) -1
         self.sheet = WDataSheet(self.context,rows)
-
-        for i in range(self.sheet.rowCount()):
-            for j in range(3,5):
-                self.sheet.item(i,j).setBackground(QColor(Qt.gray))
-
-        self.data = datos
-        for row,entry in enumerate(self.data):
-            for col,dato in enumerate(entry):
-                if col == 0 and dato is not None:
-                    self.sheet.setData(row,col,[dato,CLASES_INTERVALO[dato]],split=True)
-                    if dato == 0:
-                        break
-                elif col == 1 and dato is not None:
-                    self.sheet.setData(row,col,[dato,TIPOS_INTERVALO[dato]],split=True)
-                elif dato is not None:
-                    self.sheet.setData(row,col,dato)
-                elif col == 2 and not dato:
-                    self.sheet.setData(row,col,1)
-            self._validateEntry(row,0)
-            
-        #self.sheet.cellChanged.connect(self.validateEntry)
         self.sheet.itemChanged.connect(self.validateEntry)
+        
+        if kwparm:
+            self.setData(**kwparm)
+            
+        #for i in range(self.sheet.rowCount()):
+            #for j in range(3,5):
+                #self.sheet.item(i,j).setBackground(QColor(Qt.gray))
+
+        #self.data = datos
+        #for row,entry in enumerate(self.data):
+            #for col,dato in enumerate(entry):
+                #if col == 0 and dato is not None:
+                    #self.sheet.setData(row,col,[dato,CLASES_INTERVALO[dato]],split=True)
+                    #if dato == 0:
+                        #break
+                #elif col == 1 and dato is not None:
+                    #self.sheet.setData(row,col,[dato,TIPOS_INTERVALO[dato]],split=True)
+                #elif dato is not None:
+                    #self.sheet.setData(row,col,dato)
+                #elif col == 2 and not dato:
+                    #self.sheet.setData(row,col,1)
+            #self._validateEntry(row,0)
+            
+
         
         cabeceras = ('Tipo','Periodo','Rango','desde','hasta')
         self.sheet.setHorizontalHeaderLabels(cabeceras)
@@ -164,6 +172,38 @@ class dateFilterDlg(QDialog):
 
         self.setWindowTitle("Item editor")
 
+    def setData(self,**kwparm):
+        self.descriptores = kwparm.get('descriptores',[])
+        self.data = kwparm.get('datos',[])
+        if not self.descriptores:
+            self.reject()
+
+        self.sheet.itemChanged.disconnect()
+        
+        self.sheet.setRowCount(len(self.descriptores))
+        self.sheet.setVerticalHeaderLabels(self.descriptores)
+        
+        for i in range(self.sheet.rowCount()):
+            for j in range(3,5):
+                self.sheet.item(i,j).setBackground(QColor(Qt.gray))
+                
+        for row,entry in enumerate(self.data):
+            for col,dato in enumerate(entry):
+                if col == 0 and dato is not None:
+                    self.sheet.setData(row,col,[dato,CLASES_INTERVALO[dato]],split=True)
+                    if dato == 0:
+                        break
+                elif col == 1 and dato is not None:
+                    self.sheet.setData(row,col,[dato,TIPOS_INTERVALO[dato]],split=True)
+                elif dato is not None:
+                    self.sheet.setData(row,col,dato)
+                elif col == 2 and not dato:
+                    self.sheet.setData(row,col,1)
+            self._validateEntry(row,0)
+    
+        self.sheet.itemChanged.connect(self.validateEntry)
+            
+        
     def _validateEntry(self,row,col):
             dato = self.sheet.get(row,col)
             if col in (0,):
@@ -226,17 +266,32 @@ class dateFilterDlg(QDialog):
                 self.sheet.setFocus()
    
     def accept(self):
-        self.data = self.sheet.values()
+        #self.data = self.sheet.values()
         if not self.validate():
             return
-        self.result = self.data
-        for k in range(len(self.result)):
-            self.result[k].insert(0,self.descriptores[k])
+        self.result = {'datos':self._getData()}
+
         QDialog.accept(self)
     
+    def reject(self):
+        self.result = {'cancel':True }
+        QDialog.reject(self)
+        
+    def getData(self,reject=False):
+        if self.result:
+            return self.result
+        else:
+            self.result = {'datos':self._getData()}
+        
+    def _getData(self):
+        result = self.sheet.values()
+        for k in range(len(result)):
+            result[k].insert(0,self.descriptores[k])
+        return result
+        
     def validate(self):
         self.msgLine.setText("")
-        for row,entrada in enumerate(self.data):
+        for row,entrada in enumerate(self.sheet.values()):
             clase = entrada[0]
             tipo = entrada[1]
             numper = entrada[2]

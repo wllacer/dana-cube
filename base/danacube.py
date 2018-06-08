@@ -949,7 +949,7 @@ class DanaCube(QTreeView):
                 descriptores.append(item[0])
                 datos.append([0,0,1,None,None])
         #descriptores = [ item[0] for item in camposFecha ]
-        form = dateFilterDlg(descriptores,datos)
+        form = dateFilterDlg(descriptores=descriptores,datos=datos)
         if form.exec_():
             sqlGrp = []
             #if self.cubo.definition.get('date filter'):
@@ -957,7 +957,7 @@ class DanaCube(QTreeView):
             #else:
                 #self.cubo.definition['date filter'] = []
             self.cubo.definition['date filter'] = []        
-            for k,entry in enumerate(form.result):
+            for k,entry in enumerate(form.result.get('datos',[])):
                 if entry[1] != 0:
                     formato = queFormato(entry[0])
                     self.cubo.definition['date filter'].append({
