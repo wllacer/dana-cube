@@ -266,8 +266,8 @@ class Cubo:
         if len(filtros) == 0 :
             return sqlClause
         for item in  filtros :
-            clase_intervalo = CLASES_INTERVALO.index(item['date class'])
-            tipo_intervalo = TIPOS_INTERVALO.index(item['date range'])
+            clase_intervalo = item['date class']
+            tipo_intervalo = item['date range']
             periodos = int(item['date period'])
             if clase_intervalo == 0:
                 continue

@@ -321,7 +321,7 @@ class WDelegateSheet(QTableWidget):
                 item.setData(DISP,cdato[1])
             else:
                 item.setData(DISP,dato)
-                item.setData(USER,dato)
+                #item.setData(USER,dato)
         else:
             item.setData(role,dato)
             
@@ -758,13 +758,12 @@ class columnSheetDelegate(QStyledItemDelegate):
         elif type(editor) == QComboBoxIdx:
             model.setData(index,dato[0],USER)
             model.setData(index,dato[1],DISP)
-            item = model.itemFromIndex(index)
-            print('SMD',item.data(USER),item.data(DISP))
         elif isinstance(dato,(list,tuple)):
             dato = norm2String(dato)
             model.setData(index,dato)
         else:
             model.setData(index,dato)
+
         
 
 

@@ -133,8 +133,9 @@ class dateFilterDlg(QDialog):
                     self.sheet.setData(row,col,1)
             self._validateEntry(row,0)
             
-        self.sheet.cellChanged.connect(self.validateEntry)
-
+        #self.sheet.cellChanged.connect(self.validateEntry)
+        self.sheet.itemChanged.connect(self.validateEntry)
+        
         cabeceras = ('Tipo','Periodo','Rango','desde','hasta')
         self.sheet.setHorizontalHeaderLabels(cabeceras)
         #
@@ -173,10 +174,14 @@ class dateFilterDlg(QDialog):
             elif col in (2,):
                 self.seleccionIntervalo(dato,row)
         
-    def validateEntry(self,row,col):
-        self.sheet.cellChanged.disconnect()
+    #def validateEntry(self,row,col):
+    def validateEntry(self,item):
+        row = item.row()
+        col =  item.column()
+        self.sheet.itemChanged.disconnect()
+        self.msgLine.setText("")
         self._validateEntry(row,col)
-        self.sheet.cellChanged.connect(self.validateEntry)
+        self.sheet.itemChanged.connect(self.validateEntry)
         
             
     def flipFlop(self,line,value):
@@ -187,8 +192,6 @@ class dateFilterDlg(QDialog):
         if value == 0:
             self.sheet.setEnabled(line,1,False)
             self.sheet.setEnabled(line,2,False)
-            self.sheet.setData(line,1,None)
-            self.sheet.setData(line,2,1)
         elif value == 1: 
             self.sheet.setEnabled(line,1,True)
             self.sheet.setEnabled(line,2,False)
@@ -199,7 +202,6 @@ class dateFilterDlg(QDialog):
 
 
     def seleccionIntervalo(self,value,idx):
-        self.msgLine.setText("")
         self.sheet.set(idx,3,None)
         self.sheet.set(idx,4,None)
         clase = self.sheet.getData(idx,0,USER)
@@ -207,29 +209,29 @@ class dateFilterDlg(QDialog):
         numper = self.sheet.get(idx,2) 
         if clase: 
             if tipo is not None:
-                print(numper,self.sheet.get(idx,2),self.sheet.getData(idx,2,DISP))
                 if not numper:
                     self.sheet.set(idx,2,1)
                     if clase > 1:
                         self.sheet.setCurrentCell(idx,2)
-                        self.msgLine.setText("Especifique el numero de intervalos que desea para {}".format(self.sheet.getData(idx,0,DISP)))
+                        self.msgLine.setText("Especifique el numero de intervalos que desea para {}".format(CLASES_INTERVALO[clase]))
                         self.sheet.setFocus()
                     numper = 1
                 
-                desde,hasta = dateRange(clase,tipo,periodo=1)
+                desde,hasta = dateRange(clase,tipo,periodo=numper)
                 self.sheet.set(idx,3,str(desde))
                 self.sheet.set(idx,4,str(hasta))
             else:
                 self.sheet.setCurrentCell(idx,1)
-                self.msgLine.setText("Debe especificar un tipo de intervalo para {}".format(self.sheet.getData(idx,0,DISP)))
+                self.msgLine.setText("Debe especificar un intervalo para {}".format(CLASES_INTERVALO[clase]))
                 self.sheet.setFocus()
    
     def accept(self):
         self.data = self.sheet.values()
-        pprint(self.data)
         if not self.validate():
             return
         self.result = self.data
+        for k in range(len(self.result)):
+            self.result[k].insert(0,self.descriptores[k])
         QDialog.accept(self)
     
     def validate(self):
@@ -243,12 +245,12 @@ class dateFilterDlg(QDialog):
                     if not numper:
                         if clase > 1:
                             self.sheet.setCurrentCell(row,2)
-                            self.msgLine.setText("Especifique el numero de intervalos que desea para {}".format(self.sheet.getData(row,0,DISP)))
+                            self.msgLine.setText("Especifique el numero de intervalos que desea para {}".format(CLASES_INTERVALO[clase]))
                             self.sheet.setFocus()
                             return False
                 else:
                     self.sheet.setCurrentCell(row,1)
-                    self.msgLine.setText("Debe especificar un tipo de intervalo para {}".format(self.sheet.getData(row,0,DISP)))
+                    self.msgLine.setText("Debe especificar un tipo de intervalo para {}".format(CLASES_INTERVALO[clase]))
                     self.sheet.setFocus()
                     return False
         return True
