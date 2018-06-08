@@ -26,6 +26,7 @@ from base.datadict import DataDict
 
 from admin.cubemgmt.cubeUI.lnkEditDlg import FKNetworkDialog,makeTableSize,addNetworkMenuItem, LinksDlg,getLinks,setLinks
 from admin.cubemgmt.cubeUI.catEditDlg import catDelegate,catEditor,getCategories,setCategories
+from admin.cubemgmt.cubeUI.datEditDlg import getDateFilter,setDateFilter,dateFilterDlg
 
 
 """
@@ -282,6 +283,9 @@ EDIT_TREE = {
                        ('date end',False,True),
                        ('date format',False,True),
                     ],
+                   'editor':dateFilterDlg,
+                   'getters':[ getDateFilter, ],
+                   'setters':[ setDateFilter, ],
                    },
     'date class':{'editor':QComboBoxIdx,'source':CLASES_INTERVALO},
     'date range':{'editor':QComboBoxIdx,'source':TIPOS_INTERVALO},
@@ -589,7 +593,6 @@ class cubeTree(TreeMgr):
         match = r'([}\]]+)'
         repl = r'\1\n'
         result = tree2dict(self.tree.invisibleRootItem(),isDictFromDef)
-        pprint(result)
         resultado = repr(result)
         res = re.sub(match,repl,resultado)
         QMessageBox.information(self,"Estructura",res)

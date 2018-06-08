@@ -213,8 +213,8 @@ class Context():
         hasName = False if not isTopLevel else True
         if edit_data and  'elements' in edit_data:
             elementos = [ elements[0] for elements in getFullElementList(self.tree,edit_data['elements']) ]
-            if editType == 'category item':
-                print(elementos)
+            #if editType == 'category item':
+                #print(elementos)
             if 'name' in elementos or 'result' in elementos:
                 hasName = True
     
@@ -282,7 +282,7 @@ class TreeMgr(QTreeView):
 
         self.copyContext = None
         
-        print('inicializacion completa')
+        #print('inicializacion completa')
         #self.setEditTriggers(QAbstractItemView.NoEditTriggers)
     
     def openContextMenu(self,position):
@@ -464,7 +464,7 @@ class TreeMgr(QTreeView):
             self.setCurrentIndex(newRow[0].index())
         # este es el sitio para realizar el cambio de nombre
             ftype,fedit_data = getRealEditDefinition(newRow[0],self.treeDef,newItemType)
-            print('action rename',newRow[0].data(),ftype,fedit_data)
+            #print('action rename',newRow[0].data(),ftype,fedit_data)
             if 'elements' in fedit_data:
                 campos = [elem[0] for elem in fedit_data['elements'] ]
                 for nombre in ('name','result','default'):
@@ -807,7 +807,7 @@ class TreeDelegate(QStyledItemDelegate):
         item = self.context.get('editPos')
         display = item.data(Qt.DisplayRole)
         dato = item.data(Qt.UserRole +1)
-        print('interno',dato,'externo',display,'<')
+        #print('interno',dato,'externo',display,'<')
         getters = edit_format.get('getters')
         if not getters:
             getters = [ self._getDataForWidget ,]

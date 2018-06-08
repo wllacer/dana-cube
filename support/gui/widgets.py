@@ -45,7 +45,6 @@ def setWidgetData(parent,editor,dato,valor_defecto):
     elif isinstance(editor,QComboBoxIdx):
         # Si no existe lo dejo abendar. No deberia pasar con este tipo de combos
         # el dato es una dupla
-        print('SWD CBI',dato)
         if dato:
             if is_number(dato):
                 editor.setCurrentIndex(dato)

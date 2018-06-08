@@ -475,7 +475,6 @@ def numEntries(tree):
     k = 0
     for item in traverse(tree):
         k +=1
-    print('hay ',k, ' entradas')
     return k
 
 def padd(lista,num,default=None,pos='after',truncate=True):

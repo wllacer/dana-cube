@@ -121,7 +121,7 @@ class dateFilterDlg(QDialog):
         self.sheet.itemChanged.connect(self.validateEntry)
         
         if kwparm:
-            self.setData(**kwparm)
+            self.setData(kwparm)
             
         #for i in range(self.sheet.rowCount()):
             #for j in range(3,5):
@@ -172,7 +172,7 @@ class dateFilterDlg(QDialog):
 
         self.setWindowTitle("Item editor")
 
-    def setData(self,**kwparm):
+    def setData(self,kwparm):
         self.descriptores = kwparm.get('descriptores',[])
         self.data = kwparm.get('datos',[])
         if not self.descriptores:
@@ -181,7 +181,7 @@ class dateFilterDlg(QDialog):
         self.sheet.itemChanged.disconnect()
         
         self.sheet.setRowCount(len(self.descriptores))
-        self.sheet.setVerticalHeaderLabels(self.descriptores)
+        self.sheet.setVerticalHeaderLabels([ nombre.split('.')[-1] for nombre in self.descriptores] )
         
         for i in range(self.sheet.rowCount()):
             for j in range(3,5):
