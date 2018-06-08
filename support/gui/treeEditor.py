@@ -743,7 +743,7 @@ class TreeDelegate(QStyledItemDelegate):
             editor.setMaximum(edit_format.get('max',99))
             editor.setMinimum(edit_format.get('min',0))
             
-        elif defeditor in (QComboBox,WMultiCombo,WMultiList):
+        elif defeditor in (QComboBox,QComboBoxIdx,WMultiCombo,WMultiList):
             #FIXME parche de presentacion
             if defeditor != WMultiList:   
                 editor = defeditor(parent=parent )
@@ -770,7 +770,7 @@ class TreeDelegate(QStyledItemDelegate):
                     editor.load(self.currentList)
                 #TODO  WMultiCombo as editable ... no lo veo
                 #editor.setEditable(edit_format.get('editable',False))
-            if defeditor ==  QComboBox:
+            if defeditor in (QComboBoxIdx, QComboBox) :
                 editor.addItems(self.currentList)
                 editor.setEditable(edit_format.get('editable',False))
             elif defeditor in (WMultiList, ):
@@ -897,6 +897,10 @@ class TreeDelegate(QStyledItemDelegate):
                     return
 
         else:
+            if isinstance(editor,QComboBoxIdx):
+                values = None
+                ivalue = datoWidget[0]
+                dvalue = datoWidget[1]
             if isinstance(editor, QComboBox) and self.isDouble:
                 values = None
                 ivalue,dvalue = datoWidget
