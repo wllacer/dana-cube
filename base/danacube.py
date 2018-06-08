@@ -937,9 +937,9 @@ class DanaCube(QTreeView):
         if self.cubo.definition.get('date filter'):
             for item in self.cubo.definition.get('date filter'):
                 descriptores.append(item['elem'])
-                intervalo = dateRange(CLASES_INTERVALO.index(item['date class']),TIPOS_INTERVALO.index(item['date range']),periodo=int(item['date period']))
-                datos.append([CLASES_INTERVALO.index(item['date class']),
-                             TIPOS_INTERVALO.index(item['date range']),
+                intervalo = dateRange(item['date class'],item['date range'],periodo=int(item['date period']))
+                datos.append([ item['date class'],
+                             item['date range'],
                              item['date period'],
                              str(intervalo[0]),str(intervalo[1])])
         for item in camposFecha:
@@ -949,7 +949,7 @@ class DanaCube(QTreeView):
                 descriptores.append(item[0])
                 datos.append([0,0,1,None,None])
         #descriptores = [ item[0] for item in camposFecha ]
-        form = dateFilterDlg(descriptores,datos)
+        form = dateFilterDlg(descriptores=descriptores,datos=datos)
         if form.exec_():
             sqlGrp = []
             #if self.cubo.definition.get('date filter'):
@@ -957,13 +957,13 @@ class DanaCube(QTreeView):
             #else:
                 #self.cubo.definition['date filter'] = []
             self.cubo.definition['date filter'] = []        
-            for k,entry in enumerate(form.result):
+            for k,entry in enumerate(form.result.get('datos',[])):
                 if entry[1] != 0:
                     formato = queFormato(entry[0])
                     self.cubo.definition['date filter'].append({
                                                 'elem':entry[0],
-                                                'date class': CLASES_INTERVALO[entry[1]],
-                                                'date range': TIPOS_INTERVALO[entry[2]],
+                                                'date class': entry[1],
+                                                'date range': entry[2],
                                                 'date period': entry[3],
                                                 'date start': None,
                                                 'date end': None,

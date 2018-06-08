@@ -194,7 +194,6 @@ def getFKLinks(tableDdItem,order='FK'):
                     tdict[parent]= dict()
                     tdict[parent][_path2cadena(entrada)] =entrada
     return tdict
-    pprint(tdict)
     
 def changeTable(string,oldName,newName):
     import re
@@ -283,7 +282,6 @@ def getConnection(item,**kwparm):
     conItem = getChildByType(getParentByType(item,'base'),'connect')
     n,i,t = getRow(conItem)
     datos = {}
-    print('nombre',n.data())
     for k in range(n.rowCount()):
         nh = n.child(k,0)
         ih  = n.child(k,1)
@@ -483,9 +481,12 @@ def srcFields(*lparm,**kparm):
         esquema = getSchema(item,table)
 
     dict_ref = view.diccionario[confName][esquema][table]['FIELDS']
-    resultado = [ ['{}.{}.{}'.format(esquema,table,entrada),entrada]
-                            for entrada in dict_ref.keys() 
-                            if entrada[0] != '@' and delta(dict_ref[entrada][idx])]
+    if 'extended' in kparm and kparm.get('extended'):
+        return dict_ref
+    else:
+        resultado = [ ['{}.{}.{}'.format(esquema,table,entrada),entrada]
+                                for entrada in dict_ref.keys() 
+                                if entrada[0] != '@' and delta(dict_ref[entrada][idx])]
 
     return resultado
     
@@ -673,7 +674,6 @@ def addDateGroups(*lparm):
     #fileItem = getChildByType(getChildByType(getChildByType(item,'prod'),'prod'),'elem')
     fileItem = getChildByTypeH(item,'prod,prod,elem')
     field = getRow(fileItem)[1].data()
-    print('ADG',driver,nombre,field)
     lista = ('Cuatrimestre','Trimestre','Quincena')
     text,ok = QInputDialog.getItem(None,'Seleccione el periodo de agrupacion de fechas a añadir',
                                                         'periodo',lista,0,False)
@@ -849,7 +849,6 @@ def propagateTableName(item,view,oldValue,newValue):
         view.expand(item.parent().index())  
 
 def setTable(*lparm):
-    print('set table',lparm)
     item = lparm[0]
     view = lparm[1]
     if len(lparm) > 2:   

@@ -213,8 +213,8 @@ class Context():
         hasName = False if not isTopLevel else True
         if edit_data and  'elements' in edit_data:
             elementos = [ elements[0] for elements in getFullElementList(self.tree,edit_data['elements']) ]
-            if editType == 'category item':
-                print(elementos)
+            #if editType == 'category item':
+                #print(elementos)
             if 'name' in elementos or 'result' in elementos:
                 hasName = True
     
@@ -282,7 +282,7 @@ class TreeMgr(QTreeView):
 
         self.copyContext = None
         
-        print('inicializacion completa')
+        #print('inicializacion completa')
         #self.setEditTriggers(QAbstractItemView.NoEditTriggers)
     
     def openContextMenu(self,position):
@@ -464,7 +464,7 @@ class TreeMgr(QTreeView):
             self.setCurrentIndex(newRow[0].index())
         # este es el sitio para realizar el cambio de nombre
             ftype,fedit_data = getRealEditDefinition(newRow[0],self.treeDef,newItemType)
-            print('action rename',newRow[0].data(),ftype,fedit_data)
+            #print('action rename',newRow[0].data(),ftype,fedit_data)
             if 'elements' in fedit_data:
                 campos = [elem[0] for elem in fedit_data['elements'] ]
                 for nombre in ('name','result','default'):
@@ -770,7 +770,11 @@ class TreeDelegate(QStyledItemDelegate):
                     editor.load(self.currentList)
                 #TODO  WMultiCombo as editable ... no lo veo
                 #editor.setEditable(edit_format.get('editable',False))
+<<<<<<< HEAD
             if defeditor in  (QComboBoxIdx,QComboBox):
+=======
+            if defeditor in (QComboBoxIdx, QComboBox) :
+>>>>>>> newGuiElements
                 editor.addItems(self.currentList)
                 editor.setEditable(edit_format.get('editable',False))
             elif defeditor in (WMultiList, ):
@@ -807,7 +811,7 @@ class TreeDelegate(QStyledItemDelegate):
         item = self.context.get('editPos')
         display = item.data(Qt.DisplayRole)
         dato = item.data(Qt.UserRole +1)
-        print('interno',dato,'externo',display,'<')
+        #print('interno',dato,'externo',display,'<')
         getters = edit_format.get('getters')
         if not getters:
             getters = [ self._getDataForWidget ,]
@@ -899,8 +903,13 @@ class TreeDelegate(QStyledItemDelegate):
         else:
             if isinstance(editor,QComboBoxIdx):
                 values = None
+<<<<<<< HEAD
                 ivalue = datoWidget
                 dvalue = editor.currentText()
+=======
+                ivalue = datoWidget[0]
+                dvalue = datoWidget[1]
+>>>>>>> newGuiElements
             if isinstance(editor, QComboBox) and self.isDouble:
                 values = None
                 ivalue,dvalue = datoWidget

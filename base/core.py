@@ -266,14 +266,18 @@ class Cubo:
         if len(filtros) == 0 :
             return sqlClause
         for item in  filtros :
-            clase_intervalo = CLASES_INTERVALO.index(item['date class'])
-            tipo_intervalo = TIPOS_INTERVALO.index(item['date range'])
+            clase_intervalo = item['date class']
+            tipo_intervalo = item['date range']
             periodos = int(item['date period'])
+            if isinstance(item['elem'],(list,tuple)):
+                campo = item['elem'][0] #no debe haber mas
+            else:
+                campo = item['elem']
             if clase_intervalo == 0:
                 continue
             if item['date class']:
                     intervalo = dateRange(clase_intervalo,tipo_intervalo,periodo=periodos,fmt=item.get('date format'))
-                    sqlClause.append((item['elem'],'BETWEEN',intervalo,'f'))
+                    sqlClause.append((campo,'BETWEEN',intervalo,'f'))
         return sqlClause
     
 

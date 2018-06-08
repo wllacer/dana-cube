@@ -93,48 +93,57 @@ class propertySheetDlg(QDialog):
 from support.util.fechas import *
 
 class dateFilterDlg(QDialog):
-    def __init__(self,descriptores=None,datos=None,parent=None):   
+    def __init__(self,parent=None,**kwparm):
+    #def __init__(self,descriptores=None,datos=None,parent=None):   
         """
         """
-        if descriptores is None:
+        
+        if kwparm and not kwparm.get('descriptores'):
             return 
-        else:
-            self.descriptores = descriptores
-            
+        #else:
+            #self.descriptores = descriptores
+        self.descriptores = []
+        self.data = []
+        self.result = None
+        
         super(dateFilterDlg, self).__init__(parent)
         # cargando parametros de defecto
-        self.context = [ ['\t {}'.format(k) for k in descriptores ],
-                                ('todo',QComboBox,None,CLASES_INTERVALO),
-                                (None,QComboBox,None,TIPOS_INTERVALO),
+        self.context = [ ( None ,), #['\t {}'.format(k) for k in descriptores ],
+                                ('todo',QComboBoxIdx,None,CLASES_INTERVALO),
+                                (None,QComboBoxIdx,None,TIPOS_INTERVALO),
                                 (1,QSpinBox,{"setRange":(1,366)},None),
                                 (None,QLineEdit,{"setEnabled":False},None),
                                 (None,QLineEdit,{"setEnabled":False},None),
                                 ]
-        rows = len(self.context[0])
-        cols = len(self.context) -1
+        rows = 5 #len(self.context[0])
+        cols = 5 #len(self.context) -1
         self.sheet = WDataSheet(self.context,rows)
-
-        for i in range(self.sheet.rowCount()):
-            for j in range(3,5):
-                self.sheet.item(i,j).setBackground(QColor(Qt.gray))
-
-
-        self.data = [ [None,None,1,None,None] for k in range(rows)]
-        for row,entrada in enumerate(datos):
-            if not entrada[0]:
-               continue
-            else:
-                self.data[row][0] = CLASES_INTERVALO[entrada[0]]
-                self.data[row][1] = TIPOS_INTERVALO[entrada[1]]
-                for col in range(2,5):
-                    self.data[row][col] = entrada[col]
-        self.sheet.loadData(self.data)    
-        for row in range(len(self.data)):
-            self.flipFlop(row,self.data[row][0])
-            self.seleccionIntervalo(self.data[row][0],row)
+        self.sheet.itemChanged.connect(self.validateEntry)
+        
+        if kwparm:
+            self.setData(kwparm)
             
-        self.sheet.cellChanged.connect(self.validateEntry)
+        #for i in range(self.sheet.rowCount()):
+            #for j in range(3,5):
+                #self.sheet.item(i,j).setBackground(QColor(Qt.gray))
 
+        #self.data = datos
+        #for row,entry in enumerate(self.data):
+            #for col,dato in enumerate(entry):
+                #if col == 0 and dato is not None:
+                    #self.sheet.setData(row,col,[dato,CLASES_INTERVALO[dato]],split=True)
+                    #if dato == 0:
+                        #break
+                #elif col == 1 and dato is not None:
+                    #self.sheet.setData(row,col,[dato,TIPOS_INTERVALO[dato]],split=True)
+                #elif dato is not None:
+                    #self.sheet.setData(row,col,dato)
+                #elif col == 2 and not dato:
+                    #self.sheet.setData(row,col,1)
+            #self._validateEntry(row,0)
+            
+
+        
         cabeceras = ('Tipo','Periodo','Rango','desde','hasta')
         self.sheet.setHorizontalHeaderLabels(cabeceras)
         #
@@ -162,20 +171,58 @@ class dateFilterDlg(QDialog):
         buttonBox.rejected.connect(self.reject)
 
         self.setWindowTitle("Item editor")
+
+    def setData(self,kwparm):
+        self.descriptores = kwparm.get('descriptores',[])
+        self.data = kwparm.get('datos',[])
+        if not self.descriptores:
+            self.reject()
+
+        self.sheet.itemChanged.disconnect()
         
-    def validateEntry(self,row,col):
-            self.sheet.cellChanged.disconnect()
+        self.sheet.setRowCount(len(self.descriptores))
+        self.sheet.setVerticalHeaderLabels([ nombre.split('.')[-1] for nombre in self.descriptores] )
+        
+        for i in range(self.sheet.rowCount()):
+            for j in range(3,5):
+                self.sheet.item(i,j).setBackground(QColor(Qt.gray))
+                
+        for row,entry in enumerate(self.data):
+            for col,dato in enumerate(entry):
+                if col == 0 and dato is not None:
+                    self.sheet.setData(row,col,[dato,CLASES_INTERVALO[dato]],split=True)
+                    if dato == 0:
+                        break
+                elif col == 1 and dato is not None:
+                    self.sheet.setData(row,col,[dato,TIPOS_INTERVALO[dato]],split=True)
+                elif dato is not None:
+                    self.sheet.setData(row,col,dato)
+                elif col == 2 and not dato:
+                    self.sheet.setData(row,col,1)
+            self._validateEntry(row,0)
+    
+        self.sheet.itemChanged.connect(self.validateEntry)
+            
+        
+    def _validateEntry(self,row,col):
             dato = self.sheet.get(row,col)
             if col in (0,):
-                dato = CLASES_INTERVALO.index(dato)
                 self.flipFlop(row,dato)
-                self.seleccionCriterio(dato,row)
+                self.seleccionIntervalo(dato,row)
             elif col in (1,):
-                dato = TIPOS_INTERVALO.index(dato)
                 self.seleccionIntervalo(dato,row)
             elif col in (2,):
                 self.seleccionIntervalo(dato,row)
-            self.sheet.cellChanged.connect(self.validateEntry)
+        
+    #def validateEntry(self,row,col):
+    def validateEntry(self,item):
+        row = item.row()
+        col =  item.column()
+        self.sheet.itemChanged.disconnect()
+        self.msgLine.setText("")
+        self._validateEntry(row,col)
+        self.sheet.itemChanged.connect(self.validateEntry)
+        
             
     def flipFlop(self,line,value):
         # puede ser un poco repetitivo, pero no se si es mas costoso el enable/disable que comprobar cada
@@ -185,8 +232,6 @@ class dateFilterDlg(QDialog):
         if value == 0:
             self.sheet.setEnabled(line,1,False)
             self.sheet.setEnabled(line,2,False)
-            self.sheet.setData(line,1,None)
-            self.sheet.setData(line,2,1)
         elif value == 1: 
             self.sheet.setEnabled(line,1,True)
             self.sheet.setEnabled(line,2,False)
@@ -195,61 +240,76 @@ class dateFilterDlg(QDialog):
             self.sheet.setEnabled(line,2,True)
         # ponemos los valores ejemplo
 
-    def seleccionCriterio(self,value,idx):
-        #self.flipFlop(idx,value)
-        self.seleccionIntervalo(value,idx)
-            
+
     def seleccionIntervalo(self,value,idx):
-        #if not self.sheet.get(idx,0):
-            #self.sheet.set(idx,3,None)
-            #self.sheet.set(idx,4,None)
-            #return
         self.sheet.set(idx,3,None)
         self.sheet.set(idx,4,None)
-        try:
-            clase = CLASES_INTERVALO.index(self.sheet.get(idx,0))
-        except ValueError:
-            return
-        if value:
-            if self.sheet.get(idx,2):
-                numper = self.sheet.get(idx,2)
+        clase = self.sheet.getData(idx,0,USER)
+        tipo = self.sheet.getData(idx,1,USER)
+        numper = self.sheet.get(idx,2) 
+        if clase: 
+            if tipo is not None:
+                if not numper:
+                    self.sheet.set(idx,2,1)
+                    if clase > 1:
+                        self.sheet.setCurrentCell(idx,2)
+                        self.msgLine.setText("Especifique el numero de intervalos que desea para {}".format(CLASES_INTERVALO[clase]))
+                        self.sheet.setFocus()
+                    numper = 1
+                
+                desde,hasta = dateRange(clase,tipo,periodo=numper)
+                self.sheet.set(idx,3,str(desde))
+                self.sheet.set(idx,4,str(hasta))
             else:
-                numper = 1
-            try:
-                tipo = TIPOS_INTERVALO.index(self.sheet.get(idx,1))
-            except ValueError:
-                return
-            desde,hasta = dateRange(clase,tipo,periodo=numper)
-            self.sheet.set(idx,3,str(desde))
-            self.sheet.set(idx,4,str(hasta))
-
+                self.sheet.setCurrentCell(idx,1)
+                self.msgLine.setText("Debe especificar un intervalo para {}".format(CLASES_INTERVALO[clase]))
+                self.sheet.setFocus()
    
     def accept(self):
-        self.data = self.sheet.values()
+        #self.data = self.sheet.values()
         if not self.validate():
             return
-        self.result = []
-        for k,valor in enumerate(self.data):
-            if not valor[0] or valor[0] == CLASES_INTERVALO[0]:
-                continue
-            else:
-                valor[0] = CLASES_INTERVALO.index(valor[0])
-                valor[1] = TIPOS_INTERVALO.index(valor[1])
-                self.result.append((self.descriptores[k],valor[0],valor[1],valor[2]))
-                
+        self.result = {'datos':self._getData()}
+
         QDialog.accept(self)
     
+    def reject(self):
+        self.result = {'cancel':True }
+        QDialog.reject(self)
+        
+    def getData(self,reject=False):
+        if self.result:
+            return self.result
+        else:
+            self.result = {'datos':self._getData()}
+        
+    def _getData(self):
+        result = self.sheet.values()
+        for k in range(len(result)):
+            result[k].insert(0,self.descriptores[k])
+        return result
+        
     def validate(self):
-        for row,entrada in enumerate(self.data):
-            if not entrada[0] or entrada[0] == CLASES_INTERVALO[0]:
-                continue
-            else:
-                if not entrada[1]:
-                    self.msgLine.setText("Debe especificar un tipo de intervalo para {}".format(entrada[0]))
+        self.msgLine.setText("")
+        for row,entrada in enumerate(self.sheet.values()):
+            clase = entrada[0]
+            tipo = entrada[1]
+            numper = entrada[2]
+            if clase: 
+                if tipo is not None:
+                    if not numper:
+                        if clase > 1:
+                            self.sheet.setCurrentCell(row,2)
+                            self.msgLine.setText("Especifique el numero de intervalos que desea para {}".format(CLASES_INTERVALO[clase]))
+                            self.sheet.setFocus()
+                            return False
+                else:
                     self.sheet.setCurrentCell(row,1)
+                    self.msgLine.setText("Debe especificar un tipo de intervalo para {}".format(CLASES_INTERVALO[clase]))
                     self.sheet.setFocus()
                     return False
         return True
+
 class dataEntrySheetDlg(QDialog):
     """
         NO consta que se use
