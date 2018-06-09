@@ -1,6 +1,5 @@
 {
     "datos catalonia": {
-        "base filter": "",
         "connect": {
             "dbhost": null,
             "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
@@ -191,7 +190,6 @@
         "table": "main.votos_catalonia"
     },
     "datos light": {
-        "base filter": "",
         "connect": {
             "dbhost": null,
             "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
@@ -213,7 +211,6 @@
                         "domain": {
                             "code": "code",
                             "desc": "acronym",
-                            "filter": "",
                             "table": "main.partidos"
                         },
                         "elem": "partido_id",
@@ -350,7 +347,6 @@
                         "domain": {
                             "code": "code",
                             "desc": "acronym",
-                            "filter": "",
                             "table": "main.partidos"
                         },
                         "elem": "partido_id",
@@ -518,7 +514,6 @@
         "table": "main.votos_locales"
     },
     "datos provincia": {
-        "base filter": "",
         "connect": {
             "dbhost": null,
             "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
@@ -541,7 +536,6 @@
                         "domain": {
                             "code": "code",
                             "desc": "acronym",
-                            "filter": "",
                             "table": "main.partidos"
                         },
                         "elem": "partido_id",
@@ -632,14 +626,12 @@
     "default": {
         "cubo": "rental",
         "vista": {
-            "elemento": "public.rental.inventory_id",
             "agregado": "count",
-            "row": 0,
-            "col": 5
+            "col": 5,
+            "elemento": "public.rental.inventory_id"
         }
     },
     "experimento": {
-        "base filter": "",
         "connect": {
             "dbhost": null,
             "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
@@ -759,7 +751,6 @@
         "table": "main.votos_provincia"
     },
     "provincia_resumido": {
-        "base filter": "",
         "connect": {
             "dbhost": "",
             "dbname": "/home/werner/elecciones/inebase.db",
@@ -942,7 +933,6 @@
         "table": "public.rental"
     },
     "votos_prov_ref": {
-        "base filter": "",
         "connect": {
             "dbhost": "",
             "dbname": "/home/werner/projects/dana-cube.git/ejemplo_dana.db",
@@ -1030,12 +1020,24 @@
                 "prod": [
                     {
                         "domain": {
-                            "code": "pais, region, provincia",
-                            "desc": "pais, region, provincia",
-                            "filter": "",
+                            "code": [
+                                "main.prov_complex.pais",
+                                "main.prov_complex.region",
+                                "main.prov_complex.provincia"
+                            ],
+                            "desc": [
+                                "main.prov_complex.nombre",
+                                "main.prov_complex.pais",
+                                "main.prov_complex.region",
+                                "main.prov_complex.provincia"
+                            ],
                             "table": "main.prov_complex"
                         },
-                        "elem": "nacion, region, provincia"
+                        "elem": [
+                            "main.votos_prov_ref.nacion",
+                            "main.votos_prov_ref.region",
+                            "main.votos_prov_ref.provincia"
+                        ]
                     }
                 ]
             },
@@ -1051,7 +1053,6 @@
                             "desc": [
                                 "main.prov_complex.pais"
                             ],
-                            "filter": "",
                             "table": "main.prov_complex"
                         },
                         "elem": [
@@ -1063,7 +1064,6 @@
                         "domain": {
                             "code": "region",
                             "desc": "region",
-                            "filter": "",
                             "grouped by": "pais",
                             "table": "main.prov_complex"
                         },
@@ -1074,7 +1074,6 @@
                         "domain": {
                             "code": "provincia",
                             "desc": "provincia",
-                            "filter": "",
                             "grouped by": "pais, region",
                             "table": "main.prov_complex"
                         },

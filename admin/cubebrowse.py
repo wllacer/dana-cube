@@ -5,11 +5,11 @@ Todo list tras completar validators y setters
 -> DONE no en add, pero pueden moverse los elementos
 -> DONE Incluir llamada a la consulta de guia
 -> DONE Incluir llamada al grand total. 
-->        da fallo en votos locales, votos_prov_ref
 -> DONE Las fechas artificiales (trimestres, cuatrimestres, ...) como opciones de menu aqui y no en info2*
 -> Para sqlite que el selector de base de datos sea el selector de ficheros del sistema
 -> DONE Copy to other place
 -> DONE Restore
+
 
 """
 
@@ -629,7 +629,7 @@ Interfaz de usuario
 
 """
 from support.datalayer.querywidget import *
-from research.grandBrowse import generaQuery,QueryTab
+from admin.grandBrowse import generaQuery,QueryTab
 
 class browsePreview(QDialog):
     def __init__(self,cubo,parent=None):

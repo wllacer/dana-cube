@@ -183,9 +183,11 @@ def __multiListUnload(parent,editor):
     else:
         values = []
         tmpval = editor.seleList
+        fullList = parent.fullList
         for entry in tmpval:
             idx = parent.currentList.index(entry)
             try:
+                nuevo = fullList[idx][0]
                 values.append(parent.fullList[idx][0])
             except IndexError:
                 values.append(entry)

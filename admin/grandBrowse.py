@@ -102,8 +102,7 @@ def catenate(db,array,sep=' '):
         return 'CONCAT_WS("{}",{})'.format(sep,','.join(array))
     else:
         return "|| '{}' || ".format(sep).join(array)
-        
-     
+    
 def getPartialTitle(title,field,lastResource):
     if ' ' in field or '(' in field:
         pos = field.lower().find(' as ')
@@ -147,13 +146,7 @@ def generateFullQuery(cubo, autoDates=True):
                 campos.append([fieldFqN(level['desc'][-1],lvlTable),prefix,lvlTable,titulo])
             else:
                 tmpDesc = list(map(lambda item:fieldFqN(item,lvlTable),level['desc']))
-                #campos.append([catenate(cubo.db,tmpDesc),prefix,lvlTable,titulo])
-                for k,item in enumerate(tmpDesc):
-                    if len(tmpDesc) > 1:
-                        titulo_parcial = getPartialTitle(titulo,item,k)
-                        campos.append([item,prefix,lvlTable,titulo_parcial])
-                    else:
-                        campos.append([item,prefix,lvlTable,titulo])
+                campos.append([catenate(cubo.db,tmpDesc),prefix,lvlTable,titulo])
             
             if lvlTable != factTable:
                 # como es un join implicito primero generamos una entrada como si viniera de Link Via 
@@ -187,7 +180,7 @@ def generateFullQuery(cubo, autoDates=True):
 
                     joinentry += '{}{}'.format(' AND ' if joinentry != ''  else '',entrada)
                     
-                    if arco['filter']:
+                    if arco.get('filter') and arco.get('filter').strip():
                         filtro = fullQualifyInString(arco['filter'],baseTbl)
                         filtro = fullQualifyInString(arco['filter'],tgtTbl)
                         joinentry += ' AND {}'.format(filtro)
@@ -256,13 +249,13 @@ def generateFullQuery(cubo, autoDates=True):
         joinentry = swapPrefix(joinentry,basePfx,baseTbl)
         joinentry = swapPrefix(joinentry,tgtPfx,tgtTbl)
 
-        sqlString += 'JOIN {} as {} on {} '.format(tgtTbl,tgtPfx,joinentry)
+        sqlString +='LEFT JOIN {} as {} on {} '.format(tgtTbl,tgtPfx,joinentry)
         
     # filtros generales
     
     filtroGeneral = None
     filtroFechas  = None
-    if cubo.definition.get('base filter'):
+    if cubo.definition.get('base filter') and cubo.definition.get('base filter').strip():
         filtroGeneral = changeTable(fullQualifyInString(cubo.definition['base filter'],factTable,),factTable,'fact')
     if cubo.definition.get('date filter'):
         tmpDF = searchConstructor('where',where=cubo.setDateFilter(),driver=cubo.dbdriver)
@@ -275,6 +268,7 @@ def generateFullQuery(cubo, autoDates=True):
 @stopwatch
 def generaQuery(cubo,mostrar=False,ejecutar=True,salida=False):
     query = generateFullQuery(cubo)
+    #print(queryFormat(query))
     if mostrar:
         print(queryFormat(query))
     if ejecutar:
