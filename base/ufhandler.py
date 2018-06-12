@@ -10,11 +10,23 @@ from __future__ import unicode_literals
 
 from pprint import pprint
 import sys
-
-sys.path.append('./userfunctions')
+import os
+from importlib import import_module
+EXTENDED_USER = False
+USER_EXTENDED_DIR = './userfunctions'
 
 import user as uf
-import userfunctions as uf2
+
+# poder modificar dinamicamente el nombre
+
+if os.path.isdir(USER_EXTENDED_DIR):  #y tiene un init file
+    fullpath = os.path.abspath(USER_EXTENDED_DIR)
+    libname = fullpath.split('/')[-1]
+    if os.path.exists(fullpath + '/__init__.py'):
+        EXTENDED_USER = True
+        if fullpath not in sys.path:
+            sys.path.append(fullpath)
+        uf2 = import_module(libname)
 
 from support.util.uf_manager import *
 from support.util.decorators import keep_tree_layout,model_change_control,waiting_effects
@@ -34,14 +46,17 @@ class Uf_handler():
         self.baseSlot = slot
         
         reload(sys.modules['user'])
-        reload(sys.modules['userfunctions'])
+        if EXTENDED_USER:
+            reload(sys.modules['userfunctions'])
         
         if not configFile:
             uf_discover(uf,self.plugins)
-            uf_discover(uf2,self.plugins)
+            if EXTENDED_USER:
+                uf_discover(uf2,self.plugins)
         else:
             uf_discover_file(uf,self.plugins,configFile)
-            uf_discover_file(uf2,self.plugins,configFile)
+            if EXTENDED_USER:
+                uf_discover_file(uf2,self.plugins,configFile)
         
         if menu and slot:
             self.setupPluginMenu(self.ufMenu,cubo,self.baseSlot)
