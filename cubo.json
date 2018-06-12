@@ -624,11 +624,12 @@
         "table": "main.votos_provincia"
     },
     "default": {
-        "cubo": "rental",
+        "cubo": "datos locales",
         "vista": {
-            "agregado": "count",
-            "col": 5,
-            "elemento": "public.rental.inventory_id"
+            "elemento": "votes_presential",
+            "agregado": "sum",
+            "row": 4,
+            "col": 1
         }
     },
     "experimento": {

@@ -23,7 +23,7 @@
         "porcentaje": {
             "class": "function",
             "entry": "porcentaje",
-            "seqnr": 1,
+            "seqnr": 55,
             "text": "Porcentaje calculados sobre el total de la fila",
             "type": "item"
         },

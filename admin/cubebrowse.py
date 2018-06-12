@@ -9,6 +9,7 @@ Todo list tras completar validators y setters
 -> Para sqlite que el selector de base de datos sea el selector de ficheros del sistema
 -> DONE Copy to other place
 -> DONE Restore
+-> Revisar como se crean las conexiones; donde se cierran y como utilizar las del superior ...
 
 
 """
@@ -442,7 +443,11 @@ class cubeTree(TreeMgr):
             secure = kwparms.get('secure',True)
             sysEx =   kwparms.get('sysExclude',True)
             self.dataDict  = file2datadict(file,secure,sysEx)
-            
+        
+        if 'confName' in kwparms:
+            self.defaultConnection = kwparms['confName']
+        else:
+            self.defaultConnection = None
         self.diccionario = datadict2dict(self.dataDict.hiddenRoot)
         
         self.defaultEntry = {'file':file,'rawCube':kwparms.get('rawCube',{})}
@@ -614,11 +619,24 @@ class cubeTree(TreeMgr):
 
     def browsePreview(self,item):
         cubo = tree2dict(item,isDictFromDef)
-        form = browsePreview(cubo)
+        if isinstance(self.parent(),cubeMgrWindow):
+            pass        
+        form = browsePreview(cubo,parent=self)
         form.setWindowTitle('Ejemplo de datos de ' + item.data())
         form.setMinimumSize(640,480)
         form.show()
         form.exec_()
+  
+    def getPreviewQuery(self,pitem=None):
+        if not pitem:
+            item = self.baseModel.item(0,0)
+        else:
+            item = pitem
+        cubo = tree2dict(item,isDictFromDef)
+        activeCube = Cubo(cubo)
+        query = generaQuery(activeCube,ejecutar=False)
+        return query
+            
         
     def test(self):
         return

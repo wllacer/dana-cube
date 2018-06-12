@@ -716,7 +716,9 @@ class columnSheetDelegate(QStyledItemDelegate):
         return self._setupEditorFromContext(specs,parent,option,index)
     
     def _setupEditorFromContext(self,specs,parent,option,index):
-        editorObj = specs[1] if specs[1] else super().createEditor(parent,option,index)
+        if not specs[1]:
+            return super().createEditor(parent,option,index)
+        editorObj = specs[1] 
         editor = editorObj(parent)
         typeSpec = specs[2]
         if typeSpec is not None:
@@ -891,7 +893,7 @@ class WPropertySheet(WDelegateSheet):
         specialize as you need in your cases
         """
         specs = self.editContext[x]
-        if  specs[1] in (QComboBox,WMultiCombo) :
+        if  specs[1] in (QComboBox,QComboBoxIdx,WMultiCombo) :
             if specs[3] and isinstance(specs[3][0],(list,tuple,set)):
                   return True
             elif specs[3] and isinstance(dato,int):

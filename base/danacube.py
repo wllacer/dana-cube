@@ -421,23 +421,20 @@ class DanaCubeWindow(QMainWindow):
         if vista is not  None:
             parametros[0]=vista.row_id
             parametros[1]=vista.col_id
-            parametros[2]=self.cubo.getFunctions().index(vista.agregado)
-            parametros[3]=self.cubo.getFields().index(vista.campo)
+            parametros[2]=vista.agregado #self.cubo.getFunctions().index(vista.agregado)
+            parametros[3]=vista.campo #self.cubo.getFields().index(vista.campo)
             parametros[4]=vista.totalizado
             parametros[5]=vista.stats
         
         vistaDlg = VistaDlg(self.cubo,parametros, self)
             
         if vistaDlg.exec_():
-            viewData['row'] = parametros[0]
-            viewData['col'] = parametros[1]
-            viewData['agregado'] = parametros[2]
-            viewData['campo'] = parametros[3]
-            #viewData['agregado'] = self.cubo.getFunctions()[parametros[2]]
-            ##campo = self.cubo.getFunctions()[parametros[1]]
-            #viewData['campo'] = vistaDlg.sheet.cellWidget(3,0).currentText() #otra manera de localizar
-            viewData['totalizado'] = parametros[4]
-            viewData['stats'] = parametros[5]
+            viewData['row'] = vistaDlg.data[0]
+            viewData['col'] = vistaDlg.data[1]
+            viewData['agregado'] = vistaDlg.data[2]  
+            viewData['campo'] = vistaDlg.data[3] 
+            viewData['totalizado'] = vistaDlg.data[4]
+            viewData['stats'] = vistaDlg.data[5]
         
         return viewData
 

@@ -157,6 +157,8 @@ class DanaBrowseWindow(QMainWindow):
         self.cubeMenu.addAction("&Salvar", self.saveCubeFile, "Ctrl+S")
         self.cubeMenu.addAction("&Restaurar", self.restoreCubeFile, "Ctrl+M")
         self.cubeMenu.addAction("S&alir", self.hideCube, "Ctrl+D")
+        self.cubeMenu.addSeparator()
+        self.cubeMenu.addAction("Ver ejemplo de datos del cubo",self.previewCube)
         self.cubeMenu.setEnabled(False)
         
         #self.queryModel = self.queryView.baseModel
@@ -345,7 +347,7 @@ class DanaBrowseWindow(QMainWindow):
   
     @waiting_effects
     def databrowse(self,confName,schema,table,iters=0):
-        print(confName,schema,table,self.dictionary.conn[confName])
+        #print(confName,schema,table,self.dictionary.conn[confName])
         self.queryView.reconnect(self.queryView.getConnection(self.dictionary,confName,schema,table,iters))
         self.queryView.executeNewScript(self.queryView.generateSQL(confName,schema,table,iters,pFilter=None))
         if self.queryView.isHidden():
@@ -404,6 +406,18 @@ class DanaBrowseWindow(QMainWindow):
     def refreshTable(self):
         self.baseModel.emitModelReset()
 
+    def previewCube(self):
+        startItem = self.cubeMgr.model().item(0,0)
+        conName = self.cubeMgr.defaultConnection
+        self.queryView.reconnect(self.queryView.getConnection(self.dictionary,confName=conName))
+        query = self.cubeMgr.getPreviewQuery(startItem)
+        self.queryView.executeNewScript(query)
+        if self.queryView.isHidden():
+            self.queryView.show()
+        self.queryMenu.setEnabled(True)
+        if self.querySplitter.count() == 1:  #de momento parece un modo sencillo de no multiplicar en exceso
+            self.querySplitter.addWidget(self.queryView)
+        
 if __name__ == '__main__':
 
     import sys

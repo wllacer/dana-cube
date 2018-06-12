@@ -9,10 +9,20 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from pprint import pprint
+import sys
+
+sys.path.append('./userfunctions')
 
 import user as uf
+import userfunctions as uf2
+
 from support.util.uf_manager import *
 from support.util.decorators import keep_tree_layout,model_change_control,waiting_effects
+
+try:
+    from importlib import reload
+except ImportError:
+    from imp import reload
 
 
 class Uf_handler():
@@ -23,10 +33,15 @@ class Uf_handler():
         self.specUfMenu = None  #menu para subsistema particular
         self.baseSlot = slot
         
+        reload(sys.modules['user'])
+        reload(sys.modules['userfunctions'])
+        
         if not configFile:
             uf_discover(uf,self.plugins)
+            uf_discover(uf2,self.plugins)
         else:
             uf_discover_file(uf,self.plugins,configFile)
+            uf_discover_file(uf2,self.plugins,configFile)
         
         if menu and slot:
             self.setupPluginMenu(self.ufMenu,cubo,self.baseSlot)
