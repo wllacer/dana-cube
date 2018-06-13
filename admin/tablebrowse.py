@@ -102,17 +102,20 @@ class TableBrowse(QueryTab):
     specific context menu actions
     """
     def filterRemove(self):
+        self.filtro = None
         self.areFiltered = False
         self.loadData()
         pass
     
 
     def filterQuery(self):
+        #TODO mantener en presentacion el filtro de la ultima ejecución
         driver=self.localContext[0].conn[self.localContext[1]].dialect.name
         self.areFiltered = True
-        self.filterDlg = filterDialog(self.baseModel.recordStructure,self,driver=driver)
+        self.filterDlg = filterDialog(self.baseModel.recordStructure,self.filtro,'Filtre por campos',self,driver=driver)
         if self.filterDlg.exec_():
             self.loadData(pFilter=self.filterDlg.result)
+            self.filtro = [ data for data in self.filterDlg.data]
 
 
     def filterQueryPick(self,index):

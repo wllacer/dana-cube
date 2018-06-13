@@ -336,13 +336,15 @@ class DanaBrowseWindow(QMainWindow):
     def openContextMenu(self,position):
         """
         """
+        item = None
         indexes = self.view.selectedIndexes()
         if len(indexes) > 0:
             index = indexes[0]
             item = self.baseModel.itemFromIndex(index)
         menu = QMenu()
-        item.setMenuActions(menu,self)
-        action = menu.exec_(self.view.viewport().mapToGlobal(position))
+        if item:
+            item.setMenuActions(menu,self)
+            action = menu.exec_(self.view.viewport().mapToGlobal(position))
         #getContextMenu(item,action,self)
   
     @waiting_effects

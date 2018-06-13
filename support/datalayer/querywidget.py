@@ -192,6 +192,7 @@ class QueryTab(QWidget):
         #self.sortByColumn(0, Qt.AscendingOrder)
         self.areHidden = False
         self.areFiltered = False
+        self.filtro = None  #estas dos ultimas son redundantes, realmente
 
     @waiting_effects
     def execute(self):

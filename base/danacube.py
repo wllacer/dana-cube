@@ -878,17 +878,11 @@ class DanaCube(QTreeView):
         #self.areFiltered = True
         #self.cubo.recordStructure = self.getCubeRecordInfo()
         
-        filterDlg = filterDialog(self.cubo.recordStructure,self,driver=self.cubo.dbdriver)
-        if self.filterValues :
-            for k in range(len(self.filterValues)):
-                filterDlg.sheet.set(k,2,self.filterValues[k][0])
-                filterDlg.sheet.set(k,3,self.filterValues[k][1])
-                
+        filterDlg = filterDialog(self.cubo.recordStructure,self.filterValues,'Aplicar filtro a la consulta',self,driver=self.cubo.dbdriver)
         if filterDlg.exec_():
-            #self.loadData(pFilter=filterDlg.result)
             self.filtroCampos=filterDlg.result
             self.filtro = mergeString(self.filtroCampos,self.filtroFechas,'AND')
-            self.filterValues = [ (data[2],data[3],) for data in filterDlg.data]
+            self.filterValues = [ data for data in filterDlg.data]
             self.cargaVista(self.vista.row_id,self.vista.col_id,
                             self.vista.agregado,self.vista.campo,
                             self.vista.totalizado,self.vista.stats) #__WIP__ evidentemente aqui faltan todos los parametros

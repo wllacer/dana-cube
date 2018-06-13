@@ -61,7 +61,7 @@ Areas where the product __must__ be improved. They might not be errors but don't
 Thing which shall belong to the app and aren't there now
 
 * Local filter at the view data (w/o round trip to the DB)
-* A different filter dialog in which the user selects which fields to append
+* __solved__ A different filter dialog in which the user selects which fields to append
 * __solved__ (at least on paper) Dynamic reloading of user functions, and locating them OUTSIDE the python tree
 * Move default definition to the same place as the user function definition tree
 * __solved__ Performance enhacements when a guide includes categories and dates not in the first prod rule
@@ -82,7 +82,7 @@ Things which would be a welcome addition to the application
 
 * Integration with Django (use django as data source, core as django tool)
 
-* Use of importlib finder mechanism instead of the crafted __init__.py file for user functions 
+* __NOOP__ Use of importlib finder mechanism instead of the crafted __init__.py file for user functions. Instead code a "create a plugin local directory"
 
 # Subsystems
 
