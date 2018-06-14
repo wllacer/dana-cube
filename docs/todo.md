@@ -38,13 +38,13 @@ Serious errors which are either upstream or we haven't still found a solution
 
 Areas where the product __must__ be improved. They might not be errors but don't feel quite right
 
-* Menu keyboard shorcuts
+* __solved on main menus__ Menu keyboard shorcuts
 
 * Menu internationalization
 
 * __Solved__ Move user function list to a text file. Fist option is the config file. 
 
-* Move definition of DB Drivers to a text file. Fist option is the config file
+* __NOOP__  Date formatters need the config delimiter. For the time being, info will be split in access_layer and datemgr  definition of DB Drivers to a text file. Fist option is the config file
 
 * __Solved__ Display of date fields. Delimiter is now a global setting; works as specified
 
@@ -55,6 +55,8 @@ Areas where the product __must__ be improved. They might not be errors but don't
 * __Solved__ Current export implementation is fast, but does not take into account changes via danacube
 
 * __Solved__ Restaurar valores originales no funciona ahora ¿?
+
+* Windows integration ¿?
 
 ## Needed Enhancements
 
@@ -82,7 +84,9 @@ Things which would be a welcome addition to the application
 
 * Integration with Django (use django as data source, core as django tool)
 
-* __NOOP__ Use of importlib finder mechanism instead of the crafted __init__.py file for user functions. Instead code a "create a plugin local directory"
+* __NOOP__ Use of importlib finder mechanism instead of the crafted __init__.py file for user functions. 
+
+* code a "create a plugin local directory"
 
 # Subsystems
 
@@ -101,7 +105,7 @@ Most of it is already in a new (and I hope better) implementation, but they stil
     * ref to complex links
 * __solved__ No el add, sino el desplazamiento. en repeatable add debe dividirse en (insert after, insert before, append). General de editTree
 * __solved__ Incluir llamada a la consulta de guia
-* Incluir llamada al grand total
+* __solved__ Incluir llamada al grand total
 * __solved__ Las fechas artificiales (trimestres, cuatrimestres, ...) como opciones de menu aqui y no en info2*
 * Para sqlite que el selector de base de datos sea el selector de ficheros del sistema
 * __solved__ Copy to other place. Falta el proceso de adaptacion de tablas
@@ -120,7 +124,8 @@ Everything related to the database backends
         * Extremely slow in my setup (with system)
         * What does it reads in danabrowse for a simple user? Fails with privileges
         * synonim handling
-    * SQLServer (not available locally)
+    * SQLServer (not available locally).
+        * Date handling seems pretty unstandard and unfriendly ... will be hard work
 
 * PostGreSQL
     * if a field is an enum they don't come orderer by text but internal and that destroys my algoritms. Seems hard to solve.

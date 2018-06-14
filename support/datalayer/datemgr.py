@@ -44,6 +44,16 @@ DB_DATE_QUIRKS = {
         "cat":"{{}} ||'{}'||'{{}}' ".format(config.DELIMITER),
         "marker":{ "Y":'YYYY', "m":'MM', "W":'WW', "d": 'DD',"w": 'D',"J": 'DDD'},
         },
+    #SQLserver > 12. 
+    #   No tiene acceso directo ni a la semana ni al dia semana en numero, excepto via datepart
+    #Para versiones anteriores ver (horroroso, vaya)
+    #   https://anubhavg.wordpress.com/2009/06/11/how-to-format-datetime-date-in-sql-server-2005/
+    "odbc":{ 
+        "function":'FORMAT',
+        "function_mask":"{0}({1},'{2}')",
+        "cat":"CONCAT_WS('{}',{{}},'{{}}')".format(config.DELIMITER),
+        "marker":{ "Y":'yyyy', "m":'MM', "d": 'dd'},
+        },
     }
 
 def validate(date_text,fmt):  

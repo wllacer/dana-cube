@@ -14,6 +14,7 @@ SYSTEM_SCHEMAS = {'mysql':('information_schema','mysql','performance_schema'),
                   'oracle':('anonymous','apex_public_user','apex_040000','ctxsys','flows_files','mdsys','outln','sys','system','xdb','xs$null')
                 }
 
+
 '''
 Documentation, License etc.
 
@@ -374,7 +375,7 @@ def SQLConcat(db,array,sep=','):
     elif len(array) == 1:
         return array[0]
     
-    if db.dialect == 'mysql':
+    if db.dialect in ('mysql','odbc'):
         return 'CONCAT_WS("{}",{})'.format(sep,','.join(array))
     else:
         return "|| '{}' || ".format(sep).join(array)
