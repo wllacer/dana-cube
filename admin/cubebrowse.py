@@ -712,10 +712,10 @@ class cubeMgrWindow(QMainWindow):
                                             sysExclude = self.sysExclude)
         
         self.fileMenu = self.menuBar().addMenu("&General")
-        self.fileMenu.addAction("Verificar",lambda k=False:self.tree.prune(exec=k))
+        self.fileMenu.addAction("&Verificar",lambda k=False:self.tree.prune(exec=k),"Ctrl+V")
         self.fileMenu.addAction("&Salvar", self.tree.saveCubeFile, "Ctrl+S")
-        self.fileMenu.addAction("&Restaurar", self.tree.restoreCubeFile, "Ctrl+M")
-        self.fileMenu.addAction("S&alir", self.close, "Ctrl+D")
+        self.fileMenu.addAction("&Restaurar", self.tree.restoreCubeFile, "Ctrl+R")
+        self.fileMenu.addAction("S&alir", self.close, "Ctrl+Q")
 
         self.setCentralWidget(self.tree)
         self.setStatusBar(self.statusBar)

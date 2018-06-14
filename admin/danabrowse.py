@@ -153,7 +153,7 @@ class DanaBrowseWindow(QMainWindow):
         self.queryMenu.addAction("Cerrar",self.hideDatabrowse)
         self.queryMenu.setEnabled(False)
         
-        self.cubeMenu = self.menuBar().addMenu("Cubo")
+        self.cubeMenu = self.menuBar().addMenu("C&ubo")
         self.cubeMenu.addAction("&Salvar", self.saveCubeFile, "Ctrl+S")
         #self.cubeMenu.addAction("&Restaurar", self.restoreCubeFile, "Ctrl+M")
         self.cubeMenu.addAction("S&alir", self.hideCube, "Ctrl+C")
