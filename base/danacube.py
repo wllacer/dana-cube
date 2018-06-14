@@ -170,55 +170,51 @@ class DanaCubeWindow(QMainWindow):
         self.cubeMenu = self.menuBar().addMenu("&Cubo")
         self.cubeMenu.addAction("Abrir Cubo ...", self.selectCube, "Ctrl+O")
         self.cubeMenu.addSeparator()
-        self.cubeMenu.addAction("Convertir vista actual a defecto", self.defaultVista, "Ctrl+H")
+        self.cubeMenu.addAction("Convertir vista actual a defecto", self.defaultVista)
 
         self.viewMenu = self.menuBar().addMenu("&Vista")
-        self.viewMenu.addAction("&Abrir Vista ...",lambda a='new': self.openView(a), "Ctrl+O")
-        self.viewMenu.addAction("Cambiar vista actual", lambda a='active': self.openView(a), "Ctrl+H")     
-        self.viewMenu.addAction("Cerrar vista actual", self.closeView, "Ctrl+H")     
+        self.viewMenu.addAction("Abrir Vista ...",lambda a='new': self.openView(a), "Ctrl+V")
+        self.viewMenu.addAction("Cambiar vista actual ...", lambda a='active': self.openView(a), "Ctrl+M")     
+        self.viewMenu.addAction("Cerrar vista actual", self.closeView)     
  
-        self.filtersMenu = self.menuBar().addMenu("&Usar Filtros")
+        self.filtersMenu = self.menuBar().addMenu("Usar &Filtros")
 
-        self.filterActions['create'] = self.filtersMenu.addAction('Editar &Filtro',
+        self.filterActions['create'] = self.filtersMenu.addAction('Editar Filtro ...',
                                     self.setFilter,
-                                    "Ctrl+K")
-        self.filterActions['drop'] = self.filtersMenu.addAction('Borrar &Filtros',
-                                    self.dropFilter,
-                                    "Ctrl+K")
-        self.filterActions['save'] = self.cubeMenu.addAction('Guardar &Filtros permanentemente',
-                                    self.saveFilter,
-                                    "Ctrl+K")
+                                    "Ctrl+S")
+        self.filterActions['drop'] = self.filtersMenu.addAction('Borrar Filtros',
+                                    self.dropFilter)
+        self.filterActions['save'] = self.cubeMenu.addAction('Guardar Filtros permanentemente',
+                                    self.saveFilter)
         self.filterActions['drop'].setEnabled(False)
         self.filterActions['save'].setEnabled(False)
         self.filtersMenu.addSeparator()
 
         
-        self.dateRangeActions['dates'] = self.filtersMenu.addAction('Editar &Rango fechas',
+        self.dateRangeActions['dates'] = self.filtersMenu.addAction('Editar Rango fechas ...',
                                     self.setRange,
-                                    "Ctrl+K")
-        self.dateRangeActions['drop'] = self.filtersMenu.addAction('Borrar &Rango fechas',
-                                    self.dropRange,
-                                    "Ctrl+K")
-        self.dateRangeActions['save'] = self.cubeMenu.addAction('Salvar &Rango fechas',
-                                    self.saveRange,
-                                    "Ctrl+K")
+                                    "Ctrl+F")
+        self.dateRangeActions['drop'] = self.filtersMenu.addAction('Borrar Rango fechas',
+                                    self.dropRange)
+        self.dateRangeActions['save'] = self.cubeMenu.addAction('Salvar Rango fechas',
+                                    self.saveRange)
         self.dateRangeActions['drop'].setEnabled(False)
         self.dateRangeActions['save'].setEnabled(False)
 
 
         # esta es la version nueva del menu funcional
         
-        self.userFunctionsMenu = self.menuBar().addMenu("&Funciones de usuario")
-        self.editActions['restore'] = self.userFunctionsMenu.addAction("&Restaurar valores originales"
+        self.userFunctionsMenu = self.menuBar().addMenu("Funciones de &usuario")
+        self.editActions['restore'] = self.userFunctionsMenu.addAction("Restaurar valores originales"
             ,self.tabulatura.currentWidget().tree.restoreData,"Ctrl+R")
         self.editActions['restore'].setEnabled(False)
 
         self.userFunctionsMenu.addSeparator()
-        self.editActions['active'] = self.userFunctionsMenu.addAction("&Activar edicion celdas"
-            ,self.tabulatura.currentWidget().tree.activateEdit,"Ctrl+R")
+        self.editActions['active'] = self.userFunctionsMenu.addAction("Activar edicion celdas"
+            ,self.tabulatura.currentWidget().tree.activateEdit,"Ctrl+E")
         self.editActions['active'].setEnabled(True)
-        self.editActions['inactive'] = self.userFunctionsMenu.addAction("&Desactivar edicion celdas"
-            ,self.tabulatura.currentWidget().tree.deactivateEdit,"Ctrl+R")
+        self.editActions['inactive'] = self.userFunctionsMenu.addAction("Desactivar edicion celdas"
+            ,self.tabulatura.currentWidget().tree.deactivateEdit,"Ctrl+D")
         self.editActions['inactive'].setEnabled(False)
         
         self.userFunctionsMenu.addSeparator()
@@ -228,19 +224,19 @@ class DanaCubeWindow(QMainWindow):
         self.pluginDbMenu = self.ufHandler.specUfMenu
         ## opciones
         self.optionsMenu = self.menuBar().addMenu("&Opciones")
-        self.optionsMenu.addAction("&Exportar datos ...",
+        self.optionsMenu.addAction("Exportar datos ...",
                                    self.exportData,
-                                   "CtrlT")
-        self.optionsMenu.addAction("&Trasponer datos",
+                                   "Ctrl+X")
+        self.optionsMenu.addAction("Trasponer datos",
                                    self.trasposeData,
-                                   "CtrlT")
-        self.optionsMenu.addAction("&Presentacion ...",
+                                   "Ctrl+T")
+        self.optionsMenu.addAction("Presentacion ...",
                                    self.setNumberFormat,
                                    "Ctrl+F")
         self.optionsMenu.addSeparator()
-        self.optionsMenu.addAction("&Graficos",self.setGraph,"Ctrl+G")
+        self.optionsMenu.addAction("Graficos",self.setGraph,"Ctrl+G")
         self.optionsMenu.addSeparator()
-        self.optionsMenu.addAction("Mantenimiento de funciones de usuario",self.adminUF,"Ctrl+G")
+        self.optionsMenu.addAction("Mantenimiento de funciones de usuario",self.adminUF,"Ctrl+U")
         ## esto al final para que las distintas opciones raras que van al menu de cubos vayan en su sitio
         self.cubeMenu.addSeparator()
         self.cubeMenu.addAction("E&xit", self.close, "Ctrl+Q")
