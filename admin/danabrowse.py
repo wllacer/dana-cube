@@ -149,16 +149,16 @@ class DanaBrowseWindow(QMainWindow):
         self.dictMenu.addAction("E&xit", self.close, "Ctrl+Q")
         
         
-        self.queryMenu = self.menuBar().addMenu('C&onsulta de datos')
+        self.queryMenu = self.menuBar().addMenu('Consulta de &datos')
         self.queryMenu.addAction("Cerrar",self.hideDatabrowse)
         self.queryMenu.setEnabled(False)
         
         self.cubeMenu = self.menuBar().addMenu("Cubo")
         self.cubeMenu.addAction("&Salvar", self.saveCubeFile, "Ctrl+S")
-        self.cubeMenu.addAction("&Restaurar", self.restoreCubeFile, "Ctrl+M")
-        self.cubeMenu.addAction("S&alir", self.hideCube, "Ctrl+D")
+        #self.cubeMenu.addAction("&Restaurar", self.restoreCubeFile, "Ctrl+M")
+        self.cubeMenu.addAction("S&alir", self.hideCube, "Ctrl+C")
         self.cubeMenu.addSeparator()
-        self.cubeMenu.addAction("Ver ejemplo de datos del cubo",self.previewCube)
+        self.cubeMenu.addAction("Ver &ejemplo de datos del cubo",self.previewCube,"Ctrl+E")
         self.cubeMenu.setEnabled(False)
         
         #self.queryModel = self.queryView.baseModel
