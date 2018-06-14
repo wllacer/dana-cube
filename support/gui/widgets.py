@@ -51,7 +51,10 @@ def setWidgetData(parent,editor,dato,valor_defecto):
             else:
                 editor.setCurrentIndex(parent.currentList.index(dato))
         elif valor_defecto:
-            editor.setCurrentIndex(valor_defecto)
+            if is_number(valor_defecto):
+                editor.setCurrentIndex(valor_defecto)
+            else:
+                editor.setCurrentIndex(parent.currentList.index(valor_defecto))
         else:
             editor.setCurrentIndex(-1)
             
@@ -701,26 +704,30 @@ class WPowerTable(WDelegateSheet):
 """
 delegados estandar
 
-"""        
-class columnSheetDelegate(QStyledItemDelegate):
+"""
+    
+class sheetDelegate(QStyledItemDelegate):
+    
+
     def __init__(self,context,parent=None):
         super().__init__(parent)
-        self.context = context
+        self.context = self.convertContext(context)
         
     def createEditor(self,parent,option,index):
+        row = index.row()
         col = index.column()
-        specs = self.context[col +1]
-        if len(specs) < 4:
-            for k in range(len(specs),4):
-                specs.append(None)
+        specs = self.elemContext(row,col)
+        #if len(specs) < 4:
+            #for k in range(len(specs),4):
+                #specs.append(None)
         return self._setupEditorFromContext(specs,parent,option,index)
     
     def _setupEditorFromContext(self,specs,parent,option,index):
-        if not specs[1]:
+        if not specs or not specs.get('editor'):
             return super().createEditor(parent,option,index)
-        editorObj = specs[1] 
+        editorObj = specs['editor'] 
         editor = editorObj(parent)
-        typeSpec = specs[2]
+        typeSpec = specs.get('options')
         if typeSpec is not None:
             #TODO ejecuto los metodos dinamicamente. por ahora solo admite parametros en lista  
             #TODO vale como funcion utilitaria
@@ -735,7 +742,7 @@ class columnSheetDelegate(QStyledItemDelegate):
                 else:
                     parms = (typeSpec[func],)
                 shoot(*parms)
-        self.fullList = specs[3]
+        self.fullList = specs.get('source')
         if self.fullList is not None:
             if isinstance(self.fullList[0],(list,tuple)):
                 self.isDouble = True
@@ -748,11 +755,13 @@ class columnSheetDelegate(QStyledItemDelegate):
         return editor
         
     def setEditorData(self, editor, index):
+        row = index.row()
         col = index.column()
         dato = index.data()  #Qt.DisplayRole
-        try:
-            def_value = self.context[index.column() +1][4] 
-        except IndexError:
+        specs = self.elemContext(row,col)
+        if specs:
+            def_value = specs.get('default')
+        else:
             def_value = None
         setWidgetData(self,editor,dato,def_value)
         
@@ -771,27 +780,58 @@ class columnSheetDelegate(QStyledItemDelegate):
         else:
             model.setData(index,dato)
 
-        
+    def elemContext(self,row,col):
+        for clave in ((row,col),('*',col),(col,'*'),('*','*')):
+            if clave in self.context:
+                return self.context[clave]
+        return None  #FIXME ¿a default?
+    
+    def convertContext(self,oldContext,oldStyle=None):
+        """
+        funcion virtual. Ademas es estática
+        """
+        return oldContext
+    
 
 
-class rowSheetDelegate(columnSheetDelegate):
+class rowSheetDelegate(sheetDelegate):
     """
             Version del TableWidget para simular hojas de propiedades
         se inicializa con el array context
-           context[0] titulos de las filas
-           context[1] widget a utilizar (defecto QLineEdit)
-           context[2] parametrizacion del widget (metodo:valor)
-           ...
+            context[0] titulos de las filas
+            context[1] widget a utilizar (defecto QLineEdit)
+            context[2] parametrizacion del widget (metodo:valor)
+            ...
     """
-    def createEditor(self,parent,option,index):
-
-        row = index.row()
-        specs = [None,] + list(self.context[row][1:])
-        if len(specs) < 4:
-            for k in range(len(specs),4):
-                specs.append(None)
-        #specs = (None,self.context[row][1],self.context[row][2],self.context[row][3])
-        return self._setupEditorFromContext(specs,parent,option,index)
+    def convertContext(self,oldContext,oldStyle='row'):
+        contexto = {}
+        for k,item in enumerate(oldContext):
+            contexto[(k,0)] = {}
+            #if item[0]:
+                #contexto[(k,0)]['default']=item[0]
+            if item[1]:
+                contexto[(k,0)]['editor']=item[1]
+            if len(item) > 2 and item[2]:
+                contexto[(k,0)]['options']=item[2]
+            if len(item) > 3 and item[3]:
+                contexto[(k,0)]['source']=item[3]
+        return contexto
+    
+class columnSheetDelegate(sheetDelegate):
+    def convertContext(self,oldContext,oldStyle='column'):
+        contexto = {}
+        for k,item in enumerate(oldContext[1:]):
+            contexto[('*',k)] = {}
+            if item[0]:
+                contexto[('*',k)]['default']=item[0]
+            if item[1]:
+                contexto[('*',k)]['editor']=item[1]
+            if len(item) > 2 and item[2]:
+                contexto[('*',k)]['options']=item[2]
+            if len(item) > 3 and item[3]:
+                contexto[('*',k)]['source']=item[3]
+        pprint(contexto)
+        return contexto
         
 class WDataSheet(WDelegateSheet):
     """

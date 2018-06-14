@@ -109,7 +109,7 @@ class dateFilterDlg(QDialog):
         super(dateFilterDlg, self).__init__(parent)
         # cargando parametros de defecto
         self.context = [ ( None ,), #['\t {}'.format(k) for k in descriptores ],
-                                ('todo',QComboBoxIdx,None,CLASES_INTERVALO),
+                                (0,QComboBoxIdx,None,CLASES_INTERVALO),
                                 (None,QComboBoxIdx,None,TIPOS_INTERVALO),
                                 (1,QSpinBox,{"setRange":(1,366)},None),
                                 (None,QLineEdit,{"setEnabled":False},None),
