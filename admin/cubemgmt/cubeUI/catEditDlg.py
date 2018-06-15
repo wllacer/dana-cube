@@ -15,7 +15,7 @@ import argparse
 
 from support.gui.treeEditor import *
 from admin.cubemgmt.cubeTreeUtil import *
-from support.gui.widgets import WMultiCombo,WPowerTable,WMultiList,WDelegateSheet,makeTableSize
+from support.gui.widgets import WMultiCombo,WPowerTable,WMultiList,WSheet,makeTableSize
 
 from base.datadict import DataDict
 
@@ -212,7 +212,7 @@ class catEditor(QDialog):
         self.msgLine = QLabel()
         
         clauseLbl = QLabel('Eliga el proceso de categorias')
-        self.sheet = WDelegateSheet(5,3,catDelegate)
+        self.sheet = WSheet(5,3,catDelegate)
         self.sheet.setHorizontalHeaderLabels(('Resultado','Op','Valores                     '))
         defaultLbl = QLabel('Valor por defecto ')
         self.defaultValue = QLineEdit()

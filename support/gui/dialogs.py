@@ -584,9 +584,9 @@ class WNameValue(QDialog):
     def __init__(self,load=None,parent=None):
         super().__init__(parent)
         if load:
-            self.sheet = WDelegateSheet(len(load) +2,2)
+            self.sheet = WSheet(len(load) +2,2)
         else:
-            self.sheet = WDelegateSheet(5,2)
+            self.sheet = WSheet(5,2)
 
         self.setMinimumSize(QSize(440,220))
         

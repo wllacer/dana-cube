@@ -27,7 +27,7 @@ from __future__ import unicode_literals
 
 from pprint import pprint
 
-from support.gui.widgets import WMultiCombo,WPowerTable,WMultiList,WDelegateSheet,makeTableSize
+from support.gui.widgets import WMultiCombo,WPowerTable,WMultiList,WSheet,makeTableSize
 from support.util.record_functions import norm2List,norm2String
 
 from PyQt5.QtCore import Qt,QSize,pyqtSignal
@@ -372,7 +372,7 @@ class LinksDlg(QDialog):
         internalLbl=QLabel('O Eliga una relacion interna')
         self.internalLink = QComboBox()
         clauseLbl = QLabel('Eliga la condicion de enlace entre las tablas')
-        self.clauseWgt = WDelegateSheet(5,3,fieldDelegate)
+        self.clauseWgt = WSheet(5,3,fieldDelegate)
         #self.setClauseWgtSize()
         fieldsTargetLbl = QLabel('Escoga los campos por los que desee agrupar')
         self.fieldsTarget = WMultiList(format='c',cabeceras=('De ','Campos de agrupacion'))

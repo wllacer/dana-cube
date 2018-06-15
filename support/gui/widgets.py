@@ -202,7 +202,7 @@ def __multiListUnload(parent,editor):
     return values
 
 
-class WDelegateSheet(QTableWidget):
+class WSheet(QTableWidget):
     """
     """
     resized = pyqtSignal()
@@ -686,11 +686,9 @@ class WMultiCombo(QComboBox):
         return result
             
 
-class WPowerTable(WDelegateSheet):
+class WPowerTable(WSheet):
     """
-    DEPRECATED
-    
- class WDelegateSheet(QTableWidget):
+ 
     """
     def __init__(self,row,col,context=None,parent=None):
         super().__init__(row,col,delegate=None,parent=parent)
@@ -933,7 +931,7 @@ class columnSheetDelegate(sheetDelegate):
                 contexto[('*',k)]['source']=item[3]
         return contexto
         
-class WDataSheet(WDelegateSheet):
+class WDataSheet(WSheet):
     """
         Version del TableWidget para simular hojas de entrada de datos
         se inicializa con el context
@@ -1004,7 +1002,7 @@ class WDataSheet(WDelegateSheet):
     #def setData(self,row,col,dato):
     #def resizeEvent(self, event):
 
-class WPropertySheet(WDelegateSheet):
+class WPropertySheet(WSheet):
     """
             Version del TableWidget para simular hojas de propiedades
         se inicializa con el array context
