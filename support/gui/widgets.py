@@ -409,7 +409,7 @@ class WMultiList(QWidget):
         self.selecto = QListWidget()
         self.anyade = QPushButton('Añadir')
         self.elimina = QPushButton('Eliminar')
-        
+        self.keepPosition = True  #so this behaviour is  selectable
         
         origenlayout=QVBoxLayout()
         self.origenCabecera = QLabel(cabeceras[0] if cabeceras else 'Elementos disponibles')
@@ -450,8 +450,11 @@ class WMultiList(QWidget):
         
         self.setLayout(meatlayout)
 
+        self.disponible.itemDoubleClicked.connect(self.selectItem)
+        self.selecto.itemDoubleClicked.connect(self.removeItem)
         self.anyade.clicked.connect(self.selectItem)
         self.elimina.clicked.connect(self.removeItem)
+    
         
         self.origList = []
         self.freeList = []
@@ -492,18 +495,41 @@ class WMultiList(QWidget):
 
     def removeItem(self,checked):
         """
-        checked is not used, but demanded by signal
-        #TODO devolver a la posicion original
+        checked is not used, but demanded by signal.
+        self.keepPosition determines whether the removed value returns to its original place or not
+            pretty from the user's point of view,  consuming internally
         """
         lista = self.selecto.selectedItems()
         for item in lista:
             valor = item.data(0)
             idx = self.seleList.index(valor)
             del self.seleList[idx]
-            self.freeList.append(valor)
-            mitem = self.selecto.takeItem(idx)
-            self.disponible.addItem(mitem)
+            if self.keepPosition:
+                opos = self._getOrigPos(valor)
+                self.freeList.insert(opos,valor)
+                mitem = self.selecto.takeItem(idx)
+                self.disponible.insertItem(opos,mitem)
+            else:
+                self.freeList.append(valor)
+                mitem = self.selecto.takeItem(idx)
+                self.disponible.addItem(mitem)
 
+    def _getOrigPos(self,valor):
+        """
+        permite devolver un item a su posicion original en disponible tras removerlo.
+        Es un esfuerzo un poco costoso, pero ...
+        
+        """
+        pos = self.origList.index(valor)
+        for k in range(pos -1,-1,-1):
+            anterior = self.origList[k]
+            try:
+                opos = self.freeList.index(anterior)
+                return opos
+            except ValueError:
+                continue
+        return 0
+        
     def removeSelection(self):
         for item in self.seleList:
             self.removeEntry(item.data(0))

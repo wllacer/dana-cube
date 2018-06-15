@@ -185,7 +185,7 @@
         },
         "simul": {
             "class": "sequence",
-            "db": "datos locales",
+            "db": "datos locales,datos light",
             "list": [
                 "borraIU",
                 "borraMes",

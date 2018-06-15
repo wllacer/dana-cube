@@ -28,8 +28,6 @@ cubo = None
 class propertySheetDlg(QDialog):
     """
        Genera (mas o menos) una hoja de propiedades
-       TODO faltan datos adicionales para cada item, otro widget, cfg del widget, formato de salida
-       FIXME los botones estan fatal colocados
     """
     def __init__(self,title,context,data,parent=None):   
         super(propertySheetDlg, self).__init__(parent)
@@ -314,8 +312,7 @@ class dataEntrySheetDlg(QDialog):
     """
         NO consta que se use
        Genera (mas o menos) una hoja de entrada de datos
-       TODO faltan datos adicionales para cada item, otro widget, cfg del widget, formato de salida
-       FIXME los botones estan fatal colocados
+       
     """
     def __init__(self,title,context,numrows,data,parent=None):   
         super(dataEntrySheetDlg, self).__init__(parent)
