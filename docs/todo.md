@@ -68,6 +68,7 @@ Thing which shall belong to the app and aren't there now
 * Move default definition to the same place as the user function definition tree
 * __solved__ Performance enhacements when a guide includes categories and dates not in the first prod rule
 
+
 ## Wishlist
 
 Things which would be a welcome addition to the application
@@ -78,15 +79,20 @@ Things which would be a welcome addition to the application
 
 * __HOLD__ Use [qtpy](https://pypi.python.org/pypi/QtPy) as a wrapper of the various qt APIs. Doesn't include bindings for QtSQL, but that is no showstopper anymore
 
-* Integration with [pandas](http://pandas.pydata.org/) as data provider
-
-* Integration with [Orange3 project](https://github.com/biolab/orange3) as data provider
-
-* Integration with Django (use django as data source, core as django tool)
-
 * __NOOP__ Use of importlib finder mechanism instead of the crafted __init__.py file for user functions. 
 
 * code a "create a plugin local directory"
+
+* An specialized ComboBox for external/internal value lists. Same for WMultiBox. It's more or less solved but it is a hack
+
+* Possibility of generating an independent matplotlib window for the graphs
+
+* Integration with [pandas](http://pandas.pydata.org/) as data provider. _Nothing done thus far_
+
+* Integration with [Orange3 project](https://github.com/biolab/orange3) as data provider. 
+
+* Integration with Django (use django as data source, core as django tool). _Nothing done thus far_
+
 
 # Subsystems
 

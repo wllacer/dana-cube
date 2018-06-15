@@ -207,9 +207,7 @@ class Context():
             
             if t and t.data() and t.data() == tpType:  #es un elemento repetible
                 isRepeatInstance = True
-        
-            
-        #TODO puede ser interesante para name vlaue paisrs
+    
         hasName = False if not isTopLevel else True
         if edit_data and  'elements' in edit_data:
             elementos = [ elements[0] for elements in getFullElementList(self.tree,edit_data['elements']) ]
@@ -520,14 +518,12 @@ class TreeMgr(QTreeView):
                     #elif entrada[1]:
                     else:
                         self.actionAdd(newHead,entrada[0])
-        #TODO falta colocar el foco y validar obligatorios
     
     def actionAddTop(self,item,newItemType):
         pos = self.actionAdd(item,newItemType)
         self.actionRename(pos)
        
     def actionRename(self,item,campo=None):
-        #TODO necesita un alta ¿?
         text = QInputDialog.getText(None, "Nuevo nombre para el nodo: "+item.data(),"Nodo", QLineEdit.Normal,item.data())
         if text[0] and text[0] != '':
             item.setData(text[0],Qt.EditRole)
@@ -557,9 +553,6 @@ class TreeMgr(QTreeView):
         self.copyContext=(item,tipoPadre)
     
     def actionPaste(self,item):
-        """
-        TODO comprobar que sean iguales
-        """
         oitem = self.copyContext[0]
         otype = self.copyContext[1]
         ocontext = self.ctxFactory(oitem)
@@ -615,7 +608,7 @@ class TreeMgr(QTreeView):
         #for funcion in context.get('edit_tree',{}).get('validators',[]):
             #if not funcion(item,resultado):
                 #self.msgLine.setText('Validacion para {} fallida'.format(nombre))
-                #print('validacion fallida')  #TODO a mensaje o similar
+                #print('validacion fallida')
                 #self.setCurrentIndex()
                 #return
         
@@ -741,9 +734,8 @@ class TreeDelegate(QStyledItemDelegate):
         item = self.context.get('editPos')
         defeditor = edit_format.get('editor',QLineEdit)
         if defeditor ==  QCheckBox:
-            #TODO hay que ponerle un nombre
             editor = QCheckBox(self.context.get('name'),parent)
-            
+            #FIXME make background not transparent
         elif defeditor ==  QSpinBox:
             editor = QSpinBox(parent)
             editor.setMaximum(edit_format.get('max',99))
@@ -850,11 +842,6 @@ class TreeDelegate(QStyledItemDelegate):
 
     
     def setModelData(self,editor,model,index):
-        """
-        TODO dobleSeleccion
-        """
-        
-        
         model = index.model()
         values = None
         dvalue = ivalue = None
@@ -913,7 +900,7 @@ class TreeDelegate(QStyledItemDelegate):
             elif isinstance(editor, (QSpinBox,QCheckBox,)):
                 dvalue = str(ivalue)
             elif isinstance(editor,WPowerTable):
-                return
+                return editor.values()
             elif isinstance(editor,QLineEdit) and self.context.get('edit_tree',{}).get('hidden',False):
                 dvalue = '****'
             else:

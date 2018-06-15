@@ -1,7 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 ## Copyright (c) 2012,2016 Werner Llacer. All rights reserved.. Under the terms of the LGPL 2
+"""
 
+__WISHLIST__
+    Un WComboBox con valor interno y externo (en los antiguos wizards habia algo preparado)
+    Lo mismo para WMultiCombo
+    
+"""
 
 from __future__ import division
 from __future__ import print_function
@@ -552,7 +558,7 @@ class WMultiList(QWidget):
                 self.freeList.insert(opos,entrada)
                 self.disponible.insertItem(opos,entrada)
             else:
-                self.freeList.append(entrada)  #TODO devolver a la posicion original
+                self.freeList.append(entrada)  
                 self.disponible.addItem(entrada)
         ande = self.seleList.index(entrada)
         self.selecto.takeItem(ande)
@@ -780,10 +786,13 @@ class WPowerTable(WSheet):
             return None
         editorObj = specs['editor'] 
         editor = editorObj()
+        """
+        __REUSABLE__
+        Ejecucion dinamica de acciones de un widget (o cualquier objeto python)
+        podría ser reusable (ver tambien "user functions", que es un poco mas complejo
+        """
         typeSpec = specs.get('options')
         if typeSpec is not None:
-            #TODO ejecuto los metodos dinamicamente. por ahora solo admite parametros en lista  
-            #TODO vale como funcion utilitaria
             for func in typeSpec:
                 try:
                     shoot = getattr(editor,func)
@@ -859,8 +868,6 @@ class sheetDelegate(QStyledItemDelegate):
         editor = editorObj(parent)
         typeSpec = specs.get('options')
         if typeSpec is not None:
-            #TODO ejecuto los metodos dinamicamente. por ahora solo admite parametros en lista  
-            #TODO vale como funcion utilitaria
             for func in typeSpec:
                 try:
                     shoot = getattr(editor,func)

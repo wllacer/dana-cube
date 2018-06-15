@@ -1,6 +1,10 @@
 """
 Qt 5 sample of matplotlib use.
     Taken from https://www.boxcontrol.net/embedding-matplotlib-plot-on-pyqt5-gui.html
+    
+TODO
+   get an option to show it as an independent matplotlib window
+   
 """
 import sys
 import random
@@ -80,8 +84,7 @@ class SimpleChart(FigureCanvas):
         plt.setp(labels, rotation = 60.)
         #TODO un poquito de magia por favor
         if tipo == 'multibar' and  not isinstance(self.y[0],(list,tuple)):
-            tipo = 'bar'
-            
+            tipo = 'bar'            
         if tipo == 'bar':
             self.axes.bar(pos_list,self.y)
         elif tipo == 'multibar':
