@@ -120,6 +120,11 @@ def getWidgetData(parent,editor):
     elif isinstance(editor,QComboBoxIdx):
         return [editor.currentIndex(),editor.currentText()]
     elif isinstance(editor, QComboBox):
+        if editor.currentIndex() < 0:
+            if parent.isDouble:
+                return [None,None]
+            else:
+                return None
         if parent.isDouble:
             return [parent.fullList[editor.currentIndex()][0] , parent.currentList[editor.currentIndex()]]
         else:
@@ -207,6 +212,7 @@ class WDelegateSheet(QTableWidget):
 
     def __init__(self,row,col,delegate=None,parent=None):
         super().__init__(row,col,parent)
+        self.editContext = {}
         self.initialize()
         if delegate:
             sheetDelegate = delegate(self)
@@ -218,7 +224,7 @@ class WDelegateSheet(QTableWidget):
 
         if row < 10:
             makeTableSize(self)
-        self.editContext = {}
+
         # en esta posicion para que las señales se activen tras la inicializacion
         #self.currentItemChanged.connect(self.moveSheetSel)
         #self.itemChanged.connect(self.itemChanged)
@@ -383,6 +389,14 @@ class WDelegateSheet(QTableWidget):
         else:
             self.item(x,y).setFlags(Qt.ItemIsSelectable )
             self.item(x,y).setBackground(QColor(Qt.gray))
+            
+    def getContextConstraint(self,x,y):
+        if self.editContext:
+            for clave in ((x,y),('*',y),(x,'*'),('*','*')):
+                if clave in self.editContext:
+                    return self.editContext[clave]
+        return None
+
             
 class WMultiList(QWidget):
     """
@@ -676,30 +690,119 @@ class WPowerTable(WDelegateSheet):
     """
     DEPRECATED
     
-    might be renewed (UI is sometimes better on the base of the WDelegateSheet
-    
+ class WDelegateSheet(QTableWidget):
+    """
+    def __init__(self,row,col,context=None,parent=None):
+        super().__init__(row,col,delegate=None,parent=parent)
+        self.editContext = context
+        self.initialize()
     #def initialize(self):
     #def initializeRow(self,x):
-    #def initializeCell(self,x,y):
+    def initializeCell(self,x,y):
+        constraint = self.getContextConstraint(x,y)
+        if not constraint:
+            super().initializeCell(x,y)
+        else:
+            editor = self._setupEditorFromContext(constraint)
+            if not editor:
+                super().initializeCell(x,y)
+            else:
+                self.setCellWidget(x,y,editor)
+                self.setData(x,y,constraint.get('default'))
+
     #def openContextMenu(self,position):
     #def addRow(self,idx=None,emit=True):
     #def removeRow(self,idx=None,emit=True):
     #def setContext(self,data=None,**kwparm):
     #def loadData(self,data):
     #def unloadData(self):
-    #def setData(self,row,col,dato):
+    def setData(self,row,col,dato,role=None,split=False):
+        constraint = self.getContextConstraint(row,col)
+        if not constraint:
+            super().setData(row,col,role,split)
+            return
+        self._createComboContext(constraint)
+        editor = self.cellWidget(row,col)
+        setWidgetData(self,editor,dato,constraint.get('default'))
     #def resizeEvent(self, event):
+    #def set(self,x,y,value):
+    def getData(self,row,col,role=None):
+        constraint = self.getContextConstraint(row,col)
+        if not constraint:
+            return super().getData(row,col,role)
+        self._createComboContext(constraint)
+        editor = self.cellWidget(row,col)
+        return getWidgetData(self,editor)
+        
+    def get(self,x,y):
+        constraint = self.getContextConstraint(x,y)
+        if not constraint:
+            return super().get(x,y)
+        else:
+            return self.getData(x,y)
+    #def values(self):
+    #def fill(self,data):
+    #def getItem(self,x,y):
+    #def hasSplitData(self,x,y,dato):
+    #def getSplitData(self,x,y,dato):
+    #def setEnabled(self,x,y,state):
+    def _setupEditorFromContext(self,specs): #,parent,option,index):
+        if not specs or not specs.get('editor'):
+            return None
+        editorObj = specs['editor'] 
+        editor = editorObj()
+        typeSpec = specs.get('options')
+        if typeSpec is not None:
+            #TODO ejecuto los metodos dinamicamente. por ahora solo admite parametros en lista  
+            #TODO vale como funcion utilitaria
+            for func in typeSpec:
+                try:
+                    shoot = getattr(editor,func)
+                except AttributeError:
+                    print('Error de atributos',typeSpec)
+                    exit()
+                if isinstance(typeSpec[func],(list,tuple)):
+                    parms = typeSpec[func]
+                else:
+                    parms = (typeSpec[func],)
+                shoot(*parms)
+        fullList = specs.get('source')
+        if fullList is not None:
+            if isinstance(fullList[0],(list,tuple)):
+                currentList = [ elem[1] for elem in fullList]
+            else:
+                isDouble = False
+                currentList = fullList
+            if editorObj in  (WMultiCombo,QComboBoxIdx,QComboBox):
+                editor.addItems(currentList)
+        return editor
+        
+    def _createComboContext(self,specs):
+        if not specs or not specs.get('source'):
+            self.fullList = None
+            self.currentList = None
+            self.isDouble = False
+            return
+        self.fullList = specs.get('source')
+        self.currentList = self.fullList
+        if isinstance(self.fullList[0],(list,tuple)):
+            self.isDouble = True
+            self.currentList = [ elem[1] for elem in self.fullList]
+        else:
+            self.isDouble = False
+
 
     """
-    def __init__(self,row,cols,parent=None):
-        super().__init__(self,row,cols,parent=parent)
-    def setRowModelDef(self,contexto):
-        self.edtiContext = contexto
-    def addCell(self,x,y,colDef,defVal):
-        print(" Clase obsoleta y funcion no compatible ")
-        return
-    def appendRow(self,row):
-        self.addRow(row)
+    """
+    #def __init__(self,row,cols,parent=None):
+        #super().__init__(self,row,cols,parent=parent)
+    #def setRowModelDef(self,contexto):
+        #self.edtiContext = contexto
+    #def addCell(self,x,y,colDef,defVal):
+        #print(" Clase obsoleta y funcion no compatible ")
+        #return
+    #def appendRow(self,row):
+        #self.addRow(row)
         
 """
 delegados estandar
@@ -707,8 +810,6 @@ delegados estandar
 """
     
 class sheetDelegate(QStyledItemDelegate):
-    
-
     def __init__(self,context,parent=None):
         super().__init__(parent)
         self.context = self.convertContext(context)
@@ -753,7 +854,7 @@ class sheetDelegate(QStyledItemDelegate):
             if editorObj in  (WMultiCombo,QComboBoxIdx,QComboBox):
                 editor.addItems(self.currentList)
         return editor
-        
+
     def setEditorData(self, editor, index):
         row = index.row()
         col = index.column()
@@ -830,7 +931,6 @@ class columnSheetDelegate(sheetDelegate):
                 contexto[('*',k)]['options']=item[2]
             if len(item) > 3 and item[3]:
                 contexto[('*',k)]['source']=item[3]
-        pprint(contexto)
         return contexto
         
 class WDataSheet(WDelegateSheet):
