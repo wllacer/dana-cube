@@ -22,7 +22,8 @@ import user as uf
 if os.path.isdir(USER_EXTENDED_DIR):  #y tiene un init file
     fullpath = os.path.abspath(USER_EXTENDED_DIR)
     libname = fullpath.split('/')[-1]
-    if os.path.exists(fullpath + '/__init__.py'):
+    initfile = fullpath + '/__init__.py'
+    if os.path.exists(initfile):
         EXTENDED_USER = True
         if fullpath not in sys.path:
             sys.path.append(fullpath)

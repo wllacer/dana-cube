@@ -24,7 +24,7 @@ from  PyQt5.QtWidgets import QApplication
 #import base.exportWizard as eW
 #from support.util.numeros import fmtNumber
 #from support.util.jsonmgr import dump_structure
-from support.util.mplwidget import SimpleChart
+from support.gui.mplwidget import SimpleChart
   
 #import math
 #import matplotlib.pyplot as plt

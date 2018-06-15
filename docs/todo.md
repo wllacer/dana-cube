@@ -69,6 +69,7 @@ Thing which shall belong to the app and aren't there now
 * __solved__ Performance enhacements when a guide includes categories and dates not in the first prod rule
 
 
+
 ## Wishlist
 
 Things which would be a welcome addition to the application
@@ -76,8 +77,6 @@ Things which would be a welcome addition to the application
 * Use of CUBE / ROLLUP sintax where available
 
 * __DONE__ Add Column/Row into view. Plus initial loading
-
-* __HOLD__ Use [qtpy](https://pypi.python.org/pypi/QtPy) as a wrapper of the various qt APIs. Doesn't include bindings for QtSQL, but that is no showstopper anymore
 
 * __NOOP__ Use of importlib finder mechanism instead of the crafted __init__.py file for user functions. 
 
@@ -87,12 +86,15 @@ Things which would be a welcome addition to the application
 
 * Possibility of generating an independent matplotlib window for the graphs
 
+* consistent error messaging
+
 * Integration with [pandas](http://pandas.pydata.org/) as data provider. _Nothing done thus far_
 
 * Integration with [Orange3 project](https://github.com/biolab/orange3) as data provider. 
 
 * Integration with Django (use django as data source, core as django tool). _Nothing done thus far_
 
+* __HOLD__ Use [qtpy](https://pypi.python.org/pypi/QtPy) as a wrapper of the various qt APIs. Doesn't include bindings for QtSQL, but that is no showstopper anymore
 
 # Subsystems
 

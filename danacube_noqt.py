@@ -27,7 +27,7 @@ from noqt.core import Cubo,Vista, mergeString
 #from base.cubetree import traverseTree
 #from support.datalayer.query_constructor import searchConstructor
 
-#from support.util.mplwidget import SimpleChart
+#from support.gui.mplwidget import SimpleChart
 #from support.util.uf_manager import *
 
 #import base.exportWizard as eW
