@@ -547,8 +547,13 @@ class WMultiList(QWidget):
             
     def removeEntry(self,entrada):
         if entrada not in self.freeList:
-            self.freeList.append(entrada)  #TODO devolver a la posicion original
-            self.disponible.addItem(entrada)
+            if self.keepPosition:
+                opos = self._getOrigPos(entrada)
+                self.freeList.insert(opos,entrada)
+                self.disponible.insertItem(opos,entrada)
+            else:
+                self.freeList.append(entrada)  #TODO devolver a la posicion original
+                self.disponible.addItem(entrada)
         ande = self.seleList.index(entrada)
         self.selecto.takeItem(ande)
         del self.seleList[ande]
