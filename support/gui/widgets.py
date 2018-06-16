@@ -48,7 +48,7 @@ def setWidgetData(parent,editor,dato,valor_defecto):
         if len(dato) == 0 and valor_defecto is not None:
             editor.set(valor_defecto)
         
-    elif isinstance(editor,QComboBoxIdx):
+    elif isinstance(editor,WComboBoxIdx):
         # Si no existe lo dejo abendar. No deberia pasar con este tipo de combos
         # el dato es una dupla
         if dato:
@@ -123,7 +123,7 @@ def getWidgetData(parent,editor):
         return editor.document().toPlainText()
     elif isinstance(editor,QDialog):
         return editor.getData()
-    elif isinstance(editor,QComboBoxIdx):
+    elif isinstance(editor,WComboBoxIdx):
         return [editor.currentIndex(),editor.currentText()]
     elif isinstance(editor, QComboBox):
         if editor.currentIndex() < 0:
@@ -598,13 +598,97 @@ class WMultiList(QWidget):
     #def removeSelectedItem(self):
         #pass
 
-class QComboBoxIdx(QComboBox):
+
+
+class WComboBox(QComboBox):
+    """
+    
+    Un intento para que los combos con valor interno y externo sean transparentes (lo mas posible)
+    He  sobrecargado las add* y las insert* para que admitan cualquier tipo de valor
+    Ademas he creado dos metodos genericos currentValue y currentItemInfo para obtener los datos interno y todos respectivamente
+    He creado un metodo index que hace que el combo se comporte como una lista
+    
+    """
+    def addItems(self,datos):
+        for item in datos:
+            self.addItem(item)
+            
+    def addItem(self,*lparm,**kwparm):
+        if kwparm:
+            super().addItem(*lparm,**kwparm)
+        else:
+            if isinstance(lparm[-1],(list,tuple)):
+                gparm = list(lparm[:])
+                gparm[-1]=lparm[-1][1]
+                super().addItem(*gparm,userData=lparm[-1][0])
+            else:
+                super().addItem(*lparm)
+             
+    def insertItems(self,index,datos):
+        for idx,item in enumerate(datos):
+            self.insertItem(index + idx,item)
+        
+    def insertItem(self,*lparm,**kwparm):
+        if kwparm:
+            super().insertItem(*lparm,**kwparm)
+        else:
+            if isinstance(lparm[-1],(list,tuple)):
+                gparm = list(lparm[:])
+                gparm[-1]=lparm[-1][1]
+                super().insertItem(*gparm,userData=lparm[-1][0])
+            else:
+                super().insertItem(*lparm)
+                
+    def currentValue(self):
+        dato = self.itemData(self.currentIndex())
+        if not dato:
+            return self.currentText()
+        else:
+            return dato
+
+    def currentItemInfo(self):
+        idx = self.currentIndex()
+        txt = self.currentText()
+        val = self.itemData(idx)
+        if not val:
+            val = txt
+        return [val,txt,idx]
+
+    def index(self,dato,role=None):
+        if role:
+            return self.findData(dato,role)
+        else:
+            idx = self.findData(dato)
+            if idx < 0:
+                idx = self.findText(dato)
+            return idx
+        
+    def setCurrentValue(self,value,role=Qt.UserRole):
+        #TODO ¿y si es una estructura?
+        idx = self.index(value,role)
+        if idx < 0:
+            if self.isEditable():
+                self.addItem(value)
+                idx = self.count() -1
+            else:
+                raise(ValueError)
+        self.setCurrentIndex(idx)
+        
+        
+    def listText(self):
+        pass
+    
+    def listData(self,role=Qt.UserRole):
+        pass
+        
+class WComboBoxIdx(WComboBox):
     """
     Un nombre distinto para el combobox que usa como dato el indice, no el valor.
-    En lo demás absolutamente identico al combo
+    Sobrecargamos currentValue para que devuelva el  índice En lo demás absolutamente identico al combo
     """
-    pass
-
+    def currentValue(self):
+        return self.currentIndex()
+    
 class WMultiCombo(QComboBox):
     """ Una variante de combo con seleccion multiple
     """
@@ -811,7 +895,7 @@ class WPowerTable(WSheet):
             else:
                 isDouble = False
                 currentList = fullList
-            if editorObj in  (WMultiCombo,QComboBoxIdx,QComboBox):
+            if editorObj in  (WMultiCombo,WComboBoxIdx,QComboBox):
                 editor.addItems(currentList)
         return editor
         
@@ -887,7 +971,7 @@ class sheetDelegate(QStyledItemDelegate):
             else:
                 self.isDouble = False
                 self.currentList = self.fullList
-            if editorObj in  (WMultiCombo,QComboBoxIdx,QComboBox):
+            if editorObj in  (WMultiCombo,WComboBoxIdx,QComboBox):
                 editor.addItems(self.currentList)
         return editor
 
@@ -908,7 +992,7 @@ class sheetDelegate(QStyledItemDelegate):
         if type(editor) in (QComboBox,) and self.isDouble:
             model.setData(index,dato[0],USER)
             model.setData(index,dato[1],DISP)
-        elif type(editor) == QComboBoxIdx:
+        elif type(editor) == WComboBoxIdx:
             model.setData(index,dato[0],USER)
             model.setData(index,dato[1],DISP)
         elif isinstance(dato,(list,tuple)):
@@ -1069,7 +1153,7 @@ class WPropertySheet(WSheet):
         specialize as you need in your cases
         """
         specs = self.editContext[x]
-        if  specs[1] in (QComboBox,QComboBoxIdx,WMultiCombo) :
+        if  specs[1] in (QComboBox,WComboBoxIdx,WMultiCombo) :
             if specs[3] and isinstance(specs[3][0],(list,tuple,set)):
                   return True
             elif specs[3] and isinstance(dato,int):
