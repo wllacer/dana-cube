@@ -689,8 +689,123 @@ class WComboBoxIdx(WComboBox):
     def currentValue(self):
         return self.currentIndex()
     
+class WComboMulti(QComboBox):
+    """ Una variante de combo con seleccion multiple
+    """
+    textoCabecera = 'Seleccione los elementos'
+    
+    def __init__(self,parent=None):
+        super(WComboMulti,self).__init__(parent)
+        self.modelo = QStandardItemModel()
+        self.setModel(self.modelo)
+        self.view().pressed.connect(self.handleItemPressed)
+   
+
+    def _makeItem(self,entrada):
+            item = QStandardItem()
+            if isinstance(entrada,(list,tuple)):
+                item.setData(entrada[0],USER)
+                item.setData(entrada[1],DISP)
+            else:
+                item.setData(entrada,USER)
+                item.setData(entrada,DISP)
+            item.setData(Qt.Unchecked,Qt.CheckStateRole)
+            item.setFlags(Qt.ItemIsEnabled)
+            return item
+        
+    def addItem(self,entrada):
+        self.modelo.appendRow(self._makeItem(entrada))
+        
+    def insertItem(self,pos,entrada):
+        self.modelo.insertRow(pos,self._makeItem(entrada))
+        
+    def addItems(self,data):
+        self.modelo.clear()
+        item = QStandardItem(WComboMulti.textoCabecera)
+        self.model().setItem(0,0,item)
+        for entrada in data:
+            self.addItem(entrada)
+
+    def insertItems(self,pos,data):
+        self.modelo.clear()
+        for k,entrada in enumerate(data):
+            self.insertItem(pos +k,entrada)
+        
+    def handleItemPressed(self, index):
+        item = self.model().itemFromIndex(index)
+        if index.row() == 0:
+            return
+        if item.checkState() == Qt.Checked:
+            item.setCheckState(Qt.Unchecked)
+            self.updateHdr('remove',item.data(DISP))
+        else:
+            item.setCheckState(Qt.Checked)
+            self.updateHdr('set',item.data(DISP))
+            
+    def set(self,values):
+        for value in values:
+            pos = self.index(value)
+            if pos > 0:
+                item = self.model().item(pos,0)
+            elif pos < 1 and self.isEditable():
+                self.model().appendRow(self._makeItem(value))
+                item = self.model().item(self.model().rowCount() -1,0)
+            else:
+                return None
+            item.setData(Qt.Checked,Qt.CheckStateRole)
+            self.updateHdr('set',item.data(DISP))
+                
+    def unset(self,values):
+        for value in values:
+            pos = self.index(value)
+            if pos > 0:
+                item = self.model().item(pos,0)
+                item.setData(Qt.Unchecked,Qt.CheckStateRole)
+                self.updateHdr('remove',item.data(DISP))
+
+                
+    def reset(self):
+        for idx in range(1,self.count()):
+            if self.itemData(idx,Qt.CheckStateRole) == Qt.Checked:
+                self.setItemData(idx,Qt.Unchecked,Qt.CheckStateRole)
+        cabItem = self.model().item(0,0)
+        cabItem.setData(WComboMulti.textoCabecera,DISP)
+    
+    def get(self,role=USER):
+        result = []
+        for k in range(1,self.count()):
+            if self.itemData(k,Qt.CheckStateRole) == Qt.Checked :
+                result.append(self.itemData(k,role))
+        return norm2String(result)
+    
+    def updateHdr(self,action,value):
+        cabecera = self.itemData(0,DISP)
+        if cabecera ==WComboMulti.textoCabecera:
+            elementos = set()
+        else:
+            elementos = set(norm2List(cabecera))
+        if action == 'set':
+            elementos.add(value)
+        else:
+            elementos.remove(value)
+            
+        cabItem = self.model().item(0,0)
+        if len(elementos) == 0:
+            cabItem.setData(WComboMulti.textoCabecera,DISP)
+        else:
+            cabItem.setData(norm2String(elementos),DISP)
+
+        
+    def index(self,text):
+        # find data choca con el elemento 0
+        for k in range(1,self.count()):
+            if text in (self.itemData(k,DISP),self.itemData(k,USER)):
+                return k
+        return -1
+      
 class WMultiCombo(QComboBox):
     """ Una variante de combo con seleccion multiple
+    DEPRECATED
     """
     def __init__(self,parent=None):
         super(WMultiCombo,self).__init__(parent)
