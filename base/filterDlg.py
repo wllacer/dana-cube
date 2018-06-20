@@ -25,7 +25,7 @@ from PyQt5.QtWidgets import QApplication, QDialog, QLineEdit, QComboBox, QLabel,
 
 #from support.datalayer.query_constructor import *
 #from support.gui.dialogs import dataEntrySheetDlg
-from support.gui.widgets import WDataSheet
+from support.gui.widgets import *
 #from support.util.numeros import fmtNumber               
 from admin.cubemgmt.cubeTypes import LOGICAL_OPERATOR
 from support.util.numeros import is_number
