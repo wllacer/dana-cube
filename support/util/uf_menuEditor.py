@@ -175,7 +175,7 @@ EDIT_TREE = {
                     },
     'name': {'editor':QLineEdit,
              'text':'nombre'},
-    'entry':{'editor':QComboBox,'source':funclist, 
+    'entry':{'editor':WComboBox,'source':funclist, 
              "hint":"El nombre de la funcion a ejecutar, seleccione de la lista una de las dispoinibles",
              'text':'funcion a ejecutar',},
     'type': {'editor':WComboMulti,
@@ -196,7 +196,7 @@ EDIT_TREE = {
     'hidden':{'editor':QCheckBox,'default':False,'text':'oculta'},
     'list' : {'editor':WMultiList,'source':modlist},
     'api': {'editor':QSpinBox,'default':1,'max':1,'min':1,'text':'versión de la interfaz'},
-    'class':{'editor':QComboBox,'source':('function','sequence'),'text':'clase de entrada'}
+    'class':{'editor':WComboBox,'source':('function','sequence'),'text':'clase de entrada'}
     
 }
     

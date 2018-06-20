@@ -23,7 +23,7 @@ import math
 from support.util.uf_manager import *
 from base.ufhandler import functionFromName
 from support.util.jsonmgr import *
-from support.gui.widgets import WMultiCombo,WPowerTable, WMultiList 
+from support.gui.widgets import *
 from support.util.record_functions import norm2List,norm2String
 
 import base.config as config

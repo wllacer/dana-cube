@@ -3,9 +3,7 @@
 ## Copyright (c) 2012,2016 Werner Llacer. All rights reserved.. Under the terms of the LGPL 2
 """
 
-__WISHLIST__
-    Un WComboBox con valor interno y externo (en los antiguos wizards habia algo preparado)
-    Lo mismo para WMultiCombo
+
     
 """
 
@@ -42,7 +40,7 @@ def setWidgetData(parent,editor,dato,valor_defecto):
         if not dato and valor_defecto is not None:
             editor.selectEntry(valor_defecto)
 
-    elif isinstance(editor,(WComboMulti,WMultiCombo)): # WMC siemre antes que QCB porque es una especializacion
+    elif isinstance(editor,(WComboMulti,)): # WMC siemre antes que QCB porque es una especializacion
         for entrada in dato:
             editor.set(entrada)
         if len(dato) == 0 and valor_defecto is not None:
@@ -123,7 +121,7 @@ def setWidgetData(parent,editor,dato,valor_defecto):
 def getWidgetData(parent,editor):
     if isinstance(editor, WMultiList):
         return __multiListUnload(parent,editor)
-    elif isinstance(editor, (WComboMulti,WMultiCombo)):
+    elif isinstance(editor, (WComboMulti,)):
         return editor.get()                
     elif isinstance(editor,QTextEdit):
         return editor.document().toPlainText()
@@ -670,7 +668,7 @@ class WComboBox(QComboBox):
                 idx = self.findText(dato)
             return idx
         
-    def setCurrentValue(self,value,role=Qt.UserRole):
+    def setCurrentValue(self,value,role=None):
         #TODO ¿y si es una estructura?
         idx = self.index(value,role)
         if idx < 0:
@@ -1025,7 +1023,7 @@ class WPowerTable(WSheet):
             else:
                 isDouble = False
                 currentList = fullList
-            if editorObj in  (WMultiCombo,WComboBoxIdx,QComboBox):
+            if editorObj in  (WComboBoxIdx,QComboBox):
                 editor.addItems(currentList)
         return editor
         
@@ -1101,8 +1099,10 @@ class sheetDelegate(QStyledItemDelegate):
             else:
                 self.isDouble = False
                 self.currentList = self.fullList
-            if editorObj in  (WMultiCombo,WComboBoxIdx,QComboBox):
+            if editorObj in  (QComboBox):
                 editor.addItems(self.currentList)
+            elif editorObj in (WComboBox,WComboBoxIdx,WComboMulti):
+                editor.addItems(self.fullList)
         return editor
 
     def setEditorData(self, editor, index):
@@ -1286,7 +1286,7 @@ class WPropertySheet(WSheet):
         specialize as you need in your cases
         """
         specs = self.editContext[x]
-        if  specs[1] in (QComboBox,WComboBoxIdx,WMultiCombo) :
+        if  specs[1] in (QComboBox,WComboBoxIdx,WComboMulti) :
             if specs[3] and isinstance(specs[3][0],(list,tuple,set)):
                   return True
             elif specs[3] and isinstance(dato,int):

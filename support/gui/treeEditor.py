@@ -741,7 +741,7 @@ class TreeDelegate(QStyledItemDelegate):
             editor.setMaximum(edit_format.get('max',99))
             editor.setMinimum(edit_format.get('min',0))
             
-        elif defeditor in (WComboBox,WComboMulti,QComboBox,WComboBoxIdx,WMultiCombo,WMultiList):
+        elif defeditor in (WComboBox,WComboMulti,QComboBox,WComboBoxIdx,WMultiList):
             #FIXME parche de presentacion
             if defeditor != WMultiList:   
                 editor = defeditor(parent=parent )
@@ -761,13 +761,6 @@ class TreeDelegate(QStyledItemDelegate):
                 self.currentList = self.fullList
                 self.isDouble = False
 
-            if defeditor in (WMultiCombo,) :   #WMC siempre antes que QCB ya que es una especializacion
-                if self.isDouble:
-                    editor.load([ entry[0] for entry in self.fullList],self.currentList)
-                else:
-                    editor.load(self.currentList)
-                #TODO  WMultiCombo as editable ... no lo veo
-                #editor.setEditable(edit_format.get('editable',False))
             if defeditor in (WComboBox,WComboBoxIdx,WComboMulti):
                 editor.addItems(self.fullList)
             if defeditor in (QComboBox,) :
@@ -860,7 +853,7 @@ class TreeDelegate(QStyledItemDelegate):
             if not self.generalValidation(index,editor,values):
                 return
                 
-        elif isinstance(editor, (WComboMulti,WMultiCombo)):
+        elif isinstance(editor, (WComboMulti,)):
                 #TODO insercion
             if self.context.get('dtype','atom') == 'list':
                 values = norm2List(datoWidget)
@@ -986,7 +979,7 @@ class TreeDelegate(QStyledItemDelegate):
             else:
                 return [],''
                 
-        elif isinstance(editor,(WComboMulti,WMultiCombo)): # WMC siemre antes que QCB porque es una especializacion
+        elif isinstance(editor,(WComboMulti,)): # WMC siemre antes que QCB porque es una especializacion
             #TODO doble seleccion 
             # TODO con insercion
             if self.context.get('dtype','atom') == 'list':

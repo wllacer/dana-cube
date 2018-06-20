@@ -27,7 +27,7 @@ from __future__ import unicode_literals
 
 from pprint import pprint
 
-from support.gui.widgets import WMultiCombo,WPowerTable,WMultiList,WSheet,makeTableSize
+from support.gui.widgets import *
 from support.util.record_functions import norm2List,norm2String
 
 from PyQt5.QtCore import Qt,QSize,pyqtSignal
@@ -869,7 +869,7 @@ class FKNetworkDialog(QDialog):
 
         
         self.destTable = QComboBox()
-        self.destField = WMultiCombo()
+        self.destField = WComboMulti()
         self.destRoutes = QComboBox()
         
         meatlayout = QGridLayout()
@@ -912,10 +912,11 @@ class FKNetworkDialog(QDialog):
         # preparamos la lista de campos
         #self.FieldsFullList = srcFields(self.item,self.view,file=self.tablesCurrentList[idx])
         self.FieldsFullList = self.fields.getFull(self.tablesCurrentList[idx])
-        x,y = zip(*self.FieldsFullList)
-        self.fieldsCurrentList = list(y)
+        #x,y = zip(*self.FieldsFullList)
+        #self.fieldsCurrentList = list(y)
         self.destField.clear()
-        self.destField.load([ entry[0] for entry in self.FieldsFullList],self.fieldsCurrentList)
+        self.destField.addItems(self.FieldsFullList)
+        #self.destField.load([ entry[0] for entry in self.FieldsFullList],self.fieldsCurrentList)
         
         # preparamos la lista de rutas
         rutasTabla = self.rel.prettyList(self.cubeTable,self.tablesCurrentList[idx])
