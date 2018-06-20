@@ -53,8 +53,6 @@ def setWidgetData(parent,editor,dato,valor_defecto):
         else:
             editor.setCurrentIndex(-1)
     elif isinstance(editor,WComboBoxIdx):
-        # Si no existe lo dejo abendar. No deberia pasar con este tipo de combos
-        # el dato es una dupla
         if dato:
             if is_number(dato):
                 editor.setCurrentIndex(dato)
@@ -70,10 +68,8 @@ def setWidgetData(parent,editor,dato,valor_defecto):
             
     elif isinstance(editor,QComboBox):
         if dato:
-            #__comboLoad(parent,editor,dato)
             editor.setCurrentIndex(editor.findText(dato))
         elif valor_defecto:
-            #editor.setCurrentIndex(parent.currentList.index(valor_defecto))
             editor.setCurrentIndex(editor.findText(valor_defecto))
         else:
             editor.setCurrentIndex(-1)
@@ -134,15 +130,6 @@ def getWidgetData(parent,editor):
         #return [editor.currentIndex(),editor.currentText()]
     elif isinstance(editor, QComboBox):
         return editor.currentText()
-        #if editor.currentIndex() < 0:
-            #if parent.isDouble:
-                #return [None,None]
-            #else:
-                #return None
-        #if parent.isDouble:
-            #return [parent.fullList[editor.currentIndex()][0] , parent.currentList[editor.currentIndex()]]
-        #else:
-            #return parent.currentList[editor.currentIndex()]
     elif isinstance(editor, QSpinBox):
         return int(editor.value())
     elif isinstance(editor, QCheckBox):
@@ -171,33 +158,6 @@ def __multiListLoad(parent,editor,dato):
         dato = parent.currentList[pos]
     editor.selectEntry(dato)
  
-def __comboLoad(parent,editor,dato):
-    """
-    convenience for just this
-    """
-    isEditable = editor.isEditable()
-    try:
-        pos = parent.currentList.index(dato)
-    except ValueError:
-        if parent.isDouble:
-            try:
-                pos =  [ entry[0] for entry in parent.fullList].index(dato)
-            except ValueError:
-                if isEditable:
-                    parent.currentList.append(dato)
-                    parent.fullList.append([dato,dato])
-                    editor.addItem(dato)
-                    pos = len(parent.currentList) -1
-                else:
-                    raise
-        else:
-            if isEditable:
-                parent.currentList.append(dato)
-                editor.addItem(dato)
-                pos = len(parent.currentList) -1
-            else:
-                raise
-    editor.setCurrentIndex(pos)
             
 def __multiListUnload(parent,editor):
     if not parent.isDouble:
@@ -227,6 +187,7 @@ class WSheet(QTableWidget):
     def __init__(self,row,col,delegate=None,parent=None):
         super().__init__(row,col,parent)
         self.editContext = {}
+        self.auxContext = {}
         self.initialize()
         if delegate:
             sheetDelegate = delegate(self)
@@ -288,20 +249,20 @@ class WSheet(QTableWidget):
         self.setCurrentItem(self.sheet.item(idx -1,0))
         self.setFocus()
 
-    def setContext(self,data=None,**kwparm):
+    def setAuxContext(self,data=None,**kwparm):
         """
         probably obsolete
         """
         changed = False
         for dato in kwparm:
-            if self.editContext.get(dato) != kwparm.get(dato):
+            if self.auxContext.get(dato) != kwparm.get(dato):
                 changed = True
                 break
         if changed:
             self.contextChange.emit()
             self.initialize()
         for dato in kwparm:
-            self.editContext[dato] = kwparm[dato]
+            self.auxContext[dato] = kwparm[dato]
             
         if data:
             self.loadData(data)
@@ -819,123 +780,6 @@ class WComboMulti(QComboBox):
                 return k
         return -1
       
-class WMultiCombo(QComboBox):
-    """ Una variante de combo con seleccion multiple
-    DEPRECATED
-    """
-    def __init__(self,parent=None):
-        super(WMultiCombo,self).__init__(parent)
-        self.Head = None
-        self.view().pressed.connect(self.handleItemPressed)
-        
-    def load(self,data,dataDisplay=None):
-        model = QStandardItemModel()
-        item = QStandardItem('Seleccione los elementos')
-        model.setItem(0,0,item)
-        self.Head = item.index()
-        if not dataDisplay:
-            dataDisplay = data
-        for i,entrada in enumerate(dataDisplay):
-            item = QStandardItem(entrada)
-            item.setData(Qt.Unchecked,Qt.CheckStateRole)
-            item.setFlags(Qt.ItemIsEnabled)
-            item.setData(data[i],USER)
-            model.setItem(i+1,0,item)
-        self.setModel(model)
-
-    def updateHeader(self,status,item):
-        if not self.Head:
-            self.Head = self.model().item(0).index()
-        hdr = self.model().itemFromIndex(self.Head)
-        extra = set(norm2List(hdr.data()))
-        if status == 'add':
-            extra.add(item.data(DISP))
-        elif status == 'remove':
-            try:
-                extra.remove(item.data(DISP))
-            except KeyError:
-                pass
-        if len(extra) > 0:
-            hdr.setData(norm2String(list(extra)))
-            hdr.setData(norm2String(list(extra)),DISP)
-        else:
-            hdr.setData(norm2String(None))
-            hdr.setData(norm2String(None),DISP)
-
-    def handleItemPressed(self, index):
-        item = self.model().itemFromIndex(index)
-
-        if index.row() == 0:
-            return
-        if item.checkState() == Qt.Checked:
-            item.setCheckState(Qt.Unchecked)
-            self.updateHeader('remove',item)
-        else:
-            item.setCheckState(Qt.Checked)
-            self.updateHeader('add',item)
-
-    def checkElemText(self,text):
-        # find data choca con el elemento 0
-        for k in range(1,self.count()):
-            if text in (self.itemData(k,DISP),self.itemData(k,USER)):
-                return k
-        return -1
-      
-    def addCell(self,data,dataDisplay=None,values=None):
-        if not dataDisplay:
-            display = data
-        else:
-            display = dataDisplay
-        self.load(data,display)
-        
-        if values is None :
-            return 
-        self.set(values)
-
-    def set(self,values):
-        elementos = norm2List(values)
-        for entry in elementos:
-            idx = self.checkElemText(entry)
-            if idx < 0:
-                item = QStandardItem(entry)
-                item.setData(Qt.Checked,Qt.CheckStateRole)
-                item.setFlags(Qt.ItemIsEnabled)
-                item.setData(entry,USER)
-                self.model().appendRow(item)
-                idx = self.model().rowCount() -1
-                
-            self.setItemData(idx,Qt.Checked,Qt.CheckStateRole)
-            self.updateHeader('add',self.model().item(idx))
-    
-    def unset(self,values):
-        elementos = norm2List(values)
-        for item in elementos:
-            idx = self.checkElemText(item)
-            if idx > 0:
-                self.setItemData(idx,Qt.Unchecked,Qt.CheckStateRole)
-                self.updateHeader('remove',self.model().item(idx))
-                
-    def reset(self):
-        for idx in range(1,self.count()):
-            if self.itemData(idx,Qt.CheckStateRole) == Qt.Checked:
-                self.setItemData(idx,Qt.Unchecked,Qt.CheckStateRole)
-                
-        self.setItemData(0,'Seleccione los elementos')
-                                 
-    
-    def get(self):
-        result = []
-        for k in range(1,self.count()):
-            if self.itemData(k,Qt.CheckStateRole) == Qt.Checked :
-                result.append(self.itemData(k,USER))
-        return norm2String(result)
-            
-    def selectedItems(self):
-        result = []
-        for k in range(1,self.count()):
-            if self.itemData(k,Qt.CheckStateRole) == Qt.Checked :
-                result.append(self.model().item(k))
-        return result
             
 
 class WPowerTable(WSheet):
@@ -1233,34 +1077,15 @@ class WDataSheet(WSheet):
         self.contextChange.emit()
         
     def changeContextColumn(self,context,column):
-        self.editContext = context
-        self.contextChange.emit()
+        """
+        realmente cambio todo, pero lo necesito por compatibilidad
+        """
+        self.changeContext(context)
         
     def addRow(self,line=None):
         super().addRow(line)
     def valueCol(self,col=0):
         pass
-    #** from powertable **
-    #def __init__(self,rows=0,cols=0,parent=None):
-    #def openContextMenu(self,position):
-    #def execAction(self,row,action):
-    #def setRowModelDef(self,contexto):
-    #def addCell(self,x,y,colDef=None,defVal=None):
-    #def values(self):
-    #def appendRow(self,row):
-    #** from WDelegateSheet
-    #def __init__(self,row,col,delegate=None,parent=None):
-    #def initialize(self):
-    #def initializeRow(self,x):
-    #def initializeCell(self,x,y):
-    #def openContextMenu(self,position):
-    #def addRow(self,idx=None,emit=True):
-    #def removeRow(self,idx=None,emit=True):
-    #def setContext(self,data=None,**kwparm):
-    #def loadData(self,data):
-    #def unloadData(self):
-    #def setData(self,row,col,dato):
-    #def resizeEvent(self, event):
 
 class WPropertySheet(WSheet):
     """

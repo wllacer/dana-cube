@@ -621,7 +621,7 @@ class LinksDlg(QDialog):
             initialData.append((elem['base_elem'],elem.get('condition','='),elem['rel_elem']))
         if initialData:
             self.internalLink.setEnabled(False)
-        self.clauseWgt.setContext(initialData,tableFrom=tableFrom,tableTo=tableTo,fieldCatcher=self.fields)
+        self.clauseWgt.setAuxContext(initialData,tableFrom=tableFrom,tableTo=tableTo,fieldCatcher=self.fields)
         self.clauseWgt.setHorizontalHeaderLabels(('Desde  {:25}'.format(tableFrom),
                                                             'op',
                                                            'Hacia   {:25}'.format(tableTo)
