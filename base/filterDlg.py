@@ -25,7 +25,7 @@ from PyQt5.QtWidgets import QApplication, QDialog, QLineEdit, QComboBox, QLabel,
 
 #from support.datalayer.query_constructor import *
 #from support.gui.dialogs import dataEntrySheetDlg
-from support.gui.widgets import WDataSheet
+from support.gui.widgets import *
 #from support.util.numeros import fmtNumber               
 from admin.cubemgmt.cubeTypes import LOGICAL_OPERATOR
 from support.util.numeros import is_number
@@ -51,9 +51,9 @@ class filterDialog(QDialog):
         self.driver = driver
         self.context = []
         self.context.append(('campo','formato','condicion','valores'))
-        self.context.append((None,QComboBox,None,self.campos))
+        self.context.append((None,WComboBox,None,self.campos))
         self.context.append((None,QLineEdit,{'setEnabled':False},None))
-        self.context.append(('=',QComboBox,None,tuple(LOGICAL_OPERATOR)))
+        self.context.append(('=',WComboBox,None,tuple(LOGICAL_OPERATOR)))
         self.context.append((None,QLineEdit,None,None))
         self.data = []
         

@@ -15,7 +15,7 @@ import argparse
 
 from support.gui.treeEditor import *
 from admin.cubemgmt.cubeTreeUtil import *
-from support.gui.widgets import WMultiCombo,WPowerTable,WMultiList,WSheet,makeTableSize
+from support.gui.widgets import *
 
 from base.datadict import DataDict
 

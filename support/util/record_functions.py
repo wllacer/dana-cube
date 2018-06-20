@@ -51,6 +51,8 @@ def norm2String(entrada,separador=', '):
             return separador.join([str(elem) for elem in entrada])
         else:
             return separador.join(entrada)
+    elif isinstance(entrada,set):
+         return separador.join(entrada)
     else:
         return entrada
     

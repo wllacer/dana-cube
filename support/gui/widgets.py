@@ -3,9 +3,7 @@
 ## Copyright (c) 2012,2016 Werner Llacer. All rights reserved.. Under the terms of the LGPL 2
 """
 
-__WISHLIST__
-    Un WComboBox con valor interno y externo (en los antiguos wizards habia algo preparado)
-    Lo mismo para WMultiCombo
+
     
 """
 
@@ -42,13 +40,19 @@ def setWidgetData(parent,editor,dato,valor_defecto):
         if not dato and valor_defecto is not None:
             editor.selectEntry(valor_defecto)
 
-    elif isinstance(editor,WMultiCombo): # WMC siemre antes que QCB porque es una especializacion
+    elif isinstance(editor,(WComboMulti,)): # WMC siemre antes que QCB porque es una especializacion
         for entrada in dato:
             editor.set(entrada)
         if len(dato) == 0 and valor_defecto is not None:
             editor.set(valor_defecto)
-        
-    elif isinstance(editor,QComboBoxIdx):
+    elif isinstance(editor,WComboBox):
+        if dato:
+            editor.setCurrentValue(dato)
+        elif valor_defecto:
+            editor.setCurrentValue(valor_defecto)
+        else:
+            editor.setCurrentIndex(-1)
+    elif isinstance(editor,WComboBoxIdx):
         # Si no existe lo dejo abendar. No deberia pasar con este tipo de combos
         # el dato es una dupla
         if dato:
@@ -66,9 +70,11 @@ def setWidgetData(parent,editor,dato,valor_defecto):
             
     elif isinstance(editor,QComboBox):
         if dato:
-            __comboLoad(parent,editor,dato)
+            #__comboLoad(parent,editor,dato)
+            editor.setCurrentIndex(editor.findText(dato))
         elif valor_defecto:
-            editor.setCurrentIndex(parent.currentList.index(valor_defecto))
+            #editor.setCurrentIndex(parent.currentList.index(valor_defecto))
+            editor.setCurrentIndex(editor.findText(valor_defecto))
         else:
             editor.setCurrentIndex(-1)
 
@@ -117,24 +123,26 @@ def setWidgetData(parent,editor,dato,valor_defecto):
 def getWidgetData(parent,editor):
     if isinstance(editor, WMultiList):
         return __multiListUnload(parent,editor)
-    elif isinstance(editor, WMultiCombo):
+    elif isinstance(editor, (WComboMulti,)):
         return editor.get()                
     elif isinstance(editor,QTextEdit):
         return editor.document().toPlainText()
     elif isinstance(editor,QDialog):
         return editor.getData()
-    elif isinstance(editor,QComboBoxIdx):
-        return [editor.currentIndex(),editor.currentText()]
+    elif isinstance(editor,WComboBox):
+        return editor.currentItemInfo()
+        #return [editor.currentIndex(),editor.currentText()]
     elif isinstance(editor, QComboBox):
-        if editor.currentIndex() < 0:
-            if parent.isDouble:
-                return [None,None]
-            else:
-                return None
-        if parent.isDouble:
-            return [parent.fullList[editor.currentIndex()][0] , parent.currentList[editor.currentIndex()]]
-        else:
-            return parent.currentList[editor.currentIndex()]
+        return editor.currentText()
+        #if editor.currentIndex() < 0:
+            #if parent.isDouble:
+                #return [None,None]
+            #else:
+                #return None
+        #if parent.isDouble:
+            #return [parent.fullList[editor.currentIndex()][0] , parent.currentList[editor.currentIndex()]]
+        #else:
+            #return parent.currentList[editor.currentIndex()]
     elif isinstance(editor, QSpinBox):
         return int(editor.value())
     elif isinstance(editor, QCheckBox):
@@ -598,15 +606,222 @@ class WMultiList(QWidget):
     #def removeSelectedItem(self):
         #pass
 
-class QComboBoxIdx(QComboBox):
+
+
+class WComboBox(QComboBox):
+    """
+    
+    Un intento para que los combos con valor interno y externo sean transparentes (lo mas posible)
+    He  sobrecargado las add* y las insert* para que admitan cualquier tipo de valor
+    Ademas he creado dos metodos genericos currentValue y currentItemInfo para obtener los datos interno y todos respectivamente
+    He creado un metodo index que hace que el combo se comporte como una lista
+    
+    """
+    def addItems(self,datos):
+        for item in datos:
+            self.addItem(item)
+            
+    def addItem(self,*lparm,**kwparm):
+        if kwparm:
+            super().addItem(*lparm,**kwparm)
+        else:
+            if isinstance(lparm[-1],(list,tuple)):
+                gparm = list(lparm[:])
+                gparm[-1]=lparm[-1][1]
+                super().addItem(*gparm,userData=lparm[-1][0])
+            else:
+                super().addItem(*lparm)
+             
+    def insertItems(self,index,datos):
+        for idx,item in enumerate(datos):
+            self.insertItem(index + idx,item)
+        
+    def insertItem(self,*lparm,**kwparm):
+        if kwparm:
+            super().insertItem(*lparm,**kwparm)
+        else:
+            if isinstance(lparm[-1],(list,tuple)):
+                gparm = list(lparm[:])
+                gparm[-1]=lparm[-1][1]
+                super().insertItem(*gparm,userData=lparm[-1][0])
+            else:
+                super().insertItem(*lparm)
+                
+    def currentValue(self):
+        dato = self.itemData(self.currentIndex())
+        if not dato:
+            return self.currentText()
+        else:
+            return dato
+
+    def currentItemInfo(self):
+        idx = self.currentIndex()
+        txt = self.currentText()
+        val = self.itemData(idx)
+        if not val:
+            val = txt
+        return [val,txt,idx]
+
+    def index(self,dato,role=None):
+        if role:
+            return self.findData(dato,role)
+        else:
+            idx = self.findData(dato)
+            if idx < 0:
+                idx = self.findText(dato)
+            return idx
+        
+    def setCurrentValue(self,value,role=None):
+        #TODO ¿y si es una estructura?
+        idx = self.index(value,role)
+        if idx < 0:
+            if self.isEditable():
+                self.addItem(value)
+                idx = self.count() -1
+            else:
+                raise(ValueError)
+        self.setCurrentIndex(idx)
+        
+        
+    def listText(self):
+        pass
+    
+    def listData(self,role=Qt.UserRole):
+        pass
+        
+class WComboBoxIdx(WComboBox):
     """
     Un nombre distinto para el combobox que usa como dato el indice, no el valor.
-    En lo demás absolutamente identico al combo
+    Sobrecargamos currentValue para que devuelva el  índice En lo demás absolutamente identico al combo
     """
-    pass
+    def currentValue(self):
+        return self.currentIndex()
+ 
+    def setCurrentValue(self,value,role=Qt.UserRole):
+        #TODO ¿y si es una estructura?
+        if is_number(value):
+            self.setCurrentIndex(value)
+        else:
+            self.setCurrentIndex(self.index(value,DISP))
+            
+class WComboMulti(QComboBox):
+    """ Una variante de combo con seleccion multiple
+    """
+    textoCabecera = 'Seleccione los elementos'
+    
+    def __init__(self,parent=None):
+        super(WComboMulti,self).__init__(parent)
+        self.modelo = QStandardItemModel()
+        self.setModel(self.modelo)
+        self.view().pressed.connect(self.handleItemPressed)
+   
 
+    def _makeItem(self,entrada):
+            item = QStandardItem()
+            if isinstance(entrada,(list,tuple)):
+                item.setData(entrada[0],USER)
+                item.setData(entrada[1],DISP)
+            else:
+                item.setData(entrada,USER)
+                item.setData(entrada,DISP)
+            item.setData(Qt.Unchecked,Qt.CheckStateRole)
+            item.setFlags(Qt.ItemIsEnabled)
+            return item
+        
+    def addItem(self,entrada):
+        self.modelo.appendRow(self._makeItem(entrada))
+        
+    def insertItem(self,pos,entrada):
+        self.modelo.insertRow(pos,self._makeItem(entrada))
+        
+    def addItems(self,data):
+        self.modelo.clear()
+        item = QStandardItem(WComboMulti.textoCabecera)
+        self.model().setItem(0,0,item)
+        for entrada in data:
+            self.addItem(entrada)
+
+    def insertItems(self,pos,data):
+        self.modelo.clear()
+        for k,entrada in enumerate(data):
+            self.insertItem(pos +k,entrada)
+        
+    def handleItemPressed(self, index):
+        item = self.model().itemFromIndex(index)
+        if index.row() == 0:
+            return
+        if item.checkState() == Qt.Checked:
+            item.setCheckState(Qt.Unchecked)
+            self.updateHdr('remove',item.data(DISP))
+        else:
+            item.setCheckState(Qt.Checked)
+            self.updateHdr('set',item.data(DISP))
+            
+    def set(self,dato):
+        values = norm2List(dato)
+        for value in values:
+            pos = self.index(value)
+            if pos > 0:
+                item = self.model().item(pos,0)
+            elif pos < 1 and self.isEditable():
+                self.model().appendRow(self._makeItem(value))
+                item = self.model().item(self.model().rowCount() -1,0)
+            else:
+                return None
+            item.setData(Qt.Checked,Qt.CheckStateRole)
+            self.updateHdr('set',item.data(DISP))
+                
+    def unset(self,values):
+        for value in values:
+            pos = self.index(value)
+            if pos > 0:
+                item = self.model().item(pos,0)
+                item.setData(Qt.Unchecked,Qt.CheckStateRole)
+                self.updateHdr('remove',item.data(DISP))
+
+                
+    def reset(self):
+        for idx in range(1,self.count()):
+            if self.itemData(idx,Qt.CheckStateRole) == Qt.Checked:
+                self.setItemData(idx,Qt.Unchecked,Qt.CheckStateRole)
+        cabItem = self.model().item(0,0)
+        cabItem.setData(WComboMulti.textoCabecera,DISP)
+    
+    def get(self,role=USER):
+        result = []
+        for k in range(1,self.count()):
+            if self.itemData(k,Qt.CheckStateRole) == Qt.Checked :
+                result.append(self.itemData(k,role))
+        return norm2String(result)
+    
+    def updateHdr(self,action,value):
+        cabecera = self.itemData(0,DISP)
+        if cabecera ==WComboMulti.textoCabecera:
+            elementos = set()
+        else:
+            elementos = set(norm2List(cabecera))
+        if action == 'set':
+            elementos.add(value)
+        else:
+            elementos.remove(value)
+            
+        cabItem = self.model().item(0,0)
+        if len(elementos) == 0:
+            cabItem.setData(WComboMulti.textoCabecera,DISP)
+        else:
+            cabItem.setData(norm2String(elementos),DISP)
+        self.setCurrentIndex(0)
+        
+    def index(self,text):
+        # find data choca con el elemento 0
+        for k in range(1,self.count()):
+            if text in (self.itemData(k,DISP),self.itemData(k,USER)):
+                return k
+        return -1
+      
 class WMultiCombo(QComboBox):
     """ Una variante de combo con seleccion multiple
+    DEPRECATED
     """
     def __init__(self,parent=None):
         super(WMultiCombo,self).__init__(parent)
@@ -805,14 +1020,16 @@ class WPowerTable(WSheet):
                     parms = (typeSpec[func],)
                 shoot(*parms)
         fullList = specs.get('source')
-        if fullList is not None:
-            if isinstance(fullList[0],(list,tuple)):
-                currentList = [ elem[1] for elem in fullList]
-            else:
-                isDouble = False
-                currentList = fullList
-            if editorObj in  (WMultiCombo,QComboBoxIdx,QComboBox):
-                editor.addItems(currentList)
+        if editorObj in (WComboBox,WComboBoxIdx,WComboMulti,QComboBox):
+             editor.addItems(fullList)
+        #if fullList is not None:
+            #if isinstance(fullList[0],(list,tuple)):
+                #currentList = [ elem[1] for elem in fullList]
+            #else:
+                #isDouble = False
+                #currentList = fullList
+            #if editorObj in  (WComboBoxIdx,QComboBox):
+                #editor.addItems(currentList)
         return editor
         
     def _createComboContext(self,specs):
@@ -881,14 +1098,16 @@ class sheetDelegate(QStyledItemDelegate):
                 shoot(*parms)
         self.fullList = specs.get('source')
         if self.fullList is not None:
-            if isinstance(self.fullList[0],(list,tuple)):
-                self.isDouble = True
-                self.currentList = [ elem[1] for elem in self.fullList]
-            else:
-                self.isDouble = False
-                self.currentList = self.fullList
-            if editorObj in  (WMultiCombo,QComboBoxIdx,QComboBox):
-                editor.addItems(self.currentList)
+            #if isinstance(self.fullList[0],(list,tuple)):
+                #self.isDouble = True
+                #self.currentList = [ elem[1] for elem in self.fullList]
+            #else:
+                #self.isDouble = False
+                #self.currentList = self.fullList
+            #if editorObj in  (QComboBox):
+                #editor.addItems(self.currentList)
+            if editorObj in (WComboBox,WComboBoxIdx,WComboMulti,QComboBox):
+                editor.addItems(self.fullList)
         return editor
 
     def setEditorData(self, editor, index):
@@ -905,10 +1124,13 @@ class sheetDelegate(QStyledItemDelegate):
     def setModelData(self,editor,model,index):
         dato = getWidgetData(self,editor)
 
-        if type(editor) in (QComboBox,) and self.isDouble:
-            model.setData(index,dato[0],USER)
+        #if type(editor) in (QComboBox,) and self.isDouble:
+            #model.setData(index,dato[0],USER)
+            #model.setData(index,dato[1],DISP)
+        if type(editor) == WComboBoxIdx:
+            model.setData(index,dato[2],USER)
             model.setData(index,dato[1],DISP)
-        elif type(editor) == QComboBoxIdx:
+        elif type(editor) == WComboBox:
             model.setData(index,dato[0],USER)
             model.setData(index,dato[1],DISP)
         elif isinstance(dato,(list,tuple)):
@@ -1069,7 +1291,7 @@ class WPropertySheet(WSheet):
         specialize as you need in your cases
         """
         specs = self.editContext[x]
-        if  specs[1] in (QComboBox,QComboBoxIdx,WMultiCombo) :
+        if  specs[1] in (QComboBox,WComboBoxIdx,WComboMulti,WComboBox) :
             if specs[3] and isinstance(specs[3][0],(list,tuple,set)):
                   return True
             elif specs[3] and isinstance(dato,int):

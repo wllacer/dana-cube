@@ -741,7 +741,10 @@ class TreeDelegate(QStyledItemDelegate):
             editor.setMaximum(edit_format.get('max',99))
             editor.setMinimum(edit_format.get('min',0))
             
-        elif defeditor in (QComboBox,QComboBoxIdx,WMultiCombo,WMultiList):
+        elif defeditor in (WComboBox,WComboMulti,QComboBox,WComboBoxIdx,WMultiList):
+            """
+            Con esta revision dejo QComboBox para los casos sencillos (lo que importa es el valor)
+            """
             #FIXME parche de presentacion
             if defeditor != WMultiList:   
                 editor = defeditor(parent=parent )
@@ -753,24 +756,19 @@ class TreeDelegate(QStyledItemDelegate):
                 self.fullList = sorted(orlist(item,self.parent()))
             else:
                 self.fullList = orlist
-            if isinstance(self.fullList[0],(list,tuple)):
-                x,y = zip(*self.fullList)
-                self.currentList = list(y)
-                self.isDouble = True
-            else:
-                self.currentList = self.fullList
-                self.isDouble = False
+            #if isinstance(self.fullList[0],(list,tuple)):
+                #x,y = zip(*self.fullList)
+                #self.currentList = list(y)
+                #self.isDouble = True
+            #else:
+                #self.currentList = self.fullList
+                #self.isDouble = False
 
-            if defeditor in (WMultiCombo,) :   #WMC siempre antes que QCB ya que es una especializacion
-                if self.isDouble:
-                    editor.load([ entry[0] for entry in self.fullList],self.currentList)
-                else:
-                    editor.load(self.currentList)
-                #TODO  WMultiCombo as editable ... no lo veo
+            if defeditor in (WComboBox,WComboBoxIdx,WComboMulti,QComboBox):
+                editor.addItems(self.fullList)
+            #if defeditor in (QComboBox,) :
+                #editor.addItems(self.currentList)
                 #editor.setEditable(edit_format.get('editable',False))
-            if defeditor in (QComboBoxIdx, QComboBox) :
-                editor.addItems(self.currentList)
-                editor.setEditable(edit_format.get('editable',False))
             elif defeditor in (WMultiList, ):
                 editor.load(self.currentList,[])
                 
@@ -858,7 +856,7 @@ class TreeDelegate(QStyledItemDelegate):
             if not self.generalValidation(index,editor,values):
                 return
                 
-        elif isinstance(editor, WMultiCombo):
+        elif isinstance(editor, (WComboMulti,)):
                 #TODO insercion
             if self.context.get('dtype','atom') == 'list':
                 values = norm2List(datoWidget)
@@ -890,13 +888,17 @@ class TreeDelegate(QStyledItemDelegate):
                     return
 
         else:
-            if isinstance(editor,QComboBoxIdx):
+            if isinstance(editor,WComboBoxIdx):
+                values = None
+                ivalue = datoWidget[2]
+                dvalue = datoWidget[1]
+            elif isinstance(editor,WComboBox):
                 values = None
                 ivalue = datoWidget[0]
                 dvalue = datoWidget[1]
-            if isinstance(editor, QComboBox) and self.isDouble:
-                values = None
-                ivalue,dvalue = datoWidget
+            #elif isinstance(editor, QComboBox) and self.isDouble:
+                #values = None
+                #ivalue,dvalue = datoWidget
             elif isinstance(editor, (QSpinBox,QCheckBox,)):
                 dvalue = str(ivalue)
             elif isinstance(editor,WPowerTable):
@@ -980,7 +982,7 @@ class TreeDelegate(QStyledItemDelegate):
             else:
                 return [],''
                 
-        elif isinstance(editor,WMultiCombo): # WMC siemre antes que QCB porque es una especializacion
+        elif isinstance(editor,(WComboMulti,)): # WMC siemre antes que QCB porque es una especializacion
             #TODO doble seleccion 
             # TODO con insercion
             if self.context.get('dtype','atom') == 'list':

@@ -107,8 +107,8 @@ class dateFilterDlg(QDialog):
         super(dateFilterDlg, self).__init__(parent)
         # cargando parametros de defecto
         self.context = [ ( None ,), #['\t {}'.format(k) for k in descriptores ],
-                                (0,QComboBoxIdx,None,CLASES_INTERVALO),
-                                (None,QComboBoxIdx,None,TIPOS_INTERVALO),
+                                (0,WComboBoxIdx,None,CLASES_INTERVALO),
+                                (None,WComboBoxIdx,None,TIPOS_INTERVALO),
                                 (1,QSpinBox,{"setRange":(1,366)},None),
                                 (None,QLineEdit,{"setEnabled":False},None),
                                 (None,QLineEdit,{"setEnabled":False},None),
@@ -434,10 +434,10 @@ class VistaDlg(propertySheetDlg):
         title = 'Eliga los parametros de la vista'
         self.data = parametros
         self.context = []
-        self.context.append(('Guia filas',QComboBoxIdx,None,cubo.getGuideNames()),)
-        self.context.append(('Guia columnas',QComboBoxIdx,None,cubo.getGuideNames()),)
-        self.context.append(('Función agregacion',QComboBox,None,cubo.getFunctions()),)
-        self.context.append(('Campo de datos',QComboBox,None,cubo.getFields()),)
+        self.context.append(('Guia filas',WComboBoxIdx,None,cubo.getGuideNames()),)
+        self.context.append(('Guia columnas',WComboBoxIdx,None,cubo.getGuideNames()),)
+        self.context.append(('Función agregacion',WComboBox,None,cubo.getFunctions()),)
+        self.context.append(('Campo de datos',WComboBox,None,cubo.getFields()),)
         self.context.append(('Con totales',QCheckBox,None),)
         self.context.append(('Con estadisticas',QCheckBox,None),)
         

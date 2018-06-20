@@ -110,7 +110,7 @@ EDIT_TREE = {
                     'menuActions':[ [addConnectionMenu,'Comprueba la conexión'],],
                     'text':'parámetros de conexion a la base de datos',
                     },
-    'driver': {'editor':QComboBox, 'source':DRIVERS,
+    'driver': {'editor':WComboBox, 'source':DRIVERS,
                'text':'gestor de base de datos a usar',
                'validators':[valConnect,],
                },
@@ -125,10 +125,10 @@ EDIT_TREE = {
               'validators':[valConnect,],},
     'dbpass':{'editor':QLineEdit, 'hidden':True,
               'text':'clave del usuario en la B.D. (desaconsejado)'},   
-    'schema':{'editor':QComboBox,'source':srcSchemas,'default':defaultSchema,
+    'schema':{'editor':WComboBox,'source':srcSchemas,'default':defaultSchema,
               'text':'Esquema de la B.D. a utilizar por defecto',
               },
-    'table' : { 'editor':QComboBox, 'source':srcTables,'editable':True,'setters':['default',setTable,] },
+    'table' : { 'editor':WComboBox, 'source':srcTables,'editable':True,'setters':['default',setTable,] },
     'base filter': {'editor':QTextEdit }, #QLineEdit},   #aceptaria un validator
     'date filter': {'objtype':'list'},
     'fields' : { 'objtype':'list', 'editor' : WMultiList, 'source': srcNumFields,
@@ -146,8 +146,8 @@ EDIT_TREE = {
                     'menuActions':[[addNetworkMenuItem,'Añada una regla remota'],],
                    },
     'name':{'editor':QLineEdit },
-    'class' :{'editor':QComboBox,'source':GUIDE_CLASS,'default':'o'},
-    'fmt' :{'editor':QComboBox,'source': ENUM_FORMAT ,'default':'txt' },
+    'class' :{'editor':WComboBox,'source':GUIDE_CLASS,'default':'o'},
+    'fmt' :{'editor':WComboBox,'source': ENUM_FORMAT ,'default':'txt' },
     'prod':{'objtype':'dict','subtypes':('prod_std','prod_cat','prod_case','prod_date','prod_ref'),
             'discriminator':discProd,
             'setters':[setClass,],
@@ -247,11 +247,11 @@ EDIT_TREE = {
                 'children': 'field',
                 },
     'result':{'editor':QLineEdit }, #TODO necesita un setter
-    'condition':{'editor':QComboBox,'source':LOGICAL_OPERATOR,'default':'='},
+    'condition':{'editor':WComboBox,'source':LOGICAL_OPERATOR,'default':'='},
     'values' : { 'objtype':'list',
                 'children':'field'},
 
-    'fmt_out' :{'editor':QComboBox,'source': ENUM_FORMAT ,'default':'txt' },
+    'fmt_out' :{'editor':WComboBox,'source': ENUM_FORMAT ,'default':'txt' },
     'link via': {'objtype':'dict',
                 'elements':[
                     ('table',True,False),
@@ -270,8 +270,8 @@ EDIT_TREE = {
                   ('rel_elem',True,False)
                   ],
               },
-    'base_elem':{'editor':QComboBox,'editable':True,'source':srcFields},  #TODO source
-    'rel_elem':{'editor':QComboBox,'editable':True,'source':srcFields},     #TODO source
+    'base_elem':{'editor':WComboBox,'editable':True,'source':srcFields},  #TODO source
+    'rel_elem':{'editor':WComboBox,'editable':True,'source':srcFields},     #TODO source
     #TODO concretar cuando puede usarse date start,date end, date format. Es cuestion de teoria
     'date filter':{'objtype':'dict',
                    'elements': [
@@ -287,11 +287,11 @@ EDIT_TREE = {
                    'getters':[ getDateFilter, ],
                    'setters':[ setDateFilter, ],
                    },
-    'date class':{'editor':QComboBoxIdx,'source':CLASES_INTERVALO},
-    'date range':{'editor':QComboBoxIdx,'source':TIPOS_INTERVALO},
+    'date class':{'editor':WComboBoxIdx,'source':CLASES_INTERVALO},
+    'date range':{'editor':WComboBoxIdx,'source':TIPOS_INTERVALO},
     'date period':{'editor':QSpinBox,'min':1},
     'date format':{'default':'fecha'},
-    'reference':{'editor':QComboBox,'source':srcGuides },
+    'reference':{'editor':WComboBox,'source':srcGuides },
     'link ref':{'editor':QLineEdit},
     'default base': { 'objtype':'dict',
                      'elements':[],
