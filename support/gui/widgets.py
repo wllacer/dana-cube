@@ -70,9 +70,11 @@ def setWidgetData(parent,editor,dato,valor_defecto):
             
     elif isinstance(editor,QComboBox):
         if dato:
-            __comboLoad(parent,editor,dato)
+            #__comboLoad(parent,editor,dato)
+            editor.setCurrentIndex(editor.findText(dato))
         elif valor_defecto:
-            editor.setCurrentIndex(parent.currentList.index(valor_defecto))
+            #editor.setCurrentIndex(parent.currentList.index(valor_defecto))
+            editor.setCurrentIndex(editor.findText(valor_defecto))
         else:
             editor.setCurrentIndex(-1)
 
@@ -131,15 +133,16 @@ def getWidgetData(parent,editor):
         return editor.currentItemInfo()
         #return [editor.currentIndex(),editor.currentText()]
     elif isinstance(editor, QComboBox):
-        if editor.currentIndex() < 0:
-            if parent.isDouble:
-                return [None,None]
-            else:
-                return None
-        if parent.isDouble:
-            return [parent.fullList[editor.currentIndex()][0] , parent.currentList[editor.currentIndex()]]
-        else:
-            return parent.currentList[editor.currentIndex()]
+        return editor.currentText()
+        #if editor.currentIndex() < 0:
+            #if parent.isDouble:
+                #return [None,None]
+            #else:
+                #return None
+        #if parent.isDouble:
+            #return [parent.fullList[editor.currentIndex()][0] , parent.currentList[editor.currentIndex()]]
+        #else:
+            #return parent.currentList[editor.currentIndex()]
     elif isinstance(editor, QSpinBox):
         return int(editor.value())
     elif isinstance(editor, QCheckBox):
@@ -1017,14 +1020,16 @@ class WPowerTable(WSheet):
                     parms = (typeSpec[func],)
                 shoot(*parms)
         fullList = specs.get('source')
-        if fullList is not None:
-            if isinstance(fullList[0],(list,tuple)):
-                currentList = [ elem[1] for elem in fullList]
-            else:
-                isDouble = False
-                currentList = fullList
-            if editorObj in  (WComboBoxIdx,QComboBox):
-                editor.addItems(currentList)
+        if editorObj in (WComboBox,WComboBoxIdx,WComboMulti,QComboBox):
+             editor.addItems(fullList)
+        #if fullList is not None:
+            #if isinstance(fullList[0],(list,tuple)):
+                #currentList = [ elem[1] for elem in fullList]
+            #else:
+                #isDouble = False
+                #currentList = fullList
+            #if editorObj in  (WComboBoxIdx,QComboBox):
+                #editor.addItems(currentList)
         return editor
         
     def _createComboContext(self,specs):
@@ -1093,15 +1098,15 @@ class sheetDelegate(QStyledItemDelegate):
                 shoot(*parms)
         self.fullList = specs.get('source')
         if self.fullList is not None:
-            if isinstance(self.fullList[0],(list,tuple)):
-                self.isDouble = True
-                self.currentList = [ elem[1] for elem in self.fullList]
-            else:
-                self.isDouble = False
-                self.currentList = self.fullList
-            if editorObj in  (QComboBox):
-                editor.addItems(self.currentList)
-            elif editorObj in (WComboBox,WComboBoxIdx,WComboMulti):
+            #if isinstance(self.fullList[0],(list,tuple)):
+                #self.isDouble = True
+                #self.currentList = [ elem[1] for elem in self.fullList]
+            #else:
+                #self.isDouble = False
+                #self.currentList = self.fullList
+            #if editorObj in  (QComboBox):
+                #editor.addItems(self.currentList)
+            if editorObj in (WComboBox,WComboBoxIdx,WComboMulti,QComboBox):
                 editor.addItems(self.fullList)
         return editor
 
@@ -1119,10 +1124,10 @@ class sheetDelegate(QStyledItemDelegate):
     def setModelData(self,editor,model,index):
         dato = getWidgetData(self,editor)
 
-        if type(editor) in (QComboBox,) and self.isDouble:
-            model.setData(index,dato[0],USER)
-            model.setData(index,dato[1],DISP)
-        elif type(editor) == WComboBoxIdx:
+        #if type(editor) in (QComboBox,) and self.isDouble:
+            #model.setData(index,dato[0],USER)
+            #model.setData(index,dato[1],DISP)
+        if type(editor) == WComboBoxIdx:
             model.setData(index,dato[2],USER)
             model.setData(index,dato[1],DISP)
         elif type(editor) == WComboBox:
@@ -1286,7 +1291,7 @@ class WPropertySheet(WSheet):
         specialize as you need in your cases
         """
         specs = self.editContext[x]
-        if  specs[1] in (QComboBox,WComboBoxIdx,WComboMulti) :
+        if  specs[1] in (QComboBox,WComboBoxIdx,WComboMulti,WComboBox) :
             if specs[3] and isinstance(specs[3][0],(list,tuple,set)):
                   return True
             elif specs[3] and isinstance(dato,int):

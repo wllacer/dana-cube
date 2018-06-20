@@ -436,8 +436,8 @@ class VistaDlg(propertySheetDlg):
         self.context = []
         self.context.append(('Guia filas',WComboBoxIdx,None,cubo.getGuideNames()),)
         self.context.append(('Guia columnas',WComboBoxIdx,None,cubo.getGuideNames()),)
-        self.context.append(('Función agregacion',QComboBox,None,cubo.getFunctions()),)
-        self.context.append(('Campo de datos',QComboBox,None,cubo.getFields()),)
+        self.context.append(('Función agregacion',WComboBox,None,cubo.getFunctions()),)
+        self.context.append(('Campo de datos',WComboBox,None,cubo.getFields()),)
         self.context.append(('Con totales',QCheckBox,None),)
         self.context.append(('Con estadisticas',QCheckBox,None),)
         

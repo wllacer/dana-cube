@@ -51,9 +51,9 @@ class filterDialog(QDialog):
         self.driver = driver
         self.context = []
         self.context.append(('campo','formato','condicion','valores'))
-        self.context.append((None,QComboBox,None,self.campos))
+        self.context.append((None,WComboBox,None,self.campos))
         self.context.append((None,QLineEdit,{'setEnabled':False},None))
-        self.context.append(('=',QComboBox,None,tuple(LOGICAL_OPERATOR)))
+        self.context.append(('=',WComboBox,None,tuple(LOGICAL_OPERATOR)))
         self.context.append((None,QLineEdit,None,None))
         self.data = []
         

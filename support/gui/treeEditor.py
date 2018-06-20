@@ -742,6 +742,9 @@ class TreeDelegate(QStyledItemDelegate):
             editor.setMinimum(edit_format.get('min',0))
             
         elif defeditor in (WComboBox,WComboMulti,QComboBox,WComboBoxIdx,WMultiList):
+            """
+            Con esta revision dejo QComboBox para los casos sencillos (lo que importa es el valor)
+            """
             #FIXME parche de presentacion
             if defeditor != WMultiList:   
                 editor = defeditor(parent=parent )
@@ -753,19 +756,19 @@ class TreeDelegate(QStyledItemDelegate):
                 self.fullList = sorted(orlist(item,self.parent()))
             else:
                 self.fullList = orlist
-            if isinstance(self.fullList[0],(list,tuple)):
-                x,y = zip(*self.fullList)
-                self.currentList = list(y)
-                self.isDouble = True
-            else:
-                self.currentList = self.fullList
-                self.isDouble = False
+            #if isinstance(self.fullList[0],(list,tuple)):
+                #x,y = zip(*self.fullList)
+                #self.currentList = list(y)
+                #self.isDouble = True
+            #else:
+                #self.currentList = self.fullList
+                #self.isDouble = False
 
-            if defeditor in (WComboBox,WComboBoxIdx,WComboMulti):
+            if defeditor in (WComboBox,WComboBoxIdx,WComboMulti,QComboBox):
                 editor.addItems(self.fullList)
-            if defeditor in (QComboBox,) :
-                editor.addItems(self.currentList)
-                editor.setEditable(edit_format.get('editable',False))
+            #if defeditor in (QComboBox,) :
+                #editor.addItems(self.currentList)
+                #editor.setEditable(edit_format.get('editable',False))
             elif defeditor in (WMultiList, ):
                 editor.load(self.currentList,[])
                 
@@ -893,9 +896,9 @@ class TreeDelegate(QStyledItemDelegate):
                 values = None
                 ivalue = datoWidget[0]
                 dvalue = datoWidget[1]
-            elif isinstance(editor, QComboBox) and self.isDouble:
-                values = None
-                ivalue,dvalue = datoWidget
+            #elif isinstance(editor, QComboBox) and self.isDouble:
+                #values = None
+                #ivalue,dvalue = datoWidget
             elif isinstance(editor, (QSpinBox,QCheckBox,)):
                 dvalue = str(ivalue)
             elif isinstance(editor,WPowerTable):
