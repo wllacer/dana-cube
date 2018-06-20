@@ -42,12 +42,18 @@ def setWidgetData(parent,editor,dato,valor_defecto):
         if not dato and valor_defecto is not None:
             editor.selectEntry(valor_defecto)
 
-    elif isinstance(editor,WMultiCombo): # WMC siemre antes que QCB porque es una especializacion
+    elif isinstance(editor,(WComboMulti,WMultiCombo)): # WMC siemre antes que QCB porque es una especializacion
         for entrada in dato:
             editor.set(entrada)
         if len(dato) == 0 and valor_defecto is not None:
             editor.set(valor_defecto)
-        
+    elif isinstance(editor,WComboBox):
+        if dato:
+            editor.setCurrentValue(dato)
+        elif valor_defecto:
+            editor.setCurrentValue(valor_defecto)
+        else:
+            editor.setCurrentIndex(-1)
     elif isinstance(editor,WComboBoxIdx):
         # Si no existe lo dejo abendar. No deberia pasar con este tipo de combos
         # el dato es una dupla
@@ -117,14 +123,15 @@ def setWidgetData(parent,editor,dato,valor_defecto):
 def getWidgetData(parent,editor):
     if isinstance(editor, WMultiList):
         return __multiListUnload(parent,editor)
-    elif isinstance(editor, WMultiCombo):
+    elif isinstance(editor, (WComboMulti,WMultiCombo)):
         return editor.get()                
     elif isinstance(editor,QTextEdit):
         return editor.document().toPlainText()
     elif isinstance(editor,QDialog):
         return editor.getData()
-    elif isinstance(editor,WComboBoxIdx):
-        return [editor.currentIndex(),editor.currentText()]
+    elif isinstance(editor,WComboBox):
+        return editor.currentItemInfo()
+        #return [editor.currentIndex(),editor.currentText()]
     elif isinstance(editor, QComboBox):
         if editor.currentIndex() < 0:
             if parent.isDouble:
@@ -688,7 +695,14 @@ class WComboBoxIdx(WComboBox):
     """
     def currentValue(self):
         return self.currentIndex()
-    
+ 
+    def setCurrentValue(self,value,role=Qt.UserRole):
+        #TODO ¿y si es una estructura?
+        if is_number(value):
+            self.setCurrentIndex(value)
+        else:
+            self.setCurrentIndex(self.index(value,DISP))
+            
 class WComboMulti(QComboBox):
     """ Una variante de combo con seleccion multiple
     """
@@ -742,7 +756,8 @@ class WComboMulti(QComboBox):
             item.setCheckState(Qt.Checked)
             self.updateHdr('set',item.data(DISP))
             
-    def set(self,values):
+    def set(self,dato):
+        values = norm2List(dato)
         for value in values:
             pos = self.index(value)
             if pos > 0:
@@ -794,7 +809,7 @@ class WComboMulti(QComboBox):
             cabItem.setData(WComboMulti.textoCabecera,DISP)
         else:
             cabItem.setData(norm2String(elementos),DISP)
-
+        self.setCurrentIndex(0)
         
     def index(self,text):
         # find data choca con el elemento 0
@@ -1108,6 +1123,9 @@ class sheetDelegate(QStyledItemDelegate):
             model.setData(index,dato[0],USER)
             model.setData(index,dato[1],DISP)
         elif type(editor) == WComboBoxIdx:
+            model.setData(index,dato[2],USER)
+            model.setData(index,dato[1],DISP)
+        elif type(editor) == WComboBox:
             model.setData(index,dato[0],USER)
             model.setData(index,dato[1],DISP)
         elif isinstance(dato,(list,tuple)):

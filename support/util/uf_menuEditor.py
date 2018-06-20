@@ -21,7 +21,7 @@ import user as uf
 from support.util.uf_manager import *
 from support.util.jsonmgr import *
 
-from support.gui.widgets import WMultiCombo,WMultiList
+from support.gui.widgets import *
 import base.config as config
 
 from PyQt5.QtCore import Qt, QSize
@@ -178,7 +178,7 @@ EDIT_TREE = {
     'entry':{'editor':QComboBox,'source':funclist, 
              "hint":"El nombre de la funcion a ejecutar, seleccione de la lista una de las dispoinibles",
              'text':'funcion a ejecutar',},
-    'type': {'editor':WMultiCombo,
+    'type': {'editor':WComboMulti,
                 'source':['item','leaf','colparm','rowparm','colkey','rowkey','kwparm'],
                 'default':'item',
                 'text':'tipo de parametros',

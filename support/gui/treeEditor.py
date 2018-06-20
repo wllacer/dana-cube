@@ -741,7 +741,7 @@ class TreeDelegate(QStyledItemDelegate):
             editor.setMaximum(edit_format.get('max',99))
             editor.setMinimum(edit_format.get('min',0))
             
-        elif defeditor in (QComboBox,WComboBoxIdx,WMultiCombo,WMultiList):
+        elif defeditor in (WComboBox,WComboMulti,QComboBox,WComboBoxIdx,WMultiCombo,WMultiList):
             #FIXME parche de presentacion
             if defeditor != WMultiList:   
                 editor = defeditor(parent=parent )
@@ -768,7 +768,9 @@ class TreeDelegate(QStyledItemDelegate):
                     editor.load(self.currentList)
                 #TODO  WMultiCombo as editable ... no lo veo
                 #editor.setEditable(edit_format.get('editable',False))
-            if defeditor in (WComboBoxIdx, QComboBox) :
+            if defeditor in (WComboBox,WComboBoxIdx,WComboMulti):
+                editor.addItems(self.fullList)
+            if defeditor in (QComboBox,) :
                 editor.addItems(self.currentList)
                 editor.setEditable(edit_format.get('editable',False))
             elif defeditor in (WMultiList, ):
@@ -858,7 +860,7 @@ class TreeDelegate(QStyledItemDelegate):
             if not self.generalValidation(index,editor,values):
                 return
                 
-        elif isinstance(editor, WMultiCombo):
+        elif isinstance(editor, (WComboMulti,WMultiCombo)):
                 #TODO insercion
             if self.context.get('dtype','atom') == 'list':
                 values = norm2List(datoWidget)
@@ -892,9 +894,13 @@ class TreeDelegate(QStyledItemDelegate):
         else:
             if isinstance(editor,WComboBoxIdx):
                 values = None
+                ivalue = datoWidget[2]
+                dvalue = datoWidget[1]
+            elif isinstance(editor,WComboBox):
+                values = None
                 ivalue = datoWidget[0]
                 dvalue = datoWidget[1]
-            if isinstance(editor, QComboBox) and self.isDouble:
+            elif isinstance(editor, QComboBox) and self.isDouble:
                 values = None
                 ivalue,dvalue = datoWidget
             elif isinstance(editor, (QSpinBox,QCheckBox,)):
@@ -980,7 +986,7 @@ class TreeDelegate(QStyledItemDelegate):
             else:
                 return [],''
                 
-        elif isinstance(editor,WMultiCombo): # WMC siemre antes que QCB porque es una especializacion
+        elif isinstance(editor,(WComboMulti,WMultiCombo)): # WMC siemre antes que QCB porque es una especializacion
             #TODO doble seleccion 
             # TODO con insercion
             if self.context.get('dtype','atom') == 'list':
