@@ -274,16 +274,16 @@ class fieldDelegate(QStyledItemDelegate):
         
         if not self.tempTables:
             self.tempTables = [None,('=','>','<','>=','<=','!='),None]
-        if self.sheet.context.get('fieldCatcher') and self.fields != self.sheet.context.get('fieldCatcher'):
+        if self.sheet.auxContext.get('fieldCatcher') and self.fields != self.sheet.auxContext.get('fieldCatcher'):
             self.tempTables[0] = None
             self.tempTables[2] = None
-            self.fields = self.sheet.context.get('fieldCatcher')
+            self.fields = self.sheet.auxContext.get('fieldCatcher')
        
-        if self.tableFrom != self.sheet.context.get('tableFrom') or not self.tempTables[0]:
-            self.tableFrom = self.sheet.context.get('tableFrom')
+        if self.tableFrom != self.sheet.auxContext.get('tableFrom') or not self.tempTables[0]:
+            self.tableFrom = self.sheet.auxContext.get('tableFrom')
             self.tempTables[0] = self.fields.get(self.tableFrom)
-        if self.tableTo != self.sheet.context.get('tableTo') or not self.tempTables[2]:
-            self.tableTo = self.sheet.context.get('tableTo')
+        if self.tableTo != self.sheet.auxContext.get('tableTo') or not self.tempTables[2]:
+            self.tableTo = self.sheet.auxContext.get('tableTo')
             self.tempTables[2] = self.fields.get(self.tableTo)
 
         editor = QComboBox(parent)
@@ -713,7 +713,7 @@ class LinksDlg(QDialog):
                         self.loadDetail(ind +1)
                         self.clauseWgt.setFocus()
                         return False
-            elif len(self.fieldsTarget.seleList) == 0:
+            elif len(self.fieldsTarget.get()) == 0:
                 self.msgLine.setText('Debe especificar al menos un campo para agrupar')
                 self.fieldsTarget.setFocus()
                 return False
@@ -816,7 +816,7 @@ class LinksDlg(QDialog):
         if 'structure' not in dato:
             dato['structure'] = {}
         dato['structure']['name'] = name
-        dato['structure']['elem'] = [ self.fields.tr(self.targetTable,value) for value in self.fieldsTarget.seleList ]
+        dato['structure']['elem'] = [ self.fields.tr(self.targetTable,value) for value in self.fieldsTarget.get() ]
         dato['structure']['table'] = self.short2long(self.targetTable)
         dato['structure']['link via'] = links
         return dato

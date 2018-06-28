@@ -756,10 +756,10 @@ class TreeDelegate(QStyledItemDelegate):
                 self.fullList = sorted(orlist(item,self.parent()))
             else:
                 self.fullList = orlist
-            if defeditor in (WComboBox,WComboBoxIdx,WComboMulti,QComboBox):
+            if defeditor in (WComboBox,WComboBoxIdx,WComboMulti,QComboBox,WMultiList):
                 editor.addItems(self.fullList)
-            elif defeditor in (WMultiList, ):
-                editor.load(self.fullList,[])
+            #elif defeditor in (WMultiList, ):
+                #editor.load(self.fullList,[])
                 
         elif defeditor == QTextEdit:
             editor = defeditor()
