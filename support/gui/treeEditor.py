@@ -759,7 +759,7 @@ class TreeDelegate(QStyledItemDelegate):
             if defeditor in (WComboBox,WComboBoxIdx,WComboMulti,QComboBox):
                 editor.addItems(self.fullList)
             elif defeditor in (WMultiList, ):
-                editor.load(self.currentList,[])
+                editor.load(self.fullList,[])
                 
         elif defeditor == QTextEdit:
             editor = defeditor()

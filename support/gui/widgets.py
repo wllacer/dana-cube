@@ -447,7 +447,7 @@ class WMultiList(QWidget):
         self.disponible.clear()
         if lista is not None:
             self.origList = lista #[ entry for entry in lista ]
-        self.freeList = [ entry for entry in self.origList]
+        self.freeList = [ entry[1] if isinstance(entry,(list,tuple)) else entry for entry in self.origList]
         self.disponible.addItems(self.freeList)
         self.selecto.clear()
         self.seleList = []
