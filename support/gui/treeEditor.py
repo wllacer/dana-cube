@@ -756,21 +756,10 @@ class TreeDelegate(QStyledItemDelegate):
                 self.fullList = sorted(orlist(item,self.parent()))
             else:
                 self.fullList = orlist
-            #if isinstance(self.fullList[0],(list,tuple)):
-                #x,y = zip(*self.fullList)
-                #self.currentList = list(y)
-                #self.isDouble = True
-            #else:
-                #self.currentList = self.fullList
-                #self.isDouble = False
-
-            if defeditor in (WComboBox,WComboBoxIdx,WComboMulti,QComboBox):
+            if defeditor in (WComboBox,WComboBoxIdx,WComboMulti,QComboBox,WMultiList):
                 editor.addItems(self.fullList)
-            #if defeditor in (QComboBox,) :
-                #editor.addItems(self.currentList)
-                #editor.setEditable(edit_format.get('editable',False))
-            elif defeditor in (WMultiList, ):
-                editor.load(self.currentList,[])
+            #elif defeditor in (WMultiList, ):
+                #editor.load(self.fullList,[])
                 
         elif defeditor == QTextEdit:
             editor = defeditor()
@@ -896,9 +885,6 @@ class TreeDelegate(QStyledItemDelegate):
                 values = None
                 ivalue = datoWidget[0]
                 dvalue = datoWidget[1]
-            #elif isinstance(editor, QComboBox) and self.isDouble:
-                #values = None
-                #ivalue,dvalue = datoWidget
             elif isinstance(editor, (QSpinBox,QCheckBox,)):
                 dvalue = str(ivalue)
             elif isinstance(editor,WPowerTable):
