@@ -38,8 +38,6 @@ def setWidgetData(parent,editor,dato,valor_defecto):
     if isinstance(editor,WMultiList):
         if dato:
             editor.setEntries(dato)
-        #for entrada  in dato:
-            #__multiListLoad(parent,editor,entrada)           
         if not dato and valor_defecto is not None:
             editor.selectEntry(valor_defecto)
 
@@ -144,39 +142,6 @@ def getWidgetData(parent,editor):
     else:
         return editor.text()
 
-#def __multiListLoad(parent,editor,dato):
-    #"""
-    #convenience for just this
-    #"""
-    #if parent.isDouble:                            #para presentar correctamente
-        #try:
-            #pos = parent.currentList.index(dato)
-        #except ValueError:
-            #try:
-                #pos  = [ entry[0] for entry in parent.fullList ].index(dato)
-            #except ValueError:
-                #parent.currentList.append(dato)
-                #parent.fullList.append([dato,dato])
-                #pos = len(parent.currentList) -1
-        #dato = parent.currentList[pos]
-    #editor.selectEntry(dato)
- 
-            
-#def __multiListUnload(parent,editor):
-    #if not parent.isDouble:
-        #values = editor.seleList
-    #else:
-        #values = []
-        #tmpval = editor.seleList
-        #fullList = parent.fullList
-        #for entry in tmpval:
-            #idx = parent.currentList.index(entry)
-            #try:
-                #nuevo = fullList[idx][0]
-                #values.append(parent.fullList[idx][0])
-            #except IndexError:
-                #values.append(entry)
-    #return values
 
 
 class WSheet(QTableWidget):
@@ -387,54 +352,68 @@ class WListView(QListView):
         super().__init__(parent)
         self.baseList = None
         self.keepPosition = True
-        #self.setDragDropMode(QAbstractItemView.InternalMove)
-        
-    def _appendRow(self,rowData,model):
-        if isinstance(rowData,(list,tuple)):
-                external = rowData[WListView.extIdx]
-                internal  = rowData[WListView.intIdx]
+        self.setModel(QStandardItemModel())
+        """
+        Las siguientes lineas hacen la magia de activar el drag and drop
+        """
+        self.setSelectionMode(self.SingleSelection)
+        self.setAcceptDrops(True);
+        self.setDragEnabled(True);
+        #self.setSelectionBehavior(self.SelectRows)
+        self.setDragDropMode(QAbstractItemView.InternalMove)
+       
+    def _makeItem(self,data):
+        if isinstance(data,(list,tuple)):
+            extdata = data[WListView.extIdx]
+            intdata = data[WListView.intIdx]
         else:
-            external = internal = rowData
-        model.appendRow((QStandardItem(external),QStandardItem(internal)))
+            extdata = intdata = data
+        item = QStandardItem(extdata)
+        item.setData(intdata,Qt.UserRole +1)
+        return item
+    
+    def _appendRow(self,rowData):
+        self.model().appendRow((self._makeItem(rowData),))
         
-    def _insertRow(self,elem,model,pos):
-        if isinstance(elem,(list,tuple)):
-                external = elem[WListView.extIdx]
-                internal  = elem[WListView.intIdx]
-        else:
-            external = internal = elem
-        model.insertRow(pos,(QStandardItem(external),QStandardItem(internal)))
+    def _insertRow(self,elem,pos):
+        self.model().insertRow(pos,(self._makeItem(elem),))
 
     def _getRow(self,item):
-        row = item.row()
-        intval = self.model().item(row,1).data(Qt.DisplayRole)
-        extval = self.model().item(row,0).data(Qt.DisplayRole)
-        return [intval,extval]
-        
-    def createModel(self,array=None):
-        model = QStandardItemModel()
+        ext = item.data(Qt.DisplayRole)
+        intnl = item.data(Qt.UserRole +1)
+        if intnl is None:
+            intnl = ext
+        return [intnl,ext]
+
+    def find(self,value,role=None):
+        start = self.model().index(0,0,QModelIndex())
+        if role is not None:
+            resultIdx = self.model().match(start,role,value,-1,Qt.MatchExactly|Qt.MatchCaseSensitive)
+        else:
+            resultIdx = self.model().match(start,Qt.UserRole  +1,value,-1,Qt.MatchExactly|Qt.MatchCaseSensitive)
+            if not resultIdx:
+                resultIdx = self.model().match(start,Qt.DisplayRole,value,-1,Qt.MatchExactly|Qt.MatchCaseSensitive)
+        if not resultIdx:
+            return None
+        else:
+            retorno = [self.model().itemFromIndex(idx) for idx in resultIdx ]
+            return retorno
+
+    def addItems(self,array=None):
+        self.model().clear()
         if not array:
             self.baseList = None
         else:
             self.baseList = array
             for elem in array:
-                self._appendRow(elem,model)
-        self.setModel(model)
+                self._appendRow(elem)
        
     def addRow(self,elem):
-        model = self.model()
-        self._appendRow(elem,model)
+        self._appendRow(elem)
         
     def insertRow(self,pos,elem):
-        model = self.model()
-        self._insertRow(self,elem,model,pos)
+        self._insertRow(self,elem,pos)
        
-    def find(self,value):
-        result = self.model().findItems(value,column=1)
-        if not result:
-            result = self.model().findItems(value,column=0)
-        return result
-
     def index(self,value):
         result = self.find(value)
         if not result:
@@ -461,7 +440,7 @@ class WListView(QListView):
         return entryList
             
     def takeRow(self,row):
-        return self.model.takeRow(row)
+        return self.model().takeRow(row)
     
     def joinRow(self,row):
         self.model().appendRow(row)
@@ -474,7 +453,7 @@ class WListView(QListView):
         for index in self.selectedIndexes():
             result.append(self.model().itemFromIndex(index))
         return result
-
+ 
 class WMultiList(QWidget):
     """
     WIP
@@ -544,24 +523,18 @@ class WMultiList(QWidget):
     
         
         self.origList = []
-        self.freeList = []
-        self.seleList = []
         
         self.load(lista,initial)
      
     def clear(self):
-        if self.disponible.model():
-            self.disponible.model().clear()
-        if self.selecto.model():
-            self.selecto.model().clear()
-        self.freeList.clear()
-        self.seleList.clear()
+        self.disponible.model().clear()
+        self.selecto.model().clear()
         
     def addItems(self,lista):
         self.clear()
         if lista is not None:
             self.origList = lista #[ entry for entry in lista ]
-            self.disponible.createModel(lista)
+            self.disponible.addItems(lista)
    
         
     def load(self,lista,initial):
