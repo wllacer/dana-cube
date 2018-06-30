@@ -354,7 +354,7 @@ class WListView(QListView):
         self.keepPosition = True
         self.setModel(QStandardItemModel())
         """
-        Las siguientes lineas hacen la magia de activar el drag and drop
+        Las siguientes lineas hacen la magia de activar el drag and drop interno
         """
         self.setSelectionMode(self.SingleSelection)
         self.setAcceptDrops(True);
@@ -473,19 +473,19 @@ class WMultiList(QWidget):
         origenlayout.addWidget(self.disponible)
         
         destinolayout=QVBoxLayout()
-        self.destinoCabecera = QLabel(cabeceras[1] if cabeceras else 'Elemenos seleccionados')
+        self.destinoCabecera = QLabel(cabeceras[1] if cabeceras else 'Elementos seleccionados')
         destinolayout.addWidget(self.destinoCabecera)
         destinolayout.addWidget(self.selecto)
 
         if format == 'm':
             texto = 'Seleccione origen/destino pulsando doble click'
-            textoWdt = QLabel(texto)
+            self.textoWdt = QLabel(texto)  #necesito usarlo fuera
             meatlayout = QGridLayout()
             meatlayout.addWidget(self.origenCabecera,1,0)
             meatlayout.addWidget(self.destinoCabecera,1,1)
             meatlayout.addWidget(self.disponible,2,0)
             meatlayout.addWidget(self.selecto,2,1)
-            meatlayout.addWidget(textoWdt,3,0)
+            meatlayout.addWidget(self.textoWdt,3,0)
         elif format == 'c':
             origenlayout.addWidget(self.anyade)
             destinolayout.addWidget(self.elimina)
@@ -539,8 +539,6 @@ class WMultiList(QWidget):
         
     def load(self,lista,initial):
         self.addItems(lista)
-        selectModel = QStandardItemModel()
-        self.selecto.setModel(selectModel)
         if initial is not None:
             self.setEntries(initial)
 
@@ -658,6 +656,42 @@ class WMultiList(QWidget):
         #pass
     #def removeSelectedItem(self):
         #pass
+
+class dndLinealModel(QStandardItemModel):
+    """
+    Especializacion del QStandardItemModel para poder hacer drags y drops correctamente en modelos lineales (solo mover)
+    Pensado para las WListViews
+    
+    """
+
+    def dropMimeData(self, data, action, row, column, parent):
+        """ 
+        En QStandardIttemModel si se deja sobre un elemento crea un hijo, que no es lo que queremos para las listViews
+        Esta pequeña magia lo que hace es ponerlo por delante del elemento elegido, sin padre
+        """
+        if parent.isValid():
+            row = parent.row()
+            column = parent.column()
+
+        return super().dropMimeData(data,action,row,column,QModelIndex())
+
+    def supportedDropActions(self):
+        return Qt.MoveAction
+
+
+class dndMultiList(WMultiList):
+    """
+    Especializacion de WMultiList para permitir la eleccion via drag and drop entre listas
+    
+    """
+    def __init__(self,lista=None,initial=None,format=None,cabeceras=None,parent=None):
+        super().__init__(None,None,'m',cabeceras,parent)
+        self.disponible.setModel(dndLinealModel())
+        self.disponible.setDragDropMode(QAbstractItemView.DragDrop)
+        self.selecto.setModel(dndLinealModel())
+        self.selecto.setDragDropMode(QAbstractItemView.DragDrop)
+        self.textoWdt.setText('Seleccione arrastrando con el cursor o doble click')
+        self.load(lista,initial)
 
 class WComboBox(QComboBox):
     """
