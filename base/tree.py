@@ -87,8 +87,6 @@ def searchTree(item,value,role):
     * Programming notes.
         Look for GuideModel.searchHierarchy for usage
         
-    __TODO__
-    Make a variant which do not requires previous order
     """
     lower = 0
     upper = item.rowCount()
@@ -133,9 +131,6 @@ def getBinPos(item,value,role):
      
     * Programming notes.
         Look for GuideModel.searchHierarchy for usage
-        
-    __TODO__
-    Make a variant which do not requires previous order
     """
     def _cmp(external,internal):
         if isinstance(internal,int):
@@ -185,7 +180,7 @@ def modelSearch(item,value,role):
     """
     Auxiliary function.
     Implement a search inside a QStandardItemModel using QAbstractItemModel.match
-    Performance wise is a bad choice (might be 15 times slower than the preceding one in a 1000 row case)
+    Performancewise is a bad choice (might be 15 times slower than the preceding one in a 1000 row case)
     """
     if role is None:
         prole = Qt.UserRole +1
@@ -202,7 +197,7 @@ def lineSearch(item,value,role):
     """
     Auxiliary function.
     Implement a search inside a QStandardItemModel navigating the tree
-    Performance wise is a bad choice (might be 10 times slower than the binary search one in a 1000 row case)
+    Performancewise is a bad choice (might be 10 times slower than the binary search one in a 1000 row case)
     """
     if role is None:
         prole = Qt.UserRole +1
