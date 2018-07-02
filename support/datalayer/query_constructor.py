@@ -855,12 +855,8 @@ def _joinConstructor(**kwargs):
             if optCache[j -1][5] is not None:
                 pfix = optCache[optCache[j -1][5]][2]
             else:
-                print('en paso',j)
-                pprint(optCache)
                 pfix = optCache[j -1][2]
-            print('antes',clausula,optCache[j][4],pfix)
             clausula = replTablePrefix(clausula.lower(),optCache[j][4].lower(),pfix)
-            print('desp ',clausula)
         optCache[j][3] = clausula
         
     for itm in optCache:

@@ -59,14 +59,15 @@ def traverseBasic(root,base=None):
             del queue[0]
         else:
             queue = expansion  + queue[1:]  
-from PyQt5.QtCore import Qt 
+from PyQt5.QtCore import Qt,QModelIndex
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
+
 from PyQt5.QtGui import QColor
 from support.util.numeros import isOutlier,fmtNumber,s2n
 
 LEAF,BRANCH,TOTAL = range(1000,1000+3)
 
-def searchStandardItem(item,value,role):
+def searchTree(item,value,role):
     """
     Auxiliary function.
     Implement a binary search inside a QStandardItemModel.
@@ -94,6 +95,13 @@ def searchStandardItem(item,value,role):
     while lower < upper:   # use < instead of <=
         x = lower + (upper - lower) // 2
         val = item.child(x).data(role)
+        #normalizo al tipo interno para evitar que se me escapen elementos 
+        if type(val) == int:
+            value = int(value)
+        elif type(val) == float:
+            value = float(value)
+        elif type(val) == str:
+            value = str(value)
         try:
             if value == val:
                 return item.child(x)
@@ -108,10 +116,118 @@ def searchStandardItem(item,value,role):
             raise
     return None
 
+def getBinPos(item,value,role):
+    """
+    Auxiliary function.
+    Implement a binary search inside a QStandardItemModel to locate where an element should be placed
+    Only perform the search in one hierarchical level
+    currently REQUIRES that the children be ordered by default. As is the case in _danacube_
+    
+    * Input Parameters
+        * __item__ (QStandardItem) parent of the level we are searching for
+        * __value__ value we are searching for
+        * __role__  the __Qt Role__ for the value. (An item can contain different data associated to different roles)
+    
+    * Returns
+        the nur which has that _value_ or _None_
+     
+    * Programming notes.
+        Look for GuideModel.searchHierarchy for usage
+        
+    __TODO__
+    Make a variant which do not requires previous order
+    """
+    def _cmp(external,internal):
+        if isinstance(internal,int):
+            external = int(external)
+        elif isinstance(internal,float):
+            external = float(external)
+        elif isinstance(internal,str):
+            external = str(external)
+            
+        if external == internal:
+            return '='
+        elif external > internal:
+            return '>'
+        elif external < internal:
+            return '<'
+        else:
+            return 'U' #undefined
+        
+    lower = 0
+    upper = item.rowCount()
+    if item.rowCount() > 0:
+        lowval = item.child(lower).data(role)
+        uppval  = item.child(upper -1).data(role)
+        if _cmp(value,lowval) == '<':
+            return 0
+        elif _cmp(value,uppval) == '>':
+            return None
+    else:
+        return None
+    
+    while lower < upper:   # use < instead of <=
+        x = lower + (upper - lower) // 2
+        val = item.child(x).data(role)
+        #normalizo al tipo interno para evitar que se me escapen elementos 
+        cmp = _cmp(value,val)
+        if cmp == '=':
+            return x #implica que admite duplicados por defincion
+        elif cmp == '<':
+            upper = x
+        elif cmp == '>':
+            if lower == x:
+                return x +1
+            lower = x
+    return None
+
+def modelSearch(item,value,role):
+    """
+    Auxiliary function.
+    Implement a search inside a QStandardItemModel using QAbstractItemModel.match
+    Performance wise is a bad choice (might be 15 times slower than the preceding one in a 1000 row case)
+    """
+    if role is None:
+        prole = Qt.UserRole +1
+    else:
+        prole = role
+    model = item.model()
+    start = model.index(0,0,item.index() if item.index().isValid() else QModelIndex())
+    result = model.match(start,prole,value,1,Qt.MatchExactly)
+    if not result:
+        return None
+    return model.itemFromIndex(result[0])
+
+def lineSearch(item,value,role):
+    """
+    Auxiliary function.
+    Implement a search inside a QStandardItemModel navigating the tree
+    Performance wise is a bad choice (might be 10 times slower than the binary search one in a 1000 row case)
+    """
+    if role is None:
+        prole = Qt.UserRole +1
+    else:
+        prole = role
+    for k in range(item.rowCount()):
+        if item.child(k,0).data(prole) == value:
+            return item.child(k,0)
+    return None
+    
+#def searchTree(item,value,role):
+    #"""
+    #selector.  
+        #For an special bad case case (1000 rows, no hierarchy)
+        #binary search performance is about 15 times better than model search and about 10 times better than lineal seach
+    #"""
+    ##return binarySearch(item,value,role)
+    ##return modelSearch(item,value,role)
+    #return lineSearch(item,value,role)
+
 def searchHierarchy(model,valueList,role=None):
     """
         Does a search thru all the hierarchy given the key/value data. 
         As 1st level function to be able to use in QStandardItemModels
+        Uses searchStandardItem 
     
     * Input parameters
         * __valueList__ an array with the hierachy data to be searched
@@ -130,11 +246,12 @@ def searchHierarchy(model,valueList,role=None):
     elem = model.invisibleRootItem()
     parent = model.invisibleRootItem()
     for k,value in enumerate(valueList):
-        elem = searchStandardItem(parent,value,prole)
+        elem = searchTree(parent,value,prole)
         if not elem:
             return None
         parent = elem
     return elem
+
 
 def _getHeadColumn(item):
     """
@@ -503,7 +620,7 @@ class GuideItem(NewGuideItem):
             prole = Qt.UserRole +1
         else:
             prole = role
-        return searchStandardItem(self,value,prole)
+        return searchTree(self,value,prole)
 
    
     def getColumn(self,col):
@@ -855,7 +972,7 @@ class GuideItem(NewGuideItem):
         if format == 'single':
             return item.data(rol)
         elif format == 'string':
-            clave = item.data(rol)
+            clave = str(item.data(rol))
             if sparse:
                 for k in range(item.depth()):
                     clave = delim + clave
@@ -871,7 +988,7 @@ class GuideItem(NewGuideItem):
         pai = item.parent()
         while pai is not None and pai != item.model().invisibleRootItem():
             if format == 'string':
-                clave = pai.data(rol) + delim + clave
+                clave = str(pai.data(rol)) + delim + clave
             elif format == 'array':
                 clave.insert(0,pai.data(rol))
             pai = pai.parent()
@@ -1375,7 +1492,7 @@ class GuideItemModel(QStandardItemModel):
         elem = self.invisibleRootItem()
         parent = self.invisibleRootItem()
         for k,value in enumerate(valueList):
-            elem = searchStandardItem(parent,value,prole)
+            elem = searchTree(parent,value,prole)
             if not elem:
                 return None
             parent = elem

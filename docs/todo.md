@@ -25,15 +25,18 @@ Serious errors which are either upstream or we haven't still found a solution
 *   __UPSTREAM__ __STUDY PENDING__ __BYPASSED__ QStandardItem(*args) bombs system if args[0] is int and big (some millions, still not out)
 
 *  BUG 5  __CLOSED__
-    query_constructor has torubles handling with file prefixes, esp with joins. and if both guides are "joined". 
+    query_constructor has troubles handling file prefixes, esp with joins. and if both guides are "joined". 
     Actual implementation has troubles only with a few corner cases (pure link vias with more than one field to group, and only if not fully qualified), which can be bypassed with the use of domains.
     A correct general solution has been found, and was pretty simple
     
 * BUG6  __CLOSED__ 
     guides with more than one field as elems might not behave properly.
     Significative problem for those DB's which don't use surrogate keys but compound ones.
-    Don't know if my solution is to everybody's taste. Presentationwise is the only choice, but i have doubts about performance during group operations on large tables (will indexes be used ¿?)
+    Don't know if my solution (catenate the fields)  is to everybody's taste. Presentationwise is the only choice, but i have doubts about performance during group operations on large tables (will indexes be used ¿?)
 
+* BUG7 __CLOSED__ __DB BACKEND__
+    In certain cases (f.i. _enums in PgSQL_ external order of the db. column (the value shown) is not the same for which the DB _ORDER  BY_ uses (the internal numeric value of the enum). Dana coding expects both to be the same and messes results acordingly. We have tried to solve it in a general way, without a serious performance penality (see. @base.core.createProdModel for the solution and @base.tree the *Search routines for performance issues)
+    
 ## rough corners
 
 Areas where the product __must__ be improved. They might not be errors but don't feel quite right

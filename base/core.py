@@ -350,33 +350,6 @@ class Cubo:
                 datefilter = self.setDateFilter()
         return table_name,basefilter,datefilter
     
-    #def _setTableNameOrig(self,guia,idx):
-        #"""
-        #Para una regla de producción concreta en una guia obtiene la tabla base que corresponde para 
-        #el dominio de definición que deseo
-        
-        #input
-           #guia  definicion de la guia correspondiente
-           #idx   indice de la produccion en la tupla de contextos
-        #output
-           #table_name nombre de la tabla
-           #filter filtro asociado
-        #"""
-        #basefilter = None
-        #datefilter = None
-        #entrada = guia['prod'][idx]
-        #if 'domain' in entrada:
-            #table_name = entrada['domain'].get('table')  # se supone que tiene que existir
-            #basefilter = entrada['domain'].get('filter')
-        #elif 'link via' in entrada:
-            #table_name = entrada['link via'][-1].get('table')
-        #else:
-            #table_name = self.definition.get('table')
-            #if len(self.definition.get('base filter','')) > 0:
-                #basefilter = self.definition['base filter']
-            #if 'date filter' in self.definition:
-                #datefilter = self.setDateFilter()
-        #return table_name,basefilter,datefilter
             
    
     def _expandReference(self,guidID,prodRules=None):
@@ -466,7 +439,6 @@ class Cubo:
                                  'join_modifier':'LEFT',
                                 'opt_clause':link_ref}]
             try:
-                pprint(sqlDef)
                 sqlString = queryConstructor(**sqlDef)
                 print(queryFormat(sqlString))
             except:
@@ -483,7 +455,7 @@ class Cubo:
 
             return cursor
 
-    def _createProdModel(self,raiz,cursor,contexto,prodId,total=None,display=False):
+    def createProdModel(self,raiz,cursor,contexto,prodId,total=None,display=False):
         """
         De cursor al modelo que utilizamos para definir la guia
         Input
@@ -514,15 +486,15 @@ class Cubo:
             for k in range(len(row)):
                 if row[k] is None:
                     row[k] = ''
-                else:
-                    row[k] = str(row[k]) #.replace(config.DELIMITER,'/') #OJO todas las claves son Alfanumericas
+                #else:
+                    #row[k] = str(row[k]) #.replace(config.DELIMITER,'/') #OJO todas las claves son Alfanumericas
             if ndesc == 0:
                 value = ', '.join(row[-ncode:])
             else:
                 value = ', '.join(row[-ndesc:])
             #
             # ahora debo localizar donde en la jerarquia tiene que encontrarse. Eso varia por tipo
-            # Notese que para GuideItemModel utilizo un sistema de cache para reducir el numero de busquedas
+            # __FIXME__ Para GuideItemModel   un sistema de cache para reducir el numero de busquedas seria de utilidad
             #
             if not display:  #la situacion ordinaria
                 papid = row[0:len(code)]
@@ -533,14 +505,23 @@ class Cubo:
                     papid = ["//",]+papid
                 if len(papid) == 0:
                     item = GuideItem(key,value)
-                    raiz.appendRow((item,))                    
+                    pos = getBinPos(raiz,key,Qt.UserRole +1)
+                    if pos is None:
+                        raiz.appendRow((item,))
+                    else:
+                        raiz.insertRow(pos,(item,))
                 else:
                     parent = raiz.model().searchHierarchy(papid)
                     if not parent:
                         continue
                     else:
                         item = GuideItem(key,value)
-                        parent.appendRow((item,))
+                        pos = getBinPos(parent,key,Qt.UserRole +1)
+                        if pos is None:
+                            parent.appendRow((item,))
+                        else:
+                            parent.insertRow(pos,item)
+
             else:
                 papid = row[0:len(code)]
                 key = papid[-1]
@@ -549,13 +530,22 @@ class Cubo:
                 if total:  #no viene recogido previamente
                     papid = ["//",]+papid
                 if len(papid) == 0:
-                    raiz.appendRow((QStandardItem(str(key)),QStandardItem(str(value)),))                    
+                    pos = getBinPos(raiz,key,Qt.UserRole +1)
+                    if pos is None:
+                        raiz.appendRow((QStandardItem(str(key)),QStandardItem(str(value)),))                    
+                    else:
+                        raiz.insertRow(pos,(QStandardItem(str(key)),QStandardItem(str(value)),))
                 else:
                     parent = searchHierarchy(raiz.model(),papid,Qt.DisplayRole)
                     if not parent:
                         continue
                     else:
-                        parent.appendRow((QStandardItem(str(key)),QStandardItem(str(value)),))                    
+                        pos = getBinPos(parent,key,Qt.UserRole +1)
+                        if pos is None:
+                            parent.appendRow((QStandardItem(str(key)),QStandardItem(str(value)),))                    
+                        else:
+                            parent.insertRow(pos,(QStandardItem(str(key)),QStandardItem(str(value)),))    
+                            
 
     
     def setGroupBy(self,contexto,prodId,table,code,desc,columns,groupby):
@@ -568,14 +558,6 @@ class Cubo:
         
         return groupby,code,desc,columns
 
-            #if contexto[prodId -1]['table'] == table:  #por coherencia sin groop by es imposible sino
-                #groupby = contexto[prodId -1]['code']
-                #if code != desc:
-                    #code = groupby + code
-                    #columns = code + desc
-                #else:
-                    #code = desc = columns = groupby + code
-            #return groupby,code,desc,columns
             
     def fillGuia(self,guidIdentifier,total=None,generateTree=True,display=False):
         '''
@@ -845,60 +827,12 @@ class Cubo:
             if generateTree:
                 if clase == 'c' and 'categories' in produccion:
                     cursor = categoriesCursorGen() #tree,produccion,prodId,contexto,basefilter,datefilter)
-                    #kcursor = []
-                    #for entrada in produccion['categories']:
-                        #if 'result' in entrada:
-                            #kcursor.append([entrada.get('result'),])
-                        #else:
-                            #kcursor.append([entrada.get('default'),])
-                    #kcursor.sort()
-                    #if prodId == 0:
-                        #cursor = kcursor
-                    #else:
-                        #cursor  = self._getProdCursor(contexto,prodId,basefilter,datefilter)
                 elif clase == 'd':
                     ## obtengo la fecha minima y maxima. Para ello tendre que consultar la base de datos
                     cursor = dateCursorGen() #tree,produccion,prodId,contexto,basefilter,datefilter,date_cache,origId,origGuide,guidId,table)
-                    #campo = produccion.get('campo_base') #solo podemos   trabajar con un campo
-                    #if campo in date_cache:
-                        #pass
-                    #else:
-                        ##TODO solo se requiere consulta a la base de datos si el formato incluye 'Y'
-                        ##REFINE creo que fields sobra
-                        #sqlDefDate=dict()
-                        #sqlDefDate['tables'] = table
-                        #if basefilter is not None:
-                            #sqlDefDate['base_filter'] = basefilter
-                        #if datefilter is not None:
-                            #sqlDefDate['where'] = datefilter
-                        #sqlDefDate['fields'] = [[campo,'max'],[campo,'min'],]
-                        #sqlDefDate['driver'] = self.dbdriver
-                        #try:
-                            #sqlStringDate = queryConstructor(**sqlDefDate) 
-                        #except:
-                            #raise()
-                        #row=getCursor(self.db,sqlStringDate)
-                        #if not row[0][0]:
-                            ## un bypass para que no se note 
-                            #date_cache[campo] = [datetime.date.today(),datetime.date.today()]
-                        #else:
-                            #date_cache[campo] = [row[0][0], row[0][1]] 
-                        ##
-                    ## TODO, desplegarlo todo
-
-                    #kmask = produccion.get('mask')     
-                    ##FIXME valido fechas pero todos los formatos no son compatibles con esa validacion
-                    #kcursor = getDateIndexNew(date_cache[campo][0]  #max_date
-                                                #, date_cache[campo][1]  #min_date
-                                                #, kmask)
-                    #if origId == 0 and guidId == origGuide:
-                        #cursor = kcursor
-                    #else:
-                        #cursor  = self._getProdCursor(contexto,prodId,basefilter,datefilter)
                 else:
                     cursor  = self._getProdCursor(contexto,prodId,basefilter,datefilter)
-                    #cursor = self._getProdCursor(contexto[-1],basefilter,datefilter)
-                self._createProdModel(tree,cursor,contexto[-1],prodId,total,display)
+                self.createProdModel(tree,cursor,contexto[-1],prodId,total,display)
         if generateTree:
             return arbol,contexto
         else:
@@ -1054,7 +988,7 @@ class Vista:
                 entradilla = (rel_elem,clausula.get('condition','='),base_elem)
                 join_entrada['join_clause'].append(entradilla)
             resultado.append(join_entrada)
-            pprint(resultado)
+            #pprint(resultado)
         return resultado
 
     def  __setDataMatrix(self):
@@ -1168,13 +1102,6 @@ class Vista:
         colTree.coordinates = (1,0)
         rowTree.orthogonal = colTree
         colTree.orthogonal = rowTree
-        #colindex = []
-        #idx = 1
-        #for item in colTree.traverse():
-            #colindex.append({'objid':item,'key':item.getFullKey()})
-            #idx += 1
-        #rowTree.colTreeIndex = {'idx':colindex} #{'dict':coldict,'idx':colindex}
-        # rowTree.colTreeIndex['leaf'] = [ idx for idx,obj in enumerate(rowTree.colTreeIndex['idx']) if obj['objid'].type() == LEAF ]
         return None
         
         

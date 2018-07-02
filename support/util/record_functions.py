@@ -185,10 +185,11 @@ def regTreeGuide(record,**kwargs):
             pos_ini = 0
         else:
             pos_ini = kwargs['row'].get('nkeys',1)
-        krecord = list(map(lambda x:str(x),record[pos_ini:pos_ini+dimension]))
+        #krecord = list(map(lambda x:str(x),record[pos_ini:pos_ini+dimension]))
+        krecord = list(map(lambda x:'' if x is None else x,record[pos_ini:pos_ini+dimension]))
         parent = kwargs[dictionaries[k]].searchHierarchy(krecord)
         if parent is None:
-            #print(record,dim,pos_ini,dimension,'falla')
+            #print(krecord,dim,pos_ini,dimension,'falla')
             del record[:]
             return
         else:
