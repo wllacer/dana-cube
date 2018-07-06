@@ -479,21 +479,8 @@ def generaArgParser():
 
     return parser
 
-def traverse(root,base=None):
-    if base is not None:
-       yield base
-       queue = base.listChildren() 
-    else:
-        queue = [ root.child(i) for i in range(0,root.rowCount()) ]
-        #print(queue)
-        #print('')
-    while queue :
-        yield queue[0]
-        expansion = queue[0].listChildren() 
-        if expansion is None:
-            del queue[0]
-        else:
-            queue = expansion  + queue[1:]      
+from base.tree import traverseBasic as traverse
+
 def prueba():
     parser = generaArgParser()
     args = parser.parse_args()

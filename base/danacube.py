@@ -103,7 +103,7 @@ from support.util.uf_manager import *
 import base.exportWizard as eW
 
 from support.util.treestate import *
-from base.tree import GuideItem,_getHeadColumn
+from base.tree import GuideItem,_getHeadColumn,traverseBasic
 import base.config as config
 
 from base.ufhandler import Uf_handler
@@ -381,7 +381,7 @@ class DanaCubeWindow(QMainWindow):
         dict = DataDict(conn=self.cubo.db,schema=schema,table=table,iters=iters) #,confData=confData) #iters todavia noprocesamos
         tabInfo = []
         gotcha = False
-        for item in traverseTree(dict.hiddenRoot):
+        for item in traverseBasic(dict.hiddenRoot):
             if item == dict.hiddenRoot:
                 continue
             if gotcha:
