@@ -305,7 +305,7 @@ NOOP ->datalayer/query_constructor.py:377:      #FIXME no entiendo porque necesi
 
 * __EXPERIMENTAL__: __PASS__ Substitute PySide for PyQt (licensing issues) (but only Qt4.8)
 
-* __EXPERIMENTAL__ : __HOLD__ Use [qtpy](https://pypi.python.org/pypi/QtPy) as a wrapper of the various qt APIs. Doesn't
+* __EXPERIMENTAL__ : __HOLD__ Use [PyQt5](https://pypi.python.org/pypi/PyQt5) as a wrapper of the various qt APIs. Doesn't
                     include bindings for QtSQL
 
 * __EXPERIMENTAL__: Definition language compatible to CUBES (?)

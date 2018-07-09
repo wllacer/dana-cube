@@ -94,7 +94,7 @@ from support.util.decorators import *
 #from base.tree import traverse
 from base.filterDlg import filterDialog
 from base.datadict import DataDict
-from base.cubetree import traverseTree
+#from base.cubetree import traverseTree
 from support.datalayer.query_constructor import searchConstructor
 
 from support.gui.mplwidget import SimpleChart

@@ -12,6 +12,9 @@ Documentation, License etc.
 @package estimaciones
 # 0.3
 '''
+import sys
+sys.path.append('/home/werner/projects/dana-cube.git')
+
 
 from pprint import pprint
 import datetime
@@ -33,6 +36,7 @@ from base.tree import GuideItem,GuideItemModel,_getHeadColumn
 from support.util.decorators import stopwatch,model_change_control
 from support.util.numeros import is_number
 from support.gui.dialogs import propertySheetDlg
+from support.util.traverse import traverse
 
 ASUCAR = [ ['Uno',1,2,3,4 ],
            ['Dos',5,6,7,8 ],
@@ -318,31 +322,32 @@ class SsModel(QStandardItemModel):
         self.datos = TreeFormat()
         self.ss = SpreadSheet(self)
     def traverse(self,base=None):
-        """
-        Generator to navigate the tree. It only reads the head items of each rows
+        return traverse(self,base)
+        #"""
+        #Generator to navigate the tree. It only reads the head items of each rows
 
-        * Input parameter
-            * __base__ initial item to process. default is .invisibleRootItem, but this element is not yielded
-        * returns
-            * next item in sequence
+        #* Input parameter
+            #* __base__ initial item to process. default is .invisibleRootItem, but this element is not yielded
+        #* returns
+            #* next item in sequence
         
-        __TODO__
+        #__TODO__
         
-        It would be nice to put it functionally on par to util.treebasic.TreeModel
-        """
-        if base is not None:
-            yield base
-            queue = [ base.child(i) for i in range(0,base.rowCount()) ]
-        else:
-            root = self.invisibleRootItem()
-            queue = [ root.child(i) for i in range(0,root.rowCount()) ]
-        while queue :
-            yield queue[0]
-            expansion = [ queue[0].child(i) for i in range(0,queue[0].rowCount()) ]
-            if expansion is None:
-                del queue[0]
-            else:
-                queue = expansion  + queue[1:]            
+        #It would be nice to put it functionally on par to util.treebasic.TreeModel
+        #"""
+        #if base is not None:
+            #yield base
+            #queue = [ base.child(i) for i in range(0,base.rowCount()) ]
+        #else:
+            #root = self.invisibleRootItem()
+            #queue = [ root.child(i) for i in range(0,root.rowCount()) ]
+        #while queue :
+            #yield queue[0]
+            #expansion = [ queue[0].child(i) for i in range(0,queue[0].rowCount()) ]
+            #if expansion is None:
+                #del queue[0]
+            #else:
+                #queue = expansion  + queue[1:]            
 
     def data(self,index,role):
         """

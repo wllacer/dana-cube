@@ -16,7 +16,7 @@ from pprint import pprint
 from PyQt5.QtCore import Qt,QModelIndex
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from support.util.record_functions import norm2List
-
+from support.util.traverse import traverse
 """
 Utildades
 """
@@ -232,30 +232,30 @@ def cloneSubTree(entryPoint=None,filter=None):
     return model
     
   
-def traverse(*lparms):
-    if len(lparms) >=2:
-        model = lparms[0]
-        key = lparms[1]
-    elif len(lparms) == 1:
-        if isinstance(lparms[0],QStandardItemModel):
-            model = lparms[0]
-            key = model.invisibleRootItem()
-        else:
-            key = lparms[0]
-            model = lparms[0].model()
+#def traverse(*lparms):
+    #if len(lparms) >=2:
+        #model = lparms[0]
+        #key = lparms[1]
+    #elif len(lparms) == 1:
+        #if isinstance(lparms[0],QStandardItemModel):
+            #model = lparms[0]
+            #key = model.invisibleRootItem()
+        #else:
+            #key = lparms[0]
+            #model = lparms[0].model()
             
-    if key == model.invisibleRootItem():
-        queue = childItems(model.invisibleRootItem())
-    elif key is not None:
-        yield key
-        queue = childItems(key)
-    else:
-        queue = childItems(model.invisibleRootItem())
+    #if key == model.invisibleRootItem():
+        #queue = childItems(model.invisibleRootItem())
+    #elif key is not None:
+        #yield key
+        #queue = childItems(key)
+    #else:
+        #queue = childItems(model.invisibleRootItem())
         
-    while queue:
-        yield queue[0] 
-        expansion = childItems(queue[0])
-        queue = expansion + queue[1:]  # depth-first
+    #while queue:
+        #yield queue[0] 
+        #expansion = childItems(queue[0])
+        #queue = expansion + queue[1:]  # depth-first
 
 def getRow(item_ref,conTipo=False):
     """

@@ -7,58 +7,59 @@ from __future__ import unicode_literals
 from pprint import pprint
 
 from support.util.numeros import stats
+from support.util.traverse import traverse,traverseBasic
 
 (_ROOT, _DEPTH, _BREADTH) = range(3)
 (_KEY,_ITEM) = range(2)
 
 import base.config as config
 
-def traverse(tree, key=None, mode=1):
-    """
-    __DOES NOT WORK NOW__
+#def traverse(tree, key=None, mode=1):
+    #"""
+    #__DOES NOT WORK NOW__
     
-    Auxiliary function.
-    Generator to navigate a tree, but as external function See base at util.treebasic.TreeModel
+    #Auxiliary function.
+    #Generator to navigate a tree, but as external function See base at util.treebasic.TreeModel
 
-    * Input parameter
-        * __tree__ the tree to be navigated
-        * __key__  the key of the element to start reading
-        * __mode__ type of navigation. One of (_ROOT, _DEPTH, _BREADTH) =range(3). _DEPTH navigates hierarchicaly, .BREADTH per level. Default _DEPTH
+    #* Input parameter
+        #* __tree__ the tree to be navigated
+        #* __key__  the key of the element to start reading
+        #* __mode__ type of navigation. One of (_ROOT, _DEPTH, _BREADTH) =range(3). _DEPTH navigates hierarchicaly, .BREADTH per level. Default _DEPTH
 
-    * returns
-        * next item in sequence
+    #* returns
+        #* next item in sequence
         
-    __NOTES__
+    #__NOTES__
     
-    More complex interface to current traverse at GuideItemModel. Should be upgraded to this specs.
-    See base at util.treebasic.TreeModel
+    #More complex interface to current traverse at GuideItemModel. Should be upgraded to this specs.
+    #See base at util.treebasic.TreeModel
 
-    """
-    if type(tree) == GuideItemModel:
-        if not key:
-            return tree.traverse(tree.invisibleRootItem())
-        else:
-            return tree.traverse(key)
-    elif isinstance(tree,QStandardItemModel):
-        return traverseBasic(tree.invisibleRootItem())
-    else:
-        return tree.traverse(key,mode,output = _ITEM)
+    #"""
+    #if type(tree) == GuideItemModel:
+        #if not key:
+            #return tree.traverse(tree.invisibleRootItem())
+        #else:
+            #return tree.traverse(key)
+    #elif isinstance(tree,QStandardItemModel):
+        #return traverseBasic(tree.invisibleRootItem())
+    #else:
+        #return tree.traverse(key,mode,output = _ITEM)
 
-def traverseBasic(root,base=None):
-    if base is not None:
-       yield base
-       queue = [ base.child(i) for i in range(0,base.rowCount()) ]
-    else:
-        queue = [ root.child(i) for i in range(0,root.rowCount()) ]
-        #print(queue)
-        #print('')
-    while queue :
-        yield queue[0]
-        expansion = [ queue[0].child(i) for i in range(0,queue[0].rowCount()) ]
-        if expansion is None:
-            del queue[0]
-        else:
-            queue = expansion  + queue[1:]  
+#def traverseBasic(root,base=None):
+    #if base is not None:
+       #yield base
+       #queue = [ base.child(i) for i in range(0,base.rowCount()) ]
+    #else:
+        #queue = [ root.child(i) for i in range(0,root.rowCount()) ]
+        ##print(queue)
+        ##print('')
+    #while queue :
+        #yield queue[0]
+        #expansion = [ queue[0].child(i) for i in range(0,queue[0].rowCount()) ]
+        #if expansion is None:
+            #del queue[0]
+        #else:
+            #queue = expansion  + queue[1:]  
 from PyQt5.QtCore import Qt,QModelIndex
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 
@@ -1202,31 +1203,32 @@ class GuideItemModel(QStandardItemModel):
         self.coordinates = GuideItem.coordinates
         
     def traverse(self,base=None):
-        """
-        Generator to navigate the tree. It only reads the head items of each rows
+        return traverse(self,base)
+        #"""
+        #Generator to navigate the tree. It only reads the head items of each rows
 
-        * Input parameter
-            * __base__ initial item to process. default is .invisibleRootItem, but this element is not yielded
-        * returns
-            * next item in sequence
+        #* Input parameter
+            #* __base__ initial item to process. default is .invisibleRootItem, but this element is not yielded
+        #* returns
+            #* next item in sequence
         
-        __TODO__
+        #__TODO__
         
-        It would be nice to put it functionally on par to util.treebasic.TreeModel
-        """
-        if base is not None:
-            yield base
-            queue = [ base.child(i) for i in range(0,base.rowCount()) ]
-        else:
-            root = self.invisibleRootItem()
-            queue = [ root.child(i) for i in range(0,root.rowCount()) ]
-        while queue :
-            yield queue[0]
-            expansion = [ queue[0].child(i) for i in range(0,queue[0].rowCount()) ]
-            if expansion is None:
-                del queue[0]
-            else:
-                queue = expansion  + queue[1:]            
+        #It would be nice to put it functionally on par to util.treebasic.TreeModel
+        #"""
+        #if base is not None:
+            #yield base
+            #queue = [ base.child(i) for i in range(0,base.rowCount()) ]
+        #else:
+            #root = self.invisibleRootItem()
+            #queue = [ root.child(i) for i in range(0,root.rowCount()) ]
+        #while queue :
+            #yield queue[0]
+            #expansion = [ queue[0].child(i) for i in range(0,queue[0].rowCount()) ]
+            #if expansion is None:
+                #del queue[0]
+            #else:
+                #queue = expansion  + queue[1:]            
        
     def numRecords(self,type=None):
         """

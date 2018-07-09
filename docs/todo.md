@@ -97,7 +97,7 @@ Things which would be a welcome addition to the application
 
 * Integration with Django (use django as data source, core as django tool). _Nothing done thus far_
 
-* __HOLD__ Use [qtpy](https://pypi.python.org/pypi/QtPy) as a wrapper of the various qt APIs. Doesn't include bindings for QtSQL, but that is no showstopper anymore
+* __HOLD__ Use [PyQt5](https://pypi.python.org/pypi/PyQt5) as a wrapper of the various qt APIs. Doesn't include bindings for QtSQL, but that is no showstopper anymore
 
 # Subsystems
 
