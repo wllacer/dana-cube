@@ -330,6 +330,8 @@ class WSheet(QTableWidget):
         if len(lparm) == 1:
             super().setEnabled(state)
             return 
+        x = lparm[0]
+        y = lparm[1]
         if state:
             self.item(x,y).setFlags( Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled )
             self.item(x,y).setBackground(QColor(Qt.white))

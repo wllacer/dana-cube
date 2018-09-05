@@ -673,6 +673,7 @@ class TreeMgr(QTreeView):
                 msg = self.domainPrune(item,ctx)
                 if msg:
                     to_check.append(msg +'/'.join(fullKey(item)))
+                #__FIXME__ esto es una emergencia rapida. debo excluir el 0 como no valido                    
                 if mand and not dato and nchild == 0:
                     to_check.append('Obligatorio sin valor : '+'/'.join(fullKey(item)))
                 elif not mand and not dato and nchild == 0:

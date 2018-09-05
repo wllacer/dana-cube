@@ -562,7 +562,12 @@ class cubeTree(TreeMgr):
 
     #
     def pruneExcludeList(self):
-        return ['connect',]
+        """
+        lista de entradas que no debe comprobarse si son vacias. Hay dos casos:
+        connect que tiene que existir y
+        date range que debe admitir un 0  (ampliar a cualqier entrada numerica que sea indice de una lista, de momento)
+        """
+        return ['connect','date range']
 
     def domainPrune(self,item,ctx):
         super().domainPrune(item,ctx)

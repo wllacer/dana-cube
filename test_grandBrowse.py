@@ -40,5 +40,5 @@ if __name__ == '__main__':
         sys.setdefaultencoding('utf-8')
     #export()
     config.DEBUG = False
-    UberTest(mostrar=True,ejecutar=False)
+    UberTest(mostrar=True,ejecutar=True,salida=True)
     #test("rental",ejecutar=False)

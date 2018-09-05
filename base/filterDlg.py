@@ -145,6 +145,8 @@ class filterDialog(QDialog):
     def cambioCampo(self,item):
         if item.column() != 0:
             return 
+        if item.text() == '':
+            return
         pos = self.campos.index(item.text())
         self.sheet.setData(item.row(),1,self.formatos[pos])
         

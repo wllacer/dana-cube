@@ -184,7 +184,6 @@ class dateFilterDlg(QDialog):
         for i in range(self.sheet.rowCount()):
             for j in range(3,5):
                 self.sheet.item(i,j).setBackground(QColor(Qt.gray))
-                
         for row,entry in enumerate(self.data):
             for col,dato in enumerate(entry):
                 if col == 0 and dato is not None:
@@ -192,6 +191,7 @@ class dateFilterDlg(QDialog):
                     if dato == 0:
                         break
                 elif col == 1 and dato is not None:
+                    #self.sheet.setData(row,col,dato)
                     self.sheet.setData(row,col,[dato,TIPOS_INTERVALO[dato]],split=True)
                 elif dato is not None:
                     self.sheet.setData(row,col,dato)

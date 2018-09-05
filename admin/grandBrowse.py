@@ -5,6 +5,10 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import sys
+
+sys.path.append('/home/werner/projects/dana-cube.git')
+
 
 '''
 Documentation, License etc.
@@ -284,9 +288,10 @@ def generaQuery(cubo,mostrar=False,ejecutar=True,salida=False):
 from support.datalayer.querywidget import *
 
 class browsePreview(QDialog):
+    from support.util.jsonmgr import load_cubo
     def __init__(self,cubo,parent=None):
         super().__init__(parent)
-        mis_cubos = load_cubo()
+        mis_cubos =  load_cubo('/home/werner/projects/dana-cube.git/cubo.json')
         cubo = Cubo(mis_cubos[cubo])
         query = generaQuery(cubo,ejecutar=False)
         
@@ -295,31 +300,40 @@ class browsePreview(QDialog):
         meatLayout.addWidget(self.tree)
         self.setLayout(meatLayout)    
         self.tree.execute()
+
+def test(cuboId,mostrar=True,ejecutar=False,salida=False):
+    from support.util.jsonmgr import load_cubo
+
+    # TODO normalizar los nombres de ficheros y campos a FQN
+    mis_cubos = load_cubo('/home/werner/projects/dana-cube.git/cubo.json')
+    cubo = Cubo(mis_cubos[cuboId])
+    generaQuery(cubo,mostrar,ejecutar,salida)
+    #pprint(cursor)
+
+def UberTest(mostrar=False,ejecutar=True,salida=False):
+    from support.util.jsonmgr import load_cubo
+
+    # TODO normalizar los nombres de ficheros y campos a FQN
+    mis_cubos =  load_cubo('/home/werner/projects/dana-cube.git/cubo.json')
+    for cuboId in mis_cubos:
+        if cuboId == 'default':
+            continue
+        print('Ahora para el cubo ',cuboId)
+        cubo = Cubo(mis_cubos[cuboId])
+        cubo.nombre = cuboId
+        generaQuery(cubo,mostrar,ejecutar,salida)
         
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
     import sys
     #print(sys,version_info)
+    sys.path.append('/home/werner/projects/dana-cube.git')
     if sys.version_info[0] < 3:
         reload(sys)
         sys.setdefaultencoding('utf-8')
     #export()
-    cadena = 'Werner Llácer Viciano el niño de la bola ±±±þ Jalisco no te rajes'
-    print(toNormString(cadena))
-    cadena = 'þWerner Llácer Viciano el niño de la bola ±±±þ Jalisco no te rajes'
-    print(toNormString(cadena))
-    #.encode('ascii',"ignore").decode('utf-8'))
-    #print(toNormString(cadena).encode('ascii',"replace").decode('utf-8'))
-    #print(toNormString(cadena).encode('ascii',"xmlcharrefreplace").decode('utf-8'))
-    #print(toNormString(cadena).encode('ascii',"surrogatepass").decode('utf-8'))
-    #tabla = toArray()
-    #for item in tabla:
-        #print(len(item),item)
-    #getHeaders()
-    #getHeadersFilter()
-    #testTraspose()
-    #bugFecha()
     config.DEBUG = False
     #UberTest(mostrar=True,ejecutar=False)
     #test("rental",ejecutar=False)
+    #browsePreview("rental")
     

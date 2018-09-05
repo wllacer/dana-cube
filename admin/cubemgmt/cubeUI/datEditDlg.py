@@ -51,26 +51,29 @@ SETTERS
         output
             item, the edited item
 """
-def _getDetailLine(hijo,elems):
+def _getDetailLine(hijo): #,elems):
     linea = [ None for m in range(5) ]
+    campo = None
     numele = hijo.rowCount()
     for l in range(hijo.rowCount()):
         base = hijo.child(l,0).data()
         valor = hijo.child(l,1).data()
         if base == 'elem':
-            valores = []
-            for m in range(hijo.child(l,0).rowCount()):
-                valores.append(hijo.child(l,0).child(m,1).data())
-            elems.append(norm2String(valores))
+            #valores = []
+            #for m in range(hijo.child(l,0).rowCount()):
+                #valores.append(hijo.child(l,0).child(m,1).data())
+            #elems.append(norm2String(valores))
+            #elems.append(valor)
+            campo = valor
         elif base == 'date class':
             linea[0] = valor
-        elif base == 'date period':
-            linea[1] = valor
         elif base == 'date range':
+            linea[1] = valor
+        elif base == 'date period':
             linea[2] = valor
         linea[3] = None
-        linea[4] = None
-    return linea 
+        linea[4]= None
+    return campo,linea 
 
 def getDateFilter(*lparm):
     editor = lparm[0]
@@ -85,19 +88,30 @@ def getDateFilter(*lparm):
     if n.data() ==  'date filter':
         for k in range(n.rowCount()):
             hijo = n.child(k,0)
-            dato.append(_getDetailLine(hijo,elems))
+            campo,linea = _getDetailLine(hijo)
+            #dato.append(_getDetailLine(hijo,elems))
+            if campo:
+                elems.append(campo)
+                dato.append(linea)
+            
     elif t.data() == 'date filter':
-        dato.append(_getDetailLine(n,elems))
+        #dato.append(_getDetailLine(n,elems))
+        campo,linea = _getDetailLine(n)
+        if campo:
+            elems.append(campo)
+            dato.append(linea)
+        
     gparm = list(lparm[1:3])
     gparm.insert(2,'@fmt') #formato
     gparm.insert(3,lambda i:i in ('fecha', 'fechahora'))
     datefields = srcFields(*gparm)
+    
     for item in datefields:
-        if item[0] in descriptores:
+        if item[0] in elems:
             continue
         else:
-            descriptores.append(item[0])
-            datos.append([0,0,1,None,None])
+            elems.append(item[0])
+            dato.append([0,0,1,None,None])
 
     environ = {'descriptores':elems,'datos':dato}
     return environ,display
@@ -107,7 +121,7 @@ def setDateFilter(*lparm):
     view = lparm[1]
     context = lparm[2]  
     values = lparm[3]
-    if 'cancel' in values:
+    if not values or 'cancel' in values:
         return
     definicion = []
     fieldCtx = srcFields(item,view,extended=True)

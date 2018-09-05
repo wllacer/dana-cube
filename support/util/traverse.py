@@ -21,7 +21,7 @@ inspirado en un ejemplo de  [Brett Kromkamp](http://www.quesucede.com/page/show/
 """
 _DEPTH,_BREADTH = range(1,3)
 
-from PyQt5.QtCore import QAbstractItemModel
+from PyQt5.QtCore import QAbstractItemModel,QModelIndex
 #from support.util.tree_abstract import TreeDict
 
 def traverseBasic(root,base=None,mode=_DEPTH):
@@ -64,3 +64,30 @@ def traverse(*lparm,**kwparm):
     mode = kwparm.get('mode',_DEPTH)
     return traverseBasic(root,start,mode)
 
+def _getRow(lineHdr):
+    """
+    """
+    if isinstance(lineHdr,QModelIndex):
+        index = lineHdr 
+    else:
+        index = lineHdr.index()
+    model = index.model()  
+
+    if index is None or not index.isValid():
+        print('indice dañado seriamente')
+        raise()
+    print(lineHdr,lineHdr.columnCount())
+    linea = [ None ] * lineHdr.columnCount()
+    
+    for k in range(lineHdr.columnCount()):  #y si es index
+        colIdx = index.sibling(index.row(),k)
+        linea[k] = model.itemFromIndex(colIdx)
+    
+    return linea
+        
+def dumpTree(*lparm,**kwparm):
+    model = None
+    for line in traverse(*lparm,**kwparm):
+        if not model:
+            model = line.model()
+        yield _getRow(line)

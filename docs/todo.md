@@ -5,7 +5,7 @@
 
 Serious errors which are either upstream or we haven't still found a solution
 
-* BUG 0  __UPSTREAM__ __QT__ __NOTIFY PENDING__ __BYPASSED__ 
+* BUG 0  __UPSTREAM__ __QTBUG-69387__ __BYPASSED__ 
     QStandardItem.insertColumn does NOT work. QStandardITem.insertColumns behaves erratically.
     Example at _./bug_0.py_
     
