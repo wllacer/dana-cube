@@ -259,26 +259,38 @@ class Cubo:
         convierte la clausula date filter en codigo que puede utilizarse como una clausula where 
         Retorna una tupla de condiciones campo BETWEEN x e y, con un indicador de formato apropiado (fecha/fechahora(
         '''
-        sqlClause = []
         filtros = self.definition.get('date filter')
-        if not filtros:
-            return sqlClause
-        if len(filtros) == 0 :
-            return sqlClause
-        for item in  filtros :
-            clase_intervalo = item['date class']
-            tipo_intervalo = item['date range']
-            periodos = int(item['date period'])
-            if isinstance(item['elem'],(list,tuple)):
-                campo = item['elem'][0] #no debe haber mas
-            else:
-                campo = item['elem']
-            if clase_intervalo == 0:
-                continue
-            if item['date class']:
-                    intervalo = dateRange(clase_intervalo,tipo_intervalo,periodo=periodos,fmt=item.get('date format'))
-                    sqlClause.append((campo,'BETWEEN',intervalo,'f'))
-        return sqlClause
+        return setDateFilterCore(filtros)
+        #return self.setDateFilterCore(filtros)
+
+    #def setDateFilterCore(self,filtros):
+        #'''
+        #TODO doc API change
+                    #mover a support.datalayer.access_layer
+        #convierte la clausula date filter en codigo que puede utilizarse como una clausula where. 
+        #Este componente acepta los fitros como algo externo, de modo que pueda ser utilizado en varias instancias dentro de las aplicaciones
+        #Retorna una tupla de condiciones campo BETWEEN x e y, con un indicador de formato apropiado (fecha/fechahora(
+        
+        #'''
+        #sqlClause = []
+        #if not filtros:
+            #return sqlClause
+        #if len(filtros) == 0 :
+            #return sqlClause
+        #for item in  filtros :
+            #clase_intervalo = item['date class']
+            #tipo_intervalo = item['date range']
+            #periodos = int(item['date period'])
+            #if isinstance(item['elem'],(list,tuple)):
+                #campo = item['elem'][0] #no debe haber mas
+            #else:
+                #campo = item['elem']
+            #if clase_intervalo == 0:
+                #continue
+            #if item['date class']:
+                    #intervalo = dateRange(clase_intervalo,tipo_intervalo,periodo=periodos,fmt=item.get('date format'))
+                    #sqlClause.append((campo,'BETWEEN',intervalo,'f'))
+        #return sqlClause
     
 
     def __setGuias(self):

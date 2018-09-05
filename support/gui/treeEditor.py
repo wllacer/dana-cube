@@ -481,13 +481,14 @@ class TreeMgr(QTreeView):
                         newRow[0].setData(str(newRow[0].row()),Qt.EditRole)
                 for funcion in edit_data.get('setters',[]):
                     funcion(newRow[0],self,self.ctxFactory(newRow[0]),None)
-        
             return newRow[0]
         else:
             self.addChildren(item,edit_data,newItemType)
             self.setCurrentIndex(item.index())
             return item
-            
+        """
+        """
+
         
 
     def addChildren(self,newHead,edit_data,tipo):
@@ -518,11 +519,12 @@ class TreeMgr(QTreeView):
                     #elif entrada[1]:
                     else:
                         self.actionAdd(newHead,entrada[0])
+
     
     def actionAddTop(self,item,newItemType):
         pos = self.actionAdd(item,newItemType)
         self.actionRename(pos)
-       
+
     def actionRename(self,item,campo=None):
         text = QInputDialog.getText(None, "Nuevo nombre para el nodo: "+item.data(),"Nodo", QLineEdit.Normal,item.data())
         if text[0] and text[0] != '':

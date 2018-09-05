@@ -239,6 +239,36 @@ def _sqlFmt(parametro,**kwargs):
     else:
         return resultado
     
+def setDateFilterCore(filtros):
+    '''
+    TODO doc API change
+    convierte la clausula date filter en codigo que puede utilizarse como una clausula where. 
+    Este componente acepta los fitros como algo externo, de modo que pueda ser utilizado en varias instancias dentro de las aplicaciones
+    Retorna una tupla de condiciones campo BETWEEN x e y, con un indicador de formato apropiado (fecha/fechahora(
+    
+    '''
+    from support.util.fechas import dateRange
+    
+    sqlClause = []
+    if not filtros:
+        return sqlClause
+    if len(filtros) == 0 :
+        return sqlClause
+    for item in  filtros :
+        clase_intervalo = item['date class']
+        tipo_intervalo = item['date range']
+        periodos = int(item['date period'])
+        if isinstance(item['elem'],(list,tuple)):
+            campo = item['elem'][0] #no debe haber mas
+        else:
+            campo = item['elem']
+        if clase_intervalo == 0:
+            continue
+        if item['date class']:
+                intervalo = dateRange(clase_intervalo,tipo_intervalo,periodo=periodos,fmt=item.get('date format'))
+                sqlClause.append((campo,'BETWEEN',intervalo,'f'))
+    return sqlClause
+    
 def _sqlClause(left,comparator,right=None,twarn=True,**kwargs):
     """Crea un operación logica con dos entradas (izquierda y derecha) con un operador de comparación
        

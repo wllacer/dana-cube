@@ -61,6 +61,7 @@ Areas where the product __must__ be improved. They might not be errors but don't
 
 * Windows integration ¿?
 
+
 ## Needed Enhancements
 
 Thing which shall belong to the app and aren't there now
@@ -121,6 +122,7 @@ Most of it is already in a new (and I hope better) implementation, but they stil
 * Para sqlite que el selector de base de datos sea el selector de ficheros del sistema
 * __solved__ Copy to other place. Falta el proceso de adaptacion de tablas
 * __solved__ Restore
+* In cubbebrowse add element should directly trigger the editor
 
 ## Database backends
 
