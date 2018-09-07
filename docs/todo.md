@@ -60,8 +60,8 @@ Areas where the product __must__ be improved. They might not be errors but don't
 * __Solved__ Restaurar valores originales no funciona ahora ¿?
 
 * Windows integration 
-    * base.uf_handler 24 spliy libname (de / a \\)
-    * support.util.jsonmgr 126 de ~ a os.environ[HOMEPATH]
+    * __solved__ base.uf_handler 24 spliy libname (de / a \\)
+    * __solved__ support.util.jsonmgr 126 de ~ a os.environ[HOMEPATH]
 
 
 ## Needed Enhancements

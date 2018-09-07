@@ -18,7 +18,7 @@ from pathlib import Path
 def load_cubo(fichero="cubo.json"):
     my_dict = {}
     try:
-        with open(fichero) as infile:
+        with open(getPath(fichero)) as infile:
             my_dict = json.load(infile)
     except IOError:
         print('Error de E/S en fichero. Probablemente fichero no exista %s'%fichero)
@@ -26,9 +26,10 @@ def load_cubo(fichero="cubo.json"):
     return my_dict
 
 def dump_json(data, fichero="cubo.json"):
-    with open(fichero,'w') as outfile:
+    with open(getPath(fichero),'w') as outfile:
         json.dump(data,outfile, sort_keys=False,indent=4,ensure_ascii=False)
     
+
 def dump_structure(new_data, fichero="cubo.json",**flags):
     total = flags.get('total',True)
     secure = flags.get('secure',False) 
@@ -115,32 +116,7 @@ def dump_config(new_data, fichero=".danabrowse.json",**flags):
         dump_json(baseCubo,'{}.{}'.format(fichero,datetime.datetime.now().strftime("%Y%m%d-%H%M%S")))
     dump_json(k_new_data,fichero)
     
-def getConfigFileName(pName=None):
-    """
-    determina la posicion y nombre de Configuration file.
-    Si existe un directorio de aplicacion (APPDATA) crea el directorio para Dana si no existe previamente
-    """
-    
-    name = Path(pName if pName else '.danabrowse.json')
-    if name.is_absolute():
-        #if not name.exists():
-            #name.touch()
-        return str(name)
 
-    appdata = os.environ.get('APPDATA')
-    if not appdata: #no existe directorio de configuracion. Entonces a Home
-        appdir = Path.home()
-    else:
-        confdir = Path(appdata)
-        if not confdir.is_dir():
-            appdir = Path.home()
-        else:
-            appdir =confdir / 'DanaCube'
-            if not appdir.exists():
-                #creo el directorio para danacube
-                appdir.mkdir()
-    configFileName = appdir / name
-    return str(configFileName)
 #
 # de http://stackoverflow.com/questions/4527942/comparing-two-dictionaries-in-python
 # el original es el segundo
@@ -154,6 +130,56 @@ def dict_compare(nuevo, original):
   same = set(o for o in intersect_keys if nuevo[o] == original[o])
   return added, removed, modified, same
 
+
+def getAppDir(create=True):
+    """
+    Obtiene el directorio de defecto de datos de la aplicacion.
+    Utiliza la variable de entorno APPDATA si existe; si no el directorio de defecto del usuario
+    """
+    appdata = os.environ.get('APPDATA')
+    if not appdata: #no existe directorio de configuracion. Entonces a Home
+        appdir = Path.home()
+    else:
+        confdir = Path(appdata)
+        if not confdir.is_dir():
+            appdir = Path.home()
+        else:
+            appdir =confdir / 'wernerllacer.com/DanaCube'
+            if not appdir.exists() and create:
+                #creo el directorio para danacube
+                appdir.mkdir(parents=True)
+    return appdir
+    
+def getPath(pFichero):
+    """
+    Determino el path real de un fichero 
+    Existen tres casos
+    1) Si fichero  es un path absoluto se retorna el mismo
+    2) si es un path relativo (con subdirectorios o comenzando con ./ -o .\\, segun) lo consideramos relativo respecto del directorio de trabajo -donde se ha invocado la aplicacion
+    3) Si es independiente ( simplemente un nombre de fichero) se busca en el directorio de arranque, y si no existe en el directorio de datos de la aplicacion (ver getAppDir)..
+    En el caso de los ficheros independientes SIEMPRE los crea en el directorio de datos de la aplicacion
+    """
+    fichero = Path(pFichero)
+    if fichero.is_absolute():
+        return fichero
+    else:
+        base = Path(os.getcwd())
+        resultado = base / fichero
+        if pFichero == fichero.name and not resultado.exists():
+            res2 = getAppDir(create=True)  / fichero
+            return res2.resolve()
+        else:
+            return resultado.resolve()
+        
+def getConfigFileName(pName=None):
+    """
+    determina la posicion y nombre de Configuration file.
+    Es ahora  un placeholder de getPath, usado por compatibilidad
+    """
+    resultado =getPath(pName if pName else '.danabrowse.json') 
+    return str(resultado)    
+
+    
 if __name__ == '__main__':
     #base = { 'entry1':1,
              #'entry2':{'connect':{'pepe':'hugo','dbpass':'mariano'}},
@@ -211,7 +237,12 @@ if __name__ == '__main__':
          
      
     }
-    print(getConfigFileName())
+    print(os.getcwd())
+    fichero = 'pepe'
+    fichero1 = './pepe'
+    for fichero in ('pepe','./pepe','../../circo/maximo','/home/werner/pepe','$HOME/paco','.cursi','testcubo.json'):
+        print('{:20} -> {}'.format(fichero,getPath(fichero)))
+    #print(getConfigFileName())
     #dump_config(nuevo,'pepelaalfa.txt')
     #dump_config(base,nuevo,'pepelaalfa.txt',total=False,secure=True)
         
