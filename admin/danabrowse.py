@@ -326,7 +326,7 @@ class DanaBrowseWindow(QMainWindow):
         parmDialog = ConnectionSheetDlg('Edite la conexion',context,datos, self)
         if parmDialog.exec_():
             #TODO deberia verificar que se han cambiado los datos
-            datos[1]=DRIVERS[datos[1]]
+            #datos[1]=DRIVERS[datos[1]]
             self.configData['Conexiones'][datos[0]] = row2dict(datos[1:],attr_list)
             return datos[0]
      

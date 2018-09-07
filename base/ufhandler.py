@@ -17,17 +17,32 @@ USER_EXTENDED_DIR = './userfunctions'
 
 import user as uf
 
-# poder modificar dinamicamente el nombre
-
-if os.path.isdir(USER_EXTENDED_DIR):  #y tiene un init file
-    fullpath = os.path.abspath(USER_EXTENDED_DIR)
-    libname = fullpath.split('/')[-1]
-    initfile = fullpath + '/__init__.py'
-    if os.path.exists(initfile):
-        EXTENDED_USER = True
+# poder modificar dinamicamente el nombre. De momento admito varia version_info
+#
+#if sys.version_info[0] == 3 and sys.version_info[1] >= 4:
+from pathlib import Path
+fullpath = Path(USER_EXTENDED_DIR).resolve()
+if fullpath.is_dir():
+    libname = fullpath.name
+    initfile = fullpath / "__init__.py"
+    if initfile.exists():
+        EXTENDED_USER=True
         if fullpath not in sys.path:
-            sys.path.append(fullpath)
+            sys.path.append(str(fullpath))   #str para garantizar de momento la homogeneidad
         uf2 = import_module(libname)
+#else:
+    #if os.path.isdir(USER_EXTENDED_DIR):  #y tiene un init file
+        #fullpath = os.path.abspath(USER_EXTENDED_DIR)
+        #if os.name == 'nt':
+            #libname = fullpath.split('\\')[-1]
+        #else:
+            #libname = fullpath.split('/')[-1]
+        #initfile = fullpath + '/__init__.py'
+        #if os.path.exists(initfile):
+            #EXTENDED_USER = True
+            #if fullpath not in sys.path:
+                #sys.path.append(fullpath)
+            #uf2 = import_module(libname)
 
 from support.util.uf_manager import *
 from support.util.decorators import keep_tree_layout,model_change_control,waiting_effects

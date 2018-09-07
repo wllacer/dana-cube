@@ -13,6 +13,7 @@ from pprint import pprint
 import json
 import os
 import datetime
+from pathlib import Path
 
 def load_cubo(fichero="cubo.json"):
     my_dict = {}
@@ -115,21 +116,31 @@ def dump_config(new_data, fichero=".danabrowse.json",**flags):
     dump_json(k_new_data,fichero)
     
 def getConfigFileName(pName=None):
-    # Configuration file
-    #TODO para ser efectivo de verdad necesita mas logica
-    if not pName:
-        name = '.danabrowse.json'
+    """
+    determina la posicion y nombre de Configuration file.
+    Si existe un directorio de aplicacion (APPDATA) crea el directorio para Dana si no existe previamente
+    """
+    
+    name = Path(pName if pName else '.danabrowse.json')
+    if name.is_absolute():
+        #if not name.exists():
+            #name.touch()
+        return str(name)
+
+    appdata = os.environ.get('APPDATA')
+    if not appdata: #no existe directorio de configuracion. Entonces a Home
+        appdir = Path.home()
     else:
-        name = pName
-        
-    if os.name == "nt":
-        appdir = os.path.expanduser('~/Application Data/Dana')
-        if not os.path.isdir(appdir):
-            os.mkdir(appdir)
-        configFilename = appdir + "/"+name
-    else:
-        configFilename = os.path.expanduser('~/'+name)
-    return configFilename
+        confdir = Path(appdata)
+        if not confdir.is_dir():
+            appdir = Path.home()
+        else:
+            appdir =confdir / 'DanaCube'
+            if not appdir.exists():
+                #creo el directorio para danacube
+                appdir.mkdir()
+    configFileName = appdir / name
+    return str(configFileName)
 #
 # de http://stackoverflow.com/questions/4527942/comparing-two-dictionaries-in-python
 # el original es el segundo
@@ -200,6 +211,7 @@ if __name__ == '__main__':
          
      
     }
-    #dump_config(base,nuevo,'pepelaalfa.txt')
-    dump_config(base,nuevo,'pepelaalfa.txt',total=False,secure=True)
+    print(getConfigFileName())
+    #dump_config(nuevo,'pepelaalfa.txt')
+    #dump_config(base,nuevo,'pepelaalfa.txt',total=False,secure=True)
         

@@ -248,7 +248,8 @@ The tool is open to user extensions, so special test can be run over the data. S
 
 ## Where to run the tool
 
-The tool is programmed in _python3_ + _PyQt5_ but it might be possible to be run under _Python2_ (we try to be as much compatible as possible, but haven't tested it in a while). And we have made avaliable the core functionality _without_ the need of using Qt. 
+The tool is programmed in _python3_ + _PyQt5_ but ~~it might be possible to be run under _Python2_ (we try to be as much compatible as possible, but haven't tested it in a while)~~ . And we make avaliable the core functionality _without_ the need of using Qt (but functionaly behind the main version)
+
 
 The infrastructure is database agnostic. We use [SqlAlchemy](http://www.sqlalchemy.org/) as data backend, so in theory every database which can be accessed thru it should be available, although a few specific changes might be needed 
 

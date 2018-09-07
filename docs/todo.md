@@ -59,7 +59,9 @@ Areas where the product __must__ be improved. They might not be errors but don't
 
 * __Solved__ Restaurar valores originales no funciona ahora ¿?
 
-* Windows integration ¿?
+* Windows integration 
+    * base.uf_handler 24 spliy libname (de / a \\)
+    * support.util.jsonmgr 126 de ~ a os.environ[HOMEPATH]
 
 
 ## Needed Enhancements
@@ -72,7 +74,7 @@ Thing which shall belong to the app and aren't there now
 * Move default definition to the same place as the user function definition tree
 * __solved__ Performance enhacements when a guide includes categories and dates not in the first prod rule
 
-
+* in column fusion end with hiding the source columns
 
 ## Wishlist
 
@@ -123,6 +125,7 @@ Most of it is already in a new (and I hope better) implementation, but they stil
 * __solved__ Copy to other place. Falta el proceso de adaptacion de tablas
 * __solved__ Restore
 * In cubbebrowse add element should directly trigger the editor
+* Lock when db not available
 
 ## Database backends
 

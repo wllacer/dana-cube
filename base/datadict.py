@@ -136,7 +136,11 @@ class DataDict():
 
         padre = self.hiddenRoot
         if 'confData' in kwargs:
-            conf = kwargs['confData'] #[confName]   
+            if confName in kwargs['confData']:
+                conf = kwargs['confData'][confName]
+            elif 'driver' in kwargs['confData']:
+                conf = kwargs['confData']
+            #FIXME no tiene salida en caso que no este bien
             # asi tengo acceso a esos datos aunque sea dinamica
             if not self.configData:
                 self.configData = {'Conexiones':{confName:conf}}
@@ -175,7 +179,7 @@ class DataDict():
         #except ( OperationalError, ProgrammingError, InterfaceError,  ) as e:
         except Exception as e:
             self.conn[confName] = None
-            informacion = [ str(item) for item in e.orig.args ]
+            informacion = [ str(item) for item in e.args ] #e.orig.args ]
             print(type(e),informacion)
             showConnectionError(confName,norm2String(informacion))             
             padre.insertRow(pos,(ConnectionTreeItem(confName,None),QStandardItem('Disconnected')))
