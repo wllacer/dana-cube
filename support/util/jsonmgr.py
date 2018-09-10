@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding=utf -*-
 from __future__ import division
 from __future__ import absolute_import
@@ -115,8 +116,80 @@ def dump_config(new_data, fichero=".danabrowse.json",**flags):
     if baseCubo:
         dump_json(baseCubo,'{}.{}'.format(fichero,datetime.datetime.now().strftime("%Y%m%d-%H%M%S")))
     dump_json(k_new_data,fichero)
-    
 
+def dictMerge(oldData,newData,sorted=False):
+    k_new_data = dict()
+    added, removed, modified, same = dict_compare(newData,oldData)
+    for entry in added:
+        k_new_data[entry] = newData[entry]
+    for entry in removed:
+        k_new_data[entry] = oldData[entry]
+    for entry in same:
+        k_new_data[entry] = oldData[entry]
+    for entry in modified:
+        # si es un diccionario muevo elemento a elemento
+        if newData[entry] and isinstance(newData[entry],dict) and isinstance(oldData[entry],dict):
+            k_new_data[entry] = dictMerge(oldData[entry],newData[entry])
+        elif newData[entry]:  #se supone que deberia salir siempre por aqui
+            k_new_data[entry] = newData[entry]
+    if sorted:
+        sk_new_data = dict()
+        for clave in sorted(k_new_data):
+            sk_new_data[clave] = k_new_data[clave]
+        return sk_new_data
+    else:
+        return k_new_data
+
+def dump_data(new_data, fichero=None,**flags):
+    total = flags.get('total',True)
+    secure = flags.get('secure',False)
+    secure_paths = flags.get('secure_paths',[])
+    sorted = flags.get('sorted',False)
+    
+    oldData=load_cubo(fichero)
+    k_new_data = dict()
+    
+    if total:
+        k_new_data = new_data
+    else:
+        k_new_data = dictMerge(oldData,new_data,sorted=sorted)
+        if secure:
+            result = dict()
+            for path in secure_paths:
+                filterDictSubset(result,secure_paths,oldData)
+            massUpdate(k_new_data,result)
+            
+        
+    #if secure:
+        ## Los datos de seguridad no se ven afectados por los cambios hechos durante el proceso  en vivo
+        #diccionario = oldData
+        #for path in secure_paths:
+            #for entry in path:
+                #diccionario = diccionario.get(entry,{})
+                #if not diccionario:
+                    #break
+            #if diccionario:
+                
+                
+                
+    
+                
+        #for entry in k_new_data['Conexiones']:
+            #if not oldData:
+                #break
+            #if not isinstance(k_new_data['Conexiones'][entry],dict):
+                #continue
+            #if k_new_data['Conexiones'][entry].get('dbpass'):
+                #k_new_data['Conexiones'][entry]['dbpass'] = oldData.get('Conexiones',{}).get(entry,{}).get('dbpass','')
+            #if k_new_data['Conexiones'][entry].get('dbuser'):
+                #k_new_data['Conexiones'][entry]['dbuser'] = oldData.get('Conexiones',{}).get(entry,{}).get('dbuser','')
+
+    if oldData == k_new_data:
+        return
+    #no grabo si no hay cambios
+    if oldData:
+        dump_json(oldData,'{}.{}'.format(fichero,datetime.datetime.now().strftime("%Y%m%d-%H%M%S")))
+    dump_json(k_new_data,fichero)
 #
 # de http://stackoverflow.com/questions/4527942/comparing-two-dictionaries-in-python
 # el original es el segundo
@@ -161,14 +234,17 @@ def getPath(pFichero):
     """
     fichero = Path(pFichero)
     if fichero.is_absolute():
+        #print(pFichero,' instanciado en ',fichero)
         return fichero
     else:
         base = Path(os.getcwd())
         resultado = base / fichero
         if pFichero == fichero.name and not resultado.exists():
             res2 = getAppDir(create=True)  / fichero
+            #print(pFichero,' instanciado en ',res2)
             return res2.resolve()
         else:
+            #print(pFichero,' instanciado en ',resultado)
             return resultado.resolve()
         
 def getConfigFileName(pName=None):
@@ -179,7 +255,41 @@ def getConfigFileName(pName=None):
     resultado =getPath(pName if pName else '.danabrowse.json') 
     return str(resultado)    
 
-    
+
+def filterDictSubset(result,secuencia,recurso,cabecera=list()):
+    dest = cabecera[:]
+    for ind,clave in enumerate(secuencia):
+        if clave == '*':
+            for nclave in recurso:
+                nseq = (nclave,) + secuencia[ind +1:]
+                filterDictSubset(result,nseq,recurso,dest)
+            break
+        else:
+            recurso = recurso.get(clave)
+            if recurso is None:
+                dest = list()
+                break
+            else:
+                dest.append(clave)
+    else:
+        #print(dest,recurso)
+        result[tuple(dest)]=recurso
+
+def massUpdate(recurso,valores):
+    for entrada in valores:
+        update(recurso,valores[entrada],*entrada)
+        
+def update(tabla,nuevovalor,*clave):
+    dest = tabla
+    for step in clave[:-1]:
+        if step in dest:
+            dest= dest[step]
+        else:
+            break
+    else:
+        dest[clave[-1]] = nuevovalor
+
+            
 if __name__ == '__main__':
     #base = { 'entry1':1,
              #'entry2':{'connect':{'pepe':'hugo','dbpass':'mariano'}},
@@ -237,12 +347,39 @@ if __name__ == '__main__':
          
      
     }
-    print(os.getcwd())
-    fichero = 'pepe'
-    fichero1 = './pepe'
-    for fichero in ('pepe','./pepe','../../circo/maximo','/home/werner/pepe','$HOME/paco','.cursi','testcubo.json'):
-        print('{:20} -> {}'.format(fichero,getPath(fichero)))
+    #print(os.getcwd())
+    #fichero = 'pepe'
+    #fichero1 = './pepe'
+    #for fichero in ('pepe','./pepe','../../circo/maximo','/home/werner/pepe','$HOME/paco','.cursi','testcubo.json'):
+        #print('{:20} -> {}'.format(fichero,getPath(fichero)))
     #print(getConfigFileName())
     #dump_config(nuevo,'pepelaalfa.txt')
     #dump_config(base,nuevo,'pepelaalfa.txt',total=False,secure=True)
-        
+    #def get_nested(data, *args):
+            #if args and data:
+                #element  = args[0]
+                #if element:
+                    #value = data.get(element)
+                    #return value if len(args) == 1 else get_nested(value, *args[1:])
+
+    activo= load_cubo('.danabrowse.json')
+    print('antes',activo['Conexiones']['Pagila']['dbhost'])
+    print('        /',base['Conexiones']['Pagila']['dbpass'])
+    activo['Conexiones']['Pagila']['dbhost']='hugo'
+    print('desp',activo['Conexiones']['Pagila']['dbhost'])
+    activo['Conexiones']['Pagila']['dbpass']='sanchez'
+    print('      /',activo['Conexiones']['Pagila']['dbpass'])
+    secuencia = (('Conexiones','*','dbhost'),('Conexiones','*','dbpass'))
+    recurso = base
+    result = dict()
+    base= load_cubo('.danabrowse.json')
+    print('stored',base['Conexiones']['Pagila']['dbhost'])    
+    for seq in secuencia:
+        filterDictSubset(result,seq,base)
+    #pprint(result)
+    massUpdate(activo,result)
+    print('al final',activo['Conexiones']['Pagila']['dbhost'])
+    print('          /',activo['Conexiones']['Pagila']['dbpass'])
+    print(activo['Conexiones']['Pagila']['dbpass'])
+
+    #pprint(nuevo)

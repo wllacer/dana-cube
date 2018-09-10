@@ -28,20 +28,21 @@ Dana-cube es una herramienta para automatizar el diseño, ejecución y visualiza
 * [Out there ...](#out-there-)
 * [Contact](#contact)
 
-# __WARNING__ 
-On the __11th of April 2018__ we changed the directory structure severely, which may have affected the stability of the tool and totally broken the API. 
-
-We hope instability is solved now. For those using the old api you migth use the latest Release or the __old_dir_struct__ branch (they're the same and stabilized, but patches are welcome)
 
 # Objetivos en Español
 
 ## Cual es el problema:
 
 
-Lo que realmente necesito es una herramienta que me permita resolver, quizas el más común de los problemas con bases de datos SQL: __resolver una agregación (suma, promedio, ...) por dos o mas parámetros y presentarlos en formato matricial (hoja de calculo)__
+Una herramienta que me permita resolver, quizas el más común de los problemas con bases de datos SQL: __resolver una agregación  (suma, promedio, ...) por dos o mas parámetros y presentarlos en formato matricial (hoja de calculo)__ Y de forma dinámica, es decir que no necesite estar programada previamente.
 
-Veamoslo con un ejemplo. Imaginen una base de datos de resultados electorales y lo que queremos es una consulta del tipo _Dame la suma de votos cruzados por partido y distrito electoral_. En teoría esto es una consulta muy sencilla en _SQL_
+Un ejemplo canónico sería de consulta de este tipo sería _dame la suma total de ventas de un periodo desglosada por linea de producto y ámbito territorial_ y lo de __dinámica__ que ahora pueda cambiar el cruce a _vendedor_ y _rating financiero del cliente_ sin necesidad de que este cruce este previamente creado.
 
+Primero querría explicar el por qué es útil una herramienta especifica para ello. Veamoslo con un ejemplo. Imaginen una base de datos de resultados electorales y lo que queremos es una consulta del tipo 
+
+_Dame la suma de votos cruzados por partido y distrito electoral_. 
+
+En teoría esto es una consulta muy sencilla en _SQL_
 
 ```
     select partido_id,provincia,sum(votes_presential)
@@ -86,16 +87,33 @@ Castellón/Castelló           48,220                                       98,3
 ...
 ```
 
-Desgraciadamente este tipo de presentación __NO esta disponible__ en la mayoría de programas de consulta. Algunos productos (como Oracle y MSSQL) ofrecen soluciones privadas para generar este tipo de consultas, pero casi nunca están disponibles en herramientas generals. Las _consultas de referencias cruzadas_ de MS Access y las _tablas Pivot_ en muchas hojas de cálculo ofrecen esta funcionalidad. He visto algunas extremadamente interesantes.
+## Qué alternativas hay 
 
-Pero la estabilidad, mantenibilidad, seguridad y las posibilidades de distribuirlas es otra historia totalmente distinta. Mi experiencia con el rendimiento de los enlaces via ODBC es menor que buena. Y como antiguo administrador, "enganchar" a una base de datos corporativa "real", una herramienta tan incontrolable como es la interfaz ODBC, es una pesadilla desde el punto de vista de la seguridad y del rendimiento
+Desgraciadamente este tipo de presentación __NO esta disponible directamente__ en la mayoría de programas de consulta. Algunos productos (como Oracle y MSSQL) ofrecen soluciones privadas para generar este tipo de consultas, pero casi nunca están disponibles en las herramientas generales. 
+
+En la mayoría de las aplicaciones existen _programas de informes_ que realizan algun tipo de operación de este tipo, pero __carecen de flexibilidad__ lo que se puede consultar y cruzar esta predefindo por la aplicación original y no puede crearse un nuevo cruce sobre la marcha.
+
+Existen una serie de productos en el mercado (conocidos como __data warehouse__, __business inteligence__, ...) que permiten estas consultas dinámicas, y muchas mas cosas sobre ello. Normalmente estan vinculados a una base de datos o un tipo de problema concreto, y tienden a ser muy __complejas y costosas en recursos__ (técnicos y de personal, al menos). Lo que nosotros queremos es una herramienta simple, y limitada al problema de las referencias cruzadas
+
+Las _consultas de referencias cruzadas_ de MS Access y las _tablas Pivot_ en muchas hojas de cálculo ofrecen la funcionalidad. Y he visto algunas soluciones extremadamente interesantes con ellas. Pero el mecanismo exige que el usuario __trabaje sobre  la estructura interna__ de la base de datos, que puede ser muy compleja.
+
+Además, la estabilidad, mantenibilidad, seguridad y las posibilidades de distribuir estas soluciones sobre Access y/o Excel  son muy problemáticas. Mi experiencia con el rendimiento de los enlaces via ODBC es menor que buena. Y como antiguo administrador, "enganchar" a una base de datos corporativa "real", una herramienta tan incontrolable como es la interfaz ODBC, es una pesadilla desde el punto de vista de la seguridad y, probablemente también, del rendimiento.
 
 ## Que ofrecemos
 
-Con _dana-cube_ ofrecemos un módulo (y su _API_) con la intención de simplificar la generación de estas matrices / referencias cruzadas; permitiendo, además integrarlas en cualquier aplicación Python. A traves de esta interfaz, la generación del ejemplo anterio puede reducirse al siguiente código (sin formateo)
+ofrecemos un programa __danacube.py__ para que los usuarios puedan ejectuar y visualizar interactivamente las distintas consultas cruzadas sobre una base de datos. 
+
+![Screenshot](docs/image/danacube_ss.png "Title")
+
+Como se puede ver en el ejemplo, __no referenciamos directamente a la base de datos subyacente, sino a una abstracción__
+Cada instancia se ejecuta contra lo que denominamos un __Cubo__ esto es la visión de una tabla de datos (o estructura equivalente), los campos (__fields__) sobre los que queremos hacer las agregaciones y los criterios de agrupación (que denominamos __guias__). Estos criterios pueden ser campos escalares o agrupaciones jerarquizadas. Si las guias son fechas, automaticamente ofrecemos la posibilidad de jeraquizarlos (por años, años-mes, ...). Cada __consulta cruzada__ entre dos guias lo que denominamos __Vista__. 
+
+Las definiciones de estos _Cubos_ se hacen a través de ficheros de texto (_json__), con lo que los posibles accesos a la base de datos están controlados externamente.
+
+Y el acceso se realiza internamente a través de una _API_   con la intención de simplificar la generación de estas matrices / referencias cruzadas; permitiendo, además integrarlas en otras aplicaciones . A traves de esta interfaz, la generación del ejemplo anterior puede reducirse al siguiente código (sin formateo)
 
 ```
-from dana-cube.util.jsonmgr import load_cubo
+from dana-cube.support.util.jsonmgr import load_cubo
 from dana-cube.core import *
 
 mis_cubos = load_cubo()
@@ -105,19 +123,10 @@ resultado = vista.toList()
 for linea in resultado:
     print(linea)
 ```
-Como se puede ver en el ekjemplo, __no referenciamos directamente a la base de datos subyacente, sino a una abstracción__
-Cada instancia se ejecuta contra lo que denominamos un __Cubo__ esto es la visión de una tabla de datos (o estructura equivalente), los campos (__fields__) sobre los que queremos hacer las agregaciones y los criterios de agrupación (que denominamos __guias__). Estos criterios pueden ser campos escalares o agrupaciones jerarquizadas. Si las guias son fechas, automaticamente ofrecemos la posibilidad de jeraquizarlos (por años, años-mes, ...). Cada __consulta cruzada__ entre dos guias lo que denominamos __Vista__. 
-Las definiciones de estos _Cubos_ se hacen a través de ficheros de texto (_json__), con lo que los posibles accesos a la base de datos están controlados externamente.
-
-Por encima de esta _API_ ofrecemos un programa __danacube.py__ para que los usuarios puedan ejectuar y visualizar interactivamente las distintas consultas cruzadas que estas definiciones permiten. Asimismo permite generar una serie de gráficos y exportar los resultados a otras herramientas
-
-
-![Screenshot](docs/image/danacube_ss.png "Title")
-
 Un usuario final de la herramienta no puede definir (ni utilizar) nada que no se encuentre en el fichero de configuración. __¿Por qué?__ Una razón es permitir que el usuario trabaje con una visión de los datos que no tiene por que corresponder con la estructura interna de la base de datos, sino a un __modelo conceptual__ mas cercano a su visión de los datos. Por otro lado, es un modo para los DBAs para limitar que esta disponible para consultas dentro de la base de datos, mas alla de la seguridad intrinseca de la base de datos
 
-La herramienta esta abierta a que los usuarios puedan incluir sus propias extensiones de modo que puedan ejecutar tests especiales. Vea [como hacerlo](docs/user_functions.md)
 
+__Danacube.py__ permite generar dinámicamente una serie de gráficos sobre los datos presentados y exportar los resultados a otras herramientas para un análisis posterior, mas detallado. O a traves de extensiones de código (vea [como hacerlo](docs/user_functions.md) ) crear sus propias herramientas de análisis
 
 Además ofrecemos los programas siguientes
 
@@ -135,8 +144,8 @@ Además ofrecemos los programas siguientes
 
 ## Donde funciona
 
-La herramienta está programada con _python3_ + _PyQt5_ (Hemos intentado ser lo mas compatibles posibles con _Python 2.7_ pero hace tiempo que no se prueba). 
-la infraestructa es agnostica respecto del gestor de base de datos. Para ello utilizamos [SqlAlchemy](http://www.sqlalchemy.org/)  como "data backend", de modo que, en teoría cualquier gestor accesible para ella puede ser utilizado con dana-cube; aunque no es descartable que requiera de pequeños ajustes
+La herramienta está programada con _python3_ + _PyQt5_ 
+La infraestructura es agnósstica respecto del gestor de base de datos. Para ello utilizamos [SqlAlchemy](http://www.sqlalchemy.org/)  como "data backend", de modo que, en teoría cualquier gestor accesible para ella puede ser utilizado con dana-cube; aunque no es descartable que requiera de pequeños ajustes
 
 * [Saltar a la información general -en ingles-](#documentation)
 
@@ -305,7 +314,7 @@ Qt, PyQt -and the additional libraries-, licensing might impose other restrictio
 
 What does it means?
 
-* We deem that we have achieved a functional 'completeness' of the cube tool (_danacube.pyw_) , so it should be useful for valiant user; but that it still lacks proper outside testing (so, for sure, many bugs ahead) and  documentation (hope to solve it soon)
+* We deem that we have achieved a functional 'completeness' of the tool, so it should be useful for valiant user; but that it still lacks proper outside testing (so, for sure, many bugs ahead) and  documentation (hope to solve it soon)
 
 * What we know it's missing:
     * Unknown bugs all around (i know i'm not perfect). And a few known ;-)
@@ -316,10 +325,6 @@ What does it means?
     * I haven't had the chance to adapt/test it against __DB2__ or __MSSQL Server__ ¿Any volunteer?
     * Nor performance, neither security have been, till now, top priority goals. _You've been warned_
     * Legalese is missing in code (copyrights, licence specs, and so on)
-
-
-__Update 2017/12/27__  We have a new core based on qt standard models. It simplifies a lot programming and has solved a number of perfomance isses with long guides, BUT we keep a pure non-qt core subsystem for those interested __Update 2018/04/13:__. The noqt subsystem has been _taken out_ for the time being (too many changes,too few hands to handle)
- 
 
 
 Active tasks can be read [here](../docs/todo.md) 
@@ -342,6 +347,6 @@ If you feel my package isn't enough for you  have a look at the following projec
 
 # Contact
 
-You can email me regarding this application thru the address _danacube.sup_ at _gmail_
+You can email me regarding this application thru the address _danacube.sup_ at _gmail_ _dot_ _com_
 
 A.M.D.G. & B.V.M.
