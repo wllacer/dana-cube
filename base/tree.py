@@ -518,6 +518,11 @@ class GuideItem(NewGuideItem):
             nitem = GuideItem(self.data(REF),super().data(SHOW))
         else:
             nitem = GuideItem(self.data(KEY),super().data(SHOW))
+        for k in range(KEY -1):
+            if k in (REF,KEY,SHOW):
+                continue
+            else:
+                nitem.setData(self.data(k),k)
         return nitem
 
     def __getitem__(self,campo):
@@ -1448,10 +1453,14 @@ class GuideItemModel(QStandardItemModel):
         for item in self.traverse(entryPoint):
             if filter and not filter(item):
                 continue
+            """
+            old code 
+            """
             papi = item.parent()
             npapi = None
             if papi:
                 ref = papi.getFullHeadInfo(content='key',format='array')
+                #print(ref)
                 while len(ref) > 0:
                     npapi = newTree.searchHierarchy(ref)
                     if npapi:
@@ -1459,9 +1468,13 @@ class GuideItemModel(QStandardItemModel):
                     else:
                         ref.remove(ref[0])
             if not npapi:  
+                #if papi:
+                    #print('No cabecera')
                 npapi = newTree.invisibleRootItem()
             nitem = item.clone()
             npapi.appendRow((nitem,))
+            
+         
             # aqui pues setPayload verifca la columna y solo tiene valor si item en arbol
             if payload:
                 pl=item.getPayload()

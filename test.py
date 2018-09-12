@@ -218,6 +218,51 @@ def numeros():
     print(s2n(e),type(e))
     print(s2n(f),type(f))
     print(s2n(g),type(g))
+    
+res = {
+'Almería':(20.39328112594321,None,None,34.070481245359105,34.99994270926594,10.536294919431741,None,None,None,None,None,None,None,None,None,None),
+'Cádiz':(21.57317665399801,None,None,25.722487800463316,35.1636124577351,17.54072308780357,None,None,None,None,None,None,None,None,None,None),
+'Córdoba':(17.321445512157016,None,None,27.855521238254205,39.790138231693376,15.032895017895383,None,None,None,None,None,None,None,None,None,None),
+'Granada':(19.901452748963663,None,None,28.148365523293545,37.95736373760612,13.992817990136658,None,None,None,None,None,None,None,None,None,None),
+'Huelva':(16.823293886701787,None,None,25.732152512451346,44.74551772146849,12.699035879378375,None,None,None,None,None,None,None,None,None,None),
+'Jaén':(15.039737879983354,None,None,27.985540776410467,46.17628613787271,10.79843520573347,None,None,None,None,None,None,None,None,None,None),
+'Málaga':(24.662032230583907,None,None,26.38991724849689,33.22289333418562,15.725157186733592,None,None,None,None,None,None,None,None,None,None),
+'Sevilla':(18.82199422414816,None,None,22.967621782713486,41.94061369360607,16.269770299532297,None,None,None,None,None,None,None,None,None,None), 
+}
+party =     "geo,C's,EH Bildu,EAJ-PNV,PP,PSOE,PODEMOS,GBAI,CCa-PNC,IU-UPeC,MÉS,DL,PODEMOS-COMPROMÍS,NÓS,EN COMÚ,PODEMOS-En Marea-ANOVA-EU,ERC-CATSI".split(',')
+
+from userfunctions.electoral import dhont
+provs = {
+'Almería':12,
+'Cádiz':15.,
+'Córdoba':12,
+'Granada':13,
+'Huelva':11,
+'Jaén':11,
+'Málaga':17,    
+'Sevilla':18,
+}
+
+
+def andazulia():
+    zumatorio = [ 0 for k in range(len(party) -1) ]
+    for prov in provs:
+        provincia = dhont(int(provs[prov]),res[prov])
+        for k in range(len(provincia)):
+            zumatorio[k] += provincia[k] if provincia[k] else 0
+    print(zumatorio)
+    
+def andazulia_jun():
+    zumatorio = [ 0 for k in range(len(party) -1) ]
+    for prov in provs:
+        datos = list(res[prov])
+        datos[3] += datos[0]
+        datos[0] = 0
+        provincia = dhont(int(provs[prov]),datos)
+        for k in range(len(provincia)):
+            zumatorio[k] += provincia[k] if provincia[k] else 0
+    print(zumatorio)
+
 if __name__ == '__main__':
     # para evitar problemas con utf-8, no lo recomiendan pero me funciona
     import sys
@@ -225,8 +270,10 @@ if __name__ == '__main__':
     if sys.version_info[0] < 3:
         reload(sys)
         sys.setdefaultencoding('utf-8')
-    app = QApplication(sys.argv)
+    #app = QApplication(sys.argv)
     #aw = ApplicationWindow()
     #aw.show()
-    prueba()
+    #prueba()
     #numeros()
+    andazulia()
+    andazulia_jun()

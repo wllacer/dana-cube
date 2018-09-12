@@ -20,6 +20,7 @@ if __name__ == '__main__':
     
     parser = generaArgParser()
     args = parser.parse_args()
+    args.experimental = True
     #FOR DEBUGER 
     app = QApplication(sys.argv)
     window = DanaCubeWindow(args)

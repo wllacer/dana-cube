@@ -141,6 +141,11 @@ def generaArgParser():
     security_parser.add_argument('--no-secure','-ns', dest='secure', action='store_false')
     parser.set_defaults(secure=False)
 
+    experimental_parser = parser.add_mutually_exclusive_group(required=False)
+    experimental_parser.add_argument('--experimental','-x',dest='experimental', action='store_true', help='Activa funciones experimentales')
+    experimental_parser.add_argument('--no-experimental','-nx', dest='experimental', action='store_false')
+    parser.set_defaults(experimental=False)
+
     return parser
 
 class DanaCubeWindow(QMainWindow):
@@ -153,6 +158,7 @@ class DanaCubeWindow(QMainWindow):
         self.cubeFile = args.cubeFile
         self.secure = args.secure
         self.contextFile = args.contextFile
+        self.experimental = args.experimental
         
         self.filterActions = dict()
         self.dateRangeActions = dict()
@@ -224,18 +230,22 @@ class DanaCubeWindow(QMainWindow):
         self.pluginDbMenu = self.ufHandler.specUfMenu
         ## opciones
         self.optionsMenu = self.menuBar().addMenu("&Opciones")
+        self.optionsMenu.addAction("Graficos",self.setGraph,"Ctrl+G")
         self.optionsMenu.addAction("Exportar datos ...",
                                    self.exportData,
                                    "Ctrl+X")
         self.optionsMenu.addAction("Trasponer datos",
                                    self.trasposeData,
                                    "Ctrl+T")
+        if self.experimental:
+            self.optionsMenu.addSeparator()
+            self.optionsMenu.addAction("Ocultar / Mostrar")
+            self.optionsMenu.addAction("                            Columnas...",self.hiddenColumns)
+            self.optionsMenu.addAction("                            Filas...",self.hiddenRows)
+        self.optionsMenu.addSeparator()
         self.optionsMenu.addAction("Presentacion ...",
                                    self.setNumberFormat,
                                    "Ctrl+F")
-        self.optionsMenu.addSeparator()
-        self.optionsMenu.addAction("Graficos",self.setGraph,"Ctrl+G")
-        self.optionsMenu.addSeparator()
         self.optionsMenu.addAction("Mantenimiento de funciones de usuario",self.adminUF,"Ctrl+U")
         ## esto al final para que las distintas opciones raras que van al menu de cubos vayan en su sitio
         self.cubeMenu.addSeparator()
@@ -489,6 +499,11 @@ class DanaCubeWindow(QMainWindow):
     def setGraph(self):
         self.tabulatura.currentWidget().setGraph()
        
+    def hiddenColumns(self):
+        self.tabulatura.currentWidget().hiddenColumns()
+    def hiddenRows(self):
+        self.tabulatura.currentWidget().hiddenRows()
+    
     def dispatch(self,FcnName):
         self.tabulatura.currentWidget().dispatch(FcnName)
         
@@ -643,6 +658,11 @@ class TabMgr(QWidget):
             self.chart.loadData(tipo,cabeceras,datos,titulo,x_text,y_text,rowid.getFullDesc())  
         self.chart.draw()
         self.chart.show()
+        
+    def hiddenColumns(self):
+        self.tree.hiddenColumnsList()
+    def hiddenRows(self):
+        self.tree.hiddenRowsList()
         
 class DanaCube(QTreeView):    
     def __init__(self,parent,**kwargs):
@@ -1046,6 +1066,8 @@ class DanaCube(QTreeView):
         self.ctxMenu = []
         self.ctxMenu.append(menu.addAction("Insertar fila",lambda :self.execAction("add",position)))
         self.ctxMenu.append(menu.addAction("Gráfico de la fila",lambda :self.execAction("graph",position)))
+        if self.parent.experimental:
+            self.ctxMenu.append(menu.addAction("Ocultar  fila",lambda :self.execAction("hide",position)))
         action = menu.exec_(self.viewport().mapToGlobal(position))
         
     def execAction(self,function,position):
@@ -1056,7 +1078,8 @@ class DanaCube(QTreeView):
             self.drawGraph('row',index)
         elif function == 'add':
             self.insertElement('row',index)
-
+        elif function == 'hide':
+            self.setRowHidden(index.row(),index.parent(),True)
      
     @model_change_control()    
     def insertElement(self,tipo,index):
@@ -1128,6 +1151,194 @@ class DanaCube(QTreeView):
                 chart.show()
             else:
                 chart.hide()
+                
+
+    #def hiddenColumns(self):
+        ## la columna 0 son las cabeceras de fila. De momento NO las oculto via este procedimiento
+        ##FIXME no hay manara de borrar la primera columna
+        #valores = []
+        #for k in range(1,self.model().columnCount()):
+            #if self.isColumnHidden(k):
+                #valores.append(self.colHdr[k -1])
+        #dialogo = hiddenElemsSelector(self.colHdr,valores)
+        #dialogo.show()
+        #if dialogo.exec():
+            ##copiado directamente de la definicion de get
+            #for k in range(dialogo.lista.count()):
+                #if dialogo.lista.itemData(k,Qt.CheckStateRole) == Qt.Checked :
+                    #if not self.isColumnHidden(k):
+                        #self.setColumnHidden(k,True)
+                #else:
+                    #if self.isColumnHidden(k):
+                        #self.setColumnHidden(k,False)
+    #def hiddenRows(self):
+        ##solo para el analisis primario
+        #self.rowHdr = self.vista.row_hdr_idx.asHdr()
+        #valores = []
+        ## la columna 0 son las cabeceras de fila. De momento NO las oculto via este procedimiento
+        #for item in self.model().traverse():
+            #if self.isRowHidden(item.row(),item.parent().index() if item.parent() else QModelIndex()):
+                #valores.append(item.text())
+        #dialogo = hiddenElemsSelector(self.rowHdr,valores)
+        #dialogo.show()
+        #if dialogo.exec():
+            ##copiado directamente de la definicion de get
+            #k = 1
+            #for item in self.model().traverse():
+                #row = item.row()
+                #pai = item.parent().index() if item.parent() else QModelIndex()
+                #if dialogo.lista.itemData(k,Qt.CheckStateRole) == Qt.Checked :
+                    #if not self.isRowHidden(row,pai):
+                        #self.setRowHidden(row,pai,True)
+                #else:
+                    #if self.isRowHidden(row,pai):
+                        #self.setRowHidden(row,pai,False)
+                #k += 1
+
+    def hiddenColumnsList(self):
+        # la columna 0 son las cabeceras de fila. De momento NO las oculto via este procedimiento
+        #FIXME no hay manara de borrar la primera columna
+        valores = []
+        for k in range(1,self.model().columnCount()):
+            if self.isColumnHidden(k):
+                #self.vista.col_hdr_idx.pos2item(k -1).setData(Qt.Checked,Qt.CheckStateRole)
+                valores.append(self.vista.col_hdr_idx.pos2item(k -1).text())
+        dialogo = hiddenElemsModelSelector(self.vista.col_hdr_idx,valores)
+        dialogo.show()
+        if dialogo.exec():
+            k = 1
+            for item in self.vista.col_hdr_idx.traverse():
+                if item.text() in dialogo.resultado:
+                    self.setColumnHidden(k,True)
+                else:
+                    self.setColumnHidden(k,False)
+                k +=1
+                
+
+                
+    def hiddenRowsList(self):
+        valores = []
+        for item in self.model().traverse():
+            if self.isRowHidden(item.row(),item.parent().index() if item.parent() else QModelIndex()):
+                valores.append(item.text())
+        dialogo = hiddenElemsModelSelector(self.vista.row_hdr_idx,valores)
+        dialogo.show()
+        if dialogo.exec():
+            #copiado directamente de la definicion de get
+            k = 0
+            for item in self.model().traverse():
+                row = item.row()
+                pai = item.parent().index() if item.parent() else QModelIndex()
+                if item.text() in dialogo.resultado:
+                    if not self.isRowHidden(row,pai):
+                        self.setRowHidden(row,pai,True)
+                else:
+                    if self.isRowHidden(row,pai):
+                        self.setRowHidden(row,pai,False)
+            k += 1
+
+
+class hiddenElemsSelector(QDialog):
+    def __init__(self,entradas,valores,parent=None):
+        super().__init__(parent)
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel,
+                                Qt.Horizontal)
+
+        self.lista = WComboMulti()
+        self.lista.addItems(entradas)
+        self.lista.set(valores)
+    
+        lay = QVBoxLayout()
+        lay.addWidget(self.lista)
+        lay.addWidget(buttonBox)
+        self.setLayout(lay)
+        
+        buttonBox.accepted.connect(self.accept)
+        buttonBox.rejected.connect(self.reject)
+
+class hiddenElemsModelSelector(QDialog):
+    def __init__(self,entradas,valores,parent=None):
+        super().__init__(parent)
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel,
+                                Qt.Horizontal)
+
+        self.lista = QTreeView()
+        self.lista.header().hide()
+        #TODO las lineas de arbol, ¿puedo eliminarlas?
+        imodel = cloneTreeStructure(entradas) #.cloneSubTree()
+        self.lista.setModel(imodel)
+        self.lista.expandAll()
+        #self.lista.set(valores)
+        for item in imodel.traverse():
+            #print(item.text(),item.parent().text() if item.parent() else '')
+            item.setCheckable(True)
+            if item.text() in valores:
+                item.setCheckState(Qt.Checked)
+            else:
+                item.setCheckState(Qt.Unchecked)
+            #item.setData(Qt.Unchecked,Qt.CheckStateRole)
+
+        lay = QVBoxLayout()
+        lay.addWidget(self.lista)
+        lay.addWidget(buttonBox)
+        self.setLayout(lay)
+        
+        buttonBox.accepted.connect(self.accept)
+        buttonBox.rejected.connect(self.reject)
+
+    def accept(self):
+        self.resultado = []
+        for item in self.lista.model().traverse():
+            if item.checkState():
+                self.resultado.append(item.text())
+        super().accept()
+        
+    def reject(self):
+        super().reject()
+   
+"""
+absolutamente innecesarios en futuro. deben ir como caso de cloneSubTree
+"""
+def bysearch(model,keyArray):
+    return model.searchHierarchy(keyArray)
+
+def bymatch(model,keyArray):
+    if model.invisibleRootItem().hasChildren():
+        base = model.invisibleRootItem().child(0,0).index()
+    else:
+        return None
+    rol = Qt.UserRole + 1
+    
+    itmIdxs = None
+    for elemento in keyArray:
+        itmIdxs = model.match(base,rol,elemento,-1,Qt.MatchExactly|Qt.MatchCaseSensitive)
+        if itmIdxs:
+            base = itmIdxs[0].child(0,0) 
+        else:
+            return None
+    
+    if itmIdxs:
+        return model.itemFromIndex(itmIdxs[0])
+    else:
+        return None
+        
+def cloneTreeStructure(source):
+    from support.util.traverse import traverse,_BREADTH,_DEPTH
+    from base.tree import GuideItemModel
+    
+    destination = GuideItemModel()
+    for item in traverse(source,mode=_BREADTH):
+        clave = item.getFullHeadInfo(content='key',format='array')
+        npapi = bymatch(destination,clave[:-1])
+        #npapi = bysearch(destination,clave[:-1])
+        nitem = item.clone()
+        # esto deberia estar en el clone                
+        if not npapi:
+            destination.appendRow((nitem,))
+        else:
+            npapi.appendRow((nitem,))
+        #print('alta de',nitem['key'])
+    return destination
 if __name__ == '__main__':
     import sys
 
