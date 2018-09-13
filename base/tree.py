@@ -93,132 +93,28 @@ def searchTree(item,value,role):
     upper = item.rowCount()
     while lower < upper:   # use < instead of <=
         x = lower + (upper - lower) // 2
-        val = item.child(x).data(role)
+        internal = item.child(x).data(role)
         #normalizo al tipo interno para evitar que se me escapen elementos 
-        if type(val) == int:
+        if type(internal) == int:
             value = int(value)
-        elif type(val) == float:
+        elif type(internal) == float:
             value = float(value)
-        elif type(val) == str:
+        elif type(internal) == str:
             value = str(value)
         try:
-            if value == val:
+            if value == internal:
                 return item.child(x)
-            elif value > val:
+            elif value > internal:
                 if lower == x:   # this two are the actual lines
                     break        # you're looking for
                 lower = x
-            elif value < val:
+            elif value < internal:
                 upper = x
         except TypeError:
             print(value,item.data(role),item.rowCount(),'castañazo')
             raise
     return None
 
-def getBinPos(item,value,role):
-    """
-    Auxiliary function.
-    Implement a binary search inside a QStandardItemModel to locate where an element should be placed
-    Only perform the search in one hierarchical level
-    currently REQUIRES that the children be ordered by default. As is the case in _danacube_
-    
-    * Input Parameters
-        * __item__ (QStandardItem) parent of the level we are searching for
-        * __value__ value we are searching for
-        * __role__  the __Qt Role__ for the value. (An item can contain different data associated to different roles)
-    
-    * Returns
-        the nur which has that _value_ or _None_
-     
-    * Programming notes.
-        Look for GuideModel.searchHierarchy for usage
-        Made obsolete per item.insertRowSorted
-    """
-    def _cmp(external,internal):
-        if isinstance(internal,int):
-            external = int(external)
-        elif isinstance(internal,float):
-            external = float(external)
-        elif isinstance(internal,str):
-            external = str(external)
-            
-        if external == internal:
-            return '='
-        elif external > internal:
-            return '>'
-        elif external < internal:
-            return '<'
-        else:
-            return 'U' #undefined
-        
-    lower = 0
-    upper = item.rowCount()
-    if item.rowCount() > 0:
-        lowval = item.child(lower).data(role)
-        uppval  = item.child(upper -1).data(role)
-        if _cmp(value,lowval) == '<':
-            return 0
-        elif _cmp(value,uppval) == '>':
-            return None
-    else:
-        return None
-    
-    while lower < upper:   # use < instead of <=
-        x = lower + (upper - lower) // 2
-        val = item.child(x).data(role)
-        #normalizo al tipo interno para evitar que se me escapen elementos 
-        cmp = _cmp(value,val)
-        if cmp == '=':
-            return x #implica que admite duplicados por defincion
-        elif cmp == '<':
-            upper = x
-        elif cmp == '>':
-            if lower == x:
-                return x +1
-            lower = x
-    return None
-
-def modelSearch(item,value,role):
-    """
-    Auxiliary function.
-    Implement a search inside a QStandardItemModel using QAbstractItemModel.match
-    Performancewise is a bad choice (might be 15 times slower than the preceding one in a 1000 row case)
-    """
-    if role is None:
-        prole = Qt.UserRole +1
-    else:
-        prole = role
-    model = item.model()
-    start = model.index(0,0,item.index() if item.index().isValid() else QModelIndex())
-    result = model.match(start,prole,value,1,Qt.MatchExactly)
-    if not result:
-        return None
-    return model.itemFromIndex(result[0])
-
-def lineSearch(item,value,role):
-    """
-    Auxiliary function.
-    Implement a search inside a QStandardItemModel navigating the tree
-    Performancewise is a bad choice (might be 10 times slower than the binary search one in a 1000 row case)
-    """
-    if role is None:
-        prole = Qt.UserRole +1
-    else:
-        prole = role
-    for k in range(item.rowCount()):
-        if item.child(k,0).data(prole) == value:
-            return item.child(k,0)
-    return None
-    
-#def searchTree(item,value,role):
-    #"""
-    #selector.  
-        #For an special bad case case (1000 rows, no hierarchy)
-        #binary search performance is about 15 times better than model search and about 10 times better than lineal seach
-    #"""
-    ##return binarySearch(item,value,role)
-    ##return modelSearch(item,value,role)
-    #return lineSearch(item,value,role)
 
 def searchHierarchy(model,valueList,role=None):
     """
@@ -249,6 +145,40 @@ def searchHierarchy(model,valueList,role=None):
         parent = elem
     return elem
 
+def searchHierarchyUnsorted(model,valueList,role=None):
+    """
+    __AUXILIARY FUNCTION__ not used
+        Does a search thru all the hierarchy given the key/value data. 
+        As 1st level function to be able to use in QStandardItemModels
+        Uses QAbstractItemModel.match.
+        Noticiable slower than searchHierarchy but nonetheless can be useful
+    
+    * Input parameters
+        * __valueList__ an array with the hierachy data to be searched
+        * __role__ the Qt.Role the data is associated with
+        
+    * Returns
+        An Item of the tree which mastches the valueList
+        
+    * Programming notes
+        Which data is searched depends on the role. Qt.UserRole +1 searches for internal keys; Qt.DisplayRole for description 
+    """
+    if model.invisibleRootItem().hasChildren():
+        base = model.invisibleRootItem().child(0,0).index()
+    else:
+        return None
+    rol = role if role is not None else Qt.UserRole + 1
+    for elemento in valueList:
+        itmIdxs = model.match(base,rol,elemento,-1,Qt.MatchExactly|Qt.MatchCaseSensitive)
+        if itmIdxs:
+            base = itmIdxs[0].child(0,0) 
+        else:
+            return None
+    else:
+        if itmIdxs:
+            return model.itemFromIndex(itmIdxs[0])
+        else:
+            return None
 
 def _getHeadColumn(item):
     """
@@ -271,7 +201,42 @@ def _getHeadColumn(item):
             colind = indice.sibling(indice.row(),0)
             return item.model().itemFromIndex(colind)
  
- 
+def getPos(padre,item):
+    """
+    Auxiliary function.
+    Implement a binary search inside a QStandardItemModel to locate where an element should be placed
+    Only perform the search in one hierarchical level
+    currently REQUIRES that the children be ordered by default. As is the case in _danacube_
+    Internally Uses the current sortRole of the ItemModel 
+    * Input Parameters
+        * __item__ (QStandardItem) parent of the level we are searching for
+        * __value__ value we are searching for
+    
+    * Returns
+        the nur which has that _value_ or _None_    
+    """
+    return_pos = padre.rowCount()
+    if not padre.hasChildren():
+        pass
+    low = 0
+    high = padre.rowCount()
+    m = 0
+    while low < high:
+        k = (low + high) // 2
+        pos = padre.child(k,0)
+        if item == pos:
+            return_pos = k
+            break
+        elif pos < item:
+            if low == k:
+                return_pos = k + 1
+                break
+            low = k
+        else:
+            high = k
+    return return_pos
+
+
 def insertSorted(row,parent,sortRole=None):
     """
     __NEW_API__
@@ -460,7 +425,38 @@ class NewGuideItem(QStandardItem):
             return self.data(Qt.DisplayRole)
         else:
             return None        
-            
+     
+    def __lt__(self,item):
+        """
+        Usado en en sort y sorted directamente en Python
+        implementacion varia, para adaptarse a los estandares de Python y evitar problemas de nulos
+        
+        """
+        role = self.model().sortRole() if self.model() else QStandardItem.internalSortRole
+        left = self.data(role)
+        right = item.data(role)
+        if left is None:
+            return True
+        if right is None:
+            return False
+        return left < right
+
+    def __ge__(self,item):
+        """
+        Usado en en sort y sorted directamente en Python
+        implementacion varia. Parece que es exclusivo de PyQt5
+        """
+        role = self.model().sortRole() if self.model() else QStandardItem.internalSortRole
+        left = self.data(role)
+        right = item.data(role)
+        if left is None and right is None:
+            return True
+        if left is None:
+            return False
+        if right is None:
+            return True
+        return left >= right
+    
 class GuideItem(NewGuideItem):
     """
     
