@@ -1493,7 +1493,7 @@ class GuideItemModel(QStandardItemModel):
                 #col.setData(None,SHOW)
                 #col.originalValue = None
 
-    def cloneSubTree(self,entryPoint=None,filter=None,payload=False):
+    def cloneSubTree(self,entryPoint=None,filter=None,payload=False,ordRole=Qt.UserRole +1):
         """
         TODO add to doc
         Generate a new tree from entryPoint and its children
@@ -1503,35 +1503,42 @@ class GuideItemModel(QStandardItemModel):
             * __entryPoint__ a GuideItem as hierachical head of what to export
             * __filter__ a function which does some filtering at the tree (default is no filter)
             * __payload__ boolean. If True copies the payload
+            * __ordRole__ int a role to guide sorting behaviour
             
         * returns
             a tree
         
         """
         newTree = GuideItemModel()
-        for item in self.traverse(entryPoint):
+        #for item in self.traverse(entryPoint):
+        for item in traverse(self,entryPoint,mode=_BREADTH):
             if filter and not filter(item):
                 continue
+            clave = item.getFullHeadInfo(role=ordRole,format='array')
+            npapi = newTree.searchHierarchy(clave[:-1],ordRole)
+            nitem = item.clone()
+            nitem.insertSorted(npapi if npapi else newTree.invisibleRootItem(),ordRole)
+
             """
             old code 
             """
-            papi = item.parent()
-            npapi = None
-            if papi:
-                ref = papi.getFullHeadInfo(content='key',format='array')
-                #print(ref)
-                while len(ref) > 0:
-                    npapi = newTree.searchHierarchy(ref)
-                    if npapi:
-                        break
-                    else:
-                        ref.remove(ref[0])
-            if not npapi:  
-                #if papi:
-                    #print('No cabecera')
-                npapi = newTree.invisibleRootItem()
-            nitem = item.clone()
-            npapi.appendRow((nitem,))
+            #papi = item.parent()
+            #npapi = None
+            #if papi:
+                #ref = papi.getFullHeadInfo(content='key',format='array')
+                ##print(ref)
+                #while len(ref) > 0:
+                    #npapi = newTree.searchHierarchy(ref)
+                    #if npapi:
+                        #break
+                    #else:
+                        #ref.remove(ref[0])
+            #if not npapi:  
+                ##if papi:
+                    ##print('No cabecera')
+                #npapi = newTree.invisibleRootItem()
+            #nitem = item.clone()
+            #npapi.appendRow((nitem,))
             
          
             # aqui pues setPayload verifca la columna y solo tiene valor si item en arbol

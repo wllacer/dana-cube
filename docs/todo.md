@@ -79,6 +79,7 @@ Thing which shall belong to the app and aren't there now
 * __solved__ Performance enhacements when a guide includes categories and dates not in the first prod rule
 
 * in column fusion end with hiding the source columns
+* Unify cloneSubTree @GuideItemModel and @treeEditorUtil.  former is newer
 
 ## Wishlist
 
