@@ -1203,7 +1203,7 @@ class DanaCube(QTreeView):
             if self.isColumnHidden(k):
                 #self.vista.col_hdr_idx.pos2item(k -1).setData(Qt.Checked,Qt.CheckStateRole)
                 valores.append(self.vista.col_hdr_idx.pos2item(k -1).text())
-        dialogo = hiddenElemsModelSelector(self.vista.col_hdr_idx,valores)
+        dialogo = hiddenElemsSelector(self.vista.col_hdr_idx,valores)
         dialogo.show()
         if dialogo.exec():
             k = 1
@@ -1221,7 +1221,7 @@ class DanaCube(QTreeView):
         for item in self.model().traverse():
             if self.isRowHidden(item.row(),item.parent().index() if item.parent() else QModelIndex()):
                 valores.append(item.text())
-        dialogo = hiddenElemsModelSelector(self.vista.row_hdr_idx,valores)
+        dialogo = hiddenElemsSelector(self.vista.row_hdr_idx,valores)
         dialogo.show()
         if dialogo.exec():
             #copiado directamente de la definicion de get
@@ -1238,25 +1238,25 @@ class DanaCube(QTreeView):
             k += 1
 
 
-class hiddenElemsSelector(QDialog):
-    def __init__(self,entradas,valores,parent=None):
-        super().__init__(parent)
-        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel,
-                                Qt.Horizontal)
+#class hiddenElemsSelector(QDialog):
+    #def __init__(self,entradas,valores,parent=None):
+        #super().__init__(parent)
+        #buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel,
+                                #Qt.Horizontal)
 
-        self.lista = WComboMulti()
-        self.lista.addItems(entradas)
-        self.lista.set(valores)
+        #self.lista = WComboMulti()
+        #self.lista.addItems(entradas)
+        #self.lista.set(valores)
     
-        lay = QVBoxLayout()
-        lay.addWidget(self.lista)
-        lay.addWidget(buttonBox)
-        self.setLayout(lay)
+        #lay = QVBoxLayout()
+        #lay.addWidget(self.lista)
+        #lay.addWidget(buttonBox)
+        #self.setLayout(lay)
         
-        buttonBox.accepted.connect(self.accept)
-        buttonBox.rejected.connect(self.reject)
+        #buttonBox.accepted.connect(self.accept)
+        #buttonBox.rejected.connect(self.reject)
 
-class hiddenElemsModelSelector(QDialog):
+class hiddenElemsSelector(QDialog):
     def __init__(self,entradas,valores,parent=None):
         super().__init__(parent)
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel,

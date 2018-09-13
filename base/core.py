@@ -515,25 +515,15 @@ class Cubo:
                 #TODO cache sigue siendo necesario
                 if total:  #no viene recogido previamente
                     papid = ["//",]+papid
+                    
                 if len(papid) == 0:
-                    item = GuideItem(key,value)
-                    pos = getBinPos(raiz,key,Qt.UserRole +1)
-                    if pos is None:
-                        raiz.appendRow((item,))
-                    else:
-                        raiz.insertRow(pos,(item,))
+                    parent = raiz
                 else:
                     parent = raiz.model().searchHierarchy(papid)
                     if not parent:
                         continue
-                    else:
-                        item = GuideItem(key,value)
-                        pos = getBinPos(parent,key,Qt.UserRole +1)
-                        if pos is None:
-                            parent.appendRow((item,))
-                        else:
-                            parent.insertRow(pos,item)
-
+                item = GuideItem(key,value)
+                item.insertSorted(parent,Qt.UserRole  +1)                    
             else:
                 papid = row[0:len(code)]
                 key = papid[-1]

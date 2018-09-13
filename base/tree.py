@@ -132,6 +132,7 @@ def getBinPos(item,value,role):
      
     * Programming notes.
         Look for GuideModel.searchHierarchy for usage
+        Made obsolete per item.insertRowSorted
     """
     def _cmp(external,internal):
         if isinstance(internal,int):
@@ -525,6 +526,40 @@ class GuideItem(NewGuideItem):
                 nitem.setData(self.data(k),k)
         return nitem
 
+    def insertSorted(self,parent,sortRole=None):
+        """
+        __NEW_API__
+        Inserta un item en un parent en una posicion predeterminada de acuerdo con el role.
+        Si son iguales (no deberia) se van insertando (por delante)
+        Input parameter:
+        * parent item
+        * sortRole which role (data) for sorting
+    
+        """
+        def_sortRole = parent.model().sortRole()
+        if sortRole is not None:
+            parent.model().setSortRole(sortRole)
+            
+        return_pos = parent.rowCount()
+        if not parent.hasChildren():
+            pass
+        for k in range(parent.rowCount()):
+            base = parent.child(k,0)
+            if base < self:
+                #print(base,'<',item)
+                continue
+            else:
+                #print(base,'>=',item,' inserto en ',k)
+                return_pos = k
+                break
+        
+        parent.insertRow(return_pos,(self,))
+        
+        if sortRole is not None:
+            parent.model().setSortRole(def_sortRole)
+    
+    
+        
     def __getitem__(self,campo):
         """
         ___NEW API__
