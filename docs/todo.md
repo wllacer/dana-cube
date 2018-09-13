@@ -37,8 +37,10 @@ Serious errors which are either upstream or we haven't still found a solution
 * BUG7 __CLOSED__ __DB BACKEND__
     In certain cases (f.i. _enums in PgSQL_ external order of the db. column (the value shown) is not the same for which the DB _ORDER  BY_ uses (the internal numeric value of the enum). Dana coding expects both to be the same and messes results acordingly. We have tried to solve it in a general way, without a serious performance penality (see. @base.core.createProdModel for the solution and @base.tree the *Search routines for performance issues)
     
-* BUG8
+* BUG8 __CLOSED__
     Danacube trees are not exactly ordered as I expected (sometimes they are inserted/expected by key others by value). Use of binary search produces strange results in clone tree, at least. 
+    Via commit __[master 144d08f]__ _Normalizar insercion con orden via API en guideItem.insertSorted_ Controlo exactamente que rol es criterio de ordenacion
+    
 ## rough corners
 
 Areas where the product __must__ be improved. They might not be errors but don't feel quite right

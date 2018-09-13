@@ -270,7 +270,49 @@ def _getHeadColumn(item):
             indice = item.index() 
             colind = indice.sibling(indice.row(),0)
             return item.model().itemFromIndex(colind)
+ 
+ 
+def insertSorted(row,parent,sortRole=None):
+    """
+    __NEW_API__
+    Inserta un item en un parent en una posicion predeterminada de acuerdo con el role.
+    Si son iguales (no deberia) se van insertando (por delante)
+    Input parameter:
+    * parent item
+    * sortRole which role (data) for sorting
     
+    COmo modulo para poder usarlo con StandardModels
+    """
+    if isinstance(row,(list,tuple)):
+        item = row[0]
+    else:
+        item = row
+        
+    def_sortRole = parent.model().sortRole()
+    if sortRole is not None:
+        parent.model().setSortRole(sortRole)
+        
+    return_pos = parent.rowCount()
+    if not parent.hasChildren():
+        pass
+    for k in range(parent.rowCount()):
+        base = parent.child(k,0)
+        if base < item:
+            #print(base,'<',item)
+            continue
+        else:
+            #print(base,'>=',item,' inserto en ',k)
+            return_pos = k
+            break
+    
+    if isinstance(row,(list,tuple)):
+        parent.insertRow(return_pos,row)
+    else:
+        parent.insertRow(return_pos,(row,))
+    
+    if sortRole is not None:
+        parent.model().setSortRole(def_sortRole)
+        
 class TreeFormat(object):
     """
     This class mantains the format definition (for a display or background roles) for the value contents of an item in GuideItemModel (see the .data method)
@@ -536,27 +578,8 @@ class GuideItem(NewGuideItem):
         * sortRole which role (data) for sorting
     
         """
-        def_sortRole = parent.model().sortRole()
-        if sortRole is not None:
-            parent.model().setSortRole(sortRole)
-            
-        return_pos = parent.rowCount()
-        if not parent.hasChildren():
-            pass
-        for k in range(parent.rowCount()):
-            base = parent.child(k,0)
-            if base < self:
-                #print(base,'<',item)
-                continue
-            else:
-                #print(base,'>=',item,' inserto en ',k)
-                return_pos = k
-                break
-        
-        parent.insertRow(return_pos,(self,))
-        
-        if sortRole is not None:
-            parent.model().setSortRole(def_sortRole)
+        insertSorted((self,),parent,sortRole)
+
     
     
         
@@ -981,12 +1004,13 @@ class GuideItem(NewGuideItem):
     def getFullHeadInfo(self,**parms):
         """
         * parms
-            * content = ('key','value')
+            * role = rol
+            * content = ('key','value') 
             * format  = ('simple','string','array')
             * delimiter  (only if format == string)
             * sparse = boolean. Default False
         """
-        rol = Qt.DisplayRole
+        rol = parms.get('role',Qt.DisplayRole)
         if 'content' in parms and parms['content'] == 'key':
                 rol = Qt.UserRole +1
         format = 'single'
@@ -1538,7 +1562,7 @@ class GuideItemModel(QStandardItemModel):
         parent = self.invisibleRootItem()
         for k,value in enumerate(valueList):
             elem = searchTree(parent,value,prole)
-            if not elem:
+            if elem is None:
                 return None
             parent = elem
         return elem

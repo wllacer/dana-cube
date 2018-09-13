@@ -507,47 +507,25 @@ class Cubo:
             #
             # ahora debo localizar donde en la jerarquia tiene que encontrarse. Eso varia por tipo
             # __FIXME__ Para GuideItemModel   un sistema de cache para reducir el numero de busquedas seria de utilidad
-            #
-            if not display:  #la situacion ordinaria
-                papid = row[0:len(code)]
-                key = papid[-1]
-                del papid[-1]
-                #TODO cache sigue siendo necesario
-                if total:  #no viene recogido previamente
-                    papid = ["//",]+papid
-                    
-                if len(papid) == 0:
-                    parent = raiz
-                else:
-                    parent = raiz.model().searchHierarchy(papid)
-                    if not parent:
-                        continue
+            # __FIXME__ el rol de ordenacion hacerlo global para todo el bucle
+            papid = row[0:len(code)]
+            key = papid[-1]
+            del papid[-1]
+            #TODO cache sigue siendo necesario
+            if total:  #no viene recogido previamente
+                papid = ["//",]+papid
+            if len(papid) == 0:
+                parent = raiz
+            else:
+                parent = raiz.model().searchHierarchy(papid,Qt.UserRole +1)
+                if not parent:
+                    continue
+            if not display:  #la situacion ordinaria de una guia
                 item = GuideItem(key,value)
                 item.insertSorted(parent,Qt.UserRole  +1)                    
-            else:
-                papid = row[0:len(code)]
-                key = papid[-1]
-                del papid[-1]
-                #TODO cache sigue siendo necesario
-                if total:  #no viene recogido previamente
-                    papid = ["//",]+papid
-                if len(papid) == 0:
-                    pos = getBinPos(raiz,key,Qt.UserRole +1)
-                    if pos is None:
-                        raiz.appendRow((QStandardItem(str(key)),QStandardItem(str(value)),))                    
-                    else:
-                        raiz.insertRow(pos,(QStandardItem(str(key)),QStandardItem(str(value)),))
-                else:
-                    parent = searchHierarchy(raiz.model(),papid,Qt.DisplayRole)
-                    if not parent:
-                        continue
-                    else:
-                        pos = getBinPos(parent,key,Qt.UserRole +1)
-                        if pos is None:
-                            parent.appendRow((QStandardItem(str(key)),QStandardItem(str(value)),))                    
-                        else:
-                            parent.insertRow(pos,(QStandardItem(str(key)),QStandardItem(str(value)),))    
-                            
+            else: #para los programas de lista
+                row = (QStandardItem(str(key)),QStandardItem(str(value)),)
+                insertSorted(row,parent,Qt.UserRole  +1)                    
 
     
     def setGroupBy(self,contexto,prodId,table,code,desc,columns,groupby):
