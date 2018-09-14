@@ -80,6 +80,9 @@ Thing which shall belong to the app and aren't there now
 
 * in column fusion end with hiding the source columns
 * Unify cloneSubTree @GuideItemModel and @treeEditorUtil.  former is newer
+* _HiddenElems_ manage hierarchies
+* _HiddenElems_ mass update
+* Filter hidden Elements in downloads (then put hidden out of experimental status)
 
 ## Wishlist
 
@@ -90,6 +93,7 @@ Things which would be a welcome addition to the application
 * __DONE__ Add Column/Row into view. Plus initial loading
 
 * __NOOP__ Use of importlib finder mechanism instead of the crafted __init__.py file for user functions. 
+
 
 * code a "create a plugin local directory"
 

@@ -660,9 +660,9 @@ class TabMgr(QWidget):
         self.chart.show()
         
     def hiddenColumns(self):
-        self.tree.hiddenColumnsList()
+        self.tree.hiddenColsMgr()
     def hiddenRows(self):
-        self.tree.hiddenRowsList()
+        self.tree.hiddenRowsMgr()
         
 class DanaCube(QTreeView):    
     def __init__(self,parent,**kwargs):
@@ -1195,150 +1195,83 @@ class DanaCube(QTreeView):
                         #self.setRowHidden(row,pai,False)
                 #k += 1
 
-    def hiddenColumnsList(self):
+    def hiddenColsMgr(self):
         # la columna 0 son las cabeceras de fila. De momento NO las oculto via este procedimiento
-        #FIXME no hay manara de borrar la primera columna
+        #TODO que hacer con los elementos jerarquicos ¿?
+        #TODO textos no editables en el dialogo
+        
         valores = []
         for k in range(1,self.model().columnCount()):
             if self.isColumnHidden(k):
-                #self.vista.col_hdr_idx.pos2item(k -1).setData(Qt.Checked,Qt.CheckStateRole)
-                valores.append(self.vista.col_hdr_idx.pos2item(k -1).text())
-        dialogo = hiddenElemsSelector(self.vista.col_hdr_idx,valores)
+                valores.append(self.vista.col_hdr_idx.pos2item(k -1).getFullHeadInfo(format='string'))
+        #dialogo = hiddenElemsSelector(self.vista.col_hdr_idx,valores)
+        dialogo = hiddenElemsMgr('col',valores,self)
         dialogo.show()
-        if dialogo.exec():
-            k = 1
-            for item in self.vista.col_hdr_idx.traverse():
-                if item.text() in dialogo.resultado:
-                    self.setColumnHidden(k,True)
-                else:
-                    self.setColumnHidden(k,False)
-                k +=1
                 
 
-                
-    def hiddenRowsList(self):
+    def hiddenRowsMgr(self):
+        # la columna 0 son las cabeceras de fila. De momento NO las oculto via este procedimiento
+        #TODO que hacer con los elementos jerarquicos ¿?
+        
         valores = []
         for item in self.model().traverse():
             if self.isRowHidden(item.row(),item.parent().index() if item.parent() else QModelIndex()):
-                valores.append(item.text())
-        dialogo = hiddenElemsSelector(self.vista.row_hdr_idx,valores)
+                valores.append(item.getFullHeadInfo(format='string'))
+        dialogo = hiddenElemsMgr('row',valores,self)
         dialogo.show()
-        if dialogo.exec():
-            #copiado directamente de la definicion de get
-            k = 0
-            for item in self.model().traverse():
-                row = item.row()
-                pai = item.parent().index() if item.parent() else QModelIndex()
-                if item.text() in dialogo.resultado:
-                    if not self.isRowHidden(row,pai):
-                        self.setRowHidden(row,pai,True)
-                else:
-                    if self.isRowHidden(row,pai):
-                        self.setRowHidden(row,pai,False)
-            k += 1
-
-
-#class hiddenElemsSelector(QDialog):
-    #def __init__(self,entradas,valores,parent=None):
-        #super().__init__(parent)
-        #buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel,
-                                #Qt.Horizontal)
-
-        #self.lista = WComboMulti()
-        #self.lista.addItems(entradas)
-        #self.lista.set(valores)
-    
-        #lay = QVBoxLayout()
-        #lay.addWidget(self.lista)
-        #lay.addWidget(buttonBox)
-        #self.setLayout(lay)
+                
         
-        #buttonBox.accepted.connect(self.accept)
-        #buttonBox.rejected.connect(self.reject)
-
-class hiddenElemsSelector(QDialog):
-    def __init__(self,entradas,valores,parent=None):
+class hiddenElemsMgr(QDialog):
+    #def __init__(self,entradas,valores,parent=None):
+    def __init__(self,direccion,valores,parent=None):
         super().__init__(parent)
-        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel,
-                                Qt.Horizontal)
-
+        self.direccion = direccion
+        self.parent = parent
+        
         self.lista = QTreeView()
         self.lista.header().hide()
         #TODO las lineas de arbol, ¿puedo eliminarlas?
-        imodel = cloneTreeStructure(entradas) #.cloneSubTree()
+        if self.direccion == 'col':
+            self.source = self.parent.vista.col_hdr_idx
+        elif self.direccion == 'row':
+            self.source = self.parent.vista.row_hdr_idx
+        imodel = self.source.cloneSubTree()
         self.lista.setModel(imodel)
         self.lista.expandAll()
-        #self.lista.set(valores)
+
         for item in imodel.traverse():
-            #print(item.text(),item.parent().text() if item.parent() else '')
             item.setCheckable(True)
-            if item.text() in valores:
+            if item.getFullHeadInfo(format='string') in valores:
                 item.setCheckState(Qt.Checked)
             else:
                 item.setCheckState(Qt.Unchecked)
-            #item.setData(Qt.Unchecked,Qt.CheckStateRole)
-
+            
         lay = QVBoxLayout()
         lay.addWidget(self.lista)
-        lay.addWidget(buttonBox)
         self.setLayout(lay)
         
-        buttonBox.accepted.connect(self.accept)
-        buttonBox.rejected.connect(self.reject)
 
-    def accept(self):
-        self.resultado = []
-        for item in self.lista.model().traverse():
-            if item.checkState():
-                self.resultado.append(item.text())
-        super().accept()
+        self.lista.model().itemChanged.connect(self.itemChanged)
         
-    def reject(self):
-        super().reject()
    
-"""
-absolutamente innecesarios en futuro. deben ir como caso de cloneSubTree
-"""
-def bysearch(model,keyArray):
-    return model.searchHierarchy(keyArray)
+    def itemChanged(self,item):
+        clave = item.getFullHeadInfo(role=Qt.UserRole +1,format='array')
+        ref_elem = self.source.searchHierarchy(clave,role=Qt.UserRole +1)
+        if self.direccion == 'col':
+            pos = self.source.item2pos(ref_elem)
+            if item.checkState():
+                self.parent.setColumnHidden(pos +1,True)
+            else:
+                self.parent.setColumnHidden(pos +1,False)
+        elif self.direccion == 'row':
+            row = ref_elem.row()
+            pai = ref_elem.parent().index() if ref_elem.parent() else QModelIndex()
+            if item.checkState():
+                self.parent.setRowHidden(row,pai,True)
+            else:
+                self.parent.setRowHidden(row,pai,False)
 
-def bymatch(model,keyArray):
-    if model.invisibleRootItem().hasChildren():
-        base = model.invisibleRootItem().child(0,0).index()
-    else:
-        return None
-    rol = Qt.UserRole + 1
     
-    itmIdxs = None
-    for elemento in keyArray:
-        itmIdxs = model.match(base,rol,elemento,-1,Qt.MatchExactly|Qt.MatchCaseSensitive)
-        if itmIdxs:
-            base = itmIdxs[0].child(0,0) 
-        else:
-            return None
-    
-    if itmIdxs:
-        return model.itemFromIndex(itmIdxs[0])
-    else:
-        return None
-        
-def cloneTreeStructure(source):
-    from support.util.traverse import traverse,_BREADTH,_DEPTH
-    from base.tree import GuideItemModel
-    
-    destination = GuideItemModel()
-    for item in traverse(source,mode=_BREADTH):
-        clave = item.getFullHeadInfo(content='key',format='array')
-        npapi = bymatch(destination,clave[:-1])
-        #npapi = bysearch(destination,clave[:-1])
-        nitem = item.clone()
-        # esto deberia estar en el clone                
-        if not npapi:
-            destination.appendRow((nitem,))
-        else:
-            npapi.appendRow((nitem,))
-        #print('alta de',nitem['key'])
-    return destination
 if __name__ == '__main__':
     import sys
 
