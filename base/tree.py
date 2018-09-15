@@ -818,7 +818,7 @@ class GuideItem(NewGuideItem):
         generator navigate the payload elements inside a row after the current one
         
         Implementation note:
-            If the corresponding column is still not defined it returns a QStandardItem, not a real column
+            If the corresponding column is still not defined it returns a None object
         If we use expanded functionality of the class we must code like
         ```
             for item in self.rowTraverse():
@@ -828,6 +828,12 @@ class GuideItem(NewGuideItem):
                     ...
         ```
         """
+        pai =  self.parent() if self.parent() else self.model().invisibleRootItem()
+        row = self.row()
+        for k in range(self.lenPayload()):
+            yield pai.child(row,k+1)
+        """
+        old code
         indice = self.index() 
         k = indice.column() + 1
         colind = indice.sibling(indice.row(),k)
@@ -835,7 +841,7 @@ class GuideItem(NewGuideItem):
             yield self.model().itemFromIndex(colind)
             k +=1
             colind = indice.sibling(indice.row(),k)
-
+        """
     """
     
     ## General methods which make up the API for __user functions__
@@ -845,7 +851,7 @@ class GuideItem(NewGuideItem):
         """
         Returns a list with the values of the payload (columns 1 .. of the current row
         """
-        return [ item.data(Qt.UserRole +1) for item in self.rowTraverse() ]
+        return [ item.data(Qt.UserRole +1) if item else None for item in self.rowTraverse() ]
     
     def setPayload(self,lista): 
         """
@@ -869,9 +875,17 @@ class GuideItem(NewGuideItem):
         Length of the payload
         
         * implementation notes
-        QStandardItem.columnCount() does not seem to work, it should be lenPayload = columnCount -1.
+        QStandardItem.columnCount() has a strange behaviour (gives the #cols as parent), 
+        it should be lenPayload = columnCount -1.
         In this case the use of the generator seems not that performant
         """
+        pai = self.parent() if self.parent() else self.model().invisibleRootItem()
+        row = self.row()
+        num = pai.columnCount() - 1 #if pai else self.model().columnCount()    
+        return num
+
+        """
+        Old Code
         #if self.hasChildren():
             #return 0
         indice = self.index() #self.model().indexFromItem(field)
@@ -881,7 +895,7 @@ class GuideItem(NewGuideItem):
             idx +=1
             colind = indice.sibling(indice.row(),idx +1)
         return idx
-
+        """
     def getPayloadFiltered(self,filtro):
         """
         TODO add to doc
@@ -958,6 +972,15 @@ class GuideItem(NewGuideItem):
        """
         return self.setUpdateColumn(idx +1,valor)
     
+    def hasPayload(self):
+        """
+        returns __True__ if the row has at least one defined element (might be null)
+        """
+        for hijo in self.rowTraverse():
+            if hijo:
+                return True
+            
+        return False
     def getKey(self):
         """
         
@@ -1122,9 +1145,9 @@ class GuideItem(NewGuideItem):
             self.setData(self.originalValue,Qt.UserRole +1)
         else:
             for item in self.rowTraverse():
-                if type(item) == QStandardItem:
-                    pass
-                else:
+                if item: # type(item) == QStandardItem:
+                    #pass
+                #else:
                     item.setData(None,Qt.DisplayRole)
                     item.setData(item.originalValue,Qt.UserRole +1)
             
@@ -1142,9 +1165,9 @@ class GuideItem(NewGuideItem):
                 self.originalValue = self.data(Qt.UserRole +1)
         else:
             for item in self.rowTraverse():
-                if type(item) == QStandardItem:
-                    pass
-                else:
+                if item: #type(item) == QStandardItem:
+                    #pass
+                #else:
                     if self.originalValue is None:
                         self.originalValue = self.data(Qt.UserRole +1)
         
