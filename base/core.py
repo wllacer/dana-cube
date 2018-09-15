@@ -20,6 +20,7 @@ from base.tree import *
 from support.util.fechas import *
 from support.util.cadenas import *
 
+
 from support.datalayer.access_layer import *
 from support.datalayer.query_constructor import *
 
@@ -517,14 +518,18 @@ class Cubo:
             if len(papid) == 0:
                 parent = raiz
             else:
-                parent = raiz.model().searchHierarchy(papid,Qt.UserRole +1)
+                parent = searchHierarchy(raiz.model(),papid,Qt.UserRole +1)
                 if not parent:
                     continue
             if not display:  #la situacion ordinaria de una guia
                 item = GuideItem(key,value)
                 item.insertSorted(parent,Qt.UserRole  +1)                    
             else: #para los programas de lista
+                # se incluye tambien los valores en el rol interno para poder unificar las operaciones de busquiedas
+                # con displyas y guideitemmodel, ya que estos ultimos suelen consultar por userrole
                 row = (QStandardItem(str(key)),QStandardItem(str(value)),)
+                row[0].setData(key,Qt.UserRole +1)
+                row[1].setData(value,Qt.UserRole +1)
                 insertSorted(row,parent,Qt.UserRole  +1)                    
 
     
@@ -538,7 +543,7 @@ class Cubo:
         
         return groupby,code,desc,columns
 
-            
+    
     def fillGuia(self,guidIdentifier,total=None,generateTree=True,display=False):
         '''
         TODO ripple doc
@@ -930,10 +935,10 @@ class Vista:
             self.col_hdr_idx = self.cubo.lista_guias[col]['dir_row']
             self.col_hdr_idx.orthogonal = None
             self.col_hdr_idx.vista = None
-            self.__setDataMatrix()
+            self._setDataMatrix()
             
 
-    def  __setDateFilter(self):
+    def  _setDateFilter(self):
         return self.cubo.setDateFilter()
      
     def __prepareJoin(self,joins,baseRef,name=None):
@@ -971,7 +976,7 @@ class Vista:
             #pprint(resultado)
         return resultado
 
-    def  __setDataMatrix(self):
+    def  _setDataMatrix(self):
         """
         __setDateFilter
         __prepareJoin
@@ -986,7 +991,7 @@ class Vista:
         sqlDef['tables']=[ [baseTable,basePfx],]
         sqlDef['base_filter']=mergeString(self.filtro,self.cubo.definition.get('base filter',''),'AND')
         sqlDef['where'] = []
-        sqlDef['where'] += self.__setDateFilter()
+        sqlDef['where'] += self._setDateFilter()
         ## si no copio tengo sorpresas
         contexto_row = self.cubo.lista_guias[self.row_id]['contexto'][:]
         contexto_col = self.cubo.lista_guias[self.col_id]['contexto'][:]

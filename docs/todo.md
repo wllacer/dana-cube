@@ -83,6 +83,7 @@ Thing which shall belong to the app and aren't there now
 * _HiddenElems_ manage hierarchies
 * _HiddenElems_ mass update
 * Filter hidden Elements in downloads (then put hidden out of experimental status)
+* code,desc,columns simplify structure @core
 
 ## Wishlist
 

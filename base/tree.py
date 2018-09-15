@@ -93,7 +93,7 @@ def searchTree(item,value,role):
     upper = item.rowCount()
     while lower < upper:   # use < instead of <=
         x = lower + (upper - lower) // 2
-        internal = item.child(x).data(role)
+        internal = item.child(x,0).data(role)
         #normalizo al tipo interno para evitar que se me escapen elementos 
         if type(internal) == int:
             value = int(value)
@@ -111,7 +111,7 @@ def searchTree(item,value,role):
             elif value < internal:
                 upper = x
         except TypeError:
-            print(value,item.data(role),item.rowCount(),'castañazo')
+            print('value ',value,'internal ',internal,'head ',item.text(),'head count ',item.rowCount(),'castañazo')
             raise
     return None
 
@@ -207,7 +207,9 @@ def getPos(padre,item):
     Implement a binary search inside a QStandardItemModel to locate where an element should be placed
     Only perform the search in one hierarchical level
     currently REQUIRES that the children be ordered by default. As is the case in _danacube_
-    Internally Uses the current sortRole of the ItemModel 
+    
+    Internally Uses the current sortRole of the ItemModel  this is done via the __lt__ &  __ge__ operators of the item. But to work with variable role the left element of the comparision must be in a model, else QStandardItem.internalSortRole is used
+    
     * Input Parameters
         * __item__ (QStandardItem) parent of the level we are searching for
         * __value__ value we are searching for

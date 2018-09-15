@@ -131,8 +131,8 @@ def normConcat(db,entry,sep=','):
     from support.datalayer.access_layer import SQLConcat
     
     array = norm2List(entry)
-    return [ [SQLConcat(db,array,sep),]]
-
+    return [SQLConcat(db,array,sep),]
+    #return [ [SQLConcat(db,array,sep),]]
 def replTablePrefix(string,oldName,newName):
     return changeTable(string,oldName,newName)
     #import re
