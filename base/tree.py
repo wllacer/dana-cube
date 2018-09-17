@@ -197,10 +197,13 @@ def _getHeadColumn(item):
         if ref:
             return ref[0]
         else:
-            indice = item.index() 
-            colind = indice.sibling(indice.row(),0)
-            return item.model().itemFromIndex(colind)
- 
+            return item.getColumn(0)
+            """
+            old code
+            #indice = item.index() 
+            #colind = indice.sibling(indice.row(),0)
+            #return item.model().itemFromIndex(colind)
+            """
 def getPos(padre,item):
     """
     Auxiliary function.
@@ -693,15 +696,20 @@ class GuideItem(NewGuideItem):
         * Implementation notes
         Surprisingly such a method does not exist at QStandardItem
         """
-        if self.column() != 0:
-            return None
-        indice = self.index() 
-        colind = indice.sibling(indice.row(),col)
-        if colind.isValid():
-            return self.model().itemFromIndex(colind)
-        else:
-            return None
-        
+        #elimino la restriccion a columna cabeza
+        #if self.column() != 0:
+            #return None
+        pai = self.parent() if self.parent() else self.model().invisibleRootItem()
+        return pai.child(self.row(),col)
+        """ 
+        old code
+        #indice = self.index() 
+        #colind = indice.sibling(indice.row(),col)
+        #if colind.isValid():
+            #return self.model().itemFromIndex(colind)
+        #else:
+            #return None
+        """
     def setColumn(self,col,value,role=Qt.UserRole +1):
         """
         __CONVERT__ __NEW API__
@@ -834,13 +842,13 @@ class GuideItem(NewGuideItem):
             yield pai.child(row,k+1)
         """
         old code
-        indice = self.index() 
-        k = indice.column() + 1
-        colind = indice.sibling(indice.row(),k)
-        while colind.isValid():
-            yield self.model().itemFromIndex(colind)
-            k +=1
-            colind = indice.sibling(indice.row(),k)
+        #indice = self.index() 
+        #k = indice.column() + 1
+        #colind = indice.sibling(indice.row(),k)
+        #while colind.isValid():
+            #yield self.model().itemFromIndex(colind)
+            #k +=1
+            #colind = indice.sibling(indice.row(),k)
         """
     """
     
@@ -888,13 +896,13 @@ class GuideItem(NewGuideItem):
         Old Code
         #if self.hasChildren():
             #return 0
-        indice = self.index() #self.model().indexFromItem(field)
-        idx = 0
-        colind = indice.sibling(indice.row(),idx +1)
-        while colind.isValid():
-            idx +=1
-            colind = indice.sibling(indice.row(),idx +1)
-        return idx
+        #indice = self.index() #self.model().indexFromItem(field)
+        #idx = 0
+        #colind = indice.sibling(indice.row(),idx +1)
+        #while colind.isValid():
+            #idx +=1
+            #colind = indice.sibling(indice.row(),idx +1)
+        #return idx
         """
     def getPayloadFiltered(self,filtro):
         """

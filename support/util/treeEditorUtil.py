@@ -122,7 +122,8 @@ def tree2dict(rootItem,esdiccionario=None,role=None):
         result_l = list()
         for item in elementos:
             nombre = item.data()
-            dato = item.model().itemFromIndex(item.index().sibling(item.row(),1)).data()
+            dato = getColumn(item,1).data()
+            #dato = item.model().itemFromIndex(item.index().sibling(item.row(),1)).data()
             #tipo = item.model().itemFromIndex(item.index().sibling(item.row(),2)).data()
             if item.hasChildren():
                 result_l.append(tree2dict(item,esdiccionario,role))
@@ -137,7 +138,8 @@ def tree2dict(rootItem,esdiccionario=None,role=None):
         result_d = dict()
         for item in elementos:
             nombre = item.data()
-            dato = item.model().itemFromIndex(item.index().sibling(item.row(),1)).data()
+            dato = getColumn(item,1).data()
+            #dato = item.model().itemFromIndex(item.index().sibling(item.row(),1)).data()
             #tipo = item.model().itemFromIndex(item.index().sibling(item.row(),2)).data()
             if item.hasChildren():
                 result_d[nombre] = tree2dict(item,esdiccionario,role)
@@ -547,6 +549,30 @@ def moveInList(item,newpos):
     pai.insertRow(pos,row)
     return pai.child(pos)
     
+def getColumn(item,column):
+    """
+    generalizacion de tree.GuideItem.getColumn, for any QStandardItem
+    
+
+        Returns the item at column _col_ for the current _item_
+        
+        * Input parameters
+            * __item__ an item at the row
+            * __col__ the index of the column requested. 0 is not allowed
+        
+        * Returns
+        The item at that column or None if it doesn't exist
+        
+        * Implementation notes
+        Surprisingly such a method does not exist at QStandardItem.
+        Alternate implementation is
+        item.model().itemFromIndex(item.index().sibling(item.row(),0)
+        but my tests show a heavy performance penalty
+    
+    """
+    pai = item.parent() if item.parent() else item.model().invisibleRootItem()
+    return pai.child(item.row(),column)
+
 
 if __name__ == '__main__':
     #readConfig()

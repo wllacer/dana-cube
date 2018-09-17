@@ -182,7 +182,9 @@ class DanaCubeWindow(QMainWindow):
         self.viewMenu.addAction("Abrir Vista ...",lambda a='new': self.openView(a), "Ctrl+V")
         self.viewMenu.addAction("Cambiar vista actual ...", lambda a='active': self.openView(a), "Ctrl+M")     
         self.viewMenu.addAction("Cerrar vista actual", self.closeView)     
- 
+        if self.experimental:
+            self.viewMenu.addSeparator()
+            self.viewMenu.addAction("Añadir criterio de agrupacion", self.addLevel)     
         self.filtersMenu = self.menuBar().addMenu("Usar &Filtros")
 
         self.filterActions['create'] = self.filtersMenu.addAction('Editar Filtro ...',
@@ -476,6 +478,44 @@ class DanaCubeWindow(QMainWindow):
         else:
             return
 
+    def addLevel(self,action='new'):
+        currentWgt = self.tabulatura.currentWidget()
+        if not currentWgt:
+            return        
+        viewData ={'row': currentWgt.tree.vista.row_id,
+                            'col'  : currentWgt.tree.vista.col_id,
+                            'agregado': currentWgt.tree.vista.agregado,
+                            'campo': currentWgt.tree.vista.campo,
+                            'totalizado':currentWgt.tree.vista.totalizado,
+                            'stats':currentWgt.tree.vista.stats
+                            }
+        guias = self.cubo.getGuideNames()
+        dialog = eligeFiltroDlg(guias)
+        dialog.show()
+        if dialog.exec_():
+            #return dialog.resultado,dialog.residx
+            if dialog.resultado.startswith('_'):
+                viewData = dialog.residx
+            else:
+                elem1 = self.cubo.definition['guides'][viewData['row']]
+                elem2 = self.cubo.definition['guides'][dialog.residx]
+                nname = '_'+self.cubo.getGuideNames()[viewData['row']]+' _'+dialog.resultado
+                #FIXME y si ya lo he fabricado ¿?
+                newElem = { 'class':'h','name':nname,'prod':[] }
+                newElemRef= {'name':newElem['name'],'class':newElem['class'],'contexto':[],'elem':[]}
+                for rule in (elem1.get('prod') + elem2.get('prod')):
+                    newElem['prod'].append(rule)
+                self.cubo.definition['guides'].append(newElem)
+                self.cubo.lista_guias.append(newElemRef)
+                viewData['row'] = len(self.cubo.lista_guias) -1
+            if action == 'new':
+                self.addView(**viewData)
+            elif action == 'active':
+                currentWgt.tree.cargaVista(viewData['row'], viewData['col'], viewData['agregado'], viewData['campo'], total=viewData['totalizado'], estad=viewData['stats'])
+            else:
+                return
+            
+        
     def setFilter(self):
         self.tabulatura.currentWidget().tree.setFilter()
     def dropFilter(self):
@@ -1271,7 +1311,36 @@ class hiddenElemsMgr(QDialog):
             else:
                 self.parent.setRowHidden(row,pai,False)
 
-    
+class eligeFiltroDlg(QDialog):
+    def __init__(self,listGuides,parent=None):
+        super().__init__(parent)
+        
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok| QDialogButtonBox.Cancel)
+        self.msgLine = QLabel()
+        #nameLbl = QLabel('Nombre de la guia')
+        #self.name = QLineEdit()
+        
+        clauseLbl = QLabel('Eliga la condicion por la que desea agurpar adicionalmente')
+
+        self.selector = QComboBox()
+        self.selector.addItems(listGuides)
+        
+        meatlayout = QVBoxLayout()
+        meatlayout.addWidget(clauseLbl)
+        meatlayout.addWidget(self.selector)
+        meatlayout.addWidget(self.msgLine)
+        meatlayout.addWidget(buttonBox)
+        
+        self.setLayout(meatlayout)
+        # en esta posicion para que las señales se activen tras la inicializacion
+        buttonBox.accepted.connect(self.accept)
+        buttonBox.rejected.connect(self.reject)        
+
+    def accept(self):
+        self.resultado = self.selector.currentText()
+        self.residx = self.selector.currentIndex()
+        super().accept()
+        
 if __name__ == '__main__':
     import sys
 

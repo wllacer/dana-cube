@@ -24,7 +24,36 @@ _DEPTH,_BREADTH = range(1,3)
 from PyQt5.QtCore import QAbstractItemModel,QModelIndex
 #from support.util.tree_abstract import TreeDict
 
-def traverseBasic(root,base=None,mode=_DEPTH):
+#def traverseBasicOld(root,base=None,mode=_DEPTH):
+    #if base is not None and base != root:
+       #yield base
+       #queue = [ base.child(i) for i in range(0,base.rowCount()) ]
+    #else:
+        #queue = [ root.child(i) for i in range(0,root.rowCount()) ]
+        ##print(queue)
+        ##print('')
+    #while queue :
+        #yield queue[0]
+        #expansion = [ queue[0].child(i) for i in range(0,queue[0].rowCount()) ]
+        #if expansion is None:
+            #del queue[0]
+        #else:
+            #if mode == _DEPTH:
+                #queue = expansion  + queue[1:]  
+            #elif mode == _BREADTH:
+                #queue = queue[1:] + expansion
+
+def traverseBasic(root,base=None,mode=_DEPTH,filter=None):
+    """
+    ejemplo de uso de filter 
+    ```
+        for item in traverseBasicFiltered(vista.row_hdr_idx.invisibleRootItem(),
+                                                            None,
+                                                            filter=lambda x:not(x.data(Qt.CheckStateRole))
+                                                            ):
+            print(item.getFullKey(),item.text(),item.getPayload())
+    ```
+    """
     if base is not None and base != root:
        yield base
        queue = [ base.child(i) for i in range(0,base.rowCount()) ]
@@ -33,8 +62,11 @@ def traverseBasic(root,base=None,mode=_DEPTH):
         #print(queue)
         #print('')
     while queue :
-        yield queue[0]
-        expansion = [ queue[0].child(i) for i in range(0,queue[0].rowCount()) ]
+        if (not filter) or filter(queue[0]):
+            yield queue[0]
+            expansion = [ queue[0].child(i) for i in range(0,queue[0].rowCount()) ]
+        else:
+            expansion = None
         if expansion is None:
             del queue[0]
         else:
@@ -62,29 +94,20 @@ def traverse(*lparm,**kwparm):
             root = lparm[0]
             start = lparm[1]
     mode = kwparm.get('mode',_DEPTH)
-    return traverseBasic(root,start,mode)
+    filter =  kwparm.get('filter')
+    return traverseBasic(root,start,mode,filter)
 
 def _getRow(lineHdr):
     """
     """
-    if isinstance(lineHdr,QModelIndex):
-        index = lineHdr 
-    else:
-        index = lineHdr.index()
-    model = index.model()  
-
-    if index is None or not index.isValid():
-        print('indice dañado seriamente')
-        raise()
-    print(lineHdr,lineHdr.columnCount())
-    linea = [ None ] * lineHdr.columnCount()
-    
-    for k in range(lineHdr.columnCount()):  #y si es index
-        colIdx = index.sibling(index.row(),k)
-        linea[k] = model.itemFromIndex(colIdx)
-    
-    return linea
-        
+    return [ col for col in rowTraverse(lineHdr) ]
+   
+def rowTraverse(self):
+    pai =  self.parent() if self.parent() else self.model().invisibleRootItem()
+    row = self.row()
+    for k in range(pai.columCount()):
+        yield pai.child(row,k)
+            
 def dumpTree(*lparm,**kwparm):
     model = None
     for line in traverse(*lparm,**kwparm):

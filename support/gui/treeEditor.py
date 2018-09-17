@@ -320,7 +320,8 @@ class TreeMgr(QTreeView):
                 if not context.get('listMember',False):  # cabeza
                     self.ctxMenu.append(menu.addAction("Clear list",lambda i=n:self.clearList(i)))
                     self.ctxMenu.append(menu.addAction("Add entry",lambda i=n:self.addEntry(i)))
-                datos = n.model().itemFromIndex(n.index().sibling(n.row(),1) )        
+                datos = getColumn(n,1)
+                #datos = n.model().itemFromIndex(n.index().sibling(n.row(),1) )        
                 if datos.data():
                     self.ctxMenu.append(menu.addAction("entry to list ",lambda i=n:self.convertToList(i)))
             elif edit_data.get('objtype','atom') == 'dict' and edit_data.get('elements',None) is None:
@@ -416,7 +417,8 @@ class TreeMgr(QTreeView):
             if itm.column() == 0:
                 parent = itm
             else:
-                parent = itm.model().itemFromIndex(itm.index().sibling(itm.row(),0))
+                parent = getColumn(itm,0)
+                #parent = itm.model().itemFromIndex(itm.index().sibling(itm.row(),0))
             if not parent:
                 return None,False
         #correccion para el caso de que sean elementos repetibles y sea el primero
@@ -639,12 +641,14 @@ class TreeMgr(QTreeView):
                 #item.appendRow(makeRow(entrada[0],entrada[1],entrada[0]))
  
     def clearList(self,item):
-        nitem = item.model().itemFromIndex(item.index().sibling(item.row(),0) )                    
+        nitem = getColumn(item,0)
+        #nitem = item.model().itemFromIndex(item.index().sibling(item.row(),0) )                    
         while nitem.rowCount() > 0:
             item.removeRow(0)
 
     def addEntry(self,item):
-        nitem = item.model().itemFromIndex(item.index().sibling(item.row(),0) )       
+        nitem = getColumn(item,0)
+        #nitem = item.model().itemFromIndex(item.index().sibling(item.row(),0) )       
         text,ok = QInputDialog.getText(None, "Nueva entrada para: "+nitem.data(),"Valor", QLineEdit.Normal,'')
         if ok and text:
             nRow = makeRow(None,text,None)
