@@ -468,7 +468,7 @@ class Cubo:
 
             return cursor
 
-    def createProdModel(self,raiz,cursor,contexto,prodId,total=None,display=False):
+    def createProdModel(self,raiz,cursor,contexto,prodId,total=None,display=False,cartesian=True):
         """
         De cursor al modelo que utilizamos para definir la guia
         Input
@@ -478,59 +478,100 @@ class Cubo:
             prodId identificación de la regla
             total (si la guia va a ser creada con totalizadores. En el caso de QStandardItemModel ha sido un fracaso de otra manera)
             display en el formato que pide guidePreview
+            cartesian: si el cruce entre distintos niveles es via un campo de enlace implicito o producto cartesiano
         Ahora mismo este codigo tiene el efecto secundario que en claves multicampo se crea implicitamente una jerarquia de valores
         TODO contemplar el caso contrario
         """
         columns = contexto['columns']   #columnas que van a obtenerse de la b.d.
         code = contexto['code']               #código que conforma la guia
+        
         desc = contexto['desc']                #texto descriptivo de cada codigo
         groupby = contexto['groupby']
         
         ngroupby = len(groupby)
         ncols = len(columns)
         ndesc = len(columns) - len(code)
-        ncode = len(code) -ngroupby
+        ncode = len(code) # -ngroupby
+                
+        def getAttributes(record,contexto,total,cartesian):
+            columns = contexto['columns']   #columnas que van a obtenerse de la b.d.
+            ncols = len(columns)
+            groupby = contexto['groupby']
+            ngroupby = len(groupby)
+            code = contexto['code']               #código que conforma la guia
+            ncode = len(code) # -ngroupby
+            desc = contexto['desc']                #texto descriptivo de cada codigo
+            ndesc = len(columns) - len(code)
+            
+
+            pai_key = []
+            key = None
+            value = None
+            """
+            #version alternativa que no requiere de groupby explicito (si no es cartesiano)
+            """
+            if not cartesian and ncode > 1:
+                ngroupby = ncode -1
+            
+            if ngroupby != 0:
+                pai_key = record[0:ngroupby]
+            key = normConcat(self.db,record[ngroupby:ncode])[0]
+            value = normConcat(self.db,record[ncode:])[0] if ndesc > 0 else key
+            return pai_key, key, value
         
-        #cache_parents = [ None for i in range(len(code))]
-        
-        #ndesc = len(columns) - len(code)
-        for entryNum,row in enumerate(cursor):
-            # renormalizamos el contenido del cursor
-            for k in range(len(row)):
-                if row[k] is None:
-                    row[k] = ''
-                #else:
-                    #row[k] = str(row[k]) #.replace(config.DELIMITER,'/') #OJO todas las claves son Alfanumericas
-            if ndesc == 0:
-                value = ', '.join(row[-ncode:])
-            else:
-                value = ', '.join(row[-ndesc:])
-            #
-            # ahora debo localizar donde en la jerarquia tiene que encontrarse. Eso varia por tipo
-            # __FIXME__ Para GuideItemModel   un sistema de cache para reducir el numero de busquedas seria de utilidad
-            # __FIXME__ el rol de ordenacion hacerlo global para todo el bucle
-            papid = row[0:len(code)]
-            key = papid[-1]
-            del papid[-1]
-            #TODO cache sigue siendo necesario
-            if total:  #no viene recogido previamente
-                papid = ["//",]+papid
-            if len(papid) == 0:
-                parent = raiz
-            else:
-                parent = searchHierarchy(raiz.model(),papid,Qt.UserRole +1)
-                if not parent:
-                    continue
-            if not display:  #la situacion ordinaria de una guia
-                item = GuideItem(key,value)
-                item.insertSorted(parent,Qt.UserRole  +1)                    
-            else: #para los programas de lista
-                # se incluye tambien los valores en el rol interno para poder unificar las operaciones de busquiedas
-                # con displyas y guideitemmodel, ya que estos ultimos suelen consultar por userrole
+        def insertElement(padre,key,value,display=False):
+            if display:
                 row = (QStandardItem(str(key)),QStandardItem(str(value)),)
                 row[0].setData(key,Qt.UserRole +1)
                 row[1].setData(value,Qt.UserRole +1)
-                insertSorted(row,parent,Qt.UserRole  +1)                    
+                insertSorted(row,padre,Qt.UserRole  +1)                    
+            else:
+                item = GuideItem(key,value)
+                insertSorted(item,padre,Qt.UserRole +1)
+            
+        def cooptCursor(padre,cursor,contexto,total,display,cartesian):
+            for record in cursor:
+                pai_key,key,value = getAttributes(record,contexto,total,cartesian)
+                if pai_key:
+                    if total:
+                        pai_key.insert(0,'//')
+                    pater = padre.getFullHeadInfo(content='key',format='array')
+                else:
+                    pater = []
+                
+                if pai_key == pater:
+                    insertElement(padre,key,value,display)
+
+
+        if cartesian:
+            if raiz.rowCount() == 0:
+                    cooptCursor(raiz,cursor,contexto,total,display,cartesian)
+            else:
+                worksheet = []
+                for item in raiz.model().traverse():
+                    if item.isLeaf():
+                        worksheet.append(item)
+                for item in worksheet:
+                    cooptCursor(item,cursor,contexto,total,display,cartesian)
+        else:
+            for record in cursor:
+                pai_key,key,value = getAttributes(record,contexto,total,cartesian)
+                if total :
+                    pai_key.insert(0,'//')
+                if len(pai_key) == 0:
+                    padre = raiz
+                else:
+                    padre = searchHierarchy(raiz.model(),pai_key,Qt.UserRole +1)
+                if not padre:
+                    continue
+                else:
+                    insertElement(padre,key,value,display)
+        
+        
+        #model = raiz.model()
+        #for item in model.traverse():
+            #print(item.getFullKey(),'->-',item.text())
+                   
 
     
     def setGroupBy(self,contexto,prodId,table,code,desc,columns,groupby):
@@ -544,7 +585,7 @@ class Cubo:
         return groupby,code,desc,columns
 
     
-    def fillGuia(self,guidIdentifier,total=None,generateTree=True,display=False):
+    def fillGuia(self,guidIdentifier,total=None,generateTree=True,display=False,cartesian=False):
         '''
         TODO ripple doc
         Es el metodo con el que creamos la guia; de paso generamos informacion complementaria, el contexto
@@ -554,6 +595,7 @@ class Cubo:
                 hacerlo que no corrompiera el arbol
         generateTree  si genera el arbol o solo el contexto
         display si el arbol generado es solo para ver la guia (en guidePrevuew)
+        cartesian: si el cruce entre distintos niveles es via un campo de enlace implicito o producto cartesiano
         
         El contexto que genera para cada produccion es
             {'table':table,   -> tabla del dominio de la guia
@@ -786,7 +828,7 @@ class Cubo:
                 groupby,code,desc,columns,elems = fieldInfoDate()
                 
             # si tengo una jerarquia y no tengo group by cargo uno por defecto si es la misma tabla
-            if prodId != 0 and len(groupby) == 0:
+            if not cartesian and prodId != 0 and len(groupby) == 0:
                 groupby,code,desc,columns = self.setGroupBy(contexto,prodId,table,code,desc,columns,groupby)
                 #if contexto[prodId -1]['table'] == table:  #por coherencia sin groop by es imposible sino
                     #groupby = contexto[prodId -1]['code']
@@ -817,7 +859,7 @@ class Cubo:
                     cursor = dateCursorGen() #tree,produccion,prodId,contexto,basefilter,datefilter,date_cache,origId,origGuide,guidId,table)
                 else:
                     cursor  = self._getProdCursor(contexto,prodId,basefilter,datefilter)
-                self.createProdModel(tree,cursor,contexto[-1],prodId,total,display)
+                self.createProdModel(tree,cursor,contexto[-1],prodId,total,display,cartesian)
         if generateTree:
             return arbol,contexto
         else:
@@ -828,7 +870,7 @@ class Cubo:
 class Vista:
     #TODO falta documentar
     #TODO falta implementar la five points metric
-    def __init__(self, cubo,prow, pcol,  agregado, campo, filtro='',totalizado=True, stats=True):
+    def __init__(self, cubo,prow, pcol,  agregado, campo, filtro='',totalizado=True, stats=True, cartesian=False):
         self.cubo = cubo
         # acepto tanto nombre como nuero de columna y fila.
         # NO Controlo el error en este caso. Es lo suficientemente serio para abendar
@@ -847,6 +889,7 @@ class Vista:
         self.filtro = filtro
         self.totalizado = totalizado
         self.stats = stats
+        self.cartesian = cartesian
         self.row_id = None   #son row y col. a asignar en setnewview
         self.col_id = None
 
@@ -860,9 +903,9 @@ class Vista:
         #self.hierarchy= False
         self.array = []
         
-        self.setNewView(row, col,agregado, campo, filtro,totalizado, stats)
+        self.setNewView(row, col,agregado, campo, filtro,totalizado, stats,cartesian=cartesian)
 
-    def setNewView(self,prow, pcol, agregado=None, campo=None, filtro='',totalizado=True, stats=True, force=False):
+    def setNewView(self,prow, pcol, agregado=None, campo=None, filtro='',totalizado=True, stats=True, force=False, cartesian=False):
         # acepto tanto nombre como nuero de columna y fila.
         # NO Controlo el error en este caso. Es lo suficientemente serio para abendar
         if isinstance(prow,int):
@@ -914,6 +957,9 @@ class Vista:
         if self.stats != stats:
             procesar = True
             self.stats = stats
+        if self.cartesian != cartesian:
+            procesar = True
+            self.cartesian = cartesian
             
         if procesar:
         
@@ -924,7 +970,7 @@ class Vista:
             #for k,entrada in enumerate(self.lista_guias):
             for item in (row,col):
                 #TODO TOT-V
-                self.cubo.lista_guias[item]['dir_row'],self.cubo.lista_guias[item]['contexto']=self.cubo.fillGuia(item,total=self.totalizado if item == row else False)
+                self.cubo.lista_guias[item]['dir_row'],self.cubo.lista_guias[item]['contexto']=self.cubo.fillGuia(item,total=self.totalizado if item == row else False,cartesian=self.cartesian)
 
             self.dim_row = len(self.cubo.lista_guias[row]['contexto'])
             self.dim_col = len(self.cubo.lista_guias[col]['contexto'])

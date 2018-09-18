@@ -494,8 +494,9 @@ class DanaCubeWindow(QMainWindow):
         dialog.show()
         if dialog.exec_():
             #return dialog.resultado,dialog.residx
+            viewData['cartesian']=dialog.cartesian
             if dialog.resultado.startswith('_'):
-                viewData = dialog.residx
+                viewData['row'] = dialog.residx
             else:
                 elem1 = self.cubo.definition['guides'][viewData['row']]
                 elem2 = self.cubo.definition['guides'][dialog.residx]
@@ -508,8 +509,10 @@ class DanaCubeWindow(QMainWindow):
                 self.cubo.definition['guides'].append(newElem)
                 self.cubo.lista_guias.append(newElemRef)
                 viewData['row'] = len(self.cubo.lista_guias) -1
+                
             if action == 'new':
                 self.addView(**viewData)
+            #TODO esta desactivado   
             elif action == 'active':
                 currentWgt.tree.cargaVista(viewData['row'], viewData['col'], viewData['agregado'], viewData['campo'], total=viewData['totalizado'], estad=viewData['stats'])
             else:
@@ -798,7 +801,8 @@ class DanaCube(QTreeView):
         
         if not viewData:
             return False 
-        self.cargaVista(viewData['row'], viewData['col'], viewData['agregado'], viewData['campo'], total=viewData['totalizado'], estad=viewData['stats'])
+        #TODO viewData
+        self.cargaVista(viewData['row'], viewData['col'], viewData['agregado'], viewData['campo'], total=viewData['totalizado'], estad=viewData['stats'],cartesian=viewData.get('cartesian',False))
         
         self.defineModel()
         return True
@@ -833,20 +837,20 @@ class DanaCube(QTreeView):
 
     @waiting_effects
     @stopwatch
-    def cargaVista(self,row, col, agregado, campo, total=True, estad=True,force=False):
+    def cargaVista(self,row, col, agregado, campo, total=True, estad=True,force=False,cartesian=False):
         if self.vista is None:
-            self.vista = Vista(self.cubo, row, col, agregado, campo, totalizado=total, stats=estad,filtro=self.filtro)
+            self.vista = Vista(self.cubo, row, col, agregado, campo, totalizado=total, stats=estad,filtro=self.filtro,cartesian=cartesian)
             self.vista.toNewTree2D()
             self.defineModel()
         else:
-            self.changeView(row, col, agregado, campo, total,estad,force)
+            self.changeView(row, col, agregado, campo, total,estad,force,cartesian)
             #self.refreshTable()
         #self.vista.format = self.format
 
     @waiting_effects
     @stopwatch
-    def changeView(self,row, col, agregado, campo, total=True, estad=True,force=False):
-        self.vista.setNewView(row, col, agregado, campo, totalizado=total, stats=estad,filtro=self.filtro,force=force)
+    def changeView(self,row, col, agregado, campo, total=True, estad=True,force=False,cartesian=False):
+        self.vista.setNewView(row, col, agregado, campo, totalizado=total, stats=estad,filtro=self.filtro,force=force,cartesian=cartesian)
         self.vista.toNewTree2D()
         #
         self.defineModel()
@@ -941,7 +945,7 @@ class DanaCube(QTreeView):
             self.filterValues = [ data for data in filterDlg.data]
             self.cargaVista(self.vista.row_id,self.vista.col_id,
                             self.vista.agregado,self.vista.campo,
-                            self.vista.totalizado,self.vista.stats) #__WIP__ evidentemente aqui faltan todos los parametros
+                            self.vista.totalizado,self.vista.stats,cartesian=self.vista.cartesian) #__WIP__ evidentemente aqui faltan todos los parametros
             self.parent.filterActions['drop'].setEnabled(True)
             self.parent.filterActions['save'].setEnabled(True)
 
@@ -952,7 +956,7 @@ class DanaCube(QTreeView):
         self.filterValues = None
         self.cargaVista(self.vista.row_id,self.vista.col_id,
                         self.vista.agregado,self.vista.campo,
-                        self.vista.totalizado,self.vista.stats) #__WIP__ evidentemente aqui     def saveFilter(self):
+                        self.vista.totalizado,self.vista.stats,cartesian=self.vista.cartesian) #__WIP__ evidentemente aqui     def saveFilter(self):
         self.parent.filterActions['drop'].setEnabled(False)
         self.parent.filterActions['save'].setEnabled(False)
 
@@ -1023,7 +1027,7 @@ class DanaCube(QTreeView):
                 #self.filtro = mergeString(self.filtroCampos,self.filtroFechas,'AND')
                 self.cargaVista(self.vista.row_id,self.vista.col_id,
                             self.vista.agregado,self.vista.campo,
-                            self.vista.totalizado,self.vista.stats,force=True) #__WIP__ evidentemente aqui faltan todos los parametros
+                            self.vista.totalizado,self.vista.stats,force=True,cartesian=self.vista.cartesian) #__WIP__ evidentemente aqui faltan todos los parametros
 
                 self.parent.dateRangeActions['drop'].setEnabled(True)
                 self.parent.dateRangeActions['save'].setEnabled(True)
@@ -1041,7 +1045,7 @@ class DanaCube(QTreeView):
         self.restoreRangeDef()
         self.cargaVista(self.vista.row_id,self.vista.col_id,
                         self.vista.agregado,self.vista.campo,
-                        self.vista.totalizado,self.vista.stats,force=True) #__WIP__ evidentemente aqui     def saveFilter(self):
+                        self.vista.totalizado,self.vista.stats,force=True,cartesian=self.vista.cartesian) #__WIP__ evidentemente aqui     def saveFilter(self):
         self.parent.dateRangeActions['drop'].setEnabled(False)
         self.parent.dateRangeActions['save'].setEnabled(False)
 
@@ -1325,9 +1329,12 @@ class eligeFiltroDlg(QDialog):
         self.selector = QComboBox()
         self.selector.addItems(listGuides)
         
+        self.cartCheck = QCheckBox('Como producto cartesiano')
+        
         meatlayout = QVBoxLayout()
         meatlayout.addWidget(clauseLbl)
         meatlayout.addWidget(self.selector)
+        meatlayout.addWidget(self.cartCheck)
         meatlayout.addWidget(self.msgLine)
         meatlayout.addWidget(buttonBox)
         
@@ -1339,6 +1346,7 @@ class eligeFiltroDlg(QDialog):
     def accept(self):
         self.resultado = self.selector.currentText()
         self.residx = self.selector.currentIndex()
+        self.cartesian = self.cartCheck.isChecked()
         super().accept()
         
 if __name__ == '__main__':
