@@ -31,7 +31,7 @@ from pprint import *
 
 import time
 
-from support.util.jsonmgr import dump_structure,dump_json
+from support.util.jsonmgr import dump_structure,dump_json   
 try:
     import xlsxwriter
     XLSOUTPUT = True
@@ -870,7 +870,21 @@ class Cubo:
 class Vista:
     #TODO falta documentar
     #TODO falta implementar la five points metric
-    def __init__(self, cubo,prow, pcol,  agregado, campo, filtro='',totalizado=True, stats=True, cartesian=False):
+    def __init__(self,cubo,prow,pcol,agregado,campo,**kwparm):
+        """
+        parametrros:
+            __cubo__
+            __prow__
+            __pcol__
+            __agregado__
+            __campo__
+            __kwparm__
+                filtro='',
+                totalizado=True,
+                stats=True, 
+                cartesian=False):
+        """
+    #def __init__(self, cubo,prow, pcol,  agregado, campo, filtro='',totalizado=True, stats=True, cartesian=False):
         self.cubo = cubo
         # acepto tanto nombre como nuero de columna y fila.
         # NO Controlo el error en este caso. Es lo suficientemente serio para abendar
@@ -886,10 +900,11 @@ class Vista:
         # deberia verificar la validez de estos datos
         self.agregado=agregado
         self.campo = campo
-        self.filtro = filtro
-        self.totalizado = totalizado
-        self.stats = stats
-        self.cartesian = cartesian
+        self.filtro = kwparm.get('filtro','')
+        self.totalizado = kwparm.get('totalizado',True)
+        self.stats = kwparm.get('stats',True)
+        self.cartesian = kwparm.get('cartesian',False)
+        
         self.row_id = None   #son row y col. a asignar en setnewview
         self.col_id = None
 
@@ -903,9 +918,10 @@ class Vista:
         #self.hierarchy= False
         self.array = []
         
-        self.setNewView(row, col,agregado, campo, filtro,totalizado, stats,cartesian=cartesian)
+        self.setNewView(row, col,agregado, campo, **kwparm)  #filtro,totalizado, stats,cartesian=cartesian)
 
-    def setNewView(self,prow, pcol, agregado=None, campo=None, filtro='',totalizado=True, stats=True, force=False, cartesian=False):
+    def setNewView(self,prow,pcol,agregado,campo,**kwparm):
+    ##def setNewView(self,prow, pcol, agregado=None, campo=None, filtro='',totalizado=True, stats=True, force=False, cartesian=False):
         # acepto tanto nombre como nuero de columna y fila.
         # NO Controlo el error en este caso. Es lo suficientemente serio para abendar
         if isinstance(prow,int):
@@ -916,7 +932,13 @@ class Vista:
             col = pcol
         else:
             col = [ item['name'] for item in self.cubo.lista_guias].index(pcol)
-        
+    
+        filtro = kwparm.get('filtro','')
+        totalizado = kwparm.get('totalizado',True)
+        stats = kwparm.get('stats',True)
+        force = kwparm.get('force',False)
+        cartesian = kwparm.get('cartesian',False)
+    
         dim_max = len(self.cubo.lista_guias)
         
         # validaciones. Necesarias porque puede ser invocado desde fuera
