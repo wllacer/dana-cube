@@ -499,7 +499,7 @@ class DanaCubeWindow(QMainWindow):
             else:
                 elem1 = self.cubo.definition['guides'][viewData['row']]
                 elem2 = self.cubo.definition['guides'][dialog.residx]
-                nname = '_'+self.cubo.getGuideNames()[viewData['row']]+' _'+dialog.resultado
+                nname = '_'+self.cubo.getGuideNames()[viewData['row']].strip()+'_'+dialog.resultado.strip()
                 #FIXME y si ya lo he fabricado ¿?
                 newElem = { 'class':'h','name':nname,'prod':[] }
                 newElemRef= {'name':newElem['name'],'class':newElem['class'],'contexto':[],'elem':[]}
