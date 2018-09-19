@@ -167,8 +167,9 @@ class DanaCubeWindow(QMainWindow):
         self.editActions = {}
         
         self.tabulatura	= QTabWidget()
+        self.tabulatura.setTabsClosable(True)
         self.tabulatura.currentChanged[int].connect(self.checkChanges)
-
+        self.tabulatura.tabCloseRequested[int].connect(self.closeView)
         self.views = list()
         self.selectCube(True)
         
@@ -460,8 +461,11 @@ class DanaCubeWindow(QMainWindow):
         self.tabulatura.setCurrentIndex(idx)
 
     
-    def closeView(self):
-        tabId = self.tabulatura.currentIndex()
+    def closeView(self,idx=None):
+        if idx:
+            tabId = idx
+        else:
+            tabId = self.tabulatura.currentIndex()
         self.tabulatura.removeTab(tabId)
         self.views[tabId].close()
         del self.views[tabId]
