@@ -74,6 +74,44 @@ def traverseBasic(root,base=None,mode=_DEPTH,filter=None):
                 queue = expansion  + queue[1:]  
             elif mode == _BREADTH:
                 queue = queue[1:] + expansion
+        
+def traverseAndDrop(root,base=None,mode=_DEPTH,filter=None):
+    """
+    ejemplo de uso de filter 
+    ```
+        for item in traverseBasicFiltered(vista.row_hdr_idx.invisibleRootItem(),
+                                                            None,
+                                                            filter=lambda x:not(x.data(Qt.CheckStateRole))
+                                                            ):
+            print(item.getFullKey(),item.text(),item.getPayload())
+    ```
+    """
+    if base is not None and base != root:
+       yield base
+       queue = [ base.child(i) for i in range(0,base.rowCount()) ]
+    else:
+        queue = [ root.child(i) for i in range(0,root.rowCount()) ]
+        #print(queue)
+        #print('')
+    while queue :
+        if (not filter) or filter(queue[0]):
+            yield queue[0]
+            expansion = [ queue[0].child(i) for i in range(0,queue[0].rowCount()) ]
+        else:
+            pai = queue[0].parent()
+            if not pai:
+                pai = queue[0].inivisibleRootItem()
+            row = queue[0].row()
+            print('a borrar',queue[0].getFullKey())
+            pai.removeRow(row)
+            expansion = None
+        if expansion is None:
+            del queue[0]
+        else:
+            if mode == _DEPTH:
+                queue = expansion  + queue[1:]  
+            elif mode == _BREADTH:
+                queue = queue[1:] + expansion
                 
 def traverse(*lparm,**kwparm):
     start = None

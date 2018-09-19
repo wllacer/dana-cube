@@ -992,7 +992,10 @@ class Vista:
             #for k,entrada in enumerate(self.lista_guias):
             for item in (row,col):
                 #TODO TOT-V
-                self.cubo.lista_guias[item]['dir_row'],self.cubo.lista_guias[item]['contexto']=self.cubo.fillGuia(item,total=self.totalizado if item == row else False,cartesian=self.cartesian)
+                self.cubo.lista_guias[item]['dir_row'],self.cubo.lista_guias[item]['contexto']=\
+                    self.cubo.fillGuia(item,
+                                                total=self.totalizado if item == row else False,
+                                                cartesian=self.cartesian if item == row else False)
 
             self.dim_row = len(self.cubo.lista_guias[row]['contexto'])
             self.dim_col = len(self.cubo.lista_guias[col]['contexto'])
@@ -1144,7 +1147,7 @@ class Vista:
                 self.array +=cursor 
                 if config.DEBUG:
                     print(time.time(),'Datos ',queryFormat(sqlstring))
-     
+            
     
     def __setAndBackup(self,item,idx,data):
         """

@@ -475,6 +475,9 @@ class DanaCubeWindow(QMainWindow):
             self.addView(**viewData)
         elif action == 'active':
             attrs = { clave:viewData[clave] for clave in viewData if clave not in ('row','col','agregado','campo') }
+            areView,areAttr = currentWgt.tree.vista.getAttributes()
+            if areAttr.get('cartesian') and areView[0] == viewData['row']:
+                attrs['cartesian'] = areAttr['cartesian']
             currentWgt.tree.cargaVista(viewData['row'], viewData['col'], viewData['agregado'], viewData['campo'], **attrs)
         else:
             return
@@ -870,7 +873,17 @@ class DanaCube(QTreeView):
             #[item.data(Qt.DisplayRole) for item in self.vista.col_hdr_idx.traverse()])
         self.expandToDepth(0)
         self.setTitle()
+        if self.vista.cartesian:
+            for item in self.vista.row_hdr_idx.traverse():
+                row = item.row()
+                pai = item.parent().index() if item.parent() else QModelIndex()
+                if item.hasPayload():
+                    self.setRowHidden(row,pai,False)
+                else:
+                    self.setRowHidden(row,pai,True)
 
+                
+            
         
     #def changeVista(self):
         #viewData = self.requestVista()
