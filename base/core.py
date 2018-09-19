@@ -1005,7 +1005,18 @@ class Vista:
             self.col_hdr_idx.vista = None
             self._setDataMatrix()
             
+    def getAttributes(self):
+        defVista = [self.row_id,self.col_id,self.agregado,self.campo ]
 
+        atrVista = {
+            'filtro': self.filtro,
+            'totalizado':self.totalizado,
+            'stats':self.stats,
+            'force' :None,
+            'cartesian':self.cartesian
+            }
+        return defVista,atrVista
+        
     def  _setDateFilter(self):
         return self.cubo.setDateFilter()
      

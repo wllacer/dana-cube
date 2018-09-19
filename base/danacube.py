@@ -474,7 +474,8 @@ class DanaCubeWindow(QMainWindow):
         if action == 'new':
             self.addView(**viewData)
         elif action == 'active':
-            currentWgt.tree.cargaVista(viewData['row'], viewData['col'], viewData['agregado'], viewData['campo'], total=viewData['totalizado'], estad=viewData['stats'])
+            attrs = { clave:viewData[clave] for clave in viewData if clave not in ('row','col','agregado','campo') }
+            currentWgt.tree.cargaVista(viewData['row'], viewData['col'], viewData['agregado'], viewData['campo'], **attrs)
         else:
             return
 
@@ -802,7 +803,8 @@ class DanaCube(QTreeView):
         if not viewData:
             return False 
         #TODO viewData
-        self.cargaVista(viewData['row'], viewData['col'], viewData['agregado'], viewData['campo'], total=viewData['totalizado'], estad=viewData['stats'],cartesian=viewData.get('cartesian',False))
+        attrs = { clave:viewData[clave] for clave in viewData if clave not in ('row','col','agregado','campo') }
+        self.cargaVista(viewData['row'], viewData['col'], viewData['agregado'], viewData['campo'], **attrs)
         
         self.defineModel()
         return True
@@ -837,8 +839,10 @@ class DanaCube(QTreeView):
 
     @waiting_effects
     @stopwatch
-    def cargaVista(self,row, col, agregado, campo, **kparm):
+    def cargaVista(self,*lparm, **kparm):
+        """ row, col, agregado, campo, """
         """:total=True, estad=True,force=False,cartesian=False):"""
+        row,col,agregado,campo = lparm[:4]
         if self.vista is None:
             self.vista = Vista(self.cubo, row, col, agregado, campo, **kparm)
             self.vista.toNewTree2D()
@@ -945,9 +949,9 @@ class DanaCube(QTreeView):
             self.filtroCampos=filterDlg.result
             self.filtro = mergeString(self.filtroCampos,self.filtroFechas,'AND')
             self.filterValues = [ data for data in filterDlg.data]
-            self.cargaVista(self.vista.row_id,self.vista.col_id,
-                            self.vista.agregado,self.vista.campo,
-                            self.vista.totalizado,self.vista.stats,cartesian=self.vista.cartesian) #__WIP__ evidentemente aqui faltan todos los parametros
+            viewDef,viewData = self.vista.getAttributes()
+            viewData['filtro'] = self.filtro
+            self.cargaVista(*viewDef,**viewData)
             self.parent.filterActions['drop'].setEnabled(True)
             self.parent.filterActions['save'].setEnabled(True)
 
@@ -956,9 +960,9 @@ class DanaCube(QTreeView):
         self.filtroCampos=''
         self.filtro = mergeString(self.filtroCampos,self.filtroFechas,'AND')
         self.filterValues = None
-        self.cargaVista(self.vista.row_id,self.vista.col_id,
-                        self.vista.agregado,self.vista.campo,
-                        self.vista.totalizado,self.vista.stats,cartesian=self.vista.cartesian) #__WIP__ evidentemente aqui     def saveFilter(self):
+        viewDef,viewData = self.vista.getAttributes()
+        viewData['filtro'] = self.filtro
+        self.cargaVista(*viewDef,**viewData)
         self.parent.filterActions['drop'].setEnabled(False)
         self.parent.filterActions['save'].setEnabled(False)
 
@@ -1027,9 +1031,9 @@ class DanaCube(QTreeView):
             if len(sqlGrp) > 0:
                 #self.filtroFechas = searchConstructor('where',where=sqlGrp,driver=self.cubo.dbdriver)
                 #self.filtro = mergeString(self.filtroCampos,self.filtroFechas,'AND')
-                self.cargaVista(self.vista.row_id,self.vista.col_id,
-                            self.vista.agregado,self.vista.campo,
-                            self.vista.totalizado,self.vista.stats,force=True,cartesian=self.vista.cartesian) #__WIP__ evidentemente aqui faltan todos los parametros
+                viewDef,viewData = self.vista.getAttributes()
+                self.cargaVista(*viewDef,**viewData)
+
 
                 self.parent.dateRangeActions['drop'].setEnabled(True)
                 self.parent.dateRangeActions['save'].setEnabled(True)
@@ -1045,9 +1049,9 @@ class DanaCube(QTreeView):
 
     def dropRange(self):
         self.restoreRangeDef()
-        self.cargaVista(self.vista.row_id,self.vista.col_id,
-                        self.vista.agregado,self.vista.campo,
-                        self.vista.totalizado,self.vista.stats,force=True,cartesian=self.vista.cartesian) #__WIP__ evidentemente aqui     def saveFilter(self):
+        viewDef,viewData = self.vista.getAttributes()
+        viewData['filtro'] = self.filtro
+        self.cargaVista(*viewDef,**viewData)
         self.parent.dateRangeActions['drop'].setEnabled(False)
         self.parent.dateRangeActions['save'].setEnabled(False)
 
