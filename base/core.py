@@ -660,7 +660,7 @@ class Cubo:
         def fieldInfoOrdinary():
             #TODO renormalizar nombres si es posible
             if 'domain' in produccion:
-                groupby = norm2List(produccion['domain'].get('grouped by'))
+                groupby = norm2List(produccion['domain'].get('grouped by',produccion.get('grouped by')))
                 code = groupby + normConcat(self.db,produccion['domain'].get('code')) 
                 desc = norm2List(produccion['domain'].get('desc'))
                 columns = code + desc
@@ -703,6 +703,8 @@ class Cubo:
 
         def fieldInfoDate():
             renormElems()
+            print('fieldInfoDate')
+            pprint(produccion)
             code = desc = columns = norm2List(produccion.get('elem'))
                 # la correcta asignacion de formatos fecha ha sido hecha al desdoblar
             if prodId == 0:    
@@ -826,8 +828,10 @@ class Cubo:
                 groupby,code,desc,columns,elems = fieldInfoCase(nombre)
             elif clase == 'd':
                 groupby,code,desc,columns,elems = fieldInfoDate()
-                
-            # si tengo una jerarquia y no tengo group by cargo uno por defecto si es la misma tabla
+            
+            #if prodId > 0:
+               #groupby = norm2List(produccion.get('domain',{}).get('grouped by',produccion.get('grouped by')))
+            ## si tengo una jerarquia y no tengo group by cargo uno por defecto si es la misma tabla
             if not cartesian and prodId != 0 and len(groupby) == 0:
                 groupby,code,desc,columns = self.setGroupBy(contexto,prodId,table,code,desc,columns,groupby)
                 #if contexto[prodId -1]['table'] == table:  #por coherencia sin groop by es imposible sino

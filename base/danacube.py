@@ -1353,7 +1353,7 @@ class eligeFiltroDlg(QDialog):
         self.selector.addItems(listGuides)
         
         self.cartCheck = QCheckBox('Como producto cartesiano')
-        
+        self.cartCheck.setChecked(True)
         meatlayout = QVBoxLayout()
         meatlayout.addWidget(clauseLbl)
         meatlayout.addWidget(self.selector)
