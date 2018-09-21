@@ -1294,6 +1294,10 @@ class hiddenElemsMgr(QDialog):
         super().__init__(parent)
         self.direccion = direccion
         self.parent = parent
+        self.propagate = QCheckBox('Propagar a lo largo de la jerarquia') 
+        #TODO lo mismo que en la descarga (multi cosas)
+        self.soloLeaf = QCheckBox('Mostrar solo las hojas')
+        self.soloBranch = QCheckBox('Mostrar solo las ramas')
         
         self.lista = QTreeView()
         self.lista.header().hide()
@@ -1302,7 +1306,21 @@ class hiddenElemsMgr(QDialog):
             self.source = self.parent.vista.col_hdr_idx
         elif self.direccion == 'row':
             self.source = self.parent.vista.row_hdr_idx
-        imodel = self.source.cloneSubTree()
+            
+        self.propagate.setVisible(False)
+        self.soloLeaf.setVisible(False)
+        self.soloBranch.setVisible(False)
+        
+        if (self.direccion == 'col' and self.parent.vista.dim_col == 1) or (self.direccion == 'row' and self.parent.vista.dim_row == 1):
+            pass
+        elif self.direccion == 'row':
+            self.soloBranch.setVisible(True)
+        else:
+            self.propagate.setVisible(True)
+            self.soloLeaf.setVisible(True)
+            self.soloBranch.setVisible(True)
+
+        imodel = self.source.cloneSubTree(ordRole=Qt.UserRole +1)
         self.lista.setModel(imodel)
         self.lista.expandAll()
 
@@ -1315,28 +1333,63 @@ class hiddenElemsMgr(QDialog):
             
         lay = QVBoxLayout()
         lay.addWidget(self.lista)
+        lay.addWidget(self.propagate)
+        lay.addWidget(self.soloBranch)
+        lay.addWidget(self.soloLeaf)
         self.setLayout(lay)
         
 
         self.lista.model().itemChanged.connect(self.itemChanged)
-        
+        #self.source.itemChanged.connect(self.itemChanged)
+        self.soloLeaf.stateChanged.connect(self.hideBranch)
+        self.soloBranch.stateChanged.connect(self.hideLeaf)
    
+    def hideLeaf(self,state):
+        for item in self.lista.model().traverse():
+            if item.isLeaf():
+                item.setCheckState(state)    
+                
+    def hideBranch(self,state):
+        if state == 0:
+            action = False
+        else:
+            action = True
+
+        propState = self.propagate.checkState()
+        self.propagate.setCheckState(False)
+        for item in  self.lista.model().traverse():
+            if item.isBranch():
+                item.setCheckState(action)
+        self.propagate.setCheckState(propState)
+        
     def itemChanged(self,item):
-        clave = item.getFullHeadInfo(role=Qt.UserRole +1,format='array')
-        ref_elem = self.source.searchHierarchy(clave,role=Qt.UserRole +1)
-        if self.direccion == 'col':
-            pos = self.source.item2pos(ref_elem)
-            if item.checkState():
-                self.parent.setColumnHidden(pos +1,True)
-            else:
-                self.parent.setColumnHidden(pos +1,False)
-        elif self.direccion == 'row':
-            row = ref_elem.row()
-            pai = ref_elem.parent().index() if ref_elem.parent() else QModelIndex()
-            if item.checkState():
-                self.parent.setRowHidden(row,pai,True)
-            else:
-                self.parent.setRowHidden(row,pai,False)
+        if item.isLeaf() or self.direccion == 'row':
+            self.switchVectorVisibility(item,self.direccion,item.checkState())
+        else:
+            self.switchVectorVisibility(item,self.direccion,item.checkState())
+            if self.propagate.checkState():
+                for k in range(item.rowCount()):
+                    item.child(k,0).setCheckState(item.checkState())
+                
+    def switchVectorVisibility(self,item,dir,state):
+            clave = item.getFullHeadInfo(role=Qt.UserRole +1,format='array')
+            ref_elem = self.source.searchHierarchy(clave,role=Qt.UserRole +1)
+            if not ref_elem:  #FIXME esto es un ejercicio de desesperacion
+                clave = item.getFullHeadInfo(role=Qt.DisplayRole,format='array')
+                ref_elem = self.source.searchHierarchy(clave,role=Qt.DisplayRole)
+            if dir == 'col':
+                pos = self.source.item2pos(ref_elem)
+                if state:
+                    self.parent.setColumnHidden(pos +1,True)
+                else:
+                    self.parent.setColumnHidden(pos +1,False)
+            elif dir == 'row':
+                row = ref_elem.row()
+                pai = ref_elem.parent().index() if ref_elem.parent() else QModelIndex()
+                if state:
+                    self.parent.setRowHidden(row,pai,True)
+                else:
+                    self.parent.setRowHidden(row,pai,False)
 
 class eligeFiltroDlg(QDialog):
     def __init__(self,listGuides,parent=None):
