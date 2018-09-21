@@ -344,7 +344,7 @@ def getFile(item,show='fqn'):
             lvg = getParentByType(link_via,'link via')
             link_via = lvg.child(pos)
             fileItem  = getChildByType(link_via,'table')
-    elif t.data() in ('code','desc'):
+    elif t.data() in ('code','desc','grouped by'):
         fileItem = getChildByType(getParentByType(item,'domain'),'table')
         if not fileItem: #¿seguro que es esto lo que quiero?
             fileItem = getChildByType(getParentByType(item,'base'),'table')

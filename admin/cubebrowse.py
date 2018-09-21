@@ -156,7 +156,7 @@ EDIT_TREE = {
                     ('name',True,True),
                     ('class',False,True),         
                     ('fmt',False,False),
-                    ('grouped by',False,False),
+                    #('grouped by',False,False),
                 ],
             'text':'Regla de produccion de guía',
             },
@@ -224,7 +224,7 @@ EDIT_TREE = {
                 'children': 'field',
                 },
     #'grouped by': {'objtype':'list'},
-    'grouped by' : { 'objtype':'list', 'editor' : WMultiList,
+    'grouped by' : { 'objtype':'list', 'editor' : WMultiList, 'source':srcFields,
                     'text':'Group by Field, -not first level prod-'}, #, 'source': srcFields,   #source probably not
                 #'children': 'field',
                 #},
