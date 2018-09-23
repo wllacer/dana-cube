@@ -236,7 +236,7 @@ def getLinks(*lparm):
     
     return environ,display
 
-def setLinks(*lparm):
+def setLinks(editor,*lparm):
     item = lparm[0]
     view = lparm[1]
     context = lparm[2]  

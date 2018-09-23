@@ -116,7 +116,7 @@ def getDateFilter(*lparm):
     environ = {'descriptores':elems,'datos':dato}
     return environ,display
                 
-def setDateFilter(*lparm):
+def setDateFilter(editor,*lparm):
     item = lparm[0]
     view = lparm[1]
     context = lparm[2]  

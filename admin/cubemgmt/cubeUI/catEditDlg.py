@@ -107,7 +107,7 @@ def getCategories(*lparm):
         
     return dato,display
                 
-def setCategories(*lparm):
+def setCategories(editor,*lparm):
     item = lparm[0]
     view = lparm[1]
     context = lparm[2]  

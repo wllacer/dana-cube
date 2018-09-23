@@ -802,6 +802,9 @@ class TreeDelegate(QStyledItemDelegate):
             if isinstance(editor,QLineEdit) and edit_format.get('hidden',False):
                 editor.setEchoMode(QLineEdit.Password)
             #editor.setText(dato)
+            
+        editoptn    = edit_format.get('options',{})
+        
         return editor
             
 
@@ -925,9 +928,9 @@ class TreeDelegate(QStyledItemDelegate):
             setters[idx] = self._updateModel
         for funcion in setters:
             if not values:
-                item = funcion(item,self.parent(),self.context,ivalue,dvalue)
+                item = funcion(editor,item,self.parent(),self.context,ivalue,dvalue)
             else:
-                item = funcion(item,self.parent(),self.context,values)
+                item = funcion(editor,item,self.parent(),self.context,values)
                 
     def generalValidation(self,index,editor,*lparms,**kwparms):
         # de momento suprimo el color rojo de fondo, ya que los cambios se pierden
@@ -1028,7 +1031,7 @@ class TreeDelegate(QStyledItemDelegate):
             return dato,display
 
 
-    def _updateModel(self,*lparms):
+    def _updateModel(self,editor,*lparms):
         item = lparms[0]
         view  = lparms[1]
         context = lparms[2]

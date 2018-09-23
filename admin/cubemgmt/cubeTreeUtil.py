@@ -757,7 +757,7 @@ def discCat(*lparm):
         return 'category item'
         
 
-def setClass(*lparm):
+def setClass(editor,*lparm,**kwparm):
     conversor = {'prod_std':'o',
                           'prod_case':'c',
                         'prod_cat':'c',
@@ -848,7 +848,7 @@ def propagateTableName(item,view,oldValue,newValue):
         i.setData(QColor(Qt.darkYellow),Qt.BackgroundRole)
         view.expand(item.parent().index())  
 
-def setTable(*lparm):
+def setTable(editor,*lparm):
     item = lparm[0]
     view = lparm[1]
     if len(lparm) > 2:   
