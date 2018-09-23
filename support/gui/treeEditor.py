@@ -804,7 +804,21 @@ class TreeDelegate(QStyledItemDelegate):
             #editor.setText(dato)
             
         editoptn    = edit_format.get('options',{})
-        
+        if editoptn is not None:
+            #TODO ejecuto los metodos dinamicamente. por ahora solo admite parametros en lista  
+            #TODO vale como funcion utilitaria
+            for func in editoptn:
+                try:
+                    shoot = getattr(editor,func)
+                except AttributeError:
+                    print(editor,editoptn,item)
+                    raise
+                if isinstance(editoptn[func],(list,tuple)):
+                    parms = editoptn[func]
+                else:
+                    parms = (editoptn[func],)
+                shoot(*parms)
+
         return editor
             
 
