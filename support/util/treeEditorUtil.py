@@ -54,7 +54,7 @@ def makeRow(*parms):
         retorno.append(elem)
     return retorno
 
-def dict2tree(parent,key,data,tipo=None,direct=False):
+def dict2tree(parent,key,data,tipo=None,direct=False,ordenado=True):
     """
         Funcion que carga de estructura de cubo python a nodo QStandardItem del arbol (recursiva)
         parent -> nodo del arbol a partir del cual incluir
@@ -75,8 +75,13 @@ def dict2tree(parent,key,data,tipo=None,direct=False):
         parent.appendRow(makeRow(key,None,tipo))
         newparent = lastChild(parent)
     if isinstance(data,dict):
-        for elem in sorted(data):
-            dict2tree(newparent,elem,data[elem])
+        if ordenado:
+            for elem in sorted(data):
+                dict2tree(newparent,elem,data[elem],ordenado=ordenado)
+        else:
+            for elem in data:
+                dict2tree(newparent,elem,data[elem],ordenado=ordenado)
+
     elif isinstance(data,(list,tuple)):
         for idx,elem in enumerate(data):
             if not isinstance(elem,(list,tuple,dict)):
@@ -92,11 +97,11 @@ def dict2tree(parent,key,data,tipo=None,direct=False):
                     clave = str(idx)
                 datos = elem
                 #datos['pos'] = idx
-                dict2tree(newparent,clave,datos,tipo)
+                dict2tree(newparent,clave,datos,tipo,ordenado=ordenado)
             else:                
                 clave = str(idx)
                 datos = elem
-                dict2tree(newparent,clave,datos,tipo)  
+                dict2tree(newparent,clave,datos,tipo,ordenado=ordenado)
      
 def tree2dict(rootItem,esdiccionario=None,role=None):
     """

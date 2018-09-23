@@ -33,6 +33,16 @@ class displayTree(QStandardItemModel):
     Quizas me he pasado de colorines
     """
     def data(self,index,role=Qt.UserRole +1):
+        if index.column() == 0:
+            if role == Qt.DisplayRole:
+                context = Context(index)
+                rowHead = context.get('rowHead')
+                tipo = context.get('type')
+                texto = context.EDIT_TREE.get(tipo,{}).get('text')
+                if context.get('name') == tipo:
+                    if texto:
+                        return texto
+                    
         if index.column() == 1:
             if role in (Qt.DisplayRole, ):
                 context = Context(index)
@@ -741,7 +751,9 @@ class TreeDelegate(QStyledItemDelegate):
         item = self.context.get('editPos')
         defeditor = edit_format.get('editor',QLineEdit)
         if defeditor ==  QCheckBox:
-            editor = QCheckBox(self.context.get('name'),parent)
+            ##editor = QCheckBox(self.context.get('name'),parent)
+            editor = QCheckBox(None,parent)
+            editor.setAutoFillBackground(True)
             #FIXME make background not transparent
         elif defeditor ==  QSpinBox:
             editor = QSpinBox(parent)
@@ -785,7 +797,7 @@ class TreeDelegate(QStyledItemDelegate):
         else:
             #FIXME dialogs probably won't be needed
             if defeditor == QLineEdit and self.context.get('rowHead').hasChildren():
-                return
+                return None
             editor = defeditor(parent)
             if isinstance(editor,QLineEdit) and edit_format.get('hidden',False):
                 editor.setEchoMode(QLineEdit.Password)

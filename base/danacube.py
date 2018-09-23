@@ -1084,6 +1084,7 @@ class DanaCube(QTreeView):
     def export(self):
         #TODO poder hacer una seleccion de area
         parms = eW.callExportWizard()
+        pprint(parms)
         selArea = dict()
         if not parms.get('file'):
             return

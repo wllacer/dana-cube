@@ -66,7 +66,8 @@ Areas where the product __must__ be improved. They might not be errors but don't
 * Windows integration 
     * __solved__ base.uf_handler 24 spliy libname (de / a \\)
     * __solved__ support.util.jsonmgr 126 de ~ a os.environ[HOMEPATH]
-
+    
+* search hierachy not always work as expected
 
 ## Needed Enhancements
 
@@ -83,8 +84,8 @@ Thing which shall belong to the app and aren't there now
 
 Things to move hidden/cartesian guide out of experimental
 
-* _HiddenElems_ manage hierarchies, incl. hide/show branches/leaves @columns
-* _HiddenElems_ mass update
+* __solved__ _HiddenElems_ manage hierarchies, incl. hide/show branches/leaves @columns
+* __solved__ _HiddenElems_ mass update
 * Filter hidden Elements in downloads (then put hidden out of experimental status)
 * code,desc,columns simplify structure @core
 * _cartesian_ date behaviour
