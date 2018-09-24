@@ -69,7 +69,25 @@ def getOrderedText(desc,sparse=True,separator=None):
     # especial fechas. no se que efectos secundarios puede tener
     texto += desc[-1]
     return texto
-        
+    
+def exportVisibleFilter(item,dim,filter=None,dir='row',view=None):
+    if view is None:
+        pass
+    else:
+        if dir == 'row':
+            entry = item
+            while entry.parent():
+                row = entry.row()
+                pai = entry.parent().index() if entry.parent() else QModelIndex()
+                if view.isRowHidden(row,pai):
+                    return False
+                entry = entry.parent()
+        elif dir == 'col':
+            pos = item.model().item2pos(item)
+            if view.isColumnHidden(pos +1):
+                return False
+    return exportFilter(item,dim,filter)
+
 def exportFilter(item,dim,filter=None):
     """
     Auxiliary function.
@@ -1420,7 +1438,7 @@ class Vista:
         self.col_hdr_idx = rtmp  #self.cubo.lista_guias[self.col_id]['dir_row']
         #self.newTreeLoad()
 
-    def __getExportData(self,parms):
+    def __getExportData(self,parms,selArea=None):
         """
             *parms['file']
             *parms['type'] = ('csv','xls','json','html')
@@ -1436,8 +1454,16 @@ class Vista:
         """
         pfilter = parms.get('filter',{})
         scope = pfilter.get('scope','all')
+            
         pfilterRow = pfilter.get('row',{})
         pfilterCol = pfilter.get('col',{})
+        if scope == 'visible':
+            filterRow = lambda x,y=self.dim_row,z=pfilterRow,k='row',l=selArea: exportVisibleFilter(x,y,z,dir=k,view=l)
+            filterCol     = lambda x,y=self.dim_col,z=pfilterCol,k='col',l=selArea: exportVisibleFilter(x,y,z,dir=k,view=l)
+
+        else:
+            filterRow = lambda x,y=self.dim_row,z=pfilterRow: exportFilter(x,y,z)
+            filterCol     = lambda x,y=self.dim_col,z=pfilterCol: exportFilter(x,y,z)
         row_sparse = pfilterRow.get('Sparse',True)
         col_sparse = pfilterCol.get('Sparse',True)
         
@@ -1448,15 +1474,11 @@ class Vista:
         # si no esta ya creados los row_hdr_idx con datos (lo que significa ortogonal) ejecuto desde array
         # si ya lo estan desde el arbol (mas eficiente y tiene datos modificados)
         if self.row_hdr_idx.orthogonal is None:
-            tmpArray = self.toArrayFilter(lambda x,y=self.dim_row,z=pfilterRow: exportFilter(x,y,z),
-                                        lambda x,y=self.dim_col,z=pfilterCol: exportFilter(x,y,z))
+            tmpArray = self.toArrayFilter(filterRow,filterCol)
         else:
-            tmpArray = self.Tree2ArrayFiltered(lambda x,y=self.dim_row,z=pfilterRow: exportFilter(x,y,z),
-                                        lambda x,y=self.dim_col,z=pfilterCol: exportFilter(x,y,z))
-        rows = self.row_hdr_idx.asHdrFilter(lambda x,y=self.dim_row,z=pfilterRow: exportFilter(x,y,z),
-                                            sparse=row_sparse,format='array') #no puedo usar offset
-        cols = self.col_hdr_idx.asHdrFilter(lambda x,y=self.dim_col,z=pfilterCol: exportFilter(x,y,z),
-                                            sparse=col_sparse,format='array')
+            tmpArray = self.Tree2ArrayFiltered(filterRow,filterCol)
+        rows = self.row_hdr_idx.asHdrFilter(filterRow, sparse=row_sparse,format='array') #no puedo usar offset
+        cols = self.col_hdr_idx.asHdrFilter(filterCol,sparse=col_sparse,format='array')
         dim_row = max([ len(item) for item in rows])
         dim_col = max([ len(item) for item in cols])
 
@@ -1511,7 +1533,7 @@ class Vista:
             else:
                 return cadena
          
-        ctable,dim_row,dim_col = self.__getExportData(parms)
+        ctable,dim_row,dim_col = self.__getExportData(parms,selArea)
         if type == 'csv':
             with open(parms['file'],'w') as f:
                 for row in ctable:

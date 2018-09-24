@@ -1088,10 +1088,11 @@ class DanaCube(QTreeView):
         dlg.show()
         if dlg.exec_():
             parms = dlg.resultado
-            pprint(parms)
-            selArea = dict()
+            selArea = None
             if not parms.get('file'):
                 return
+            if parms.get('filter',{}).get('scope') == 'visible':
+                selArea = self
             resultado = self.vista.export(parms,selArea)
             
         #parms = eW.callExportWizard()

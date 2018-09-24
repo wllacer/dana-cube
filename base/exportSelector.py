@@ -18,7 +18,7 @@ from __future__ import unicode_literals
 import os
 from pprint import pprint
 
-import user as uf
+#import user as uf
 from support.util.uf_manager import *
 from support.util.jsonmgr import *
 
@@ -103,7 +103,7 @@ def setCharacters(editor,*lparm):
         if cat == tipActua:
             continue
         valores[cat] = getRow(getChildByType(pai,cat))[1].data()
-    print(valActua,tipActua,valores)
+
     for cat in valores:
         if valActua == valores[cat]:
             #aqui viene el mogollon
@@ -176,20 +176,22 @@ elements list is (element name,mandatory,readonly,repeatable)
 still no process for repeatable 
 class & name are not to be edited (even shown) as derived DONE
 """
+puntuacion = (' ',',',';',':','.','\/')
 punctuationRe = QRegExp(r"[ ,;:.'\"\/]")
 decimalRe = QRegExp(r"[,.]")
 
 TOP_LEVEL_ELEMS = []
 EDIT_TREE = {
-    'type':{'editor':WComboBox,'source':TIPOS },
-    'file':{'editor':MyFileDialog,'setters':('default',setFileType)},
+    'type':{'editor':WComboBox,'source':TIPOS,'text':'Formato de datos' },
+    'file':{'editor':MyFileDialog,'setters':('default',setFileType),'text':'Fichero de descarga'},
     'csvProp': {'objtype':'dict',
                 'elements': [
                     ('fldSep',False,False),
                     ('decChar',False,False),
                     ('txtSep',False,False),
                 ] },
-    'fldSep': {'edit':QLineEdit,'options':{'setMaxLength':1,'setValidator':QRegExpValidator(punctuationRe) },
+    'fldSep': {'editor':WComboBox,'source':puntuacion,'options':{'setEditable':True},
+                    #'edit':QLineEdit,'options':{'setMaxLength':1,'setValidator':QRegExpValidator(punctuationRe) },
                     'default':';','text':'Delimitador de campos',
                     'setters':('default',setCharacters),
                   },
@@ -197,22 +199,23 @@ EDIT_TREE = {
         #self.separadorCampos.setValidator(QRegExpValidator(punctuationRe,self))
         #self.separadorCampos.setText(';')
 
-    'decChar':{'edit':WComboBox,'source':('.',',','@','&'),'default':'.','text':'Carácter decimal',
+    'decChar':{'editor':WComboBox,'source':('.',','),'default':'.','text':'Carácter decimal',
                     'setters':('default',setCharacters),},
-    'txtSep': {'edit':QLineEdit,'options':{'setMaxLength':1,'setValidator':QRegExpValidator(punctuationRe) },
+    'txtSep': {'editor':WComboBox,'source':puntuacion,'options':{'setEditable':True},
+                #'editor':QLineEdit,'options':{'setMaxLength':1,'setValidator':QRegExpValidator(punctuationRe) },
                'default':'"','text':'Separador de textos',
                 'setters':('default',setCharacters),},
-    'filter':{'objtype':'dict','elements':[
+    'filter':{'objtype':'dict','text':'Datos a descargar','elements':[
             ('scope',True,False),
             ('row',True,False),
             ('col',True,False),
         ]},
-    'row':{'objtype':'dict','elements':[
+    'row':{'objtype':'dict','text':'Filas','elements':[
             ('content',True,False),
             ('totals',True,False),
             ('Sparse',True,False)
         ]},
-    'col':{'objtype':'dict','elements':[
+    'col':{'objtype':'dict','text':'Columnas','elements':[
             ('content',True,False),
             ('totals',True,False),
             ('Sparse',True,False)
@@ -220,7 +223,7 @@ EDIT_TREE = {
     'content':{'editor':WComboBox,'source':('full','branch','leaf') },
     'totals':{'editor':QCheckBox,'text':'Con totalizadores' },
     'Sparse':{'editor':QCheckBox,'text':'Cabeceras sin repeticiones' },
-    'scope':{'editor':WComboBox,'source':('all','visible') },
+    'scope':{'editor':WComboBox,'source':('all','visible'),'text':'Ambito de descarga' },
     'NumFormat':{'editor':QCheckBox,'text':'Formateo de números' }
     
 }
@@ -230,11 +233,13 @@ def editAsTree(dataDict):
     if not dataDict:
         dataDict = {'file': str(deffile),
                             'type': 'csv',
-                            'filter': {'col': {'Sparse': True, 'content': 'leaf', 'totals': False},
+                            'filter': {'scope': 'all',
                                         'row': {'Sparse': True, 'content': 'leaf', 'totals': False},
-                                        'scope': 'all'},
-                            'NumFormat': False,
+                                        'col': {'Sparse': True, 'content': 'leaf', 'totals': False},
+                                        },
                             'csvProp': {'decChar': ',', 'fldSep': ';', 'txtSep': '"'},
+                            'NumFormat': False,
+
 
                             }
     
