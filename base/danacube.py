@@ -885,6 +885,14 @@ class DanaCube(QTreeView):
                     self.setRowHidden(row,pai,False)
                 else:
                     self.setRowHidden(row,pai,True)
+        else:
+            for item in self.vista.row_hdr_idx.traverse():
+                row = item.row()
+                pai = item.parent().index() if item.parent() else QModelIndex()
+                self.setRowHidden(row,pai,False)
+            
+            for pos,item in enumerate(self.vista.col_hdr_idx.traverse()):
+                self.setColumnHidden(pos +1,False)
 
                 
             

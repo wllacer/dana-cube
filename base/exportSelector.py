@@ -184,7 +184,7 @@ TOP_LEVEL_ELEMS = []
 EDIT_TREE = {
     'type':{'editor':WComboBox,'source':TIPOS,'text':'Formato de datos' },
     'file':{'editor':MyFileDialog,'setters':('default',setFileType),'text':'Fichero de descarga'},
-    'csvProp': {'objtype':'dict',
+    'csvProp': {'objtype':'dict','text':'Caracteres especiales',
                 'elements': [
                     ('fldSep',False,False),
                     ('decChar',False,False),
@@ -223,17 +223,20 @@ EDIT_TREE = {
     'content':{'editor':WComboBox,'source':('full','branch','leaf') },
     'totals':{'editor':QCheckBox,'text':'Con totalizadores' },
     'Sparse':{'editor':QCheckBox,'text':'Cabeceras sin repeticiones' },
-    'scope':{'editor':WComboBox,'source':('all','visible'),'text':'Ambito de descarga' },
+    'scope':{'editor':WComboBox,'source':('all','visible'),'text':'Ambito de descarga' ,'default':'visible'},
     'NumFormat':{'editor':QCheckBox,'text':'Formateo de números' }
     
 }
     
 def editAsTree(dataDict):
+    #
+    # Como no hay datos prealmacenados, es una manera de definir los defectos y la estructura de presentacion
+    #
     deffile = Path.cwd() / "datos" / "download.csv"
     if not dataDict:
         dataDict = {'file': str(deffile),
                             'type': 'csv',
-                            'filter': {'scope': 'all',
+                            'filter': {'scope': 'visible',
                                         'row': {'Sparse': True, 'content': 'leaf', 'totals': False},
                                         'col': {'Sparse': True, 'content': 'leaf', 'totals': False},
                                         },

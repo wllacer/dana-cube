@@ -82,13 +82,14 @@ Thing which shall belong to the app and aren't there now
 * in column fusion end with hiding the source columns
 * Unify cloneSubTree @GuideItemModel and @treeEditorUtil.  former is newer
 
-Things to move hidden/cartesian guide out of experimental
+Things to move ~~hidden~~/cartesian guide out of experimental
 
 * __solved__ _HiddenElems_ manage hierarchies, incl. hide/show branches/leaves @columns
 * __solved__ _HiddenElems_ mass update
-* Filter hidden Elements in downloads (then put hidden out of experimental status)
+* __solved__ Filter hidden Elements in downloads (then put hidden out of experimental status)
 * code,desc,columns simplify structure @core
 * _cartesian_ date behaviour
+* graphics and hidden data 
 
 ## Wishlist
 
