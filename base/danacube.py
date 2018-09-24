@@ -241,11 +241,10 @@ class DanaCubeWindow(QMainWindow):
         self.optionsMenu.addAction("Trasponer datos",
                                    self.trasposeData,
                                    "Ctrl+T")
-        if self.experimental:
-            self.optionsMenu.addSeparator()
-            self.optionsMenu.addAction("Ocultar / Mostrar")
-            self.optionsMenu.addAction("                            Columnas...",self.hiddenColumns)
-            self.optionsMenu.addAction("                            Filas...",self.hiddenRows)
+        self.optionsMenu.addSeparator()
+        self.optionsMenu.addAction("Ocultar / Mostrar")
+        self.optionsMenu.addAction("                            Columnas...",self.hiddenColumns)
+        self.optionsMenu.addAction("                            Filas...",self.hiddenRows)
         self.optionsMenu.addSeparator()
         self.optionsMenu.addAction("Presentacion ...",
                                    self.setNumberFormat,
