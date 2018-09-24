@@ -659,7 +659,7 @@ class TabMgr(QWidget):
         else:
             self.chart.hide()
     
-    def processChartItem(self,index=None,tipo='bar'):
+    def processChartItem(self,index=None,tipo='bar',visibleOnly=True):
         if index:
             if index.isValid():
                 item = self.tree.model().itemFromIndex(index)
@@ -691,15 +691,16 @@ class TabMgr(QWidget):
             datos,kcabeceras = rowid.simplify() #item.getPayload(),self.textos_col)
         
         #suprimo las columnas ocultas
-        for k in range(len(kcabeceras)-1,-1,-1):
-            pos = kcabeceras[k]
-            if self.tree.isColumnHidden(pos +1):
-                del kcabeceras[k]
-                if tipo == 'multibar':
-                    for j in range(len(datos)):
-                        del datos[j][k]
-                else:
-                    del datos[k]
+        if visibleOnly:
+            for k in range(len(kcabeceras)-1,-1,-1):
+                pos = kcabeceras[k]
+                if self.tree.isColumnHidden(pos +1):
+                    del kcabeceras[k]
+                    if tipo == 'multibar':
+                        for j in range(len(datos)):
+                            del datos[j][k]
+                    else:
+                        del datos[k]
             
         titulo = self.tree.vista.row_hdr_idx.name+'> '+rowid.getFullHeadInfo(**titleParms) +  '\n' + \
                 '{}({})'.format(self.tree.vista.agregado,self.tree.vista.campo) 
@@ -1208,7 +1209,7 @@ class DanaCube(QTreeView):
         self.defineModel()
 
     
-    def drawGraph(self,source,id):
+    def drawGraph(self,source,id,visibleOnly=True):
         dialog = GraphDlg(self.parent.tabulatura.currentWidget().chartType, source, self)
         if dialog.exec_():
             chart = self.parent.tabulatura.currentWidget().chart
