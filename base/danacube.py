@@ -1215,10 +1215,14 @@ class DanaCube(QTreeView):
             chart = self.parent.tabulatura.currentWidget().chart
             if dialog.result:
                 if source == 'row':
-                    item = self.model().item(id)
-                    titulo = item['key']
-                    datos = item.getPayload()
-                    etiquetas = self.colHdr()
+                    item = self.model().itemFromIndex(id)
+                    titulo = item['value']
+                    datos = []
+                    etiquetas = []
+                    for k,entrada in enumerate(item.getPayload()):
+                        if entrada is not None:
+                            datos.append(entrada)
+                            etiquetas.append(self.colHdr[k])
                 elif source == 'col':
                     titulo = self.colHdr[id - 1]
                     datos = []
@@ -1237,6 +1241,7 @@ class DanaCube(QTreeView):
                 if len(datos) == 0:
                     chart.axes.cla()
                 else:
+                    #print(dialog.result,etiquetas,datos,titulo,x_text,y_text)
                     chart.loadData(dialog.result,etiquetas,datos,titulo,x_text,y_text)  
                 chart.draw()
                 chart.show()
