@@ -1220,7 +1220,11 @@ class DanaCube(QTreeView):
                     datos = []
                     etiquetas = []
                     for k,entrada in enumerate(item.getPayload()):
-                        if entrada is not None:
+                        if entrada is None:
+                            continue
+                        elif visibleOnly and self.isColumnHidden(k+1):
+                            continue
+                        else:
                             datos.append(entrada)
                             etiquetas.append(self.colHdr[k])
                 elif source == 'col':
@@ -1232,6 +1236,18 @@ class DanaCube(QTreeView):
                             continue
                         if entrada.gpi(id -1) is None:
                             continue
+                        if visibleOnly:
+                            entry = entrada
+                            hidden = False
+                            while entry:
+                                row = entry.row()
+                                pai = entry.parent().index() if entry.parent() else QModelIndex()
+                                if self.isRowHidden(row,pai):
+                                    hidden = True
+                                    break
+                                entry = entry.parent()
+                            if hidden:
+                                continue
                         datos.append(entrada.gpi(id -1))
                         etiquetas.append(entrada.getFullHeadInfo())
                         
