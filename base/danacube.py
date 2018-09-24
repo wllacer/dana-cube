@@ -100,7 +100,8 @@ from support.datalayer.query_constructor import searchConstructor
 from support.gui.mplwidget import SimpleChart
 from support.util.uf_manager import *
 
-import base.exportWizard as eW
+#import base.exportWizard as eW
+from base.exportSelector import exportDialog
 
 from support.util.treestate import *
 from base.tree import GuideItem,_getHeadColumn,traverseBasic
@@ -1083,12 +1084,22 @@ class DanaCube(QTreeView):
     
     def export(self):
         #TODO poder hacer una seleccion de area
-        parms = eW.callExportWizard()
-        pprint(parms)
-        selArea = dict()
-        if not parms.get('file'):
-            return
-        resultado = self.vista.export(parms,selArea)
+        dlg = exportDialog()
+        dlg.show()
+        if dlg.exec_():
+            parms = dlg.resultado
+            pprint(parms)
+            selArea = dict()
+            if not parms.get('file'):
+                return
+            resultado = self.vista.export(parms,selArea)
+            
+        #parms = eW.callExportWizard()
+        #pprint(parms)
+        #selArea = dict()
+        #if not parms.get('file'):
+            #return
+        #resultado = self.vista.export(parms,selArea)
 
     def openHeaderContextMenu(self,position):
         indexes = self.selectedIndexes()
