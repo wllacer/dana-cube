@@ -663,31 +663,24 @@ class TabMgr(QWidget):
         if index:
             if index.isValid():
                 item = self.tree.model().itemFromIndex(index)
-                #esta vuelta es para localizar el nombre de la fila y evitar que los valores nulos, que son QStandardItem peten el proceso
-                if index.column() != 0:
-                    rowid = self.tree.model().itemFromIndex(index.sibling(index.row(),0))
-                else:
-                    rowid = item
+                rowid = item.getHead()
             else:
                 return
+            
         elif len(self.tree.selectedIndexes()) > 0:
             indice = self.tree.selectedIndexes()[0]
             item = self.tree.model().itemFromIndex(indice)
-            if item.column() != 0:
-                rowid = self.tree.model().itemFromIndex(indice.sibling(indice.row(),0))
-            else:
-                rowid = item
+            rowid = item.getHead()
+
         elif self.lastItemUsed is not None:
             item = self.lastItemUsed
             rowid = item
+
         else:
             item = self.tree.model().invisibleRootItem().child(0)
             rowid = item
-        self.lastItemUsed = item
-        #textos_col = ytree.getHeader('col')
-        #textos_row = xtree.getHeader('row')
-        #line = 0
-        #col  = 0
+        self.lastItemUsed = rowid
+
         x_text = self.tree.vista.col_hdr_idx.name
         y_text = ''
         titleParms = {}
@@ -696,7 +689,17 @@ class TabMgr(QWidget):
             titleParms = {'format':'string', 'delimiter':' > '}
         else:
             datos,kcabeceras = rowid.simplify() #item.getPayload(),self.textos_col)
-
+        
+        #suprimo las columnas ocultas
+        for k in range(len(kcabeceras)-1,-1,-1):
+            pos = kcabeceras[k]
+            if self.tree.isColumnHidden(pos +1):
+                del kcabeceras[k]
+                if tipo == 'multibar':
+                    for j in range(len(datos)):
+                        del datos[j][k]
+                else:
+                    del datos[k]
             
         titulo = self.tree.vista.row_hdr_idx.name+'> '+rowid.getFullHeadInfo(**titleParms) +  '\n' + \
                 '{}({})'.format(self.tree.vista.agregado,self.tree.vista.campo) 
@@ -891,8 +894,8 @@ class DanaCube(QTreeView):
                 pai = item.parent().index() if item.parent() else QModelIndex()
                 self.setRowHidden(row,pai,False)
             
-            for pos,item in enumerate(self.vista.col_hdr_idx.traverse()):
-                self.setColumnHidden(pos +1,False)
+        for pos,item in enumerate(self.vista.col_hdr_idx.traverse()):
+            self.setColumnHidden(pos +1,False)
 
                 
             
