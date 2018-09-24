@@ -1053,6 +1053,10 @@ class sheetDelegate(QStyledItemDelegate):
             return super().createEditor(parent,option,index)
         editorObj = specs['editor'] 
         editor = editorObj(parent)
+        # if you need special patching 
+        if editorObj == QCheckBox:
+            editor.setAutoFillBackground(True)
+        #dynamic execution of methods
         typeSpec = specs.get('options')
         if typeSpec is not None:
             for func in typeSpec:
@@ -1066,6 +1070,7 @@ class sheetDelegate(QStyledItemDelegate):
                 else:
                     parms = (typeSpec[func],)
                 shoot(*parms)
+        #initial data load
         self.fullList = specs.get('source')
         if self.fullList is not None:
             if editorObj in (WComboBox,WComboBoxIdx,WComboMulti,QComboBox,WMultiList):

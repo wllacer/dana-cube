@@ -76,7 +76,7 @@ def exportVisibleFilter(item,dim,filter=None,dir='row',view=None):
     else:
         if dir == 'row':
             entry = item
-            while entry.parent():
+            while entry: #.parent():
                 row = entry.row()
                 pai = entry.parent().index() if entry.parent() else QModelIndex()
                 if view.isRowHidden(row,pai):
