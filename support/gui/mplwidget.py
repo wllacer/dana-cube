@@ -66,7 +66,13 @@ class SimpleChart(FigureCanvas):
         self.setMinimumHeight(200)
         
     def loadData(self,*args,**kwargs):
-
+        """
+        args:
+            0 tipo de grafico
+            1 datos x
+            2 datos y
+            3 titulo
+        """
         self.axes.cla()
         tipo = args[0]
         self.x=args[1]

@@ -1699,7 +1699,7 @@ class Vista:
                 texto = col.getFullHeadInfo(format=keyfmt)
             result[col.depth()][0].append(texto)
             result[col.depth()][1].append(col.getColumn(pos))
-            #result[col.depth()][texto]=col.getColumn(pos)
+
         return result
 # monkeypatch
 Vista.toTree = Vista.newTreeLoad

@@ -641,7 +641,7 @@ class TabMgr(QWidget):
         self.drawChart(None)
     
     def setGraph(self):
-        dialog = GraphDlg(self.chartType, self)
+        dialog = GraphDlg(self.chartType, parent=self)
         if dialog.exec_():
             self.chartType = dialog.result
         self.drawChart()
