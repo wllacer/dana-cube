@@ -1643,6 +1643,64 @@ class Vista:
         for k,entry in enumerate(vector):
             vector[k][2] = vector[k][2] *100./ total
         return vector
+    
+    def getVector(self,pitem,dir='row',nulls=False,filter=None,keyfmt=None):
+        """
+        Obtengo el vector estructurado que contiene __pitem en la direccion __dir__ en una __vista__
+        parametros adicionales
+        __nulls__ boolean. Si incluye los nulos o no en el vector de salida
+        __filter__ callable or None  un filtro de postseleccion
+        __keyfmt__ texto ('sparse','string','array') como se muestra el texto de los elementos del vector
+        
+        Retorna un 
+        array con una entrada para cada nivel de anidación de la información en __dir__ (item.depth)
+            cada entrada de nivel tiene 
+                elemento 0: una lista con los nombres de los elementos del vector
+                elemento 1: una lista con los valores de los elementos del vector
+        ejemplo de uso
+        ```
+        resultado = self.getVector(yhead,dir='col')
+        for k in range(len(resultado)):
+            if k == 0 and vista.totalizado:  #solo para col, ya que un elemento de jerarquia es el gran total
+                continue
+            texto = resultado[k][0]
+            valores = resultado[k][1]
+            print('texto',texto)
+            print('datos',valores)
+
+        ```
+        """
+        if pitem.column() != 0: #TODO en vez de fallar poner a 0
+            item = pitem.getColumn(0)
+        else:
+            item = pitem
+            #item = item.getColumn(0)
+        if dir == 'row':
+            pos = self.row_hdr_idx.item2pos(item) + 1
+            dimension = self.dim_col
+            model = self.col_hdr_idx
+        else:
+            pos = self.col_hdr_idx.item2pos(item) + 1
+            dimension = self.dim_row
+            if self.totalizado:
+                dimension += 1 
+            model = self.row_hdr_idx
+        #result = [ {} for k in range(dimension) ]
+        result = [ [[],[]] for k in range(dimension)]
+        for k,col in enumerate(model.traverse()):
+            dato = col.getColumn(pos)
+            if not nulls and dato is None:
+                continue
+            if filter and not filter():
+                continue
+            if keyfmt == 'array':
+                texto = tuple(col.getFullHeadInfo(format=keyfmt))
+            else:
+                texto = col.getFullHeadInfo(format=keyfmt)
+            result[col.depth()][0].append(texto)
+            result[col.depth()][1].append(col.getColumn(pos))
+            #result[col.depth()][texto]=col.getColumn(pos)
+        return result
 # monkeypatch
 Vista.toTree = Vista.newTreeLoad
 Vista.toNewTree = Vista.newTreeLoad
@@ -1676,15 +1734,20 @@ def toList():
     from support.util.jsonmgr import load_cubo
 
     mis_cubos = load_cubo()
-    cubo = Cubo(mis_cubos["datos light"])
+    cubo = Cubo(mis_cubos["datos locales"])
 
     #vista = Vista(cubo,'geo','partidos importantes','sum','votes_presential',totalizado=True)
-    vista = Vista(cubo,'fecha','partidos importantes','sum','votes_presential',totalizado=True)
+    vista = Vista(cubo,'geo','partido','sum','votes_presential',totalizado=True)
     for line in vista.toList():
         print(line)
     print()
     for line in vista.toList(rowHdrContent='key',rowFilter=lambda x:x.type() == TOTAL):
         print(line)
+
+def printArray(vista,**kwparm): 
+    for line in vista.toList(**kwparm):
+        print(line)
+    print()
 
 def checkFilter():
     from support.util.jsonmgr import load_cubo

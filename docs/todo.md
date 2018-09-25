@@ -89,7 +89,12 @@ Things to move ~~hidden~~/cartesian guide out of experimental
 * __solved__ Filter hidden Elements in downloads (then put hidden out of experimental status)
 * code,desc,columns simplify structure @core
 * _cartesian_ date behaviour
-* graphics and hidden data 
+* __solved__ graphics and hidden data 
+
+Graphic subsystem 
+
+* graphics and hierarchies. FInd a standard
+* graphic presentation Qt5 or independent, (or both)
 
 ## Wishlist
 

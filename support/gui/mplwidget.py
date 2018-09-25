@@ -43,7 +43,10 @@ class MultiChart(FigureCanvas):
             width = 1
         rects = list()
         for k in range(numBars):
-            rects.append(self.ax.bar(pos_list +width*k, self.y[k], width, color=self.color_list[k]))
+            ely = self.y[k]
+            elco = self.color_list[k % len(self.color_list)]
+            #rects.append(self.ax.bar(pos_list +width*k, self.y[k], width, color=self.color_list[k]))
+            rects.append(self.ax.bar(pos_list +width*k, ely, width, color=elco))
         if numBars > 1:
             self.ax.set_xticks(pos_list + width)
         else:
@@ -132,10 +135,11 @@ class ApplicationWindow(QMainWindow):
 
         #self.main_widget = SimpleChart(*args,**kwargs) #self.main_widget, width=5, height=4, dpi=200)
         self.main_widget = SimpleChart(*args,**kwargs)
+        #self.main_widget = MultiChart(*args,**kwargs)
         self.main_widget.setFocus()
         self.setCentralWidget(self.main_widget)
 
-#        self.statusBar().showMessage("All hail matplotlib!", 2000)
+        #self.statusBar().showMessage("All hail matplotlib!", 2000)
 
 if __name__ == '__main__':
     
