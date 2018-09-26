@@ -11,6 +11,40 @@ Documentation, License etc.
 
 @package estimaciones
 # 0.3
+
+Usos SimpleChart
+base/danacube.py:631:        self.chart = SimpleChart()
+100:from support.gui.mplwidget import SimpleChart
+631:        self.chart = SimpleChart()
+632:        self.chartType = None #'barh'
+634:        self.tree.clicked.connect(self.drawChart)
+637:        split.addWidget(self.chart)
+641:        self.drawChart(None)
+644:        dialog = GraphDlg(self.chartType, parent=self)
+646:            self.chartType = dialog.result
+647:        self.drawChart()
+654:        self.drawChart()
+656:    def drawChart(self,index=None):
+657:        if self.chartType:
+658:            self.processChartItem(index,tipo=self.chartType)
+660:            self.chart.hide()
+662:    def processChartItem(self,index=None,tipo='bar',visibleOnly=True):
+711:            self.chart.axes.cla()
+713:            self.chart.loadData(tipo,cabeceras,datos,titulo,x_text,y_text,rowid.getFullDesc())  
+714:        self.chart.draw()
+715:        self.chart.show()
+1213:        dialog = GraphDlg(self.parent.tabulatura.currentWidget().chartType, source, self)
+1215:            chart = self.parent.tabulatura.currentWidget().chart
+1258:                    chart.axes.cla()
+1261:                    chart.loadData(dialog.result,etiquetas,datos,titulo,x_text,y_text)  
+1262:                chart.draw()
+1263:                chart.show()
+1265:                chart.hide()
+loadData
+draw
+show
+hide
+
 '''
 
 from pprint import pprint
@@ -25,7 +59,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QTreeView, QSplitter, QMenu, \
      QDialog, QInputDialog, QLineEdit, QComboBox, QMessageBox,QGridLayout, \
-     QAbstractItemView, QTableView
+     QAbstractItemView, QTableView,QTabWidget
  
 from PyQt5.QtPrintSupport import *
 from base.core import Cubo,Vista,printArray
@@ -34,7 +68,7 @@ from support.util.decorators import stopwatch,model_change_control
 from support.util.jsonmgr import load_cubo
 from support.util.record_functions import norm2List
 
-from support.gui.mplwidget import SimpleChart
+from support.gui.mplwidget import *
 from support.gui.dialogs import GraphDlg
 import sys
 
@@ -249,30 +283,73 @@ def getGraphTexts(vista,head,xlevel,dir='row'):
     ##datos,kcabeceras = head.simplify() #Hierarchical() #msimplify(mdatos,self.textos_col)
     ##print(head,datos,kcabeceras)
     
-
+#Usos SimpleChart
+#base/danacube.py:631:        self.chart = SimpleChart()
+#100:from support.gui.mplwidget import SimpleChart
+#631:        self.chart = SimpleChart()
+#632:        self.chartType = None #'barh'
+#634:        self.tree.clicked.connect(self.drawChart)
+#637:        split.addWidget(self.chart)
+#641:        self.drawChart(None)
+#644:        dialog = GraphDlg(self.chartType, parent=self)
+#646:            self.chartType = dialog.result
+#647:        self.drawChart()
+#654:        self.drawChart()
+#656:    def drawChart(self,index=None):
+#657:        if self.chartType:
+#658:            self.processChartItem(index,tipo=self.chartType)
+#660:            self.chart.hide()
+#662:    def processChartItem(self,index=None,tipo='bar',visibleOnly=True):
+#711:            self.chart.axes.cla()
+#713:            self.chart.loadData(tipo,cabeceras,datos,titulo,x_text,y_text,rowid.getFullDesc())  
+#714:        self.chart.draw()
+#715:        self.chart.show()
+#1213:        dialog = GraphDlg(self.parent.tabulatura.currentWidget().chartType, source, self)
+#1215:            chart = self.parent.tabulatura.currentWidget().chart
+#1258:                    chart.axes.cla()
+#1261:                    chart.loadData(dialog.result,etiquetas,datos,titulo,x_text,y_text)  
+#1262:                chart.draw()
+#1263:                chart.show()
+#1265:                chart.hide()
+#loadData
+#draw
+#show
+#hide
+#class ChartTab(QTabWidget):
+    #def __init__(self,parent=None):
+        #super().__init__(parent)
+        
+    #def loadData(self,vista,head,graphType='bar',dir='row',filter=None):
+        ##borro los tabs
+        #for k in range(self.count()-1,-1,-1):
+            #self.removeTab(k)
+        #if graphType is None:
+            #self.hide()
+        
+        #resultado = vista.getVector(head,dir=dir,filter=filter)
+        #for k in range(len(resultado)):
+            #if k == 0 and dir=='col' and vista.totalizado:
+                #continue
+            #texto = resultado[k][0] 
+            #valores = [ elem.data(Qt.UserRole +1) for elem in resultado[k][1] ]
+            #titulo,ejeX,ejeY = getGraphTexts(vista,head,k,dir=dir)
+            #self.addTab(SimpleChart(),ejeY)
+            #self.setCurrentIndex(self.count() -1)
+            #self.currentWidget().loadData(graphType,texto,valores,titulo,ejeX,ejeY)
+            #self.currentWidget().draw()        
+        #self.setCurrentIndex(0)
+    #def draw(self):
+        #for k in range(self.count()):
+            #self.setCurrentIndex(k)
+            #self.currentWidget().draw()
+            
 class charter(QDialog):
     def __init__(self,parent=None):
         super().__init__(parent)
-        #self.chart = SimpleChart()
+        self.chart =ChartTab()
         self.meat = QGridLayout()
-        #meat.addWidget(self.chart,0,0)
+        self.meat.addWidget(self.chart,0,0)
         self.setLayout(self.meat)
-    def loadData(self,vista,head,dir):
-        resultado = vista.getVector(head,dir=dir)
-        graphs = []
-        for k in range(len(resultado)):
-            if k == 0 and dir=='col' and vista.totalizado:
-                continue
-            texto = resultado[k][0] 
-            valores = [ elem.data(Qt.UserRole +1) for elem in resultado[k][1] ]
-            titulo,ejeX,ejeY = getGraphTexts(vista,head,k,dir=dir)
-            graphs.append(SimpleChart())
-            self.meat.addWidget(graphs[-1],0,k)
-            graphs[-1].loadData('bar',texto,valores,titulo,ejeX,ejeY)
-        print(len(graphs))
-        for k in range(len(graphs)):
-            graphs[k].draw()
-            
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
@@ -287,7 +364,7 @@ if __name__ == '__main__':
     xrecs = vista.row_hdr_idx.numRecords()
     xrow = randint(0,xrecs -1)
     xhead = vista.row_hdr_idx.pos2item(xrow)
-    dlg.loadData(vista,xhead,dir='row')
+    dlg.chart.loadData(vista,xhead,dir='row')
     dlg.show()
     if dlg.exec_():
         pass

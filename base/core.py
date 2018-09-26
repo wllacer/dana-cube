@@ -1691,7 +1691,7 @@ class Vista:
             dato = col.getColumn(pos)
             if not nulls and dato is None:
                 continue
-            if filter and not filter():
+            if filter and not filter(col):
                 continue
             if keyfmt == 'array':
                 texto = tuple(col.getFullHeadInfo(format=keyfmt))

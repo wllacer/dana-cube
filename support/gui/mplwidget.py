@@ -11,7 +11,7 @@ import random
 import matplotlib
 matplotlib.use("Qt5Agg")
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QSizePolicy, QMessageBox, QWidget,QGridLayout
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QSizePolicy, QMessageBox, QWidget,QGridLayout,QTabWidget
 
 import numpy as np
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -90,7 +90,7 @@ class SimpleChart(FigureCanvas):
             self.axes.yaxis.set_major_formatter(ticker.FixedFormatter((self.x)))            
         
         labels = self.axes.get_xticklabels()
-        plt.setp(labels, rotation = 60.)
+        plt.setp(labels, rotation = 90.)
         #TODO un poquito de magia por favor
         if tipo == 'multibar' and  not isinstance(self.y[0],(list,tuple)):
             tipo = 'bar'            
@@ -127,6 +127,72 @@ class SimpleChart(FigureCanvas):
             ktipo = 'o'  #scatter es el defecto
             self.axes.plot(pos_list, self.y,ktipo)
         self.draw()
+
+def getGraphTexts(vista,head,xlevel,dir='row'):
+    
+    if dir == 'row':
+        fmodel = vista.row_hdr_idx
+        xmodel = vista.col_hdr_idx
+        fidx = vista.row_id
+        xidx = vista.col_id
+        fdim = vista.dim_row
+        xdim  = vista.dim_col
+    else:
+        fmodel = vista.col_hdr_idx
+        xmodel = vista.row_hdr_idx
+        fidx = vista.col_id
+        xidx = vista.row_id
+        fdim = vista.dim_col
+        xdim  = vista.dim_row
+        
+    fixedParm = fmodel.name
+    if fdim > 1:
+        j = head.depth() -1 if (dir == 'row' and vista.totalizado) else head.depth()
+        if j == -1:
+            pass
+        else:
+            fixedParm = vista.cubo.lista_guias[fidx]['contexto'][j]['name']
+            
+    ejeX  = xmodel.name
+    if xdim > 1:
+        if dir == 'col' and vista.totalizado:
+            ejeX = vista.cubo.lista_guias[xidx]['contexto'][xlevel -1]['name']
+        else:
+            ejeX = vista.cubo.lista_guias[xidx]['contexto'][xlevel]['name']
+        
+    titulo = '{}:  {} \n por {} '.format(fixedParm,head.getFullHeadInfo(),ejeX)
+    
+    ejeY = '{}({})'.format(vista.agregado,vista.campo)  #TODO depende de las funciones ejecutadas
+    
+    return titulo,ejeX,ejeY
+
+class ChartTab(QTabWidget):
+    def __init__(self,parent=None):
+        super().__init__(parent)
+        
+    def loadData(self,vista,head,graphType='bar',dir='row',filter=None):
+        #borro los tabs
+        for k in range(self.count()-1,-1,-1):
+            self.removeTab(k)
+        if graphType is None:
+            self.hide()
+        
+        resultado = vista.getVector(head,dir=dir,filter=filter)
+        for k in range(len(resultado)):
+            if k == 0 and dir=='col' and vista.totalizado:
+                continue
+            texto = resultado[k][0] 
+            valores = [ elem.data(Qt.UserRole +1) for elem in resultado[k][1] ]
+            titulo,ejeX,ejeY = getGraphTexts(vista,head,k,dir=dir)
+            self.addTab(SimpleChart(),ejeY)
+            self.setCurrentIndex(self.count() -1)
+            self.currentWidget().loadData(graphType,texto,valores,titulo,ejeX,ejeY)
+            self.currentWidget().draw()        
+        self.setCurrentIndex(0)
+    def draw(self):
+        for k in range(self.count()):
+            self.setCurrentIndex(k)
+            self.currentWidget().draw()
 
 """
     Prueba

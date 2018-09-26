@@ -106,6 +106,7 @@ Things which would be a welcome addition to the application
 
 * __NOOP__ Use of importlib finder mechanism instead of the crafted __init__.py file for user functions. 
 
+* Trazability of user function calls at danacube
 
 * code a "create a plugin local directory"
 
