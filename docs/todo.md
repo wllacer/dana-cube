@@ -130,13 +130,17 @@ Things which would be a welcome addition to the application
 
 * multicharts
 * propagate on view changes
-* hidden rows
+* __done__ hidden rows
 * Internal changes 
     * Change chart type
     * Open mpl window
     * Basic export data
     * zoom ¿?
-    * On hide clear data ¿?
+    * __done__ On hide clear data ¿?
+    
+* Otra vez las Castillas
+* dumps esporádicos
+    
 ## Admin 
 Most of it is already in a new (and I hope better) implementation, but they still lack
 

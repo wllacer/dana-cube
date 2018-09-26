@@ -10,7 +10,7 @@ import sys
 import random
 import matplotlib
 matplotlib.use("Qt5Agg")
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt,QModelIndex
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QSizePolicy, QMessageBox, QWidget,QGridLayout,QTabWidget
 
 import numpy as np
@@ -128,6 +128,29 @@ class SimpleChart(FigureCanvas):
             self.axes.plot(pos_list, self.y,ktipo)
         self.draw()
 
+#def isVisible(item,treeView,direccion):
+    #if direccion == 'col':
+        #pos = treeView.vista.col_hdr_idx.item2pos(item)
+        #if treeView.isColumnHidden(pos +1):
+            #return False
+        #else:
+            #return True
+    #elif direccion == 'row':
+        #entry = item
+        #hidden = False
+        #while entry:
+            #row = entry.row()
+            #pai = entry.parent().index() if entry.parent() else QModelIndex()
+            #if treeView.isRowHidden(row,pai):
+                #hidden = True
+                #break
+            #entry = entry.parent()
+        #if hidden:
+            #return False
+        #else:
+            #return True
+    #return True
+
 def getGraphTexts(vista,head,xlevel,dir='row'):
     
     if dir == 'row':
@@ -169,9 +192,11 @@ def getGraphTexts(vista,head,xlevel,dir='row'):
 class ChartTab(QTabWidget):
     def __init__(self,parent=None):
         super().__init__(parent)
+        self.datos = []
         
     def loadData(self,vista,head,graphType='bar',dir='row',filter=None):
         #borro los tabs
+        self.datos.clear()
         for k in range(self.count()-1,-1,-1):
             self.removeTab(k)
         if graphType is None:
@@ -179,20 +204,31 @@ class ChartTab(QTabWidget):
         
         resultado = vista.getVector(head,dir=dir,filter=filter)
         for k in range(len(resultado)):
+            if len(resultado[k][0]) == 0:
+                continue
             if k == 0 and dir=='col' and vista.totalizado:
                 continue
             texto = resultado[k][0] 
             valores = [ elem.data(Qt.UserRole +1) for elem in resultado[k][1] ]
             titulo,ejeX,ejeY = getGraphTexts(vista,head,k,dir=dir)
+            self.datos.append({'texto':texto,'valores':valores,'titulo':titulo,'ejeX':ejeX,'ejeY':ejeY })
             self.addTab(SimpleChart(),ejeX)
             self.setCurrentIndex(self.count() -1)
             self.currentWidget().loadData(graphType,texto,valores,titulo,ejeX,ejeY)
-            self.currentWidget().draw()        
-        self.setCurrentIndex(0)
+            self.currentWidget().draw()   
+        if self.count() == 0:
+            self.hide()
+        else:
+            self.setCurrentIndex(0)
+            self.currentWidget().setFocus()
+        
     def draw(self):
         for k in range(self.count()):
             self.setCurrentIndex(k)
             self.currentWidget().draw()
+    def hide(self):
+        self.datos.clear()
+        super().hide()
 
 """
     Prueba

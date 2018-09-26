@@ -401,9 +401,9 @@ class GraphDlg(QDialog):
         self.cuboCB.setCurrentIndex([item[0] for item in self.tiposGraficos].index(currValue))
         cuboLbl.setBuddy(self.cuboCB)
 
-        self.elementoRB = QCheckBox('Sólo filas terminales (hojas)')
+        #self.elementoRB = QCheckBox('Sólo filas terminales (hojas)')
         
-        self.elementoRB.setVisible(False)
+        #self.elementoRB.setVisible(False)
         
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|
                                                         QDialogButtonBox.Cancel)
@@ -412,11 +412,11 @@ class GraphDlg(QDialog):
         grid.addWidget(InicioLabel, 0, 0)
         grid.addWidget(cuboLbl, 1, 0)
         grid.addWidget(self.cuboCB, 1, 1)
-        grid.addWidget(self.elementoRB,2,0)
+        #grid.addWidget(self.elementoRB,2,0)
         grid.addWidget(buttonBox, 4, 0, 1, 2)
 
-        if tipo == 'col':
-            self.elementoRB.setVisible(True)
+        #if tipo == 'col':
+            #self.elementoRB.setVisible(True)
 
         self.setLayout(grid)
         
@@ -425,7 +425,7 @@ class GraphDlg(QDialog):
         
     def accept(self):
         self.result = self.tiposGraficos[self.cuboCB.currentIndex()][0]
-        self.hojas  = self.elementoRB.isChecked()
+        #self.hojas  = self.elementoRB.isChecked()
         
         QDialog.accept(self)
         

@@ -1701,6 +1701,7 @@ class Vista:
             result[col.depth()][1].append(col.getColumn(pos))
 
         return result
+    
 # monkeypatch
 Vista.toTree = Vista.newTreeLoad
 Vista.toNewTree = Vista.newTreeLoad

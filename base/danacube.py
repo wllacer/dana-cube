@@ -680,9 +680,11 @@ class TabMgr(QWidget):
             item = self.tree.model().invisibleRootItem().child(0)
             rowid = item
         self.lastItemUsed = rowid
-
-        self.chart.loadData(self.tree.vista,rowid,graphType=tipo,dir='row')  #TODO filter
-    
+        if visibleOnly:
+            pFilter = lambda x,y=self.tree,z='col':y.isItemVisible(x,z)
+        else:
+            pFilter = None
+        self.chart.loadData(self.tree.vista,rowid,graphType=tipo,dir='row',filter=pFilter)  #TODO filter    
         self.chart.draw()
         self.chart.show()
         
@@ -1190,7 +1192,14 @@ class DanaCube(QTreeView):
                     head = self.model().itemFromIndex(id)
                 else:
                     head =  self.vista.col_hdr_idx.pos2item(id -1)
-                chart.loadData(self.vista,head,dialog.result,dir=source,filter=None)
+                if visibleOnly:
+                    if source == 'row':
+                        pFilter = lambda x,y=self,z='col':y.isItemVisible(x,z)
+                    else:
+                        pFilter = lambda x,y=self,z='row':y.isItemVisible(x,z)
+                else:
+                    pFilter = None
+                chart.loadData(self.vista,head,dialog.result,dir=source,filter=pFilter)
                 chart.draw()
                 chart.show()
 
@@ -1264,7 +1273,30 @@ class DanaCube(QTreeView):
                 valores.append(item.getFullHeadInfo(format='string'))
         dialogo = hiddenElemsMgr('row',valores,self)
         dialogo.show()
-                
+    
+    def isItemVisible(self,item,direccion):
+        if direccion == 'col':
+            pos = self.vista.col_hdr_idx.item2pos(item)
+            if self.isColumnHidden(pos +1):
+                return False
+            else:
+                return True
+        elif direccion == 'row':
+            entry = item
+            hidden = False
+            while entry:
+                row = entry.row()
+                pai = entry.parent().index() if entry.parent() else QModelIndex()
+                if self.isRowHidden(row,pai):
+                    hidden = True
+                    break
+                entry = entry.parent()
+            if hidden:
+                return False
+            else:
+                return True
+        return True
+
         
 class hiddenElemsMgr(QDialog):
     #def __init__(self,entradas,valores,parent=None):
