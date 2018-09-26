@@ -97,7 +97,7 @@ from base.datadict import DataDict
 #from base.cubetree import traverseTree
 from support.datalayer.query_constructor import searchConstructor
 
-from support.gui.mplwidget import SimpleChart
+from support.gui.mplwidget import * #ChartTab
 from support.util.uf_manager import *
 
 #import base.exportWizard as eW
@@ -628,7 +628,7 @@ class TabMgr(QWidget):
         self.tree = DanaCube(parent,**kwargs)
         if self.tree.vista is None:
             return 
-        self.chart = SimpleChart()
+        self.chart = ChartTab()
         self.chartType = None #'barh'
         self.lastItemUsed = None
         self.tree.clicked.connect(self.drawChart)
@@ -681,36 +681,8 @@ class TabMgr(QWidget):
             rowid = item
         self.lastItemUsed = rowid
 
-        x_text = self.tree.vista.col_hdr_idx.name
-        y_text = ''
-        titleParms = {}
-        if tipo == 'multibar': 
-            datos,kcabeceras = rowid.simplifyHierarchical() #msimplify(mdatos,self.textos_col)
-            titleParms = {'format':'string', 'delimiter':' > '}
-        else:
-            datos,kcabeceras = rowid.simplify() #item.getPayload(),self.textos_col)
-        
-        #suprimo las columnas ocultas
-        if visibleOnly:
-            for k in range(len(kcabeceras)-1,-1,-1):
-                pos = kcabeceras[k]
-                if self.tree.isColumnHidden(pos +1):
-                    del kcabeceras[k]
-                    if tipo == 'multibar':
-                        for j in range(len(datos)):
-                            del datos[j][k]
-                    else:
-                        del datos[k]
-            
-        titulo = self.tree.vista.row_hdr_idx.name+'> '+rowid.getFullHeadInfo(**titleParms) +  '\n' + \
-                '{}({})'.format(self.tree.vista.agregado,self.tree.vista.campo) 
-            
-        cabeceras = [ self.tree.colHdr[k] for k in kcabeceras ] 
-
-        if len(datos) == 0:
-            self.chart.axes.cla()
-        else:
-            self.chart.loadData(tipo,cabeceras,datos,titulo,x_text,y_text,rowid.getFullDesc())  
+        self.chart.loadData(self.tree.vista,rowid,graphType=tipo,dir='row')  #TODO filter
+    
         self.chart.draw()
         self.chart.show()
         
@@ -1214,56 +1186,17 @@ class DanaCube(QTreeView):
         if dialog.exec_():
             chart = self.parent.tabulatura.currentWidget().chart
             if dialog.result:
-                if source == 'row':
-                    item = self.model().itemFromIndex(id)
-                    titulo = item['value']
-                    datos = []
-                    etiquetas = []
-                    for k,entrada in enumerate(item.getPayload()):
-                        if entrada is None:
-                            continue
-                        elif visibleOnly and self.isColumnHidden(k+1):
-                            continue
-                        else:
-                            datos.append(entrada)
-                            etiquetas.append(self.colHdr[k])
-                elif source == 'col':
-                    titulo = self.colHdr[id - 1]
-                    datos = []
-                    etiquetas = []
-                    for entrada in self.model().traverse():
-                        if dialog.hojas and not entrada.isLeaf():
-                            continue
-                        if entrada.gpi(id -1) is None:
-                            continue
-                        if visibleOnly:
-                            entry = entrada
-                            hidden = False
-                            while entry:
-                                row = entry.row()
-                                pai = entry.parent().index() if entry.parent() else QModelIndex()
-                                if self.isRowHidden(row,pai):
-                                    hidden = True
-                                    break
-                                entry = entry.parent()
-                            if hidden:
-                                continue
-                        datos.append(entrada.gpi(id -1))
-                        etiquetas.append(entrada.getFullHeadInfo())
-                        
-                
-                x_text = self.model().name
-                y_text = ''
-                if len(datos) == 0:
-                    chart.axes.cla()
+                if source == 'row':  
+                    head = self.model().itemFromIndex(id)
                 else:
-                    #print(dialog.result,etiquetas,datos,titulo,x_text,y_text)
-                    chart.loadData(dialog.result,etiquetas,datos,titulo,x_text,y_text)  
+                    head =  self.vista.col_hdr_idx.pos2item(id -1)
+                chart.loadData(self.vista,head,dialog.result,dir=source,filter=None)
                 chart.draw()
                 chart.show()
+
             else:
                 chart.hide()
-                
+               
 
     #def hiddenColumns(self):
         ## la columna 0 son las cabeceras de fila. De momento NO las oculto via este procedimiento

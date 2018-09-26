@@ -10,7 +10,7 @@ import sys
 import random
 import matplotlib
 matplotlib.use("Qt5Agg")
-from PyQt5 import QtCore
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QSizePolicy, QMessageBox, QWidget,QGridLayout,QTabWidget
 
 import numpy as np
@@ -90,7 +90,7 @@ class SimpleChart(FigureCanvas):
             self.axes.yaxis.set_major_formatter(ticker.FixedFormatter((self.x)))            
         
         labels = self.axes.get_xticklabels()
-        plt.setp(labels, rotation = 90.)
+        plt.setp(labels, rotation = 270.)
         #TODO un poquito de magia por favor
         if tipo == 'multibar' and  not isinstance(self.y[0],(list,tuple)):
             tipo = 'bar'            
@@ -184,7 +184,7 @@ class ChartTab(QTabWidget):
             texto = resultado[k][0] 
             valores = [ elem.data(Qt.UserRole +1) for elem in resultado[k][1] ]
             titulo,ejeX,ejeY = getGraphTexts(vista,head,k,dir=dir)
-            self.addTab(SimpleChart(),ejeY)
+            self.addTab(SimpleChart(),ejeX)
             self.setCurrentIndex(self.count() -1)
             self.currentWidget().loadData(graphType,texto,valores,titulo,ejeX,ejeY)
             self.currentWidget().draw()        
