@@ -142,6 +142,8 @@ Things which would be a welcome addition to the application
 * __done__ (creo) dumps esporádicos en column
 * clean up code
 * ejeX con funciones
+* click on head and columns
+* Performance check (suffers a _Zugszwang_:  MPL figures have to be closed to be garbage collected, but the delay this action causes is noticeable). A rewrite of the code (reusing figures instead of closing/openinig) must be necesary
     
 ## Admin 
 Most of it is already in a new (and I hope better) implementation, but they still lack

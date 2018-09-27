@@ -1686,7 +1686,8 @@ class Vista:
                 dimension += 1 
             model = self.row_hdr_idx
         #result = [ {} for k in range(dimension) ]
-        result = [ [[],[]] for k in range(dimension)]
+        #result = [ [[],[]] for k in range(dimension)]
+        result = [ {'text':[],'elems':[] } for k in range(dimension) ]
         for k,col in enumerate(model.traverse()):
             dato = col.getColumn(pos)
             if not nulls and dato is None:
@@ -1699,8 +1700,8 @@ class Vista:
                 texto = tuple(col.getFullHeadInfo(format=keyfmt))
             else:
                 texto = col.getFullHeadInfo(format=keyfmt)
-            result[col.depth()][0].append(texto)
-            result[col.depth()][1].append(col.getColumn(pos))
+            result[col.depth()]['text'].append(texto)
+            result[col.depth()]['elems'].append(col.getColumn(pos))
 
         return result
     

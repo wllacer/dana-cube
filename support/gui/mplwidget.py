@@ -128,6 +128,9 @@ class SimpleChart(FigureCanvas):
             self.axes.plot(pos_list, self.y,ktipo)
         self.draw()
 
+    def close(self):
+        plt.close(self.fig)
+        super().close()
 #def isVisible(item,treeView,direccion):
     #if direccion == 'col':
         #pos = treeView.vista.col_hdr_idx.item2pos(item)
@@ -150,7 +153,7 @@ class SimpleChart(FigureCanvas):
         #else:
             #return True
     #return True
-
+        
 def getGraphTexts(vista,head,xlevel,dir='row'):
     
     if dir == 'row':
@@ -198,9 +201,30 @@ class ChartTab(QTabWidget):
         self.graph=None
         self.dir=None
         self.filter=None
+
+    def forSimple(self,vista):
+        resultado = vista.getVector(self.item,dir=self.dir,filter=self.filter)
+        for k in range(len(resultado)):
+            if len(resultado[k]['text']) == 0:
+                continue
+            if k == 0 and self.dir=='col' and vista.totalizado:
+                continue
+            texto = resultado[k]['text'] 
+            valores = [ elem.data(Qt.UserRole +1) for elem in resultado[k]['elems'] ]
+            titulo,ejeX,ejeY = getGraphTexts(vista,self.item,k,dir=self.dir)
+            self.datos.append({'texto':texto,'valores':valores,'titulo':titulo,'ejeX':ejeX,'ejeY':ejeY })
+            
+            self.addTab(SimpleChart(),ejeX)
+            self.setCurrentIndex(self.count() -1)
+            self.currentWidget().loadData(self.graph,texto,valores,titulo,ejeX,ejeY)
+            self.currentWidget().draw()   
+        else:
+            self.setCurrentIndex(0)
+            self.currentWidget().setFocus()  #FIXME
+        
     def loadData(self,vista,head,graphType='bar',dir='row',filter=None):
         #borro los tabs
-        self.datos.clear()
+        self.limpia()
         self.item = head
         self.vista=vista
         self.graph=graphType
@@ -211,23 +235,13 @@ class ChartTab(QTabWidget):
         if graphType is None:
             self.hide()
         
-        resultado = vista.getVector(head,dir=dir,filter=filter)
-        for k in range(len(resultado)):
-            if len(resultado[k][0]) == 0:
-                continue
-            if k == 0 and dir=='col' and vista.totalizado:
-                continue
-            texto = resultado[k][0] 
-            valores = [ elem.data(Qt.UserRole +1) for elem in resultado[k][1] ]
-            titulo,ejeX,ejeY = getGraphTexts(vista,head,k,dir=dir)
-            self.datos.append({'texto':texto,'valores':valores,'titulo':titulo,'ejeX':ejeX,'ejeY':ejeY })
-            self.addTab(SimpleChart(),ejeX)
-            self.setCurrentIndex(self.count() -1)
-            self.currentWidget().loadData(graphType,texto,valores,titulo,ejeX,ejeY)
-            self.currentWidget().draw()   
-        else:
-            self.setCurrentIndex(0)
-            self.currentWidget().setFocus()
+        if self.graph.startswith('multi') and  self.item.depth() > 0:
+            pos = self.item
+            while pos:
+                print(pos)
+                pos = pos.parent()
+            
+        self.forSimple(vista)
     
     def reLoad(self,item=None):
         if not item:
@@ -239,8 +253,16 @@ class ChartTab(QTabWidget):
         for k in range(self.count()):
             self.setCurrentIndex(k)
             self.currentWidget().draw()
+            
+    def limpia(self):
+        for k in range(self.count()):
+            self.setCurrentIndex(k)
+            #plt.close(self.currentWidget().fig)
+            self.currentWidget().close()
+        self.datos.clear()    
+        
     def hide(self):
-        self.datos.clear()
+        self.limpia()
         self.vista=None
         self.graph=None
         self.dir=None
