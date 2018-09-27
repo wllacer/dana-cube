@@ -139,7 +139,7 @@ Things which would be a welcome addition to the application
     * __done__ On hide clear data ¿?
 * barh ejeX
 * Otra vez las Castillas
-* dumps esporádicos en column
+* __done__ (creo) dumps esporádicos en column
 * clean up code
 * ejeX con funciones
     
