@@ -631,7 +631,7 @@ class TabMgr(QWidget):
         self.chart = ChartTab()
         self.chartType = None #'barh'
         self.lastItemUsed = None
-        self.tree.clicked.connect(self.drawChart)
+        #self.tree.clicked.connect(self.drawChart)
         
         split.addWidget(self.tree)
         split.addWidget(self.chart)
@@ -651,7 +651,8 @@ class TabMgr(QWidget):
     
     def dispatch(self,FcnName):
         self.tree.dispatch(FcnName)
-        self.drawChart()
+        #self.drawChart()
+        self.tree.reloadGraph()
 
     def drawChart(self,index=None):
         if self.chartType:
@@ -733,6 +734,38 @@ class DanaCube(QTreeView):
 
         self.editAllowed = False
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        
+        
+    
+    def currentChanged(self,hacia,desde):
+        if not self.parent.tabulatura:
+            pass
+        elif not self.parent.tabulatura.currentWidget().chart:
+            pass
+        elif not self.parent.tabulatura.currentWidget().chart.isHidden():
+            chart = self.parent.tabulatura.currentWidget().chart
+            #print(self.model().itemFromIndex(desde),desde.row(),desde.column(),self.model().itemFromIndex(desde.parent()),
+                     #self.model().itemFromIndex(hacia),hacia.row(),hacia.column(),self.model().itemFromIndex(hacia.parent()) 
+                     #)
+            if desde is None or hacia is None:
+                pass
+            elif chart.dir == 'row' and  desde.row() == hacia.row() and desde.parent() == hacia.parent():
+                pass
+            elif chart.dir == 'col' and desde.column() == hacia.column():
+                pass
+            elif chart.dir == 'row':
+                    head = self.model().itemFromIndex(hacia.siblingAtColumn(0))
+                    self.reloadGraph(head)                  
+            elif chart.dir == 'col':
+                    head = self.vista.col_hdr_idx.pos2item(hacia.column() -1)
+                    self.reloadGraph(head)  
+            else:
+                print('No hay parametros correctos')
+        super().currentChanged(desde,hacia)
+
+    def reloadGraph(self,item=None):
+        chart = self.parent.tabulatura.currentWidget().chart
+        chart.reLoad(item)
         
     def dataChanged(self, *args,**kwargs):
         topLeft = args[0]

@@ -193,10 +193,19 @@ class ChartTab(QTabWidget):
     def __init__(self,parent=None):
         super().__init__(parent)
         self.datos = []
-        
+        self.item =None
+        self.vista=None
+        self.graph=None
+        self.dir=None
+        self.filter=None
     def loadData(self,vista,head,graphType='bar',dir='row',filter=None):
         #borro los tabs
         self.datos.clear()
+        self.item = head
+        self.vista=vista
+        self.graph=graphType
+        self.dir=dir
+        self.filter=filter
         for k in range(self.count()-1,-1,-1):
             self.removeTab(k)
         if graphType is None:
@@ -216,11 +225,15 @@ class ChartTab(QTabWidget):
             self.setCurrentIndex(self.count() -1)
             self.currentWidget().loadData(graphType,texto,valores,titulo,ejeX,ejeY)
             self.currentWidget().draw()   
-        if self.count() == 0:
-            self.hide()
         else:
             self.setCurrentIndex(0)
             self.currentWidget().setFocus()
+    
+    def reLoad(self,item=None):
+        if not item:
+            self.loadData(self.vista,self.item,self.graph,self.dir,self.filter)
+        else:
+            self.loadData(self.vista,item,self.graph,self.dir,self.filter)
         
     def draw(self):
         for k in range(self.count()):
@@ -228,6 +241,10 @@ class ChartTab(QTabWidget):
             self.currentWidget().draw()
     def hide(self):
         self.datos.clear()
+        self.vista=None
+        self.graph=None
+        self.dir=None
+        self.filter=None
         super().hide()
 
 """

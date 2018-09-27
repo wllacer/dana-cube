@@ -129,7 +129,7 @@ Things which would be a welcome addition to the application
 ## New graphic
 
 * multicharts
-* propagate on view changes
+* __done__ propagate on view changes
 * __done__ hidden rows
 * Internal changes 
     * Change chart type
@@ -137,9 +137,11 @@ Things which would be a welcome addition to the application
     * Basic export data
     * zoom ¿?
     * __done__ On hide clear data ¿?
-    
+* barh ejeX
 * Otra vez las Castillas
-* dumps esporádicos
+* dumps esporádicos en column
+* clean up code
+* ejeX con funciones
     
 ## Admin 
 Most of it is already in a new (and I hope better) implementation, but they still lack
