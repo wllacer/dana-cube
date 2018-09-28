@@ -128,7 +128,7 @@ Things which would be a welcome addition to the application
 
 ## New graphic
 
-* multicharts
+* __done__ multicharts
 * __done__ propagate on view changes
 * __done__ hidden rows
 * Internal changes 

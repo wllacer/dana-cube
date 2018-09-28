@@ -20,6 +20,8 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import matplotlib.ticker  as ticker
 
+from pprint import pprint 
+
 class MultiChart(FigureCanvas):
     def __init__(self,*args,**kwargs):
         self.fig,self.ax = plt.subplots()
@@ -36,7 +38,7 @@ class MultiChart(FigureCanvas):
         self.ax.set_ylabel(args[5])
         
         pos_list = np.arange(len(self.x))
-        numBars = len(y)
+        numBars = len(self.y)
         if numBars > 1:
             width   = 1/(numBars +1)
         else:
@@ -52,7 +54,7 @@ class MultiChart(FigureCanvas):
         else:
             self.ax.set_xticks(pos_list)
         self.ax.set_xticklabels(self.x)
-        self.ax.legend([item[0] for item in rects], args[6])
+        self.ax.legend([item[0] for item in rects], args[6] if len(args) > 6 else 'Leyenda')
 
 class SimpleChart(FigureCanvas):
     """Class to represent the FigureCanvas widget"""
@@ -234,21 +236,93 @@ class ChartTab(QTabWidget):
             self.removeTab(k)
         if graphType is None:
             self.hide()
-        
+        print(self.graph,self.item.depth())
         if self.graph.startswith('multi') and  self.item.depth() > 0:
+            print('Un multi')
+            stack = []
             pos = self.item
             while pos:
-                print(pos)
+                stack.insert(0,pos) 
                 pos = pos.parent()
+                
+            print('stack',stack)
+            """
+            monstruoso array multidimentsional
+            gresult[x][k][dict][j]
+                                        indice del eje X
+                                texto/datos
+                           Nivle de anidacion en el eje de las X
+                        Nivel de anidacion en el paramtro
+            """         
+            gresult = []
+            for entry in stack:
+                gresult.append(vista.getVector(entry,dir=self.dir,filter=self.filter,nulls=True))
+                print(gresult[-1])
+            print(gresult)
+            # rearrange gresult a result
+            """
+            # para poder manejarlo simetricamente debe ser algo asi como
+            result[k][dict][x][j]
+                                    Nivel de anidacion en el paramtro
+                                        indice del eje X
+                            texto/datos
+                        Nivle de anidacion en el eje de las X
+
+            """
+            nivelParm = len(gresult)
+            nivelX = len(gresult[0])
+            result = [ None for k in range(nivelX) ]
+            for k in range(nivelX):
+                nivel = {'text':None,'data':[] }
+                nivel['text'] = gresult[0][k]['text']
+                for x in range(nivelParm):
+                    nivel['data'].append(
+                        [ elem.data(Qt.UserRole +1) if elem else None for elem in gresult[x][k]['elems']]
+                        )
+                #....
+                for pos in range(len(nivel['data'][-1]) -1,-1,-1): #de final al principio porque voy a borrar
+                    valor = nivel['data'][-1][pos]
+                    if valor is None:
+                        print('a borrar',nivel['text'][pos])
+                        for z in range(nivelParm):
+                            del nivel['data'][z][pos]
+                        del nivel['text'][pos]
+                result[k] = nivel
+
+            for k in range(len(result)):
+                if len(result[k]['text']) == 0:
+                    continue
+                if k == 0 and self.dir=='col' and vista.totalizado:
+                    continue
+                texto = result[k]['text'] 
+                valores = result[k]['data']
+                titulo,ejeX,ejeY = getGraphTexts(vista,self.item,k,dir=self.dir)
+                legend  = [ elem.text() for elem in stack ]
+                self.datos.append({'texto':texto,'valores':valores,'titulo':titulo,'ejeX':ejeX,'ejeY':ejeY,'legend':legend })
+                
+                self.addTab(MultiChart(),ejeX)
+                self.setCurrentIndex(self.count() -1)
+                self.currentWidget().loadData(self.graph,texto,valores,titulo,ejeX,ejeY,legend)
+                self.currentWidget().draw()   
+        
             
-        self.forSimple(vista)
+            #for k in range(len(result)):
+                #result.append({'text':gresult[0][k]['text'],'values':[None for j in range(gresult) ]})
+                #for j in range(gresult):
+                    #result[k]['values'][j]  = [ elem.data(Qt.UserRole +1)  if elem else None for elem in gresult[j][k]['elems'] ]
+                    
+            
+             
+        else:
+            self.forSimple(vista)
     
     def reLoad(self,item=None):
+        print(item)
         if not item:
             self.loadData(self.vista,self.item,self.graph,self.dir,self.filter)
         else:
             self.loadData(self.vista,item,self.graph,self.dir,self.filter)
-        
+            
     def draw(self):
         for k in range(self.count()):
             self.setCurrentIndex(k)

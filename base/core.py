@@ -1692,7 +1692,7 @@ class Vista:
             dato = col.getColumn(pos)
             if not nulls and dato is None:
                 continue
-            if dato.data(Qt.UserRole +1) is None:
+            if not nulls and dato.data(Qt.UserRole +1) is None:
                 continue
             if filter and not filter(col):
                 continue
