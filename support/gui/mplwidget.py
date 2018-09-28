@@ -55,7 +55,11 @@ class MultiChart(FigureCanvas):
             self.ax.set_xticks(pos_list)
         self.ax.set_xticklabels(self.x)
         self.ax.legend([item[0] for item in rects], args[6] if len(args) > 6 else 'Leyenda')
-
+    
+    def close(self):
+        plt.close(self.fig)
+        super().close()
+        
 class SimpleChart(FigureCanvas):
     """Class to represent the FigureCanvas widget"""
     def __init__(self,*args,**kwargs):
@@ -66,6 +70,7 @@ class SimpleChart(FigureCanvas):
         self.fig,self.axes = plt.subplots()
         super(SimpleChart,self).__init__(self.fig)
         self.setMinimumHeight(200)
+        
         
     def loadData(self,*args,**kwargs):
         """
@@ -82,6 +87,8 @@ class SimpleChart(FigureCanvas):
         self.axes.set_title(args[3])
         self.axes.set_xlabel(args[4])
         self.axes.set_ylabel(args[5])
+        if len(args) > 6:
+            legends = args[6]
         
         pos_list = np.arange(len(self.x))
         if tipo not in ('barh',):
@@ -111,11 +118,11 @@ class SimpleChart(FigureCanvas):
                 self.axes.set_xticks(pos_list)
             self.axes.set_xticklabels(self.x)
             if len(args) >= 6:
-                if len(args[6]) < numBars:
-                    labels = ['Total',]+['' for k in range(len(args[6]) - numBars -1) ] + args[6]
-                else:
-                    labels = args[6]
-                #self.axes.legend([item[0] for item in rects], labels)
+                #if len(args[6]) < numBars:
+                    #labels = ['Total',]+['' for k in range(len(args[6]) - numBars -1) ] + args[6]
+                #else:
+                    #labels = args[6]
+                self.axes.legend([item[0] for item in rects], legends)
         elif tipo == 'boxplot':
             b = self.axes.boxplot(self.y)
             for name, line_list in b.items():
@@ -133,29 +140,8 @@ class SimpleChart(FigureCanvas):
     def close(self):
         plt.close(self.fig)
         super().close()
-#def isVisible(item,treeView,direccion):
-    #if direccion == 'col':
-        #pos = treeView.vista.col_hdr_idx.item2pos(item)
-        #if treeView.isColumnHidden(pos +1):
-            #return False
-        #else:
-            #return True
-    #elif direccion == 'row':
-        #entry = item
-        #hidden = False
-        #while entry:
-            #row = entry.row()
-            #pai = entry.parent().index() if entry.parent() else QModelIndex()
-            #if treeView.isRowHidden(row,pai):
-                #hidden = True
-                #break
-            #entry = entry.parent()
-        #if hidden:
-            #return False
-        #else:
-            #return True
-    #return True
         
+
 def getGraphTexts(vista,head,xlevel,dir='row'):
     
     if dir == 'row':
@@ -223,29 +209,15 @@ class ChartTab(QTabWidget):
         else:
             self.setCurrentIndex(0)
             self.currentWidget().setFocus()  #FIXME
+   
+    def forComplex(self,vista):
         
-    def loadData(self,vista,head,graphType='bar',dir='row',filter=None):
-        #borro los tabs
-        self.limpia()
-        self.item = head
-        self.vista=vista
-        self.graph=graphType
-        self.dir=dir
-        self.filter=filter
-        for k in range(self.count()-1,-1,-1):
-            self.removeTab(k)
-        if graphType is None:
-            self.hide()
-        print(self.graph,self.item.depth())
-        if self.graph.startswith('multi') and  self.item.depth() > 0:
-            print('Un multi')
             stack = []
             pos = self.item
             while pos:
                 stack.insert(0,pos) 
                 pos = pos.parent()
-                
-            print('stack',stack)
+            
             """
             monstruoso array multidimentsional
             gresult[x][k][dict][j]
@@ -257,8 +229,6 @@ class ChartTab(QTabWidget):
             gresult = []
             for entry in stack:
                 gresult.append(vista.getVector(entry,dir=self.dir,filter=self.filter,nulls=True))
-                print(gresult[-1])
-            print(gresult)
             # rearrange gresult a result
             """
             # para poder manejarlo simetricamente debe ser algo asi como
@@ -283,7 +253,6 @@ class ChartTab(QTabWidget):
                 for pos in range(len(nivel['data'][-1]) -1,-1,-1): #de final al principio porque voy a borrar
                     valor = nivel['data'][-1][pos]
                     if valor is None:
-                        print('a borrar',nivel['text'][pos])
                         for z in range(nivelParm):
                             del nivel['data'][z][pos]
                         del nivel['text'][pos]
@@ -299,20 +268,25 @@ class ChartTab(QTabWidget):
                 titulo,ejeX,ejeY = getGraphTexts(vista,self.item,k,dir=self.dir)
                 legend  = [ elem.text() for elem in stack ]
                 self.datos.append({'texto':texto,'valores':valores,'titulo':titulo,'ejeX':ejeX,'ejeY':ejeY,'legend':legend })
-                
-                self.addTab(MultiChart(),ejeX)
+                self.addTab(SimpleChart(),ejeX)
+                #self.addTab(MultiChart(),ejeX)
                 self.setCurrentIndex(self.count() -1)
                 self.currentWidget().loadData(self.graph,texto,valores,titulo,ejeX,ejeY,legend)
-                self.currentWidget().draw()   
         
-            
-            #for k in range(len(result)):
-                #result.append({'text':gresult[0][k]['text'],'values':[None for j in range(gresult) ]})
-                #for j in range(gresult):
-                    #result[k]['values'][j]  = [ elem.data(Qt.UserRole +1)  if elem else None for elem in gresult[j][k]['elems'] ]
-                    
-            
-             
+    def loadData(self,vista,head,graphType='bar',dir='row',filter=None):
+        #borro los tabs
+        self.limpia()
+        self.item = head
+        self.vista=vista
+        self.graph=graphType
+        self.dir=dir
+        self.filter=filter
+        for k in range(self.count()-1,-1,-1):
+            self.removeTab(k)
+        if graphType is None:
+            self.hide()
+        if self.graph.startswith('multi') and  self.item.depth() > 0:
+            self.forComplex(vista)
         else:
             self.forSimple(vista)
     

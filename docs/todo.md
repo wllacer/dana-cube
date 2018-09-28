@@ -128,15 +128,19 @@ Things which would be a welcome addition to the application
 
 ## New graphic
 
-* __done__ multicharts
-* __done__ propagate on view changes
+* __done__ multicharts.
+    *  code clean up
+    *  extent to other graphs if it has sense
+* __done__ propagate on view changes..
+    *  hide/show column
 * __done__ hidden rows
-* Internal changes 
+* Internal changes .
     * Change chart type
     * Open mpl window
     * Basic export data
     * zoom ¿?
     * __done__ On hide clear data ¿?
+    __note__ context menu does not work with FigureCanvas so my plan went thru the drain. Will check alternatives
 * barh ejeX
 * Otra vez las Castillas
 * __done__ (creo) dumps esporádicos en column
@@ -144,6 +148,8 @@ Things which would be a welcome addition to the application
 * ejeX con funciones
 * click on head and columns
 * Performance check (suffers a _Zugszwang_:  MPL figures have to be closed to be garbage collected, but the delay this action causes is noticeable). A rewrite of the code (reusing figures instead of closing/openinig) must be necesary
+* screen real state (> default < 50 %)
+* more info in graphs (texts and so on ...)
     
 ## Admin 
 Most of it is already in a new (and I hope better) implementation, but they still lack

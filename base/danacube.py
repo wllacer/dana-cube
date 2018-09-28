@@ -691,8 +691,10 @@ class TabMgr(QWidget):
         
     def hiddenColumns(self):
         self.tree.hiddenColsMgr()
+        self.tree.reloadGraph()
     def hiddenRows(self):
         self.tree.hiddenRowsMgr()
+        self.tree.reloadGraph()
         
 class DanaCube(QTreeView):    
     def __init__(self,parent,**kwargs):
@@ -765,6 +767,8 @@ class DanaCube(QTreeView):
 
     def reloadGraph(self,item=None):
         chart = self.parent.tabulatura.currentWidget().chart
+        if not chart or chart.isHidden():
+            return
         chart.reLoad(item)
         
     def dataChanged(self, *args,**kwargs):
@@ -1138,13 +1142,11 @@ class DanaCube(QTreeView):
     def execHeaderAction(self,function,position):
         columna=self.header().logicalIndexAt(position)
         if function == 'hide':
-                self.setColumnHidden(columna,True)
+            self.setColumnHidden(columna,True)
+            self.reloadGraph()
         elif function == 'unhide':
-            ## eso me interesa para otras cosas
-            #for k in range(self.header().count()):
-                #print(columna,k,self.header().isSectionHidden(k))
-            #if self.header().isSectionHidden(columna -1):
             self.setColumnHidden(columna -1,False)
+            self.reloadGraph()
         elif function == 'graph':
             self.drawGraph('col',columna)
         elif function == "add":
@@ -1433,7 +1435,7 @@ class hiddenElemsMgr(QDialog):
                     self.parent.setRowHidden(row,pai,True)
                 else:
                     self.parent.setRowHidden(row,pai,False)
-
+                    
 class eligeFiltroDlg(QDialog):
     def __init__(self,listGuides,parent=None):
         super().__init__(parent)
