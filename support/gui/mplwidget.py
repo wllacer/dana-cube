@@ -14,7 +14,8 @@ from PyQt5.QtCore import Qt,QModelIndex
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QSizePolicy, QMessageBox, QWidget,QGridLayout,QTabWidget
 
 import numpy as np
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import (
+        FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
 
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
@@ -59,16 +60,36 @@ class MultiChart(FigureCanvas):
     def close(self):
         plt.close(self.fig)
         super().close()
+     
+class SimpleChart(QWidget):
+    def __init__(self,parent=None):
+        super().__init__(parent=None)
+        layout = QVBoxLayout()
+        self.canvas = baseChart(figsize=(6,3))
+        layout.addWidget(NavigationToolbar(self.canvas, self))
+        layout.addWidget(self.canvas)
+        self.setLayout(layout)
         
-class SimpleChart(FigureCanvas):
+    def loadData(self,*args,**kwargs):
+        self.canvas.loadData(*args,**kwargs)
+    
+    def draw(self):
+        self.canvas.draw()
+        
+    def close(self):
+        self.canvas.close()
+        super().close()
+        
+    
+class baseChart(FigureCanvas):
     """Class to represent the FigureCanvas widget"""
     def __init__(self,*args,**kwargs):
         # Standard Matplotlib code to generate the plot
         #self.fig = Figure()
         #self.axes = self.fig.add_subplot(111)
         self.color_list=('r','g','b','k')
-        self.fig,self.axes = plt.subplots()
-        super(SimpleChart,self).__init__(self.fig)
+        self.fig,self.axes = plt.subplots(*args,**kwargs)
+        super().__init__(self.fig)
         self.setMinimumHeight(200)
         
         
