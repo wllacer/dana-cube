@@ -5,6 +5,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from pprint import pprint
+import uuid
 
 from support.util.numeros import stats
 from support.util.traverse import traverse,traverseBasic
@@ -387,8 +388,8 @@ class NewGuideItem(QStandardItem):
                 self.setData(key,Qt.UserRole + 1)
         if value:
             self.setData(value,Qt.DisplayRole)
-
-
+        self.hashKey = uuid.uuid4().int>>64
+    
     def setData(self,value,role):
         if role in (KEY,):
             coredata = self.data(REF)
@@ -461,6 +462,9 @@ class NewGuideItem(QStandardItem):
         if right is None:
             return True
         return left >= right
+   
+    def __hash__(self):
+        return self.hashKey
     
 class GuideItem(NewGuideItem):
     """
