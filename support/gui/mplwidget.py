@@ -251,7 +251,6 @@ class ChartTab(QTabWidget):
             for entry in stack:
                 gresult.append(vista.getVector(entry,dir=self.dir,filter=self.filter,nulls=True))
             # rearrange gresult a result
-            pprint(gresult)
             """
             # para poder manejarlo simetricamente debe ser algo asi como
             result[k][dict][x][j]
@@ -314,7 +313,6 @@ class ChartTab(QTabWidget):
             self.forSimple(vista)
     
     def reLoad(self,item=None):
-        print(item)
         if not item:
             self.loadData(self.vista,self.item,self.graph,self.dir,self.filter)
         else:

@@ -246,6 +246,34 @@ Y finalmente (si es necesario) las opciones necesarias para una correcta descarg
 
 ![Paso3](./image/danacube_UG/export_params.png)
 
+#Appendice: Acciones directas en el arbol (de la documentacion de Qt)
+
+QTreeView supports a set of key bindings that enable the user to navigate in the view and interact with the contents of items:
+
+Key	Action
+__Up__ 	Moves the cursor to the item in the same column on the previous row. If the parent of the current item has no more rows to navigate to, the cursor moves to the relevant item in the last row of the sibling that precedes the parent.
+
+__Down__	Moves the cursor to the item in the same column on the next row. If the parent of the current item has no more rows to navigate to, the cursor moves to the relevant item in the first row of the sibling that follows the parent.
+
+__Left__	Hides the children of the current item (if present) by collapsing a branch.
+
+__Minus__	Same as LeftArrow.
+
+__Right__   	Reveals the children of the current item (if present) by expanding a branch.
+
+__Plus__	Same as RightArrow.
+
+__Asterisk__	Expands all children of the current item (if present).
+
+__PageUp__	Moves the cursor up one page.
+
+__PageDown__	Moves the cursor down one page.
+
+__Home__	Moves the cursor to an item in the same column of the first row of the first top-level item in the model.
+
+__End__	Moves the cursor to an item in the same column of the last row of the last top-level item in the model.
+
+__F2__	In editable models, this opens the current item for editing. The Escape key can be used to cancel the editing process and revert any changes to the data displayed.
 
 # Configurar un cubo
 ## configurar la conexion
