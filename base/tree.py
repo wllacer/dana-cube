@@ -596,7 +596,7 @@ class GuideItem(NewGuideItem):
         * __'key'__  the UsdrRole content
         * __'value'__ the DisplaRole content
         * a number: the playload column
-        
+        'colid','rowid'  static col & row number for the item
         """
         
         if not self.model():
@@ -618,13 +618,13 @@ class GuideItem(NewGuideItem):
                 return tmp[col_axis]
             else:
                 if self.model() and self.model().orthogonal:
-                    return self.model().orthogonal.pos2item(self.column()-1)  #la columna 0 es el item cabecera
+                    return self.model().orthogonal.pos2item(self.column()-1,dynamic=False)  #la columna 0 es el item cabecera
                 else:
                     return None
         elif campo == 'rownr':
             if self.column() == 0:
                 if self.model():
-                    return self.model().item2pos(self)
+                    return self.model().item2pos(self,dynamic=False)
                 else:
                     return 0
             else:
@@ -742,7 +742,7 @@ class GuideItem(NewGuideItem):
         
         if not orig or orig.data(REF) is None:
             # creamos una nueva entrada en el array
-            colItem = self.model().orthogonal.pos2item(col -1)
+            colItem = self.model().orthogonal.pos2item(col -1,dynamic=False)
             #print(col,colItem,colItem['key'],colItem['value'])
             if role == REF:
                 newtuple = value
@@ -762,7 +762,7 @@ class GuideItem(NewGuideItem):
                 tree = self.model().orthogonal
                 pai = colItem.parent() if colItem.parent() else colItem.model().invisibleRootItem()
                 row = colItem.row()
-                col = self.model().item2pos(self) +1
+                col = self.model().item2pos(self,dynamic=False) +1
                 ncItem = GuideItem(value)
                 pai.setChild(row,col,ncItem)
                 #pongo los datos
@@ -1455,7 +1455,8 @@ class GuideItemModel(QStandardItemModel):
         oidx= idx = 0
         for item in self.traverse():
             if filter(item):
-                diccionario[item.getFullKey()]={'idx':idx,'objid':item,'oidx':oidx}
+                #diccionario[item.getFullKey()]={'idx':idx,'objid':item,'oidx':oidx}
+                diccionario[item]={'idx':idx,'objid':item,'oidx':oidx}
                 idx += 1
             oidx +=1
         return diccionario

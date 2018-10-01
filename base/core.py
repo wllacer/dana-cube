@@ -1263,8 +1263,8 @@ class Vista:
         
         for record in self.array:
             try:
-                col = coldict[record[1].getFullKey()]['idx']
-                row = rowdict[record[0].getFullKey()]['idx']
+                col = coldict[record[1]]['idx']
+                row = rowdict[record[0]]['idx']
             except KeyError:
                 continue
             result[row][col] = record[2]
@@ -1293,8 +1293,8 @@ class Vista:
         result = [ [ None for j in range(len(coldict)) ] for i in range(len(rowdict)) ]
         maxCols = self.col_hdr_idx.numRecords()
         for row in self.row_hdr_idx.traverse():
-            if row.getFullKey() in rowdict:
-                r= rowdict[row.getFullKey()]['idx']
+            if row  in rowdict:
+                r= rowdict[row]['idx']
                 pl = row.getPayload()
                 if len(pl) < maxCols:
                     pl += [ None for k in range(maxCols - len(pl)) ]
@@ -1695,6 +1695,7 @@ class Vista:
         result = [ {'text':[],'elems':[] } for k in range(dimension) ]
         for k,col in enumerate(model.traverse()):
             dato = col.getColumn(pos +1)  #column 0 es la cabecera
+            print(dato,col,dato.data(Qt.UserRole +1) if dato else '',dato.data(Qt.DisplayRole) if dato else "")
             #print(pos,pos +1,col.getPayload()[pos],dato)
             if not nulls and dato is None:
                 continue

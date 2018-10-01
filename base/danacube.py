@@ -740,6 +740,12 @@ class DanaCube(QTreeView):
         
     
     def currentChanged(self,hacia,desde):
+        """
+        show data
+        """
+        destino = self.model().itemFromIndex(hacia)
+        if destino:
+            print('rowid',destino['rowid'],destino['rownr'],destino['colid'],destino['colnr'])
         if not self.parent.tabulatura:
             pass
         elif not self.parent.tabulatura.currentWidget().chart:
@@ -1384,7 +1390,7 @@ class hiddenElemsMgr(QDialog):
         self.setLayout(lay)
         
 
-        self.lista.model().itemChanged.connect(self.itemChanged)
+        #self.lista.model().itemChanged.connect(self.itemChanged)
         #self.source.itemChanged.connect(self.itemChanged)
         self.soloLeaf.stateChanged.connect(self.hideBranch)
         self.soloBranch.stateChanged.connect(self.hideLeaf)

@@ -47,6 +47,7 @@ Serious errors which are either upstream or we haven't still found a solution
         There is a second source of this behaviour for DANACUBE used models: sortt at views sorts the underlying model, so the traverse method  does not return the same order. Usually this is not a problem but I've located (at least) following potentially incorrect behaviours:
         
     *   __SOLVED__ the guideItemModel methods pos2item item2pos are written on a (false) expectation of stability. Commit __[master a2678cf0]__ specializes both functions to serve both in static or dynamic situation. Dynamic demands a relatively expensive dictionary at the tree level
+    *  __SOLVED__ Uses of pos2item item2pos: Use in hide/show as dynamic else -as of today-  static. 
     *  ~~sert/delete (column/row) after initial creation can be troublesome. ~~ The current mechanism @Danacube recalcultates the array
     *   binary search ¿?
     
@@ -72,6 +73,8 @@ Areas where the product __must__ be improved. They might not be errors but don't
 * __Solved__ Current export implementation is fast, but does not take into account changes via danacube
 
 * __Solved__ Restaurar valores originales no funciona ahora ¿?
+
+* Substitute routines to get rowid/colid rownr/colnr for __getitem__ access. And check correctness 
 
 * Windows integration 
     * __solved__ base.uf_handler 24 spliy libname (de / a \\)
