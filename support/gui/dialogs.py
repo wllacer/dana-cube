@@ -390,7 +390,7 @@ class GraphDlg(QDialog):
                           ('scatter','Grafico de puntos'),
                           ('bar','Grafico de barras'),
                           ('barh',' idm. vertical'),
-                          #('multibar',' idm. comparado a superiores en jerarquia'),
+                          ('multibar',' idm. comparado a superiores en jerarquia'),
                           ('pie','Gráfico en forma de tarta'),
                           ('boxplot','Boxplot'),
                           )

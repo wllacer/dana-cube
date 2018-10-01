@@ -1676,11 +1676,12 @@ class Vista:
             item = pitem
             #item = item.getColumn(0)
         if dir == 'row':
-            pos = self.row_hdr_idx.item2pos(item) + 1
+            pos = self.row_hdr_idx.item2pos(item,dynamic=False)
             dimension = self.dim_col
             model = self.col_hdr_idx
+            #print('eligo',pos,self.row_hdr_idx.pos2item(pos,dynamic=False))
         else:
-            pos = self.col_hdr_idx.item2pos(item) + 1
+            pos = self.col_hdr_idx.item2pos(item,dynamic=False)
             dimension = self.dim_row
             if self.totalizado:
                 dimension += 1 
@@ -1689,7 +1690,8 @@ class Vista:
         #result = [ [[],[]] for k in range(dimension)]
         result = [ {'text':[],'elems':[] } for k in range(dimension) ]
         for k,col in enumerate(model.traverse()):
-            dato = col.getColumn(pos)
+            dato = col.getColumn(pos +1)  #column 0 es la cabecera
+            #print(pos,pos +1,col.getPayload()[pos],dato)
             if not nulls and dato is None:
                 continue
             if not nulls and dato.data(Qt.UserRole +1) is None:
@@ -1701,8 +1703,7 @@ class Vista:
             else:
                 texto = col.getFullHeadInfo(format=keyfmt)
             result[col.depth()]['text'].append(texto)
-            result[col.depth()]['elems'].append(col.getColumn(pos))
-
+            result[col.depth()]['elems'].append(dato)
         return result
     
 # monkeypatch

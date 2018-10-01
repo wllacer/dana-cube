@@ -219,7 +219,7 @@ class ChartTab(QTabWidget):
             if k == 0 and self.dir=='col' and vista.totalizado:
                 continue
             texto = resultado[k]['text'] 
-            valores = [ elem.data(Qt.UserRole +1) for elem in resultado[k]['elems'] ]
+            valores = [ elem.data(Qt.UserRole +1) for elem  in resultado[k]['elems'] ]
             titulo,ejeX,ejeY = getGraphTexts(vista,self.item,k,dir=self.dir)
             self.datos.append({'texto':texto,'valores':valores,'titulo':titulo,'ejeX':ejeX,'ejeY':ejeY })
             
@@ -251,6 +251,7 @@ class ChartTab(QTabWidget):
             for entry in stack:
                 gresult.append(vista.getVector(entry,dir=self.dir,filter=self.filter,nulls=True))
             # rearrange gresult a result
+            pprint(gresult)
             """
             # para poder manejarlo simetricamente debe ser algo asi como
             result[k][dict][x][j]
@@ -267,13 +268,14 @@ class ChartTab(QTabWidget):
                 nivel = {'text':None,'data':[] }
                 nivel['text'] = gresult[0][k]['text']
                 for x in range(nivelParm):
+                    # Como tengo nulls=True en el getVector
                     nivel['data'].append(
-                        [ elem.data(Qt.UserRole +1) if elem else None for elem in gresult[x][k]['elems']]
+                        [ elem.data(Qt.UserRole +1) if elem and elem.data(Qt.UserRole +1) is not None else 0 for elem in gresult[x][k]['elems']]
                         )
                 #....
                 for pos in range(len(nivel['data'][-1]) -1,-1,-1): #de final al principio porque voy a borrar
                     valor = nivel['data'][-1][pos]
-                    if valor is None:
+                    if not valor:
                         for z in range(nivelParm):
                             del nivel['data'][z][pos]
                         del nivel['text'][pos]

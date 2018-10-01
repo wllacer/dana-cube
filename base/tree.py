@@ -1294,6 +1294,7 @@ class GuideItemModel(QStandardItemModel):
         self.vista = None
         self.orthogonal = None
         self.coordinates = GuideItem.coordinates
+        self.treeIndex = None
         
     def traverse(self,base=None):
         return traverse(self,base)
@@ -1356,12 +1357,18 @@ class GuideItemModel(QStandardItemModel):
         * Implementation notes
         Trees are meant to be navigated via traversal, but are complex to use as direct access (via the key). This function generates a dictionary which can be accessed directly via the key.
         Python didn't allowed a QStandardItem as a dict key, so we had to use the key as index. It is the full hierachical key to ensure unicity
+        
+        Results are appended to object (as it is virtually a CPU cost free addition) As asDict is only executed in view creation its results are stable to reordering in the views.
+        Performance in creation as dict is rather bad (compared to lists, about 10 times the cost -mostly caused by the need of an identifier for the item-) Performance in read is split. Getting the item from the pos needs a sequential search. which makes it poor perfomance, but access to pos is lightning fast. (I do expect more from the later than the former)
+        If insertColumn or InsertRow are executed after it has been created it becomes obsolete. Danacube, hopefully, does not do it
         """
         diccionario = {}
         idx = 0
         for item in self.traverse():
             diccionario[item.getFullKey()]={'idx':idx,'objid':item}
             idx += 1
+            
+        self.treeIndex = diccionario
         return diccionario
     
     def asHdr(self,**parms):
@@ -1603,31 +1610,48 @@ class GuideItemModel(QStandardItemModel):
             parent = elem
         return elem
 
-    def item2pos(self,pitem):
+    def item2pos(self,pitem,dynamic=True):
         """
         dado el item obtengo su posicion relativa en la navegacion de arbol
         FIXME no performance oriented  (Cost O(N))
         
         """
-        idx = 0
-        for item in self.traverse():
-            if item is pitem:
-                return idx
-            idx +=1
+        if dynamic or not self.treeIndex:
+            idx = 0
+            for item in self.traverse():
+                if item is pitem:
+                    return idx
+                idx +=1
+        else:
+            if not pitem.model():
+                return None
+            key = pitem.getFullKey()
+            try:
+                return self.treeIndex[key]['idx']
+            except KeyError:
+                return None
+
         return None
     
-    def pos2item(self,pord):
+    def pos2item(self,pord,dynamic=True):
         """
         dada la posicion obtengo el item 
         FIXME no performance oriented
         """
+        
         if pord < 0:
             return None
-        idx = 0
-        for item in self.traverse():
-            if idx == pord:
-                return item
-            idx +=1
+        if dynamic or not self.treeIndex:
+            idx = 0
+            for item in self.traverse():
+                if idx == pord:
+                    return item
+                idx +=1
+        else:
+            for key in self.treeIndex:
+                if self.treeIndex[key]['idx'] == pord:
+                    return self.treeIndex[key]['objid']
+
         return None
     
     def setStats(self,switch):
