@@ -97,9 +97,10 @@ Thing which shall belong to the app and aren't there now
 
 Things to move ~~hidden~~/cartesian guide out of experimental
 
-* __solved__ _HiddenElems_ manage hierarchies, incl. hide/show branches/leaves @columns
+*  __solved__ _HiddenElems_ manage hierarchies, incl. hide/show branches/leaves @columns
 * __solved__ _HiddenElems_ mass update
 * __solved__ Filter hidden Elements in downloads (then put hidden out of experimental status)
+* __solved__ hide sorted rows does not work (seems never to get the corresponding row id) have a look at _dnacube.hiddenElemsMgr.switchVectorVisibility_
 * code,desc,columns simplify structure @core
 * _cartesian_ date behaviour
 * __solved__ graphics and hidden data 
@@ -155,7 +156,7 @@ Things which would be a welcome addition to the application
     * __done__ On hide clear data ¿?
     __note__ context menu does not work with FigureCanvas so my plan went thru the drain. Will check alternatives
 * barh ejeX
-* __done:: Otra vez las Castillas
+* __done__ Otra vez las Castillas
 * __done__ (creo) dumps esporádicos en column
 * clean up code
 * ejeX con funciones

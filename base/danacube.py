@@ -104,7 +104,7 @@ from support.util.uf_manager import *
 from base.exportSelector import exportDialog
 
 from support.util.treestate import *
-from base.tree import GuideItem,_getHeadColumn,traverseBasic
+from base.tree import GuideItem,_getHeadColumn,traverseBasic,searchHierarchyUnsorted
 import base.config as config
 
 from base.ufhandler import Uf_handler
@@ -740,12 +740,6 @@ class DanaCube(QTreeView):
         
     
     def currentChanged(self,hacia,desde):
-        """
-        show data
-        """
-        destino = self.model().itemFromIndex(hacia)
-        if destino:
-            print('rowid',destino['rowid'],destino['rownr'],destino['colid'],destino['colnr'])
         if not self.parent.tabulatura:
             pass
         elif not self.parent.tabulatura.currentWidget().chart:
@@ -1390,7 +1384,7 @@ class hiddenElemsMgr(QDialog):
         self.setLayout(lay)
         
 
-        #self.lista.model().itemChanged.connect(self.itemChanged)
+        self.lista.model().itemChanged.connect(self.itemChanged)
         #self.source.itemChanged.connect(self.itemChanged)
         self.soloLeaf.stateChanged.connect(self.hideBranch)
         self.soloBranch.stateChanged.connect(self.hideLeaf)
@@ -1425,9 +1419,9 @@ class hiddenElemsMgr(QDialog):
     def switchVectorVisibility(self,item,dir,state):
             clave = item.getFullHeadInfo(role=Qt.UserRole +1,format='array')
             ref_elem = self.source.searchHierarchy(clave,role=Qt.UserRole +1)
-            if not ref_elem:  #FIXME esto es un ejercicio de desesperacion
-                clave = item.getFullHeadInfo(role=Qt.DisplayRole,format='array')
-                ref_elem = self.source.searchHierarchy(clave,role=Qt.DisplayRole)
+            # si ha habido un sort sobre la vista es probable que lo anterior no encuentre los datos de referencia
+            if not ref_elem:  
+                ref_elem = searchHierarchyUnsorted(self.source,clave,role=Qt.UserRole +1)
             if dir == 'col':
                 pos = self.source.item2pos(ref_elem)
                 if state:
