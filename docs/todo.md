@@ -38,18 +38,19 @@ Serious errors which are either upstream or we haven't still found a solution
     In certain cases (f.i. _enums in PgSQL_ external order of the db. column (the value shown) is not the same for which the DB _ORDER  BY_ uses (the internal numeric value of the enum). Dana coding expects both to be the same and messes results acordingly. We have tried to solve it in a general way, without a serious performance penality (see. @base.core.createProdModel for the solution and @base.tree the *Search routines for performance issues)
     
  BUG8 __REOPENED__
+    Bug will be kept open for a while, as i don't trust I got all the corner cases 
     Danacube trees are not exactly ordered as I expected.
     Reason 1:
         (sometimes they are inserted/expected by key others by value). Use of binary search produces strange results in clone tree, at least. 
         Solved Via commit __[master 144d08f]__ _Normalizar insercion con orden via API en guideItem.insertSorted_ Controlo exactamente que rol es criterio de ordenacion
     Reason 2
-        There is a second source of this behaviour: sort at views sorts the underlying model, so the traverse method  does not return the same order. Usually this is not a problem but I've located (at least) following potentially incorrect behaviours:
+        There is a second source of this behaviour for DANACUBE used models: sortt at views sorts the underlying model, so the traverse method  does not return the same order. Usually this is not a problem but I've located (at least) following potentially incorrect behaviours:
         
-    *   the guideItemModel methods pos2item item2pos are written on a (false) expectation of stability
-    *   insert/delete (column/row) after initial creation can be troublesome
+    *   __SOLVED__ the guideItemModel methods pos2item item2pos are written on a (false) expectation of stability. Commit __[master a2678cf0]__ specializes both functions to serve both in static or dynamic situation. Dynamic demands a relatively expensive dictionary at the tree level
+    *  ~~sert/delete (column/row) after initial creation can be troublesome. ~~ The current mechanism @Danacube recalcultates the array
     *   binary search ¿?
     
-    Bug will be kept open until all the secondary effects have been detected & corrected 
+    
 ## rough corners
 
 Areas where the product __must__ be improved. They might not be errors but don't feel quite right
