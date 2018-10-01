@@ -47,6 +47,7 @@ Serious errors which are either upstream or we haven't still found a solution
         There is a second source of this behaviour for DANACUBE used models: sortt at views sorts the underlying model, so the traverse method  does not return the same order. Usually this is not a problem but I've located (at least) following potentially incorrect behaviours:
         
     *   __SOLVED__ the guideItemModel methods pos2item item2pos are written on a (false) expectation of stability. Commit __[master a2678cf0]__ specializes both functions to serve both in static or dynamic situation. Dynamic demands a relatively expensive dictionary at the tree level
+    *  __SOLVED__ Uses of pos2item item2pos: Use in hide/show as dynamic else -as of today-  static. 
     *  ~~sert/delete (column/row) after initial creation can be troublesome. ~~ The current mechanism @Danacube recalcultates the array
     *   binary search ¿?
     
@@ -73,6 +74,8 @@ Areas where the product __must__ be improved. They might not be errors but don't
 
 * __Solved__ Restaurar valores originales no funciona ahora ¿?
 
+* Substitute routines to get rowid/colid rownr/colnr for __getitem__ access. And check correctness 
+
 * Windows integration 
     * __solved__ base.uf_handler 24 spliy libname (de / a \\)
     * __solved__ support.util.jsonmgr 126 de ~ a os.environ[HOMEPATH]
@@ -94,17 +97,18 @@ Thing which shall belong to the app and aren't there now
 
 Things to move ~~hidden~~/cartesian guide out of experimental
 
-* __solved__ _HiddenElems_ manage hierarchies, incl. hide/show branches/leaves @columns
+*  __solved__ _HiddenElems_ manage hierarchies, incl. hide/show branches/leaves @columns
 * __solved__ _HiddenElems_ mass update
 * __solved__ Filter hidden Elements in downloads (then put hidden out of experimental status)
+* __solved__ hide sorted rows does not work (seems never to get the corresponding row id) have a look at _dnacube.hiddenElemsMgr.switchVectorVisibility_
 * code,desc,columns simplify structure @core
 * _cartesian_ date behaviour
 * __solved__ graphics and hidden data 
 
 Graphic subsystem 
 
-* graphics and hierarchies. FInd a standard
-* graphic presentation Qt5 or independent, (or both)
+* __solved__ graphics and hierarchies. FInd a standard
+* __solved__ graphic presentation Qt5 or independent, (or both)
 
 ## Wishlist
 
@@ -142,9 +146,9 @@ Things which would be a welcome addition to the application
     *  code clean up
     *  extent to other graphs if it has sense
 * __done__ propagate on view changes..
-    *  hide/show column
+    *  __done__ hide/show column
 * __done__ hidden rows
-* Internal changes .
+* __done__ Internal changes (changed using NavigationTool)
     * Change chart type
     * Open mpl window
     * Basic export data
@@ -152,12 +156,12 @@ Things which would be a welcome addition to the application
     * __done__ On hide clear data ¿?
     __note__ context menu does not work with FigureCanvas so my plan went thru the drain. Will check alternatives
 * barh ejeX
-* Otra vez las Castillas
+* __done__ Otra vez las Castillas
 * __done__ (creo) dumps esporádicos en column
 * clean up code
 * ejeX con funciones
 * click on head and columns
-* Performance check (suffers a _Zugszwang_:  MPL figures have to be closed to be garbage collected, but the delay this action causes is noticeable). A rewrite of the code (reusing figures instead of closing/openinig) must be necesary
+* __done__ Performance check (suffers a _Zugszwang_:  MPL figures have to be closed to be garbage collected, but the delay this action causes is noticeable). A rewrite of the code (reusing figures instead of closing/openinig) must be necesary
 * screen real state (> default < 50 %)
 * more info in graphs (texts and so on ...)
     

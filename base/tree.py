@@ -5,6 +5,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from pprint import pprint
+import uuid
 
 from support.util.numeros import stats
 from support.util.traverse import traverse,traverseBasic
@@ -387,8 +388,8 @@ class NewGuideItem(QStandardItem):
                 self.setData(key,Qt.UserRole + 1)
         if value:
             self.setData(value,Qt.DisplayRole)
-
-
+        self.hashKey = uuid.uuid4().int>>64
+    
     def setData(self,value,role):
         if role in (KEY,):
             coredata = self.data(REF)
@@ -461,6 +462,9 @@ class NewGuideItem(QStandardItem):
         if right is None:
             return True
         return left >= right
+   
+    def __hash__(self):
+        return self.hashKey
     
 class GuideItem(NewGuideItem):
     """
@@ -592,7 +596,7 @@ class GuideItem(NewGuideItem):
         * __'key'__  the UsdrRole content
         * __'value'__ the DisplaRole content
         * a number: the playload column
-        
+        'colid','rowid'  static col & row number for the item
         """
         
         if not self.model():
@@ -614,13 +618,13 @@ class GuideItem(NewGuideItem):
                 return tmp[col_axis]
             else:
                 if self.model() and self.model().orthogonal:
-                    return self.model().orthogonal.pos2item(self.column()-1)  #la columna 0 es el item cabecera
+                    return self.model().orthogonal.pos2item(self.column()-1,dynamic=False)  #la columna 0 es el item cabecera
                 else:
                     return None
         elif campo == 'rownr':
             if self.column() == 0:
                 if self.model():
-                    return self.model().item2pos(self)
+                    return self.model().item2pos(self,dynamic=False)
                 else:
                     return 0
             else:
@@ -738,7 +742,7 @@ class GuideItem(NewGuideItem):
         
         if not orig or orig.data(REF) is None:
             # creamos una nueva entrada en el array
-            colItem = self.model().orthogonal.pos2item(col -1)
+            colItem = self.model().orthogonal.pos2item(col -1,dynamic=False)
             #print(col,colItem,colItem['key'],colItem['value'])
             if role == REF:
                 newtuple = value
@@ -758,7 +762,7 @@ class GuideItem(NewGuideItem):
                 tree = self.model().orthogonal
                 pai = colItem.parent() if colItem.parent() else colItem.model().invisibleRootItem()
                 row = colItem.row()
-                col = self.model().item2pos(self) +1
+                col = self.model().item2pos(self,dynamic=False) +1
                 ncItem = GuideItem(value)
                 pai.setChild(row,col,ncItem)
                 #pongo los datos
@@ -1287,6 +1291,7 @@ class GuideItemModel(QStandardItemModel):
     Cual es el otro modelo que complementa la vista (activado en core.vista.toNewArray*)
     
     ### treeIndexA, treeIndexD. Please go to asDict & pos2item & item2pos for rationale
+    
     """
     def __init__(self,parent=None):
         super(GuideItemModel, self).__init__(parent)
@@ -1370,7 +1375,8 @@ class GuideItemModel(QStandardItemModel):
         diccionario = {}
         idx = 0
         for item in self.traverse():
-            diccionario[item.getFullKey()]={'idx':idx,'objid':item}
+            #diccionario[item.getFullKey()]={'idx':idx,'objid':item}
+            diccionario[item] = idx
             idx += 1
             
         self.treeIndexD = diccionario
@@ -1449,7 +1455,8 @@ class GuideItemModel(QStandardItemModel):
         oidx= idx = 0
         for item in self.traverse():
             if filter(item):
-                diccionario[item.getFullKey()]={'idx':idx,'objid':item,'oidx':oidx}
+                #diccionario[item.getFullKey()]={'idx':idx,'objid':item,'oidx':oidx}
+                diccionario[item]={'idx':idx,'objid':item,'oidx':oidx}
                 idx += 1
             oidx +=1
         return diccionario
@@ -1638,7 +1645,8 @@ class GuideItemModel(QStandardItemModel):
             if not pitem.model():
                 return None
             try:
-                return self.treeIndexD[pitem.getFullKey()]['idx']
+                #return self.treeIndexD[pitem.getFullKey()]['idx']
+                return self.treeIndexD[pitem]
             except KeyError:
                 return None
 
