@@ -1285,6 +1285,8 @@ class GuideItemModel(QStandardItemModel):
     
     ### orthogonal
     Cual es el otro modelo que complementa la vista (activado en core.vista.toNewArray*)
+    
+    ### treeIndexA, treeIndexD. Please go to asDict & pos2item & item2pos for rationale
     """
     def __init__(self,parent=None):
         super(GuideItemModel, self).__init__(parent)
@@ -1294,7 +1296,8 @@ class GuideItemModel(QStandardItemModel):
         self.vista = None
         self.orthogonal = None
         self.coordinates = GuideItem.coordinates
-        self.treeIndex = None
+        self.treeIndexD = None
+        self.treeIndexA = None
         
     def traverse(self,base=None):
         return traverse(self,base)
@@ -1359,7 +1362,9 @@ class GuideItemModel(QStandardItemModel):
         Python didn't allowed a QStandardItem as a dict key, so we had to use the key as index. It is the full hierachical key to ensure unicity
         
         Results are appended to object (as it is virtually a CPU cost free addition) As asDict is only executed in view creation its results are stable to reordering in the views.
-        Performance in creation as dict is rather bad (compared to lists, about 10 times the cost -mostly caused by the need of an identifier for the item-) Performance in read is split. Getting the item from the pos needs a sequential search. which makes it poor perfomance, but access to pos is lightning fast. (I do expect more from the later than the former)
+        Performance in creation as dict is rather bad (compared to lists, about 10 times the cost -mostly caused by the need of an identifier for the item-)
+        Performance in read is split. Getting the item from the pos needs a sequential search with a dict. which makes it poor perfomance, but access to pos is lightning fast. (I do expect more from the later than the former).
+        I decided to have to accesses treeIndexD for item2pos and treeIndexA for pos2item.  
         If insertColumn or InsertRow are executed after it has been created it becomes obsolete. Danacube, hopefully, does not do it
         """
         diccionario = {}
@@ -1368,7 +1373,12 @@ class GuideItemModel(QStandardItemModel):
             diccionario[item.getFullKey()]={'idx':idx,'objid':item}
             idx += 1
             
-        self.treeIndex = diccionario
+        self.treeIndexD = diccionario
+        
+        self.treeIndexA = []
+        for elem in self.traverse():
+            self.treeIndexA.append(elem)
+
         return diccionario
     
     def asHdr(self,**parms):
@@ -1616,7 +1626,9 @@ class GuideItemModel(QStandardItemModel):
         FIXME no performance oriented  (Cost O(N))
         
         """
-        if dynamic or not self.treeIndex:
+        if not pitem:
+            return None
+        if dynamic or not self.treeIndexD:
             idx = 0
             for item in self.traverse():
                 if item is pitem:
@@ -1625,9 +1637,8 @@ class GuideItemModel(QStandardItemModel):
         else:
             if not pitem.model():
                 return None
-            key = pitem.getFullKey()
             try:
-                return self.treeIndex[key]['idx']
+                return self.treeIndexD[pitem.getFullKey()]['idx']
             except KeyError:
                 return None
 
@@ -1641,16 +1652,17 @@ class GuideItemModel(QStandardItemModel):
         
         if pord < 0:
             return None
-        if dynamic or not self.treeIndex:
+        if dynamic or not self.treeIndexA:
             idx = 0
             for item in self.traverse():
                 if idx == pord:
                     return item
                 idx +=1
         else:
-            for key in self.treeIndex:
-                if self.treeIndex[key]['idx'] == pord:
-                    return self.treeIndex[key]['objid']
+            try:
+                return self.treeIndexA[pord]
+            except IndexError:
+                return None
 
         return None
     
