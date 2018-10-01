@@ -1202,8 +1202,10 @@ class Vista:
         rowdict = self.row_hdr_idx.asDict()
         coldict = self.col_hdr_idx.asDict()
         for record in self.array:
-            rownr = rowdict[record[0].getFullKey()]['idx'] + 1
-            colnr = coldict[record[1].getFullKey()]['idx'] + 1
+            #rownr = rowdict[record[0].getFullKey()]['idx'] + 1
+            #colnr = coldict[record[1].getFullKey()]['idx'] + 1
+            rownr = rowdict[record[0]] +1
+            colnr = coldict[record[1]] + 1
             tupla= self.__newColumn(rownr,colnr,record)
             for entry in tupla:
                 entry.setBackup()
@@ -1231,8 +1233,10 @@ class Vista:
         result = [ [ None for j in range(len(coldict)) ] for i in range(len(rowdict)) ]
         
         for record in self.array:
-            col = coldict[record[1].getFullKey()]['idx']
-            row = rowdict[record[0].getFullKey()]['idx']
+            #col = coldict[record[1].getFullKey()]['idx']
+            #row = rowdict[record[0].getFullKey()]['idx']
+            col = coldict[record[1]]
+            row = rowdict[record[0]]
             result[row][col] = record[2]
 
         return result

@@ -1291,6 +1291,7 @@ class GuideItemModel(QStandardItemModel):
     Cual es el otro modelo que complementa la vista (activado en core.vista.toNewArray*)
     
     ### treeIndexA, treeIndexD. Please go to asDict & pos2item & item2pos for rationale
+    
     """
     def __init__(self,parent=None):
         super(GuideItemModel, self).__init__(parent)
@@ -1374,7 +1375,8 @@ class GuideItemModel(QStandardItemModel):
         diccionario = {}
         idx = 0
         for item in self.traverse():
-            diccionario[item.getFullKey()]={'idx':idx,'objid':item}
+            #diccionario[item.getFullKey()]={'idx':idx,'objid':item}
+            diccionario[item] = idx
             idx += 1
             
         self.treeIndexD = diccionario
@@ -1642,7 +1644,8 @@ class GuideItemModel(QStandardItemModel):
             if not pitem.model():
                 return None
             try:
-                return self.treeIndexD[pitem.getFullKey()]['idx']
+                #return self.treeIndexD[pitem.getFullKey()]['idx']
+                return self.treeIndexD[pitem]
             except KeyError:
                 return None
 

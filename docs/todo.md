@@ -103,8 +103,8 @@ Things to move ~~hidden~~/cartesian guide out of experimental
 
 Graphic subsystem 
 
-* graphics and hierarchies. FInd a standard
-* graphic presentation Qt5 or independent, (or both)
+* __solved__ graphics and hierarchies. FInd a standard
+* __solved__ graphic presentation Qt5 or independent, (or both)
 
 ## Wishlist
 
@@ -142,9 +142,9 @@ Things which would be a welcome addition to the application
     *  code clean up
     *  extent to other graphs if it has sense
 * __done__ propagate on view changes..
-    *  hide/show column
+    *  __done__ hide/show column
 * __done__ hidden rows
-* Internal changes .
+* __done__ Internal changes (changed using NavigationTool)
     * Change chart type
     * Open mpl window
     * Basic export data
@@ -152,12 +152,12 @@ Things which would be a welcome addition to the application
     * __done__ On hide clear data ¿?
     __note__ context menu does not work with FigureCanvas so my plan went thru the drain. Will check alternatives
 * barh ejeX
-* Otra vez las Castillas
+* __done:: Otra vez las Castillas
 * __done__ (creo) dumps esporádicos en column
 * clean up code
 * ejeX con funciones
 * click on head and columns
-* Performance check (suffers a _Zugszwang_:  MPL figures have to be closed to be garbage collected, but the delay this action causes is noticeable). A rewrite of the code (reusing figures instead of closing/openinig) must be necesary
+* __done__ Performance check (suffers a _Zugszwang_:  MPL figures have to be closed to be garbage collected, but the delay this action causes is noticeable). A rewrite of the code (reusing figures instead of closing/openinig) must be necesary
 * screen real state (> default < 50 %)
 * more info in graphs (texts and so on ...)
     
