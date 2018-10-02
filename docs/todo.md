@@ -74,7 +74,7 @@ Areas where the product __must__ be improved. They might not be errors but don't
 
 * __Solved__ Restaurar valores originales no funciona ahora ¿?
 
-* Substitute routines to get rowid/colid rownr/colnr for __getitem__ access. And check correctness 
+* Substitute routines to get rowid/colid rownr/colnr for __getitem__ access. ~~And check correctness (rowid & colid are swapped now)~~
 
 * Windows integration 
     * __solved__ base.uf_handler 24 spliy libname (de / a \\)

@@ -598,7 +598,7 @@ class GuideItem(NewGuideItem):
         * a number: the playload column
         'colid','rowid'  static col & row number for the item
         """
-        
+        modelo = self.model()
         if not self.model():
             (row_axis,col_axis) = GuideItem.coordinates
         else:

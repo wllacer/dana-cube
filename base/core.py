@@ -1186,7 +1186,7 @@ class Vista:
         Sets tree.colTreeIndex
         """
         rowTree.vista = self
-        rowTree.coordinates = (1,0)
+        rowTree.coordinates = (0,1)
         colTree.vista = self
         colTree.coordinates = (1,0)
         rowTree.orthogonal = colTree
@@ -1695,7 +1695,6 @@ class Vista:
         result = [ {'text':[],'elems':[] } for k in range(dimension) ]
         for k,col in enumerate(model.traverse()):
             dato = col.getColumn(pos +1)  #column 0 es la cabecera
-            print(dato,col,dato.data(Qt.UserRole +1) if dato else '',dato.data(Qt.DisplayRole) if dato else "")
             #print(pos,pos +1,col.getPayload()[pos],dato)
             if not nulls and dato is None:
                 continue
