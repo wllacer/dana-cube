@@ -49,7 +49,7 @@ Serious errors which are either upstream or we haven't still found a solution
     *   __SOLVED__ the guideItemModel methods pos2item item2pos are written on a (false) expectation of stability. Commit __[master a2678cf0]__ specializes both functions to serve both in static or dynamic situation. Dynamic demands a relatively expensive dictionary at the tree level
     *  __SOLVED__ Uses of pos2item item2pos: Use in hide/show as dynamic else -as of today-  static. 
     *  ~~sert/delete (column/row) after initial creation can be troublesome. ~~ The current mechanism @Danacube recalcultates the array
-    *   binary search ¿?
+    *   binary search. In one particular instance has been bypassed executing searchHierachicalUnsorted if element not found. Has a very hard solution, if we still want to be performant. (performance tests at test_xx)
     
     
 ## rough corners
@@ -80,7 +80,7 @@ Areas where the product __must__ be improved. They might not be errors but don't
     * __solved__ base.uf_handler 24 spliy libname (de / a \\)
     * __solved__ support.util.jsonmgr 126 de ~ a os.environ[HOMEPATH]
     
-* search hierachy not always work as expected
+* __solved__ search hierachy not always work as expected (did not take into account variability in tree's life cicle)
 
 ## Needed Enhancements
 

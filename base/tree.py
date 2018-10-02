@@ -69,7 +69,8 @@ from support.util.numeros import isOutlier,fmtNumber,s2n
 
 LEAF,BRANCH,TOTAL = range(1000,1000+3)
 
-def searchTree(item,value,role):
+
+def searchTreeBinary(item,value,role):
     """
     Auxiliary function.
     Implement a binary search inside a QStandardItemModel.
@@ -116,8 +117,14 @@ def searchTree(item,value,role):
             raise
     return None
 
+def searchTreeRaw(parent,value,role):
+    for k in range(parent.rowCount()):
+        if parent.child(k,0).data(role) == value:
+            return k
+    return None
 
-def searchHierarchy(model,valueList,role=None):
+
+def searchHierarchyBinary(model,valueList,role=None):
     """
         Does a search thru all the hierarchy given the key/value data. 
         As 1st level function to be able to use in QStandardItemModels
@@ -140,13 +147,40 @@ def searchHierarchy(model,valueList,role=None):
     elem = model.invisibleRootItem()
     parent = model.invisibleRootItem()
     for k,value in enumerate(valueList):
-        elem = searchTree(parent,value,prole)
+        elem = searchTreeBinary(parent,value,prole)
         if not elem:
             return None
         parent = elem
     return elem
 
-def searchHierarchyUnsorted(model,valueList,role=None):
+
+def searchHierarchyRaw(model,valueList,role=Qt.UserRole +1):
+    """
+    __AUXILIARY FUNCTION__ 
+        Does a search thru all the hierarchy given the key/value data. 
+        As 1st level function to be able to use in QStandardItemModels
+        Slower than searchHierarchy (from 1.5 to 5 times, depending on the range of each level) but nonetheless can be useful and not that unperformant
+    
+    * Input parameters
+        * __valueList__ an array with the hierachy data to be searched
+        * __role__ the Qt.Role the data is associated with
+        
+    * Returns
+        An Item of the tree which mastches the valueList
+        
+    * Programming notes
+        Which data is searched depends on the role. Qt.UserRole +1 searches for internal keys; Qt.DisplayRole for description 
+    """
+    pai = model.invisibleRootItem()
+    for entrada in valueList:
+        pos = searchTreeRaw(pai,entrada,role)
+        if pos is not None:
+            pai =  pai.child(pos,0)
+        else:
+            return None
+    return pai
+
+def searchHierarchyByMatch(model,valueList,role=Qt.UserRole +1):
     """
     __AUXILIARY FUNCTION__ not used
         Does a search thru all the hierarchy given the key/value data. 
@@ -180,6 +214,11 @@ def searchHierarchyUnsorted(model,valueList,role=None):
             return model.itemFromIndex(itmIdxs[0])
         else:
             return None
+
+#monkey patch to select an special hierarchical search algorithm
+searchHierarchy = searchHierarchyBinary
+searchHierarchyUnsorted = searchHierarchyRaw
+searchTree = searchTreeBinary
 
 def _getHeadColumn(item):
     """
@@ -1600,7 +1639,7 @@ class GuideItemModel(QStandardItemModel):
                 nitem.setPayload(pl)
         return newTree 
     
-    def searchHierarchy(self,valueList,role=None):
+    def searchHierarchy(self,valueList,role=Qt.UserRole +1):
         """
           Does a search thru all the hierarchy given the key/value data
         
@@ -1614,18 +1653,7 @@ class GuideItemModel(QStandardItemModel):
         * Programming notes
             Which data is searched depends on the role. Qt.UserRole +1 searches for internal keys; Qt.DisplayRole for description 
         """
-        if role is None:
-            prole = Qt.UserRole +1
-        else:
-            prole = role
-        elem = self.invisibleRootItem()
-        parent = self.invisibleRootItem()
-        for k,value in enumerate(valueList):
-            elem = searchTree(parent,value,prole)
-            if elem is None:
-                return None
-            parent = elem
-        return elem
+        return searchHierarchy(self,valueList,role)
 
     def item2pos(self,pitem,dynamic=True):
         """
