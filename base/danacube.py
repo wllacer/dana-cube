@@ -966,8 +966,13 @@ class DanaCube(QTreeView):
             item.restoreBackup()
             if self.vista.stats :
                item.setStatistics()
+            if self.isRowHidden(item.row(),item.parent().index() if item.parent() else QModelIndex()):
+                self.setRowHidden(item.row(),item.parent().index() if item.parent() else QModelIndex(),False)
+                
+        for j in range(self.vista.col_hdr_idx.len()):
+            if self.isColumnHidden(j +1):
+                self.setColumnHidden(j +1,False)
 
-        #self.model().rootItem = self.vista.row_hdr_idx.rootItem    
         #self.model().endResetModel()
         #restoreExpandedState(expList,self)
         #self.expandToDepth(2)
@@ -977,7 +982,8 @@ class DanaCube(QTreeView):
 
     #@waiting_effects 
     def dispatch(self,fcnName):
-        self.parent.ufHandler.dispatch(self.model(),fcnName)
+        
+        self.parent.ufHandler.dispatch(self.model(),fcnName,tree=self)
         self.parent.editActions['restore'].setEnabled(True)
 
     def setFilter(self):

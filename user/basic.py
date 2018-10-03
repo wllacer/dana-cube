@@ -132,10 +132,11 @@ def consolida(*parms,**kwparms):
     hacia=kwparms.get('hacia')
     if hacia is None:
         return
-
+    difuntas = []
     for idx in norm2List(desde):
         try:
             difunta = colkey.index(idx)
+            difuntas.append(difunta)
         except ValueError:
             continue
         if not item.gpi(difunta):
@@ -156,7 +157,11 @@ def consolida(*parms,**kwparms):
             item.spi(cakey,item.gpi(difunta))
             item.spi(difunta,None)
     pass
-
+    # borra la columna original  TODO documentar el uso de tree
+    if 'tree' in kwparms:
+        for entrada in difuntas:
+            kwparms['tree'].hideColumn(entrada +1)
+            
 def transfiere(*parms,**kwparms):
     """
     Agrega parte del contenido de una o varias columnas (parametro desde) en otra (parametro hacia) y borra la columna origen.

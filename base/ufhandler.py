@@ -202,6 +202,7 @@ class Uf_handler():
         index = callbacks.get('index',model2index)
         initial_Data = callbacks.get('index',initialDataVoid)
         data_capture = callbacks.get('data capture',presenta)
+        showTree = callbacks.get('tree',None)
 
         lparm = [None for k in range(4)]
         kparm = dict()
@@ -240,6 +241,8 @@ class Uf_handler():
             for i,key in enumerate(a_table):
                 kparm[key[0]] = m_datos[i][2]
         
+        if showTree:
+            kparm['tree'] = showTree
         return lparm,kparm
 
 

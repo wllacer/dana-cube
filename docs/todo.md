@@ -47,10 +47,20 @@ Serious errors which are either upstream or we haven't still found a solution
         There is a second source of this behaviour for DANACUBE used models: sortt at views sorts the underlying model, so the traverse method  does not return the same order. Usually this is not a problem but I've located (at least) following potentially incorrect behaviours:
         
     *   __SOLVED__ the guideItemModel methods pos2item item2pos are written on a (false) expectation of stability. Commit __[master a2678cf0]__ specializes both functions to serve both in static or dynamic situation. Dynamic demands a relatively expensive dictionary at the tree level
-    *  __SOLVED__ Uses of pos2item item2pos: Use in hide/show as dynamic else -as of today-  static. 
-    *  ~~sert/delete (column/row) after initial creation can be troublesome. ~~ The current mechanism @Danacube recalcultates the array
-    *   binary search. In one particular instance has been bypassed executing searchHierachicalUnsorted if element not found. Has a very hard solution, if we still want to be performant. (performance tests at test_xx)
     
+    *  __SOLVED__ Uses of pos2item item2pos: Use in hide/show as dynamic else -as of today-  static. 
+    
+    *  ~~sert/delete (column/row) after initial creation can be troublesome. ~~ The current mechanism @Danacube recalculates the array after every change of the tree definition
+    
+    *   binary search:
+        * Has not a clear solution, if we still want to be performant. We create the trees ordered but TreeView action can modify them internaly, and binary searches will not work afterward
+        Three styles for search: Binary Search (i.e. ordered), Unordered search using .match and unordered search by direct comparision.
+        QAbstractItemModel.Match is an extremely bad performer in general.
+        With few elements O(100) performance using unsorted algorithms is only slightly worse, but with big datasets performance for unsorted criteria is 3-5 times worse. 
+        In the geo-detail sample (about 8000 entries in 3 levels)  creation of the tree becomes unbearable if we use unsorted algorithms (is expensive anyway), Therefore We have decided to keep the ordered asumption as default
+        
+        * In one particular instance "disordering" effects have been bypassed executing searchHierachicalUnsorted if element not found after a binary search (hiddenElemsMgr.switchVectorVisibility_ at DanaCube). While not a perfect solution seems to work for most cases.
+        Performance tests at test_xx
     
 ## rough corners
 
@@ -74,7 +84,6 @@ Areas where the product __must__ be improved. They might not be errors but don't
 
 * __Solved__ Restaurar valores originales no funciona ahora ¿?
 
-* Substitute routines to get rowid/colid rownr/colnr for __getitem__ access. ~~And check correctness (rowid & colid are swapped now)~~
 
 * Windows integration 
     * __solved__ base.uf_handler 24 spliy libname (de / a \\)
@@ -91,8 +100,8 @@ Thing which shall belong to the app and aren't there now
 * __solved__ (at least on paper) Dynamic reloading of user functions, and locating them OUTSIDE the python tree
 * Move default definition to the same place as the user function definition tree
 * __solved__ Performance enhacements when a guide includes categories and dates not in the first prod rule
-
-* in column fusion end with hiding the source columns
+* __done__ in column fusion end with hiding the source columns
+* __done__  Restaurar valores originales, debe incluir "desocultar"                                                                                                                                                                                          
 * Unify cloneSubTree @GuideItemModel and @treeEditorUtil.  former is newer
 
 Things to move ~~hidden~~/cartesian guide out of experimental
@@ -104,6 +113,8 @@ Things to move ~~hidden~~/cartesian guide out of experimental
 * code,desc,columns simplify structure @core
 * _cartesian_ date behaviour
 * __solved__ graphics and hidden data 
+
+* Substitute routines to get rowid/colid rownr/colnr for __getitem__ access. ~~And check correctness (rowid & colid are swapped now)~~
 
 Graphic subsystem 
 
