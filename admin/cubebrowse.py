@@ -8,6 +8,11 @@ The text of that particular version is available at https://www.gnu.org/licenses
 Please see https://github.com/wllacer/dana-cube#license for further particulars about licencing of the Dana-Cube Project 
 
 """
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
+
 """
 Todo list tras completar validators y setters
 -> DONE no en add, pero pueden moverse los elementos
@@ -21,12 +26,6 @@ Todo list tras completar validators y setters
 
 
 """
-
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-
 from pprint import pprint
 import argparse
 

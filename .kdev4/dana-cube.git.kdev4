@@ -2,7 +2,7 @@
 BuildItems=@Variant(\x00\x00\x00\t\x00\x00\x00\x00\x01\x00\x00\x00\x0b\x00\x00\x00\x00\x01\x00\x00\x00\x1a\x00d\x00a\x00n\x00a\x00-\x00c\x00u\x00b\x00e\x00.\x00g\x00i\x00t)
 
 [Launch]
-Launch Configurations=Launch Configuration 0,Launch Configuration 1
+Launch Configurations=Launch Configuration 0,Launch Configuration 1,Launch Configuration 2
 
 [Launch][Launch Configuration 0]
 Configured Launch Modes=execute
@@ -37,6 +37,23 @@ Output Filtering Mode=2
 Remote Host=
 Run current file=false
 Working Directory=
+
+[Launch][Launch Configuration 2]
+Configured Launch Modes=execute
+Configured Launchers=scriptAppLauncher
+Name=django
+Type=Script Application
+
+[Launch][Launch Configuration 2][Data]
+Arguments=
+EnvironmentGroup=
+Executable=
+Execute on Remote Host=false
+Interpreter=python3 manage.py shell
+Output Filtering Mode=2
+Remote Host=
+Run current file=true
+Working Directory=file:///home/werner/pyvirtual/djangoproy/bagenda
 
 [Project]
 VersionControlSupport=kdevgit

@@ -8,6 +8,12 @@ The text of that particular version is available at https://www.gnu.org/licenses
 Please see https://github.com/wllacer/dana-cube#license for further particulars about licencing of the Dana-Cube Project 
 
 """
+
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
+
 """
 Nueva versiion. TodoList para volcar
          FIXED
@@ -78,11 +84,6 @@ Nueva versiion. TodoList para volcar
             context menu con los datos estadisticos en la linea
 
 """
-
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 
 from pprint import pprint
 import argparse

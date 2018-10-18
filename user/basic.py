@@ -7,10 +7,9 @@ Distributed according to the terms of the GNU LGPL v2.0 license or higher number
 The text of that particular version is available at https://www.gnu.org/licenses/old-licenses/lgpl-2.0.html
 Please see https://github.com/wllacer/dana-cube#license for further particulars about licencing of the Dana-Cube Project 
 
-"""
-'''
+
 Ver documentacion general de la api en ../docs/user_functions.md
-'''
+"""
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function

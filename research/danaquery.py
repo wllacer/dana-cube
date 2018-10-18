@@ -29,7 +29,7 @@ TODO list:
     
 @package estimaciones
 # 0.3
-'''
+"""
 
 from pprint import pprint
 

@@ -8,6 +8,11 @@ The text of that particular version is available at https://www.gnu.org/licenses
 Please see https://github.com/wllacer/dana-cube#license for further particulars about licencing of the Dana-Cube Project 
 
 """
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
+
 """
 Todo list tras completar validators y setters
 -> en repeatable add debe dividirse en (insert after, insert before, append). General de editTree
@@ -17,11 +22,6 @@ Todo list tras completar validators y setters
 -> Para sqlite que el selector de base de datos sea el selector de ficheros del sistema
 
 """
-
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 
 from pprint import pprint
 

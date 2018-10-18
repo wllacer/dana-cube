@@ -7,16 +7,15 @@ Used as  standalone module or outside the scope of  a project valid according to
 The text of that particular version is available at https://www.gnu.org/licenses/old-licenses/lgpl-2.0.html
 
 """
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
 """
 non QT implentation of a tree. Not used @dana-cube. 
 Should be upgraded to an support.util.tree compatible api
 
 """
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-
 from pprint import pprint
 
 from support.util.numeros import stats
