@@ -47,8 +47,10 @@ def perRatio(original,clave,oldratios,newratios):
     newratio = float(newratios.get(clave,oldratio))
 
     if oldratio == 0.:  #FIXME para evitar division por 0 pereo no tiene mucho sentido
-        return original
-    factor = newratio/oldratio
+        #return original
+        factor = newratio
+    else:
+        factor = newratio/oldratio
     return original*factor
     
 def resultados(original,*entrada):
@@ -70,7 +72,8 @@ def resultados(original,*entrada):
         "PODEMOS-COMPROMÍS":2.69120804771348,
         "PODEMOS-En Marea-ANOVA-EU":1.63769352340476,
         "PP":28.9374594531795,
-        "PSOE":22.1801820596102
+        "PSOE":22.1801820596102,
+        "VOX":0.24
         }
     #print(partido,original, perRatio(original,partido,datos,newratios))
     return perRatio(original,partido,datos,newratios)
@@ -94,12 +97,53 @@ def resultadosAgr(original,*entrada):
         #"PODEMOS-COMPROMÍS":2.69120804771348,
         #"PODEMOS-En Marea-ANOVA-EU":1.63769352340476,
         "PP":28.9374594531795,
-        "PSOE":22.1801820596102
+        "PSOE":22.1801820596102,
+        "VOX":0.24
         }
     #print(partido,original, perRatio(original,partido,datos,newratios))
     return perRatio(original,partido,datos,newratios)
 
+def resultados2016(original,*entrada):
+    partido = entrada[1]
+    newratios = {partido:entrada[2]}
+    datos ={
+        "CCa-PNC" : 0.327765732005388,
+        "CDC" : 2.02510828001254,
+        "C's" : 13.1585880502494,
+        "EAJ-PNV" : 1.20216929454199,
+        "ECP" : 3.57325088501732,
+        "EH Bildu" : 0.773677579848839,
+        "ERC-CATSÃ" : 2.64813668241083,
+        "PODEMOS-COM" : 2.76347647720761,
+        "PODEMOS-EN MAREA-ANOVA-EU" : 1.45569317511938,
+        "PODEMOS-IU-EQUO" : 13.5169301159882,
+        "PP" : 33.2621756426915,
+        "PSOE" : 22.8017605601651,
+        "VOX" : 0.197623640850552       
+        }
+    #print(partido,original, perRatio(original,partido,datos,newratios))
+    return perRatio(original,partido,datos,newratios)
 
+def resultados2016Agr(original,*entrada):
+    partido = entrada[1]
+    newratios = {partido:entrada[2]}
+    datos ={
+        "CCa-PNC" : 0.327765732005388,
+        "CDC" : 2.02510828001254,
+        "C's" : 13.1585880502494,
+        "EAJ-PNV" : 1.20216929454199,
+        #"ECP" : 3.57325088501732,
+        "EH Bildu" : 0.773677579848839,
+        "ERC-CATSÃ" : 2.64813668241083,
+        #"PODEMOS-COM" : 2.76347647720761,
+        #"PODEMOS-EN MAREA-ANOVA-EU" : 1.45569317511938,
+        "PODEMOS-IU-EQUO" : 13.5169301159882 + 3.57325088501732 + 2.76347647720761 + 1.45569317511938 ,
+        "PP" : 33.2621756426915,
+        "PSOE" : 22.8017605601651,
+        "VOX" : 0.197623640850552       
+        }
+    #print(partido,original, perRatio(original,partido,datos,newratios))
+    return perRatio(original,partido,datos,newratios)
 def escanos(provincia):
     # cambi 46 son 16, 24 pasa a 4
     asignacion = {"01":4,"02":4,"03":12,"04":6,"05":3,"06":6,"07":8,"08":31,"09":4,"10":4,

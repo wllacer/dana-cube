@@ -445,6 +445,61 @@ def osSplit(texto,delim=','):
             resultado.append(texto[ultpos:])
     return resultado
 
+def setBreak(datos,listaCampos):
+    """
+    de un iterable retorna una estructura jerarquizada de acuerdo con la lista de listaCampos.
+    La jerarquia queda
+    List(nivel 1). Una entrada por valor distinto nivel 1
+            List(nivel 2) ...
+               ...
+    sample of Used
+    
+    agenda = Agendas.objects.get(pk=agenda_id) 
+    cursor = agenda.citas_set.all().order_by('acto','horaInicio')
+    pprint(setBreak(cursor,(0,1,2,)))
+    pprint(setBreak(cursor2,('uno','dos',)))
+
+    """
+    def evalua(row,campo):
+        if isinstance(campo,(list,tuple)):
+            paso1 = evalua(row,campo[0]) 
+            paso2 = getattr(paso1,campo[1])()
+            return paso2
+        if isinstance(row,(dict,list,tuple)):
+            return row[campo]
+        else:
+            return getattr(row,campo)
+
+                  
+    def cmpEstado(estado,row,listaCampos):
+        for k,campo in enumerate(listaCampos):
+            if estado[k] != evalua(row,campo) :
+                #print('rompe',k,estado,evalua(row,campo))
+                return k
+        return None
+    
+    numBreaks = len(listaCampos)
+    estado = [ evalua(datos[0],k) for k in listaCampos ]
+    # el elemento 0 es la fusion final y 1..n para cada uno de los niveles
+    garray = [ [] for k in range(numBreaks +1)]
+    for row in datos:
+            breakAt= cmpEstado(estado,row,listaCampos)
+            if breakAt is None:
+                garray[-1].append(row)        
+            else:
+                #voy del penultimo hacia arriba
+                for j in range(numBreaks -1,breakAt -1,-1):
+                    garray[j].append(garray[j +1][:])
+                    estado[j] = evalua(row,listaCampos[j])
+                #limpio los niveles inferiores
+                for j in range(breakAt +1,numBreaks +1):
+                    garray[j].clear()
+                garray[-1].append(row)
+    for j in range(numBreaks -1,-1,-1):
+        garray[j].append(garray[j +1][:])
+          
+    return garray[0]
+
 if __name__ == '__main__':
     #prueba de funciones
     pass

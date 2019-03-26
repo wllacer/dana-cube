@@ -1410,8 +1410,8 @@ class Vista:
             elif len(padres) == prof:
                 if padres and padres[-1] == elem.parent():
                     cargaAcumuladores()
-                else:
-                    print('cambio de padre')
+                #else:
+                    #print('cambio de padre')
             elif len(padres) > prof:
                 procesa()
                 del padres[-1]

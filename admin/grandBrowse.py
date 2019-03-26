@@ -128,6 +128,9 @@ def getPartialTitle(title,field,lastResource):
     return '{}_{}'.format(title,mcampo)
     
 def generateFullQuery(cubo, autoDates=True):
+    """
+    corazon de 
+    """
     #defSchema = cubo.db.engine().Inspector.default_schema_name
     factTable = fqn(cubo.db,cubo.file)
     
@@ -341,7 +344,8 @@ if __name__ == '__main__':
         sys.setdefaultencoding('utf-8')
     #export()
     config.DEBUG = False
+    app = QApplication(sys.argv)
     #UberTest(mostrar=True,ejecutar=False)
-    #test("rental",ejecutar=False)
-    #browsePreview("rental")
+    #test("rental",mostrar=True,ejecutar=True,salida=True)
+    browsePreview("rental")
     

@@ -30,7 +30,6 @@
         "ordinal": {
             "class": "function",
             "entry": "ordinal",
-            "hidden": true,
             "seqnr": 2,
             "text": "Número de orden descendente en la fila",
             "type": "item"
@@ -74,7 +73,7 @@
         },
         "asigna": {
             "class": "function",
-            "db": "datos locales,datos light",
+            "db": "datos locales,datos light,votos_2016",
             "entry": "asigna",
             "seqnr": 10,
             "text": "Asignacion de escaños",
@@ -90,7 +89,7 @@
         },
         "Senado": {
             "class": "function",
-            "db": "datos locales",
+            "db": "datos locales,votos_2016",
             "entry": "senado",
             "sep": true,
             "seqnr": 11,
@@ -190,6 +189,77 @@
                 "borraIU",
                 "borraMes",
                 "factoriza",
+                "asigna"
+            ],
+            "sep": true,
+            "seqnr": 33,
+            "text": "SImulacion de escaños. separado"
+        },
+        "factoriza2016": {
+            "api": 1,
+            "aux_parm": {
+                "funAgr": "resultados2016"
+            },
+            "class": "function",
+            "entry": "factoriza",
+            "hidden": true,
+            "type": "colparm"
+        },
+        "factorizaAgregado2016": {
+            "api": 1,
+            "aux_parm": {
+                "funAgr": "resultados2016Agr"
+            },
+            "class": "function",
+            "entry": "factoriza",
+            "hidden": true,
+            "type": "colparm"
+        },
+        "unPodemos2016": {
+            "aux_parm": {
+                "desde": [
+                    "000022",
+                    "000055",
+                    "000056"
+                ],
+                "hacia": [
+                    "000059"
+                ] 
+            },
+            "class": "function",
+            "db": "votos_2016",
+            "entry": "consolida",
+            "seqnr": 20,
+            "text": "Agrupa en uno las candidaturas de Podemos",
+            "type": "colkey"
+        },
+        "simul_voto_2016": {
+            "class": "sequence",
+            "db": "votos_2016",
+            "list": [
+                "unPodemos2016",
+                "factoriza2016",
+                "porcentaje"
+            ],
+            "seqnr": 31,
+            "text": "Simulacion de voto. Podemos Agregado"
+        },
+        "simul_agregado_2016": {
+            "class": "sequence",
+            "db": "votos_2016",
+            "list": [
+                "unPodemos2016",
+                "factorizaAgregado2016",
+                "asigna"
+            ],
+            "seqnr": 32,
+            "text": "SImulacion de escaños. Podemos Agregado"
+        },
+        "simul2016": {
+            "class": "sequence",
+            "db": "votos_2016",
+            "list": [
+                "factoriza2016",
                 "asigna"
             ],
             "sep": true,

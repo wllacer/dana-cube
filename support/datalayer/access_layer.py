@@ -21,8 +21,7 @@ SYSTEM_SCHEMAS = {'mysql':('information_schema','mysql','performance_schema'),
                   'postgresql':('information_schema',),
                   'oracle':('anonymous','apex_public_user','apex_040000','ctxsys','flows_files','mdsys','outln','sys','system','xdb','xs$null')
                 }
-
-
+SUPPORTS_ROLLUP = {'sqlite':False,'mysql':False,'postgresql':True,'oracle':True,'db2':True,'odbc':True }
 '''
 Documentation, License etc.
 
