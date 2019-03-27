@@ -648,6 +648,59 @@ def _groupConstructor(**kwargs):
     *   'having'
     
     """
+    def strip_as(cadena):
+        """
+        elimina clausulas as
+        """
+        pos = cadena.upper().find(' AS ')
+        if pos > 0:
+            kelemento = cadena[0:pos]
+        else:
+            kelemento = cadena
+        return cadena
+    
+    def process_grouping(texto,entrada):
+        gstatement = entrada['type'].upper()+' '
+        if    entrada['type'].upper() == 'GROUPING SETS':
+            pass #no proceso de momento
+        elif entrada['type'].upper() == 'ROLLUP':
+            pre_texto = []
+            for elemento in entrada['elems']:
+                if isinstance(elemento,(list,tuple)):
+                    pass
+            
+                    
+                
+        elif entrada['type'].upper() == 'CUBE':
+            pass
+        else:
+            return
+
+    def catenate_for_group(fld_array,entry_list,topLevel=False):
+        """
+        funcion que encadena una lista de entradas suprimiendo posibles sentencias AS 
+        """
+        for elemento in entry_list:
+            # en el caso de las categorias se pasa el AS al group y eso no funciona y hay que quitarlo GENERADOR
+            #FIXME no entiendo porque necesito renormalizar la cadena
+            if isinstance(elemento,dict) and topLevel:
+                gstatement = elemento['type'].upper()+' '
+                if elemento['type'].upper() in ( 'GROUPING SETS','ROLLUP','CUBE'):
+                    tlist = []
+                    catenate_for_group(tlist,elemento['elems'])
+                    fld_array.append('{} ({})'.format(gstatement,', '.join(tlist)))
+                else:
+                    pass
+            elif isinstance(elemento,(list,tuple)):
+                tlist = []
+                catenate_for_group(tlist,elemento)
+                fld_array.append('({})'.format(', '.join(tlist)))
+            else:
+                nelemento = norm2String(elemento)  
+                kelemento = strip_as(nelemento)
+                fld_array.append(kelemento.strip())
+    
+
     statement = 'GROUP BY '
     definicion = 'group'
  
@@ -662,18 +715,7 @@ def _groupConstructor(**kwargs):
     
     ind = 0
     texto = []
-    for elemento in entrada:
-      # en el caso de las categorias se pasa el AS al group y eso no funciona y hay que quitarlo GENERADOR
-      #FIXME no entiendo porque necesito renormalizar la cadena
-      nelemento = norm2String(elemento)  
-      pos = nelemento.upper().find(' AS ')
-      if pos > 0:
-          kelemento = nelemento[0:pos]
-      else:
-        kelemento = nelemento
-      #1610 print(kelemento)
-      texto.append(kelemento.strip())
-    
+    catenate_for_group(texto,entrada,True)
     statement += ', '.join(texto)
     
     if statement.strip() != 'GROUP BY':
