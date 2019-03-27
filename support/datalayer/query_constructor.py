@@ -482,7 +482,16 @@ def tableNameSolver(tableName,prefix=None):
         label = iadfijo 
     return ktexto,label
     
-
+def strip_as(cadena):
+    """
+    elimina clausulas as de cadenas de texto -necesario para algunos gestores de base de datos
+    """
+    pos = cadena.upper().find(' AS ')
+    if pos > 0:
+        kelemento = cadena[0:pos]
+    else:
+        kelemento = cadena
+    return kelemento
     
 def _fromConstructor(**kwargs):
     """
@@ -648,34 +657,9 @@ def _groupConstructor(**kwargs):
     *   'having'
     
     """
-    def strip_as(cadena):
-        """
-        elimina clausulas as
-        """
-        pos = cadena.upper().find(' AS ')
-        if pos > 0:
-            kelemento = cadena[0:pos]
-        else:
-            kelemento = cadena
-        return cadena
-    
-    def process_grouping(texto,entrada):
-        gstatement = entrada['type'].upper()+' '
-        if    entrada['type'].upper() == 'GROUPING SETS':
-            pass #no proceso de momento
-        elif entrada['type'].upper() == 'ROLLUP':
-            pre_texto = []
-            for elemento in entrada['elems']:
-                if isinstance(elemento,(list,tuple)):
-                    pass
-            
-                    
-                
-        elif entrada['type'].upper() == 'CUBE':
-            pass
-        else:
-            return
 
+    
+ 
     def catenate_for_group(fld_array,entry_list,topLevel=False):
         """
         funcion que encadena una lista de entradas suprimiendo posibles sentencias AS 
@@ -988,7 +972,7 @@ def queryConstructor(**kwargs):
     return with_statement + select_statement + from_statement + join_statement + where_statement + group_statement + order_statement
   
 if __name__ == '__main__':
-
+  
   pepe=dict()
   clause1=dict()
   clause2=dict()
