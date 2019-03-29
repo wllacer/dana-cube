@@ -153,7 +153,7 @@ def searchHierarchyBinary(model,valueList,role=None):
         prole = Qt.UserRole +1
     else:
         prole = role
-    elem = model.invisibleRootItem()
+    elem = None #model.invisibleRootItem()
     parent = model.invisibleRootItem()
     for k,value in enumerate(valueList):
         elem = searchTreeBinary(parent,value,prole)

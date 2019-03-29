@@ -651,7 +651,8 @@ def _withConstructor(**kwargs):
 def _groupConstructor(**kwargs):
     """
     Crea la cadena para el group
-    
+    Estamos actualizandolo para que permita el uso de GROUPING SETS, ROLLUP y CUBE para las bases de datos que lo
+    soportan. Hemos empezado con el ROLLUP
     kwargs utilizados
     *   'group':[] 
     *   'having'

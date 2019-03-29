@@ -479,8 +479,8 @@ class Cubo:
                                 'opt_clause':link_ref}]
             try:
                 sqlString = queryConstructor(**sqlDef)
-                print(queryFormat(sqlString))
             except:
+                #TODO ventana de error, por favor
                 print('Zasss')
                 pprint(sqlDef)
                 pprint(table)
@@ -729,8 +729,6 @@ class Cubo:
 
         def fieldInfoDate():
             renormElems()
-            print('fieldInfoDate')
-            pprint(produccion)
             code = desc = columns = norm2List(produccion.get('elem'))
                 # la correcta asignacion de formatos fecha ha sido hecha al desdoblar
             if prodId == 0:    

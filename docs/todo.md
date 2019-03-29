@@ -61,6 +61,10 @@ Serious errors which are either upstream or we haven't still found a solution
         
         * In one particular instance "disordering" effects have been bypassed executing searchHierachicalUnsorted if element not found after a binary search (hiddenElemsMgr.switchVectorVisibility_ at DanaCube). While not a perfect solution seems to work for most cases.
         Performance tests at test_xx
+        
+    * diagonal (simetric) queries ( guide x guide) fails . gives no data and crashes the GUI
+        * Not exactly bug. diagonal queries is INCOMPATIBLE with totals (is a totals query in diferent format) . Current implementation seems to interfere getting the column items of the tree
+        * (Verified in the rollup mode) Seems that both row and column point to the same tree. This is not the expected behaviour-.This induces plenty of errors ...
     
 ## rough corners
 
@@ -125,7 +129,7 @@ Graphic subsystem
 
 Things which would be a welcome addition to the application
 
-* Use of CUBE / ROLLUP sintax where available
+* __WORKING__ Use of CUBE / ROLLUP sintax where available. 
 
 * __DONE__ Add Column/Row into view. Plus initial loading
 
@@ -221,6 +225,11 @@ Everything related to the database backends
         * alt 2 change the search algorithm. It's a servere performance penalty unless I find a way to catch the enums
 
 * Use of CUBE / ROLLUP sintax where available
+        * We have determined that ROLLUP is the correct sintax, more exactly GROUP BY column fields,ROLLUP(row fields). 
+        * Elapsed time performance is varied : 100% or better with dates, perhaps up to 20% faster in guides with hierarchy, even or slightly worse for single field guides). Still a number of rough ends to put it upstream    
+        * simetric queries return _Nothing (generic, see __bugs__)
+        * null entries in the rollup ¿?
+        * complex column gives diverging results
 
 ## Packaging
 
