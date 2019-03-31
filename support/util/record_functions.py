@@ -206,6 +206,33 @@ def regTreeGuide(record,**kwargs):
             triad[k] = parent
     record[0:3] = triad
     del record[3:]
+
+def regTreeGuideRollUp(record,**kwargs):
+    from PyQt5.QtCore import Qt
+    """
+    convertir el registro en una tripleta (row,col,valor) con row y col los items de CubeItemModel)
+    version especializada para el ROLLUP debido al distinto tratamiento de los nulos y la estructura del cursor base
+    """
+    dictionaries = ('rdir','cdir')
+    triad = [None,None,record[-2]]   # record[-1] es el GROUPING
+    #print('de ',record)
+    for k,dim in enumerate(('row','col')):
+        dimension = kwargs[dim].get('nkeys',1)
+        if dim == 'row':
+            pos_ini = 0
+        else:
+            pos_ini = kwargs['row'].get('nkeys',1)
+        krecord = list(filter(lambda x: x is not None,record[pos_ini:pos_ini+dimension]))  # nulos
+        parent = kwargs[dictionaries[k]].searchHierarchy(krecord)
+        if parent is None:
+            #print(krecord,dim,pos_ini,dimension,'falla')
+            del record[:]
+            return
+        else:
+            triad[k] = parent
+    #print('a  ',triad)
+    record[0:3] = triad
+    del record[3:]
     
 def regTree(record,**kwargs):
     triad=[None,None,None]

@@ -1594,7 +1594,7 @@ class GuideItemModel(QStandardItemModel):
                 #col.setData(None,SHOW)
                 #col.originalValue = None
 
-    def cloneSubTree(self,entryPoint=None,filter=None,payload=False,ordRole=Qt.UserRole +1):
+    def cloneSubTree(self,entryPoint=None,filter=None,payload=False,ordRole=Qt.UserRole +1,withEntry=True):
         """
         TODO add to doc
         Generate a new tree from entryPoint and its children
@@ -1605,48 +1605,61 @@ class GuideItemModel(QStandardItemModel):
             * __filter__ a function which does some filtering at the tree (default is no filter)
             * __payload__ boolean. If True copies the payload
             * __ordRole__ int a role to guide sorting behaviour
+            * __withEntry__ if the entrypoint is included in the copy
             
         * returns
             a tree
         
         """
         newTree = GuideItemModel()
-        #for item in self.traverse(entryPoint):
+        # obtengo la jerarquia de la que depende el punto de entrada. Realmente solo necesito la profundidad. Como invisibleRootItem no es un GuideItem hay que procesarlo por separado
+        if entryPoint is None :
+            headLength = 0
+        elif entryPoint == self.invisibleRootItem():
+            headLength = 0
+        else:
+            headLength = entryPoint.depth()
         for item in traverse(self,entryPoint,mode=_BREADTH):
+            if not withEntry and item == entryPoint:
+                headLength += 1
+                continue
             if filter and not filter(item):
                 continue
             clave = item.getFullHeadInfo(role=ordRole,format='array')
+            del clave[:headLength]
             npapi = newTree.searchHierarchy(clave[:-1],ordRole)
             nitem = item.clone()
             nitem.insertSorted(npapi if npapi else newTree.invisibleRootItem(),ordRole)
-
-            """
-            old code 
-            """
-            #papi = item.parent()
-            #npapi = None
-            #if papi:
-                #ref = papi.getFullHeadInfo(content='key',format='array')
-                ##print(ref)
-                #while len(ref) > 0:
-                    #npapi = newTree.searchHierarchy(ref)
-                    #if npapi:
-                        #break
-                    #else:
-                        #ref.remove(ref[0])
-            #if not npapi:  
-                ##if papi:
-                    ##print('No cabecera')
-                #npapi = newTree.invisibleRootItem()
-            #nitem = item.clone()
-            #npapi.appendRow((nitem,))
-            
-         
             # aqui pues setPayload verifca la columna y solo tiene valor si item en arbol
             if payload:
                 pl=item.getPayload()
                 nitem.setPayload(pl)
         return newTree 
+
+        """
+            old code 
+        """
+        #papi = item.parent()
+        #npapi = None
+        #if papi:
+            #ref = papi.getFullHeadInfo(content='key',format='array')
+            ##print(ref)
+            #while len(ref) > 0:
+                #npapi = newTree.searchHierarchy(ref)
+                #if npapi:
+                    #break
+                #else:
+                    #ref.remove(ref[0])
+        #if not npapi:  
+            ##if papi:
+                ##print('No cabecera')
+            #npapi = newTree.invisibleRootItem()
+        #nitem = item.clone()
+        #npapi.appendRow((nitem,))
+        
+         
+
+
     
     def searchHierarchy(self,valueList,role=Qt.UserRole +1):
         """

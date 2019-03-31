@@ -62,8 +62,8 @@ Serious errors which are either upstream or we haven't still found a solution
         * In one particular instance "disordering" effects have been bypassed executing searchHierachicalUnsorted if element not found after a binary search (hiddenElemsMgr.switchVectorVisibility_ at DanaCube). While not a perfect solution seems to work for most cases.
         Performance tests at test_xx
         
-    * diagonal (simetric) queries ( guide x guide) fails . gives no data and crashes the GUI
-        * Not exactly bug. diagonal queries is INCOMPATIBLE with totals (is a totals query in diferent format) . Current implementation seems to interfere getting the column items of the tree
+    * __SOLVED__ diagonal (simetric) queries ( guide x guide) fails . gives no data and crashes the GUI
+        * Not exactly bug. ~~diagonal queries is INCOMPATIBLE with totals (is a totals query in diferent format)~~ . Current implementation seems to interfere getting the column items of the tree
         * (Verified in the rollup mode) Seems that both row and column point to the same tree. This is not the expected behaviour-.This induces plenty of errors ...
     
 ## rough corners
@@ -87,6 +87,8 @@ Areas where the product __must__ be improved. They might not be errors but don't
 * __Solved__ Current export implementation is fast, but does not take into account changes via danacube
 
 * __Solved__ Restaurar valores originales no funciona ahora ¿?
+
+* Order in simetrical views is not perfect. Row is sorted by display, column is sorted by code. If last sorted by display skips the first item data
 
 
 * Windows integration 
@@ -225,11 +227,13 @@ Everything related to the database backends
         * alt 2 change the search algorithm. It's a servere performance penalty unless I find a way to catch the enums
 
 * Use of CUBE / ROLLUP sintax where available
-        * We have determined that ROLLUP is the correct sintax, more exactly GROUP BY column fields,ROLLUP(row fields). 
-        * Elapsed time performance is varied : 100% or better with dates, perhaps up to 20% faster in guides with hierarchy, even or slightly worse for single field guides). Still a number of rough ends to put it upstream    
-        * simetric queries return _Nothing (generic, see __bugs__)
+        * We have determined that ROLLUP is the correct sintax, 
+        Best sintax is GROUP BY column fields,ROLLUP(row fields). when only a column field involved, but we won't implement it as it has too many special cases. We went for a ROLLUP(colum field, row fields). If the column is multiple we were forced to use [ ROLLUP (0-nth compontent of the column,row fields) ]
+        * __DONE__ Elapsed time performance is varied. Generaly from 10-30% faster than the convemtional record, except in some hierarchies which gain is more limited. sometimes slighlty worse
+        * __SOLVED__ simetric queries return _Nothing (generic, see __bugs__)
         * null entries in the rollup ¿?
-        * complex column gives diverging results
+        * __SOLVED__ complex column gives diverging results
+        * Impact of cartesian queries with rollup 
 
 ## Packaging
 

@@ -962,7 +962,7 @@ class Vista:
             col = [ item['name'] for item in self.cubo.lista_guias].index(pcol)
     
         filtro = kwparm.get('filtro','')
-        totalizado = kwparm.get('totalizado',True)
+        totalizado = kwparm.get('totalizado',True)  #OJo en las simetricas podria tener que desactivarse 
         stats = kwparm.get('stats',True)
         force = kwparm.get('force',False)
         cartesian = kwparm.get('cartesian',False)
@@ -1015,27 +1015,45 @@ class Vista:
         
             self.row_id = row
             self.col_id = col
-            
-                    
-            #for k,entrada in enumerate(self.lista_guias):
-            for item in (row,col):
-                #TODO TOT-V
-                self.cubo.lista_guias[item]['dir_row'],self.cubo.lista_guias[item]['contexto']=\
-                    self.cubo.fillGuia(item,
-                                                total=self.totalizado if item == row else False,
-                                                cartesian=self.cartesian if item == row else False)
-
-            self.dim_row = len(self.cubo.lista_guias[row]['contexto'])
-            self.dim_col = len(self.cubo.lista_guias[col]['contexto'])
-                
-            self.row_hdr_idx = self.cubo.lista_guias[row]['dir_row']
-            self.row_hdr_idx.orthogonal = None
-            self.row_hdr_idx.vista = None
-            self.col_hdr_idx = self.cubo.lista_guias[col]['dir_row']
-            self.col_hdr_idx.orthogonal = None
-            self.col_hdr_idx.vista = None
+            self._setGuideTrees(row,col)
             self._setDataMatrix()
+          
+    def _setGuideTrees(self,row,col):    
+        """
+        Creamos los dos arboles que nos serviran de guias
+        """
+        for item in (row,col):
+            #TODO TOT-V
+            self.cubo.lista_guias[item]['dir_row'],self.cubo.lista_guias[item]['contexto']=\
+                self.cubo.fillGuia(item,
+                                            total=self.totalizado if item == row else False,
+                                            cartesian=self.cartesian if item == row else False)
+            if row == col: #no merece la pena repetirlo, pequeña optimización
+                break 
+
+        self.dim_row = len(self.cubo.lista_guias[row]['contexto'])
+        self.dim_col = len(self.cubo.lista_guias[col]['contexto'])
             
+        self.row_hdr_idx = self.cubo.lista_guias[row]['dir_row']
+        #SIMETRICAS
+        #El codigo a continuacion se activa cuando podamos clonar correctamente el arbol
+        if row != col:
+            self.col_hdr_idx = self.cubo.lista_guias[col]['dir_row']
+        else:
+            # cuerpo del delito para simetricas, tengo que hacer una copia de la guia, sin total
+            #
+            if self.totalizado:
+                start = self.row_hdr_idx.invisibleRootItem().child(0)
+            else:
+                start = None
+            self.col_hdr_idx = self.row_hdr_idx.cloneSubTree(entryPoint=start,payload=False,withEntry=False)
+                
+        self.row_hdr_idx.orthogonal = None
+        self.row_hdr_idx.vista = None
+        self.col_hdr_idx.orthogonal = None
+        self.col_hdr_idx.vista = None
+
+
     def getAttributes(self):
         defVista = [self.row_id,self.col_id,self.agregado,self.campo ]
 
