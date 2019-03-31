@@ -1108,6 +1108,9 @@ class Vista:
         """
         __setDateFilter
         __prepareJoin
+        Hay paths separados para ROLLUP y sin ROLLUP.
+        Las pruebas realizadas aparentemente no dan ventaja, en "elapsed time" a ninguna de las dos aproximaciones
+        
         """
         #TODO clarificar el codigo
         basePfx = 'base'
@@ -1128,13 +1131,17 @@ class Vista:
         Incluir totales de columan tiene una serie de efectos secundarios en todas las operaciones de columna.
         Debería estudiarlo porque merece la pena
         """
+        with_rollup = False
+        if SUPPORTS_ROLLUP[self.cubo.dbdriver]:
+            #print(self.cubo.dbdriver,' soporta ROLLUP')
+            #self.totalizado = True
+            with_rollup = True
         if self.totalizado:
             contexto_row.insert(0,{'elems':["'//'",],'linkvia':[]})
             #TOT-Y contexto_col.insert(0,{'elems':["'//'",],'linkvia':[]})
         maxRowElem = len(contexto_row[-1]['elems'])
         maxColElem = len(contexto_col[-1]['elems'])
 
-        
         for x,row in enumerate(contexto_row):
             for y,col in enumerate(contexto_col):
                 """
@@ -1178,22 +1185,56 @@ class Vista:
                     numRowElems = len(rowFields)
                     colFields = tcol
                     numColElems = len(colFields)
-                                    
-                sqlDef['order'] = [ str(x + 1) for x in range(len(sqlDef['group']))]
+                #FIXME  creo que en totalizado no acaba de ordenar por la ultima columna         
+                if self.totalizado:
+                    array_offset = 2
+                else:
+                    array_offset = 1
+                sqlDef['order'] = [ str(x + array_offset) for x in range(len(sqlDef['group']))]
+            
                 sqlDef['driver'] = self.cubo.dbdriver
                 sqlDef = setPrefix(sqlDef,baseTable,basePfx,excludeDict=('tables','table','ltable'))
-                sqlstring=queryConstructor(**sqlDef)
-                lista_compra={'row':{'nkeys':numRowElems,},
-                                'rdir':self.row_hdr_idx,
-                                'col':{'nkeys':numColElems,
-                                        'init':numRowElems,},
-                                'cdir':self.col_hdr_idx
-                                }
-                cursor = getCursor(self.cubo.db,sqlstring,regTreeGuide,**lista_compra)
-                self.array +=cursor 
-                if config.DEBUG:
-                    print(time.time(),'Datos ',queryFormat(sqlstring))
-            
+                if not with_rollup:
+                    sqlstring=queryConstructor(**sqlDef)
+                    lista_compra={'row':{'nkeys':numRowElems,},
+                                    'rdir':self.row_hdr_idx,
+                                    'col':{'nkeys':numColElems,
+                                            'init':numRowElems,},
+                                    'cdir':self.col_hdr_idx
+                                    }
+                    #print('a por el cursor de',sqlstring)
+                    cursor = getCursor(self.cubo.db,sqlstring,regTreeGuide,**lista_compra)
+                    self.array +=cursor 
+                    if config.DEBUG:
+                        print(time.time(),'Datos ',queryFormat(sqlstring))
+        if with_rollup:
+            # hay que cambiar el orden porque he descubierto que con rollup es mas practico poner las columnas delante
+            # finalmente he optado por  ROLLUP(columna,fila(s) ORDER BY GROUPING
+            # si la columna tiene jerarquia la mejor manera que he encontrado es una secuencia de ROLLUPS (col[0],filas),...ROLLUP(cols[0:n],filas) ... y la clausula DISTINCT para evitar procesar los duplicacdos que aparecen
+            rowElems= list(map(lambda x:strip_as(x),sqlDef['group'][:-1* numColElems]))
+            colElems  = list(map(lambda x:strip_as(x),sqlDef['group'][-1* numColElems:]))
+            limpia = colElems + rowElems
+            if len(colElems) == 1:
+                sqlDef['group'] = [{'type':'ROLLUP','elems':limpia},]
+            else:
+                sqlDef['group']= [ {'type':'ROLLUP','elems':colElems[:n]+rowElems}
+                                             for n in range(1,len(colElems) +1) ]
+            sqlDef['having'] = (('GROUPING({})'.format(norm2String(limpia)),'<',len(limpia)**2-1),)
+
+            ## incluyo el grouping para poder seleccionar mejor en la salida
+            sqlDef['fields'].append('GROUPING({}) AS gid'.format(norm2String(limpia)))
+            sqlDef['select_modifier'] = 'DISTINCT'
+            sqlDef['order'].insert(0,'gid DESC')
+            sqlstring=queryConstructor(**sqlDef)
+            lista_compra={'row':{'nkeys':numRowElems,},
+                'rdir':self.row_hdr_idx,
+                'col':{'nkeys':numColElems,
+                        'init':numRowElems,},
+                'cdir':self.col_hdr_idx
+                }
+            self.array = getCursor(self.cubo.db,sqlstring,regTreeGuideRollUp,**lista_compra)
+            if config.DEBUG:
+                print(time.time(),'Datos ',queryFormat(sqlstring))            
     
     def __setAndBackup(self,item,idx,data):
         """

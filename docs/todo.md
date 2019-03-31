@@ -63,8 +63,9 @@ Serious errors which are either upstream or we haven't still found a solution
         Performance tests at test_xx
         
     * __SOLVED__ diagonal (simetric) queries ( guide x guide) fails . gives no data and crashes the GUI
+        * Solved at commit __[master 07e444cc]__
         * Not exactly bug. ~~diagonal queries is INCOMPATIBLE with totals (is a totals query in diferent format)~~ . Current implementation seems to interfere getting the column items of the tree
-        * (Verified in the rollup mode) Seems that both row and column point to the same tree. This is not the expected behaviour-.This induces plenty of errors ...
+        * (Verified in the rollup mode) Seems that both row and column point to the same tree. This is not the expected behaviour-.This induces plenty of errors 
     
 ## rough corners
 
