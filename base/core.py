@@ -1219,7 +1219,7 @@ class Vista:
             else:
                 sqlDef['group']= [ {'type':'ROLLUP','elems':colElems[:n]+rowElems}
                                              for n in range(1,len(colElems) +1) ]
-            sqlDef['having'] = (('GROUPING({})'.format(norm2String(limpia)),'<',len(limpia)**2-1),)
+            sqlDef['having'] = (('GROUPING({})'.format(norm2String(limpia)),'<',2**len(limpia)-1),)
 
             ## incluyo el grouping para poder seleccionar mejor en la salida
             sqlDef['fields'].append('GROUPING({}) AS gid'.format(norm2String(limpia)))

@@ -89,7 +89,18 @@ Areas where the product __must__ be improved. They might not be errors but don't
 
 * __Solved__ Restaurar valores originales no funciona ahora ¿?
 
+Following were discovered with the rollup merge.
+
 * Order in simetrical views is not perfect. Row is sorted by display, column is sorted by code. If last sorted by display skips the first item data
+
+* Handling of columns with null value (esp. on ROLLUP sintax)
+
+* Behaviour with cartesian queries not tested
+
+* Traspose has some crashes
+
+* extension of the totals to both axis
+
 
 
 * Windows integration 
@@ -132,7 +143,7 @@ Graphic subsystem
 
 Things which would be a welcome addition to the application
 
-* __WORKING__ Use of CUBE / ROLLUP sintax where available. 
+* __DONE ROLLUP__ Use of CUBE / ROLLUP sintax where available. 
 
 * __DONE__ Add Column/Row into view. Plus initial loading
 
@@ -228,6 +239,7 @@ Everything related to the database backends
         * alt 2 change the search algorithm. It's a servere performance penalty unless I find a way to catch the enums
 
 * Use of CUBE / ROLLUP sintax where available
+        * Merged with commit __[master 68745c7]__ Existing Rough edged see at the corresponding header
         * We have determined that ROLLUP is the correct sintax, 
         Best sintax is GROUP BY column fields,ROLLUP(row fields). when only a column field involved, but we won't implement it as it has too many special cases. We went for a ROLLUP(colum field, row fields). If the column is multiple we were forced to use [ ROLLUP (0-nth compontent of the column,row fields) ]
         * __DONE__ Elapsed time performance is varied. Generaly from 10-30% faster than the convemtional record, except in some hierarchies which gain is more limited. sometimes slighlty worse
@@ -235,6 +247,8 @@ Everything related to the database backends
         * null entries in the rollup ¿?
         * __SOLVED__ complex column gives diverging results
         * Impact of cartesian queries with rollup 
+
+* Use of CUBE  to generate the whole environment. Implies a total rewrite
 
 ## Packaging
 
