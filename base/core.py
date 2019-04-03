@@ -1200,7 +1200,9 @@ class Vista:
                                     'rdir':self.row_hdr_idx,
                                     'col':{'nkeys':numColElems,
                                             'init':numRowElems,},
-                                    'cdir':self.col_hdr_idx
+                                    'cdir':self.col_hdr_idx,
+                                    'rollup':with_rollup,
+                                    #'total':False,
                                     }
                     #print('a por el cursor de',sqlstring)
                     cursor = getCursor(self.cubo.db,sqlstring,regTreeGuide,**lista_compra)
@@ -1230,9 +1232,11 @@ class Vista:
                 'rdir':self.row_hdr_idx,
                 'col':{'nkeys':numColElems,
                         'init':numRowElems,},
-                'cdir':self.col_hdr_idx
+                'cdir':self.col_hdr_idx,
+                'rollup':with_rollup,
+                #'total':False,
                 }
-            self.array = getCursor(self.cubo.db,sqlstring,regTreeGuideRollUp,**lista_compra)
+            self.array = getCursor(self.cubo.db,sqlstring,regTreeGuide,**lista_compra)
             if config.DEBUG:
                 print(time.time(),'Datos ',queryFormat(sqlstring))            
     

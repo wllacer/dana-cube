@@ -91,7 +91,7 @@ Areas where the product __must__ be improved. They might not be errors but don't
 
 Following were discovered with the rollup merge.
 
-* Order in simetrical views is not perfect. Row is sorted by display, column is sorted by code. If last sorted by display skips the first item data
+* __ON HOLD__ Order in simetrical views is not perfect. Row is shown in danacube sorted by display , column is always sorted by code. If last sorted by display a number of entries get rejected.
 
 * Handling of columns with null value (esp. on ROLLUP sintax)
 
@@ -99,9 +99,10 @@ Following were discovered with the rollup merge.
 
 * Traspose has some crashes
 
-* extension of the totals to both axis
+* __RESEARCH ON HOLD__ extension of the totals to both axis. Have to change SQL aggregation clause to CUBE. Must filter with GROUPING, otherwise performance (and network load) gets up. Probable side effects. Test module is reseach/test_total.py
+Waiting for regTree* unification and null processing
 
-
+* Unify regTreeLoad & regTreeLoadRollup
 
 * Windows integration 
     * __solved__ base.uf_handler 24 spliy libname (de / a \\)

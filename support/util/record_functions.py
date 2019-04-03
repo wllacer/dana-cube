@@ -181,51 +181,92 @@ def regHasher2D(record,**kwargs):
         #TODO lista no consecutiva
     else:
        return
-   
-def regTreeGuide(record,**kwargs):
-    from PyQt5.QtCore import Qt
-    """
-    convertir el registro en una tripleta (row,col,valor) con row y col los items de CubeItemModel)
-    """
-    dictionaries = ('rdir','cdir')
-    triad = [None,None,record[-1]]
-    for k,dim in enumerate(('row','col')):
-        dimension = kwargs[dim].get('nkeys',1)
-        if dim == 'row':
-            pos_ini = 0
-        else:
-            pos_ini = kwargs['row'].get('nkeys',1)
-        #krecord = list(map(lambda x:str(x),record[pos_ini:pos_ini+dimension]))
-        krecord = list(map(lambda x:'' if x is None else x,record[pos_ini:pos_ini+dimension]))
-        parent = kwargs[dictionaries[k]].searchHierarchy(krecord)
-        if parent is None:
-            #print(krecord,dim,pos_ini,dimension,'falla')
-            del record[:]
-            return
-        else:
-            triad[k] = parent
-    record[0:3] = triad
-    del record[3:]
+ 
+ 
+#def regTreeGuide(record,**kwargs):
+    #from PyQt5.QtCore import Qt
+    #"""
+    #convertir el registro en una tripleta (row,col,valor) con row y col los items de CubeItemModel)
+    #"""
+    #dictionaries = ('rdir','cdir')
+    #triad = [None,None,record[-1]]
+    #for k,dim in enumerate(('row','col')):
+        #dimension = kwargs[dim].get('nkeys',1)
+        #if dim == 'row':
+            #pos_ini = 0
+        #else:
+            #pos_ini = kwargs['row'].get('nkeys',1)
+        ##krecord = list(map(lambda x:str(x),record[pos_ini:pos_ini+dimension]))
+        #krecord = list(map(lambda x:'' if x is None else x,record[pos_ini:pos_ini+dimension]))
+        #parent = kwargs[dictionaries[k]].searchHierarchy(krecord)
+        #if parent is None:
+            ##print(krecord,dim,pos_ini,dimension,'falla')
+            #del record[:]
+            #return
+        #else:
+            #triad[k] = parent
+    #record[0:3] = triad
+    #del record[3:]
 
-def regTreeGuideRollUp(record,**kwargs):
-    from PyQt5.QtCore import Qt
+#def regTreeGuideRollUp(record,**kwargs):
+    #from PyQt5.QtCore import Qt
+    #"""
+    #convertir el registro en una tripleta (row,col,valor) con row y col los items de CubeItemModel)
+    #version especializada para el ROLLUP debido al distinto tratamiento de los nulos y la estructura del cursor base
+    #"""
+    #dictionaries = ('rdir','cdir')
+    #triad = [None,None,record[-2]]   # record[-1] es el GROUPING
+    ##print('de ',record)
+    #for k,dim in enumerate(('row','col')):
+        #dimension = kwargs[dim].get('nkeys',1)
+        #if dim == 'row':
+            #pos_ini = 0
+        #else:
+            #pos_ini = kwargs['row'].get('nkeys',1)
+        #krecord = list(filter(lambda x: x is not None,record[pos_ini:pos_ini+dimension]))  # nulos
+        #parent = kwargs[dictionaries[k]].searchHierarchy(krecord)
+        #if parent is None:
+            ##print(krecord,dim,pos_ini,dimension,'falla')
+            #del record[:]
+            #return
+        #else:
+            #triad[k] = parent
+    ##print('a  ',triad)
+    #record[0:3] = triad
+    #del record[3:]
+ 
+def regTreeGuide(record,**kwargs):
+    #from PyQt5.QtCore import Qt
     """
     convertir el registro en una tripleta (row,col,valor) con row y col los items de CubeItemModel)
-    version especializada para el ROLLUP debido al distinto tratamiento de los nulos y la estructura del cursor base
+
     """
     dictionaries = ('rdir','cdir')
-    triad = [None,None,record[-2]]   # record[-1] es el GROUPING
+    is_total = kwargs.get('total',False)   #for future support
+    is_rollup = kwargs.get('rollup',False)
+    
+    if is_rollup:
+        filter_func = lambda x:x is not None
+        triad = [None,None,record[-2]]   
+    else:
+        filter_func = lambda x:'' if x is None else x
+        triad   =[None,None,record[-1]]
     #print('de ',record)
+        
     for k,dim in enumerate(('row','col')):
         dimension = kwargs[dim].get('nkeys',1)
         if dim == 'row':
             pos_ini = 0
+            payload = list(filter(filter_func,record[:dimension]))
         else:
             pos_ini = kwargs['row'].get('nkeys',1)
-        krecord = list(filter(lambda x: x is not None,record[pos_ini:pos_ini+dimension]))  # nulos
-        parent = kwargs[dictionaries[k]].searchHierarchy(krecord)
+            if is_total:
+                payload = [record[0],] + list(filter(filter_func,record[pos_ini:pos_ini+dimension]))
+            else:
+                payload = list(filter(lambda x:x is not None,record[pos_ini:pos_ini+dimension]))
+        parent = kwargs[dictionaries[k]].searchHierarchy(payload)
         if parent is None:
-            #print(krecord,dim,pos_ini,dimension,'falla')
+            #print(payload,dim,pos_ini,dimension,'falla')
             del record[:]
             return
         else:
@@ -233,7 +274,9 @@ def regTreeGuideRollUp(record,**kwargs):
     #print('a  ',triad)
     record[0:3] = triad
     del record[3:]
-    
+
+regTreeGuideRollUp = regTreeGuide  #monkey path temporal
+
 def regTree(record,**kwargs):
     triad=[None,None,None]
     regHasher2D(record,**kwargs)
