@@ -85,8 +85,8 @@ def short_test_sim():
     from random import randint
     mis_cubos = load_cubo('../testcubo.json')
     cubo = Cubo(mis_cubos['datos locales'])
-    row = 'geo'
-    col = 'partido'
+    row = 'partido'
+    col = 'geo'
     vista = Vista2(cubo,row,col,'sum','votes_presential',totalizado=True)
     #pprint(vista.array)
     #for item in vista.col_hdr_idx.traverse():
@@ -175,10 +175,11 @@ class Vista2(Vista):
             with_rollup = True
         if self.totalizado:
             contexto_row.insert(0,{'elems':["'//'",],'linkvia':[]})
+            contexto_col.insert(0,{'elems':["'//'",],'linkvia':[]})
             #TOT-Y contexto_col.insert(0,{'elems':["'//'",],'linkvia':[]})
         maxRowElem = len(contexto_row[-1]['elems'])
         maxColElem = len(contexto_col[-1]['elems'])
-
+        
         for x,row in enumerate(contexto_row):
             for y,col in enumerate(contexto_col):
                 """
@@ -209,10 +210,16 @@ class Vista2(Vista):
                         del trow[pos]
                     except ValueError:
                         pass
+                    try:
+                        pos = tcol.index("'//'")
+                        del tcol[pos]
+                    except ValueError:
+                        pass
                 sqlDef['group'] = trow + tcol
                 if self.totalizado:
                     rowFields =["'//'",] + trow 
                     numRowElems = len(rowFields)
+                    print(tcol)
                     colFields = tcol
                     numColElems = len(colFields)
                     sqlDef['fields'] = rowFields + colFields + [(self.campo,self.agregado)]
@@ -241,7 +248,6 @@ class Vista2(Vista):
                                     'rollup':with_rollup,
                                     'total':self.totalizado,
                                     }
-                    #print('a por el cursor de',sqlstring)
                     cursor = getCursor(self.cubo.db,sqlstring,regTreeGuide,**lista_compra)
                     self.array +=cursor 
                     if config.DEBUG:
@@ -276,7 +282,7 @@ class Vista2(Vista):
         #pprint(self.array)
 if __name__ == '__main__':    
     app = QApplication(sys.argv)
-    config.DEBUG = True
+    config.DEBUG = False
     function = short_test_sim
     parms = []
     if len(sys.argv) > 1:
