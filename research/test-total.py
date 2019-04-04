@@ -16,7 +16,7 @@ from base.tree import *
 from support.util import decorators
 from base.core import *
 from PyQt5.QtWidgets import QApplication,QDialog,QDialogButtonBox,QComboBox,QLabel,QVBoxLayout
-
+from pprint import pprint
 import  base.config
 
 def test_genera_comp():
@@ -84,12 +84,13 @@ def short_test_sim():
     from support.util.numeros import avg
     from random import randint
     mis_cubos = load_cubo('../testcubo.json')
-    cubo = Cubo(mis_cubos['datos locales pg'])
+    cubo = Cubo(mis_cubos['datos locales'])
     row = 'geo'
     col = 'partido'
-    vista = Vista2(cubo,row,col,'sum','votes_presential',totalizado=False)
-    for item in vista.col_hdr_idx.traverse():
-        print(item.text(),item.getFullHeadInfo(content='key',format='array'))
+    vista = Vista2(cubo,row,col,'sum','votes_presential',totalizado=True)
+    #pprint(vista.array)
+    #for item in vista.col_hdr_idx.traverse():
+        #print(item.text(),item.getFullHeadInfo(content='key',format='array'))
     for line in vista.toList():
         print(line)
     print()
@@ -102,62 +103,7 @@ def short_test_sim():
     #return vista 
     #return
   
-def regTreeGuide(record,**kwargs):
-    from PyQt5.QtCore import Qt
-    """
-    convertir el registro en una tripleta (row,col,valor) con row y col los items de CubeItemModel)
-    """
-    dictionaries = ('rdir','cdir')
-    triad = [None,None,record[-1]]
-    for k,dim in enumerate(('row','col')):
-        dimension = kwargs[dim].get('nkeys',1)
-        if dim == 'row':
-            pos_ini = 0
-        else:
-            pos_ini = kwargs['row'].get('nkeys',1)
-        #krecord = list(map(lambda x:str(x),record[pos_ini:pos_ini+dimension]))
-        krecord = list(map(lambda x:'' if x is None else x,record[pos_ini:pos_ini+dimension]))
-        parent = kwargs[dictionaries[k]].searchHierarchy(krecord)
-        if parent is None:
-            #print(krecord,dim,pos_ini,dimension,'falla')
-            del record[:]
-            return
-        else:
-            triad[k] = parent
-    record[0:3] = triad
-    del record[3:]
 
-def regTreeGuideRollUp(record,**kwargs):
-    #from PyQt5.QtCore import Qt
-    """
-    convertir el registro en una tripleta (row,col,valor) con row y col los items de CubeItemModel)
-    version especializada para el ROLLUP debido al distinto tratamiento de los nulos y la estructura del cursor base
-    """
-    dictionaries = ('rdir','cdir')
-    triad = [None,None,record[-2]]   # record[-1] es el GROUPING
-    #print('de ',record)
-    is_total = kwargs.get('total',False)
-    for k,dim in enumerate(('row','col')):
-        dimension = kwargs[dim].get('nkeys',1)
-        if dim == 'row':
-            pos_ini = 0
-            payload = list(filter(lambda x:x is not None,record[:dimension]))
-        else:
-            pos_ini = kwargs['row'].get('nkeys',1)
-            if is_total:
-                payload = [record[0],] + list(filter(lambda x:x is not None,record[pos_ini:pos_ini+dimension]))
-            else:
-                payload = list(filter(lambda x:x is not None,record[pos_ini:pos_ini+dimension]))
-        parent = kwargs[dictionaries[k]].searchHierarchy(payload)
-        if parent is None:
-            #print(payload,dim,pos_ini,dimension,'falla')
-            del record[:]
-            return
-        else:
-            triad[k] = parent
-    #print('a  ',triad)
-    record[0:3] = triad
-    del record[3:]
 
 class Vista2(Vista):
     def _setGuideTrees(self,row,col):    
@@ -194,7 +140,7 @@ class Vista2(Vista):
         self.row_hdr_idx.vista = None
         self.col_hdr_idx.orthogonal = None
         self.col_hdr_idx.vista = None
-
+        
     def  _setDataMatrix(self):
         """
         __setDateFilter
@@ -292,6 +238,7 @@ class Vista2(Vista):
                                     'col':{'nkeys':numColElems,
                                             'init':numRowElems,},
                                     'cdir':self.col_hdr_idx,
+                                    'rollup':with_rollup,
                                     'total':self.totalizado,
                                     }
                     #print('a por el cursor de',sqlstring)
@@ -307,13 +254,7 @@ class Vista2(Vista):
             colElems  = list(map(lambda x:strip_as(x),sqlDef['group'][-1* numColElems:]))
             limpia = colElems + rowElems
             sqlDef['group'] =  [{'type':'CUBE','elems':limpia},]
-            #if len(colElems) == 1:
-                #sqlDef['group'] = [{'type':'ROLLUP','elems':limpia},]
-            #else:
-                #sqlDef['group']= [ {'type':'ROLLUP','elems':colElems[:n]+rowElems}
-                                             #for n in range(1,len(colElems) +1) ]
             #sqlDef['having'] = (('GROUPING({})'.format(norm2String(limpia)),'<',2**len(limpia)-1),)
-
             ## incluyo el grouping para poder seleccionar mejor en la salida
             sqlDef['fields'].append('GROUPING({}) AS gid'.format(norm2String(limpia)))
             sqlDef['select_modifier'] = 'DISTINCT'
@@ -324,15 +265,18 @@ class Vista2(Vista):
                 'col':{'nkeys':numColElems,
                         'init':numRowElems,},
                 'cdir':self.col_hdr_idx,
+                'rollup':with_rollup,
                 'total':self.totalizado,
                 }
-            self.array = getCursor(self.cubo.db,sqlstring,regTreeGuideRollUp,**lista_compra)
+            self.array = getCursor(self.cubo.db,sqlstring,regTreeGuide,**lista_compra)
             if config.DEBUG:
-                print(time.time(),'Datos ',queryFormat(sqlstring))   
+                print(time.time(),'Datos ',queryFormat(sqlstring))            
+ 
+
         #pprint(self.array)
 if __name__ == '__main__':    
     app = QApplication(sys.argv)
-    config.DEBUG = False
+    config.DEBUG = True
     function = short_test_sim
     parms = []
     if len(sys.argv) > 1:

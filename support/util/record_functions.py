@@ -239,17 +239,16 @@ def regTreeGuide(record,**kwargs):
     #from PyQt5.QtCore import Qt
     """
     convertir el registro en una tripleta (row,col,valor) con row y col los items de CubeItemModel)
-
+    FIXME no se si filter es la mas adecuada.
     """
     dictionaries = ('rdir','cdir')
     is_total = kwargs.get('total',False)   #for future support
     is_rollup = kwargs.get('rollup',False)
-    
+    filter_func = lambda x:x is not None
     if is_rollup:
-        filter_func = lambda x:x is not None
         triad = [None,None,record[-2]]   
     else:
-        filter_func = lambda x:'' if x is None else x
+        #filter_func = lambda x:'' if x is None else x
         triad   =[None,None,record[-1]]
     #print('de ',record)
         
@@ -263,7 +262,7 @@ def regTreeGuide(record,**kwargs):
             if is_total:
                 payload = [record[0],] + list(filter(filter_func,record[pos_ini:pos_ini+dimension]))
             else:
-                payload = list(filter(lambda x:x is not None,record[pos_ini:pos_ini+dimension]))
+                payload = list(filter(filter_func,record[pos_ini:pos_ini+dimension]))
         parent = kwargs[dictionaries[k]].searchHierarchy(payload)
         if parent is None:
             #print(payload,dim,pos_ini,dimension,'falla')
@@ -275,7 +274,7 @@ def regTreeGuide(record,**kwargs):
     record[0:3] = triad
     del record[3:]
 
-regTreeGuideRollUp = regTreeGuide  #monkey path temporal
+regTreeGuideRollUp = regTreeGuide  #monkey patch temporal
 
 def regTree(record,**kwargs):
     triad=[None,None,None]

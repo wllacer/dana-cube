@@ -93,13 +93,18 @@ Following were discovered with the rollup merge.
 
 * __ON HOLD__ Order in simetrical views is not perfect. Row is shown in danacube sorted by display , column is always sorted by code. If last sorted by display a number of entries get rejected.
 
-* Handling of columns with null value (esp. on ROLLUP sintax)
+* Handling of columns with null value (esp. on ROLLUP sintax). Case example: row (region,province,town) and we have CA01,None,1237 (a town not in a province, imagine it is possible). Two doubts:
+    * row2tree functions will search for (CA01,) not for (CA01,Null) in the hierarchy (we use a filter). Bug is obvious, but ... does it reflect reality ?
+    * and ¿what about the aggregation?
 
 * Behaviour with cartesian queries not tested
 
 * Traspose has some crashes
 
-* __RESEARCH ON HOLD__ extension of the totals to both axis. Have to change SQL aggregation clause to CUBE. Must filter with GROUPING, otherwise performance (and network load) gets up. Probable side effects. Test module is reseach/test_total.py
+* __RESEARCH ON HOLD__ extension of the totals to both axis.
+    * _grouping clauses_ Have to change SQL aggregation clause to CUBE. Must filter with GROUPING, otherwise performance (and network load) gets up. Probable side effects. Test module is reseach/test_total.py
+    
+    * Impact on recalculateGrandTotal
 Waiting for regTree* unification and null processing
 
 * Unify regTreeLoad & regTreeLoadRollup
