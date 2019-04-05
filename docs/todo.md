@@ -101,13 +101,16 @@ Following were discovered with the rollup merge.
 
 * Traspose has some crashes
 
-* __RESEARCH ON HOLD__ extension of the totals to both axis.
-    * _grouping clauses_ Have to change SQL aggregation clause to CUBE. Must filter with GROUPING, otherwise performance (and network load) gets up. Probable side effects. Test module is reseach/test_total.py
+* __RESEARCH__ extension of the totals to both axis.  STILL NOT ON MASTER
+    * Have to change SQL aggregation clause to CUBE. Performance suffers (up to 50% with big hierarchies), as the number of discarded records goes up
+    * __TODO__ Must filter with GROUPING, to reduce the network overhead of rejected records.
+    * __TODO__ Probable side effects.
+        * __TODO__ impact on recalculateGrandTotal
     
-    * Impact on recalculateGrandTotal
-Waiting for regTree* unification and null processing
-
-* Unify regTreeLoad & regTreeLoadRollup
+    Test module is reseach/total_core.py plus research/test_total.py.   
+    A local branch is open to check side effects.
+    
+* __solved__ Unify regTreeLoad & regTreeLoadRollup
 
 * Windows integration 
     * __solved__ base.uf_handler 24 spliy libname (de / a \\)

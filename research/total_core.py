@@ -19,8 +19,58 @@ from PyQt5.QtWidgets import QApplication,QDialog,QDialogButtonBox,QComboBox,QLab
 from pprint import pprint
 import  base.config
 
-  
+def regTreeGuideMulti(record,**kwargs):
+    #from PyQt5.QtCore import Qt
+    """
+    convertir el registro en una tripleta (row,col,valor) con row y col los items de CubeItemModel)
+    FIXME no se si filter es la mas adecuada.
+    """
+    def drop_null(entrada):
+        tmp = entrada[:]
+        cola = True
+        for k in range(len(tmp) -1,-1,-1):
+            if tmp[k] is None and cola:
+                del tmp[k]
+            elif tmp[k] is None:
+                tmp[k] = ''
+            else:
+                cola = False
+                break
+        return tmp
+    
+    dictionaries = ('rdir','cdir')
+    is_total = kwargs.get('total',False)   #for future support
+    is_rollup = kwargs.get('rollup',False)
+    filter_func = drop_null
+    if is_rollup:
+        triad = [None,None,record[-2]]   
+    else:
+        triad   =[None,None,record[-1]]
+
+    for k,dim in enumerate(('row','col')):
+        dimension = kwargs[dim].get('nkeys',1)
+        if dim == 'row':
+            pos_ini = 0
+        else:
+            pos_ini = kwargs['row'].get('nkeys',1)
+        if is_total:
+            payload = ['//',] +drop_null(record[pos_ini:pos_ini+dimension])
+        else:
+            payload = drop_null(record[pos_ini:pos_ini+dimension])
+        parent = kwargs[dictionaries[k]].searchHierarchy(payload)
+        if parent is None:
+            #print(payload,dim,pos_ini,dimension,'falla')
+            del record[:]
+            return
+        else:
+            triad[k] = parent
+    #print('a  ',triad)
+    record[0:3] = triad
+    del record[3:]
+
+
 class Vista2(Vista):
+    
     def _setGuideTrees(self,row,col):    
         """
         Creamos los dos arboles que nos serviran de guias
@@ -43,13 +93,10 @@ class Vista2(Vista):
         if row != col:
             self.col_hdr_idx = self.cubo.lista_guias[col]['dir_row']
         else:
-            # cuerpo del delito para simetricas, tengo que hacer una copia de la guia, sin total
+            # cuerpo del delito para simetricas, tengo que hacer una copia de la guia
             #
-            if self.totalizado:
-                start = self.row_hdr_idx.invisibleRootItem().child(0)
-            else:
-                start = None
-            self.col_hdr_idx = self.row_hdr_idx.cloneSubTree(entryPoint=start,payload=False,withEntry=False,ordRole=Qt.DisplayRole)
+            start = None
+            self.col_hdr_idx = self.row_hdr_idx.cloneSubTree(entryPoint=start,payload=False,withEntry=False)
                 
         self.row_hdr_idx.orthogonal = None
         self.row_hdr_idx.vista = None
@@ -89,8 +136,8 @@ class Vista2(Vista):
             #self.totalizado = True
             with_rollup = True
         if self.totalizado:
-            contexto_row.insert(0,{'elems':["'//'",],'linkvia':[]})
-            contexto_col.insert(0,{'elems':["'//'",],'linkvia':[]})
+            contexto_row.insert(0,{'elems':[None,],'linkvia':[]})
+            contexto_col.insert(0,{'elems':[None,],'linkvia':[]})
             #TOT-Y contexto_col.insert(0,{'elems':["'//'",],'linkvia':[]})
         maxRowElem = len(contexto_row[-1]['elems'])
         maxColElem = len(contexto_col[-1]['elems'])
@@ -117,38 +164,15 @@ class Vista2(Vista):
                     tcol = col['elems'][:]
                 sqlDef['join'] = tmpLinks
                 
-                #trow = row['elems'][:]
-                #tcol = col['elems'][:]
-                if self.totalizado: #and x != 0:
-                    try:
-                        pos = trow.index("'//'")
-                        del trow[pos]
-                    except ValueError:
-                        pass
-                    try:
-                        pos = tcol.index("'//'")
-                        del tcol[pos]
-                    except ValueError:
-                        pass
+                trow = list(filter(lambda x:x is not None,row['elems'][:]))
+                tcol =  list(filter(lambda x:x is not None,col['elems'][:]))
                 sqlDef['group'] = trow + tcol
-                if self.totalizado:
-                    rowFields =["'//'",] + trow 
-                    numRowElems = len(rowFields)
-                    colFields = tcol
-                    numColElems = len(colFields)
-                    sqlDef['fields'] = rowFields + colFields + [(self.campo,self.agregado)]
-                else:
-                    sqlDef['fields'] =sqlDef['group']  + [(self.campo,self.agregado)]
-                    rowFields = trow
-                    numRowElems = len(rowFields)
-                    colFields = tcol
-                    numColElems = len(colFields)
-                #FIXME  creo que en totalizado no acaba de ordenar por la ultima columna         
-                if self.totalizado:
-                    array_offset = 2
-                else:
-                    array_offset = 1
-                sqlDef['order'] = [ str(x + array_offset) for x in range(len(sqlDef['group']))]
+                sqlDef['fields'] =sqlDef['group']  + [(self.campo,self.agregado)]
+                rowFields = trow
+                numRowElems = len(rowFields)
+                colFields = tcol
+                numColElems = len(colFields)
+                sqlDef['order'] = [ str(x +1) for x in range(len(sqlDef['group']))]
             
                 sqlDef['driver'] = self.cubo.dbdriver
                 sqlDef = setPrefix(sqlDef,baseTable,basePfx,excludeDict=('tables','table','ltable'))
@@ -162,7 +186,9 @@ class Vista2(Vista):
                                     'rollup':with_rollup,
                                     'total':self.totalizado,
                                     }
-                    cursor = getCursor(self.cubo.db,sqlstring,regTreeGuide,**lista_compra)
+                    #print(sqlstring)
+                    #continue
+                    cursor = getCursor(self.cubo.db,sqlstring,regTreeGuideMulti,**lista_compra)
                     self.array +=cursor 
                     if config.DEBUG:
                         print(time.time(),'Datos ',queryFormat(sqlstring))
@@ -188,8 +214,7 @@ class Vista2(Vista):
                 'rollup':with_rollup,
                 'total':self.totalizado,
                 }
-            self.array = getCursor(self.cubo.db,sqlstring,regTreeGuide,**lista_compra)
+            self.array = getCursor(self.cubo.db,sqlstring,regTreeGuideMulti,**lista_compra)
             if config.DEBUG:
                 print(time.time(),'Datos ',queryFormat(sqlstring))            
- 
 

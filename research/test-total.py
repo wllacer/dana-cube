@@ -33,21 +33,21 @@ def test_genera_comp():
     cubo = Cubo(mis_cubos['datos locales pg'])
     for guia in cubo.lista_guias:
         for guia2 in cubo.lista_guias:
-            if guia['name'] == 'geo-detail' or guia2['name'] == 'geo-detail':
-               continue
+            #if guia['name'] == 'geo-detail' or guia2['name'] == 'geo-detail':
+               #continue
             print ('procesando ',guia['name'],guia2['name'])
             test_comp(cubo,guia['name'],'partido')
         #test_comp(cubo,'partido',guia['name'])     
  
 @stopwatch
-def with_rollup(cubo,row,col):
-    vista = Vista(cubo,row,col,'sum','votes_presential',totalizado=False)
+def base_code(cubo,row,col):
+    vista = Vista(cubo,row,col,'sum','votes_presential',totalizado=True)
     vista.toNewTree2D()
     return vista 
 
 @stopwatch
-def with_clone(cubo,row,col):
-    vista = Vista2(cubo,row,col,'sum','votes_presential',totalizado=False)
+def total_code(cubo,row,col):
+    vista = Vista2(cubo,row,col,'sum','votes_presential',totalizado=True)
     vista.toNewTree2D()
     return vista 
 
@@ -57,25 +57,25 @@ def test_comp(cubo,rowname,colname,show=False):
     Comprobar el comportamiento del rollup
     FIXME  ¿Como distingue el rollup de los nulos de cabecera con los nulos de uso practico ?
     """
-    vista = with_clone(cubo,rowname,colname) 
+    vista = total_code(cubo,rowname,colname) 
     wisout = []
     for row in vista.row_hdr_idx.traverse():
         wisout.append((row.text(),row.getPayload()))
 
-    vista2 = with_rollup(cubo,rowname,colname) 
+    vista2 = base_code(cubo,rowname,colname) 
     wisin = []
     for row in vista2.row_hdr_idx.traverse():
         wisin.append((row.text(),row.getPayload()))
     
-    if wisout != wisin:
-        print('NO coinciden las ejecuciones para fila {} y columna {}'.format(rowname,colname))
-    if show:
-        print('sin ',len(wisout),'con',len(wisin))
-        for k in range(min(len(wisout),len(wisin))):
-                print(wisout[k])
-                print(wisin[k])
-                print()
-    return
+    #if wisout != wisin:
+        #print('NO coinciden las ejecuciones para fila {} y columna {}'.format(rowname,colname))
+    #if show:
+        #print('sin ',len(wisout),'con',len(wisin))
+        #for k in range(min(len(wisout),len(wisin))):
+                #print(wisout[k])
+                #print(wisin[k])
+                #print()
+    #return
 
 def short_test_sim():
     """
@@ -86,13 +86,13 @@ def short_test_sim():
     from support.util.numeros import avg
     from random import randint
     mis_cubos = load_cubo('../testcubo.json')
-    cubo = Cubo(mis_cubos['datos locales'])
+    cubo = Cubo(mis_cubos['datos locales pg'])
     row = 'partido'
-    col = 'geo'
+    col = 'partido'
     vista = Vista2(cubo,row,col,'sum','votes_presential',totalizado=True)
     #pprint(vista.array)
-    #for item in vista.col_hdr_idx.traverse():
-        #print(item.text(),item.getFullHeadInfo(content='key',format='array'))
+    for item in vista.col_hdr_idx.traverse():
+        print(item.text(),item.getFullHeadInfo(content='key',format='array'))
     for line in vista.toList():
         print(line)
     print()
