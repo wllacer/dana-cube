@@ -164,8 +164,8 @@ class Vista2(Vista):
                     tcol = col['elems'][:]
                 sqlDef['join'] = tmpLinks
                 
-                trow = list(filter(lambda x:x is not None,row['elems'][:]))
-                tcol =  list(filter(lambda x:x is not None,col['elems'][:]))
+                trow = list(filter(lambda x:x is not None,trow))
+                tcol =  list(filter(lambda x:x is not None,tcol))
                 sqlDef['group'] = trow + tcol
                 sqlDef['fields'] =sqlDef['group']  + [(self.campo,self.agregado)]
                 rowFields = trow
