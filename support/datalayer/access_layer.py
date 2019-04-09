@@ -401,7 +401,30 @@ def showQueryError(error_text,query):
     msg.setDetailedText(query)
     msg.setStandardButtons(QMessageBox.Ok)                
     retval = msg.exec_()
+
+def sql2PyAggregate(db_function,table,maxcols):
+    """
+    to support.datalayer.access_layer
+    __db_function__ sql function to emulate (in text)
+    __table__          array to process (n rows X (maximal) maxcols columns)
+    __maxcols__     maximum number of columns of the table
     
+    convertimos las funciones de agregacion de SQL en funciones Python. Notese que se ejecutan ignorando nulos
+    Recibimos un array con los valores de datos y agrupamos por filas
+    sum,max y min no tienen problema, 
+    pero count solo cuenta las instancias del nivel anterior (un truco sería hacer un sum). De todas maneras no acabo de ver la posibilidad de realizar funciones significativas sobre count
+    avg es el promedio del nivel inferior, lo que es conceptualmente distinto del avg que genera la base de datos. Mala solucion tiene
+    """
+    from statistics import mean 
+    list_functions = {'count':len, 'max':max, 'min':min, 'avg':mean, 'sum':sum}
+    function = list_functions[db_function]
+    nhijos = len(table)
+    resultado = [ ]
+    for k in range(maxcols):
+        vector = [ table[i][k] for i in range(nhijos) if k < len(table[i]) ]
+        resultado.append(function(list(filter(lambda x:x is not None,vector))))
+    return resultado
+
 if __name__ == '__main__':
     definition1={'driver':'sqlite','dbname': '/home/werner/projects/scifi/scifi.db',
                 'dbhost':None,'dbuser':None,'dbpass':None,'debug':False } 

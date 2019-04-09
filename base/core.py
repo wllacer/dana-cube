@@ -1434,63 +1434,34 @@ class Vista:
             
         return result
                 
-    
-    def recalcGrandTotal(self):
+    def recalcGrandTotal(self,item=None):
         """
-           TODO
-        """
-        def cargaAcumuladores():
-            if elem.isLeaf():
-                for k in range(len(acumuladores)):
-                    for ind,item in enumerate(elem.getPayload()):
-                        if item is not None:
-                            acumuladores[k][ind]['max'] = max(acumuladores[k][ind]['max'],item)
-                            acumuladores[k][ind]['min'] = min(acumuladores[k][ind]['min'],item)
-                            acumuladores[k][ind]['sum'] += item
-                            acumuladores[k][ind]['count'] += 1
-        def procesa():
-            if self.agregado == 'avg':
-                datos = [item['sum']/item['count'] if item['count'] != 0 else None for item in acumuladores[-1] ]
+        Recalcula totales en arbol.
+        count y avg devuelven solo el valor para el nivel inmediatamente inferior. 
+        Nueva codificacion usando recursividad, es mucho mas simple que la version anterior
+        """    
+        resultado = []
+        if item is None:
+            item = self.row_hdr_idx.invisibleRootItem()
+            
+        if item.hasChildren():
+            table = []
+            numChild = item.rowCount()
+            for m in range(numChild):
+                elemento = item.child(m)
+                table.append(self.recalcGrandTotal(elemento))
+            if not isinstance(item,GuideItem):
+                pass
             else:
-                datos = [item[self.agregado] if item[self.agregado] != 0 else None for item in acumuladores[-1] ]
-            padres[-1].setPayload(datos)
-            if self.stats :
-                padres[-1].setStatistics()
-
-        
-        arbol = self.row_hdr_idx
-        numcol = self.col_hdr_idx.len()
-        padres = []  
-        acumuladores = []
-        for elem in arbol.traverse():
-            prof = elem.depth()
-            if len(padres) < prof:
-                padres.append(elem.parent())
-                acumuladores.append([ {'max':0,'min':0,'count':0,'sum':0} for k in range(numcol)])
-                cargaAcumuladores()
-            elif len(padres) == prof:
-                if padres and padres[-1] == elem.parent():
-                    cargaAcumuladores()
-                #else:
-                    #print('cambio de padre')
-            elif len(padres) > prof:
-                procesa()
-                del padres[-1]
-                del acumuladores[-1]
-                cargaAcumuladores()
-                #if padres[-1] == elem.parent():
-                    #print('no cambia nada')
-                #else:
-                    #print('nuevo padre')
-                    #padres.append(elem.parent())
-                #print('para atras')
+                resultado = sql2PyAggregate(self.agregado,table, item.model().lenPayload())
+            if isinstance(item,GuideItem):
+                item.setPayload(resultado)
+                if self.stats:
+                    item.setStatistics()
         else:
-            while True: #padres[-1].parent() is not None:
-                procesa()
-                del padres[-1]
-                del acumuladores[-1]
-                if len(padres) == 0 or padres[-1] is None:
-                    break
+            resultado = item.getPayload()
+        return resultado   
+    
     
     def traspose(self):
         """
