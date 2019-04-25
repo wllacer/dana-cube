@@ -995,7 +995,10 @@ class GuideItem(NewGuideItem):
         len(Datos) = len(filtro)
             
         """
+        lenVector = len(datos)
         for k,i in enumerate(filtro):
+            if k >= lenVector:
+                break
             self.setPayloadItem(i,datos[k])
     
     def getPayloadItem(self,idx):

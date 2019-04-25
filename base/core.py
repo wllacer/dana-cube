@@ -1395,7 +1395,10 @@ class Vista:
         colHdr=kwparms.get('colHdr',True)
         rowHdr=kwparms.get('rowHdr',True)
         numFormat = kwparms.get('numFmt','      {:9,d}')
-        numLen = len(numFormat.format(0))
+        try:
+            numLen = len(numFormat.format(0))
+        except ValueError:
+            numLen = len(numFormat.format(0.0))
         colFormat = kwparms.get('colFmt',' {{:>{0}.{0}s}}'.format(numLen -1))
         rowFormat = kwparms.get('rowFmt','{:20.20s}')
         rowLen = len(rowFormat.format(''))
